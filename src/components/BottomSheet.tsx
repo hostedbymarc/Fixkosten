@@ -62,16 +62,19 @@ interface Props {
   subtitle?: ReactNode;
   onClose: () => void;
   children: ReactNode;
+  /** element to focus after closing (Safari does not focus buttons on tap) */
+  returnFocusTo?: HTMLElement | null;
 }
 
-export function BottomSheet({ title, subtitle, onClose, children }: Props) {
+export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo }: Props) {
   useScrollLock();
   const keyboard = useKeyboardInset();
   const panel = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
+  const returnFocus = useRef(returnFocusTo);
   useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previouslyFocused = returnFocus.current ?? (document.activeElement as HTMLElement | null);
     // the app behind the sheet is unreachable for focus and screen readers
     const root = document.getElementById('root');
     root?.setAttribute('inert', '');

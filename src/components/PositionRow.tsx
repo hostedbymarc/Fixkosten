@@ -52,10 +52,9 @@ export function PositionRow({ item, onToggle, onOpen }: Props) {
           >
             {position.name}
           </span>
-          {(schedule || position.isVariable || payment?.note) && (
+          {(schedule || payment?.note) && (
             <span className="mt-1 flex flex-wrap items-center gap-1.5">
               {schedule && <Badge tone="accent">{schedule}</Badge>}
-              {position.isVariable && <Badge>variabel</Badge>}
               {payment?.note && <span className="truncate text-[13px] text-ink-mute">{payment.note}</span>}
             </span>
           )}
