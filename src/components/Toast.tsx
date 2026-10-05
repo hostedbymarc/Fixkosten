@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ToastOptions {
   message: string;
@@ -37,6 +38,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={show}>
       {children}
+      {/* portal: stays usable while a sheet makes #root inert */}
+      {createPortal(
       <div
         className="pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 lg:pl-[240px]"
         style={{ bottom: 'calc(var(--tabbar-h) + var(--safe-bottom) + 12px)' }}
@@ -63,7 +66,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             )}
           </div>
         )}
-      </div>
+      </div>,
+        document.body,
+      )}
     </ToastContext.Provider>
   );
 }

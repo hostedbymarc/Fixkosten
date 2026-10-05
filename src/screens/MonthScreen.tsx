@@ -1,19 +1,32 @@
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import { forwardRef, useId, useMemo, useRef, useState } from 'react';
 import { BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
+import { OneOffSheet } from '../components/OneOffSheet';
 import { PaymentSheet } from '../components/PaymentSheet';
 import { PositionRow } from '../components/PositionRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
-import { markPaid, removePayment, restorePayment, saveMonthClose, updatePayment } from '../db/repo';
+import {
+  deleteOneOff,
+  markPaid,
+  markSkipped,
+  removePayment,
+  restoreOneOff,
+  restorePayment,
+  saveMonthClose,
+  toggleOneOffPaid,
+  updatePayment,
+} from '../db/repo';
 import {
   dueItems,
   freeCalculated,
   freeGap,
   groupByCategory,
   monthCloseFor,
+  openFromPrevious,
+  sumOpen,
   periodProgress,
   plannedForPeriod,
   remindersForPeriod,
@@ -24,10 +37,11 @@ import {
   upcomingDue,
   type CategoryGroup,
   type DueItem,
+  type OpenGroup,
 } from '../lib/calc';
 import { formatDelta, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
-import type { Dataset, Period } from '../lib/types';
+import type { Dataset, OneOff, Period } from '../lib/types';
 
 interface Props {
   ds: Dataset;
@@ -37,7 +51,8 @@ interface Props {
 
 export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const toast = useToast();
-  const [openPositionId, setOpenPositionId] = useState<string | null>(null);
+  const [openKey, setOpenKey] = useState<{ positionId: string; period: Period } | null>(null);
+  const [oneOffSheet, setOneOffSheet] = useState<{ positionId: string; oneOff?: OneOff } | null>(null);
   const [closeOpen, setCloseOpen] = useState(false);
   const closeTile = useRef<HTMLButtonElement>(null);
 
@@ -46,14 +61,24 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const progress = useMemo(() => periodProgress(ds, period), [ds, period]);
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = remindersForPeriod(ds, period);
-  const openItem = items.find((i) => i.position.id === openPositionId) ?? null;
+  const openGroups = useMemo(() => openFromPrevious(ds, period), [ds, period]);
+  const openItem =
+    openKey === null
+      ? null
+      : ((openKey.period === period ? items : openGroups.flatMap((g) => g.items)).find(
+          (i) => i.position.id === openKey.positionId && i.period === openKey.period,
+        ) ?? null);
+  const oneOffPosition = oneOffSheet ? ds.positions.find((p) => p.id === oneOffSheet.positionId) : undefined;
 
   async function unpay(item: DueItem) {
     if (!item.payment) return;
     const removed = await removePayment(db, item.payment.id);
     if (!removed) return;
     toast({
-      message: `Haken bei „${item.position.name}" entfernt`,
+      message:
+        removed.status === 'skipped'
+          ? `„${item.position.name}" ist wieder offen`
+          : `Haken bei „${item.position.name}" entfernt`,
       actionLabel: 'Rückgängig',
       onAction: () => void restorePayment(db, removed),
     });
@@ -61,18 +86,47 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
   async function toggle(item: DueItem) {
     if (item.payment) await unpay(item);
-    else await markPaid(db, item.position.id, period, item.planned);
+    else await markPaid(db, item.position.id, item.period, item.planned);
   }
 
   async function save(item: DueItem, actualAmount: number, note: string) {
-    const payment = item.payment ?? (await markPaid(db, item.position.id, period, item.planned));
+    const payment =
+      item.status === 'paid' ? item.payment! : await markPaid(db, item.position.id, item.period, item.planned);
     await updatePayment(db, payment.id, { actualAmount, note });
-    setOpenPositionId(null);
+    setOpenKey(null);
+  }
+
+  async function skip(item: DueItem) {
+    const skipped = await markSkipped(db, item.position.id, item.period, item.planned);
+    toast({
+      message: `„${item.position.name}" (${monthName(item.period)}) entfällt`,
+      actionLabel: 'Rückgängig',
+      onAction: () => void removePayment(db, skipped.id),
+    });
+  }
+
+  async function removeOneOff(oneOff: OneOff) {
+    setOneOffSheet(null);
+    const removed = await deleteOneOff(db, oneOff.id);
+    if (!removed) return;
+    toast({
+      message: `„${oneOff.label}" gelöscht`,
+      actionLabel: 'Rückgängig',
+      onAction: () => void restoreOneOff(db, removed),
+    });
   }
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8">
       <MonthHeader period={period} onChange={onPeriodChange} />
+
+      {openGroups.length > 0 && (
+        <OpenFromPrevious
+          groups={openGroups}
+          onPay={(item) => setOpenKey({ positionId: item.position.id, period: item.period })}
+          onSkip={(item) => void skip(item)}
+        />
+      )}
 
       <div className="grid gap-3 lg:gap-4">
         <HeroCard progress={progress} />
@@ -99,7 +153,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         <section aria-label="Fällige Positionen" className="flex flex-col gap-4">
           {groups.length === 0 ? (
             <EmptyCard>
-              Für {periodLabel(period)} ist nichts fällig. Positionen kommen in Phase 2 dazu.
+              Für {periodLabel(period)} ist nichts fällig. Neue Positionen legst du unter „Positionen“ an.
             </EmptyCard>
           ) : (
             groups.map((group) => (
@@ -108,7 +162,9 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
                 group={group}
                 spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
                 onToggle={toggle}
-                onOpen={(item) => setOpenPositionId(item.position.id)}
+                onOpen={(item) => setOpenKey({ positionId: item.position.id, period: item.period })}
+                onToggleOneOff={(o) => void toggleOneOffPaid(db, o.id)}
+                onOpenOneOff={(o) => setOneOffSheet({ positionId: o.positionId!, oneOff: o })}
               />
             ))
           )}
@@ -148,7 +204,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
                       <span className="mt-1 flex flex-wrap gap-1.5">
                         <Badge tone="warn">{monthName(item.period)}</Badge>
                         <span className="text-[13px] leading-[22px] text-ink-mute">
-                          {scheduleLabel(item.position)}
+                          {item.plan && scheduleLabel(item.plan, item.period)}
                         </span>
                       </span>
                     </span>
@@ -175,14 +231,33 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
       {openItem && (
         <PaymentSheet
-          key={openItem.position.id}
+          key={`${openItem.position.id}-${openItem.period}`}
           item={openItem}
-          onClose={() => setOpenPositionId(null)}
+          onClose={() => setOpenKey(null)}
           onSave={(amount, note) => void save(openItem, amount, note)}
           onUnpay={() => {
-            setOpenPositionId(null);
+            setOpenKey(null);
             void unpay(openItem);
           }}
+          onAddOneOff={
+            openItem.period === period
+              ? () => {
+                  setOpenKey(null);
+                  setOneOffSheet({ positionId: openItem.position.id });
+                }
+              : undefined
+          }
+        />
+      )}
+
+      {oneOffSheet && oneOffPosition && (
+        <OneOffSheet
+          key={oneOffSheet.oneOff?.id ?? 'new'}
+          position={oneOffPosition}
+          period={period}
+          oneOff={oneOffSheet.oneOff}
+          onClose={() => setOneOffSheet(null)}
+          onDelete={(o) => void removeOneOff(o)}
         />
       )}
     </div>
@@ -311,12 +386,16 @@ function GroupCard({
   spread,
   onToggle,
   onOpen,
+  onToggleOneOff,
+  onOpenOneOff,
 }: {
   group: CategoryGroup;
   /** monthly equivalent of the whole category, incl. positions not due this month */
   spread: number;
   onToggle: (item: DueItem) => void;
   onOpen: (item: DueItem) => void;
+  onToggleOneOff: (oneOff: OneOff) => void;
+  onOpenOneOff: (oneOff: OneOff) => void;
 }) {
   const savings = group.category.kind === 'savings';
   const showSpread = Math.round(spread * 100) !== Math.round(group.planned * 100);
@@ -340,9 +419,92 @@ function GroupCard({
       </header>
       <ul className="divide-y divide-line py-1 pl-1">
         {group.items.map((item) => (
-          <PositionRow key={item.position.id} item={item} onToggle={() => onToggle(item)} onOpen={() => onOpen(item)} />
+          <PositionRow
+            key={item.position.id}
+            item={item}
+            onToggle={() => onToggle(item)}
+            onOpen={() => onOpen(item)}
+            onToggleOneOff={onToggleOneOff}
+            onOpenOneOff={onOpenOneOff}
+          />
         ))}
       </ul>
+    </section>
+  );
+}
+
+/** "Offen aus Oktober": unticked items of earlier months; collapsed by default. */
+function OpenFromPrevious({
+  groups,
+  onPay,
+  onSkip,
+}: {
+  groups: OpenGroup[];
+  onPay: (item: DueItem) => void;
+  onSkip: (item: DueItem) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const count = groups.reduce((n, g) => n + g.items.length, 0);
+  const title = groups.length === 1 ? `Offen aus ${monthName(groups[0]!.period)}` : 'Offen aus Vormonaten';
+  const contentId = useId();
+  return (
+    <section className="card mb-3 overflow-hidden border-warn/30" aria-label={title} data-testid="open-previous">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={contentId}
+        onClick={() => setExpanded((e) => !e)}
+        className="focus-ring flex min-h-[56px] w-full items-center gap-3 px-4 text-left"
+      >
+        <span className="h-2 w-2 shrink-0 rounded-full bg-warn" aria-hidden="true" />
+        <span className="flex-1 text-[15px] font-semibold text-ink">{title}</span>
+        <span className="num text-[14px] text-ink-mute">
+          {count} · {formatEUR(sumOpen(groups))}
+        </span>
+        <ChevronRight size={18} className={`text-ink-mute transition-transform ${expanded ? 'rotate-90' : ''}`} />
+      </button>
+      {expanded && (
+        <div id={contentId} className="border-t border-line">
+          {groups.map((g) => (
+            <div key={g.period}>
+              {groups.length > 1 && <div className="section-title px-4 pb-1 pt-3">{periodLabel(g.period)}</div>}
+              <ul className="divide-y divide-line">
+                {g.items.map((item) => (
+                  <li
+                    key={item.position.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
+                    data-testid="open-item"
+                    data-position={item.position.id}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-medium text-ink">{item.position.name}</span>
+                      <span className="num text-[13px] text-ink-mute">
+                        {formatEUR(item.planned)} · {periodLabel(item.period)}
+                      </span>
+                    </span>
+                    <span className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onPay(item)}
+                        className="focus-ring h-11 rounded-xl bg-accent-soft px-3 text-[14px] font-semibold text-accent-strong hover:bg-[#E2E2F8]"
+                      >
+                        Bezahlt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onSkip(item)}
+                        className="focus-ring h-11 rounded-xl px-3 text-[14px] font-medium text-ink-soft hover:bg-zinc-100"
+                      >
+                        Entfallen
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

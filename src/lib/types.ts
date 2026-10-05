@@ -14,29 +14,42 @@ export interface Category {
   sortOrder: number;
 }
 
-export interface AmountEntry {
+/** One version of a position's payment plan, valid from `validFrom` until the next entry. */
+export interface PlanEntry {
   validFrom: Period;
   amount: number;
+  frequency: Frequency;
+  dueMonths: number[]; // 1–12; for monthly all twelve
+  dueDay?: number; // 1–31, 31 = last day of the month
+}
+
+/** Closed gap between an archive and a restore (inclusive months). */
+export interface Pause {
+  from: Period;
+  to: Period;
 }
 
 export interface Position {
   id: string;
   name: string;
   categoryId: string;
-  frequency: Frequency;
-  dueMonths: number[]; // 1–12; for monthly all twelve
-  dueDay?: number;
   note?: string;
-  amountHistory: AmountEntry[];
+  history: PlanEntry[];
   createdAt: string;
+  /** archived from this month on (exclusive of earlier months) */
   archivedAt?: string;
+  pauses?: Pause[];
   sortOrder: number;
 }
+
+export type PaymentStatus = 'paid' | 'skipped';
 
 export interface Payment {
   id: string;
   positionId: string;
   period: Period;
+  status: PaymentStatus;
+  /** plan snapshot at the time of ticking; ticked months never change afterwards */
   plannedAmount: number;
   actualAmount: number;
   paidAt: string;
@@ -49,6 +62,8 @@ export interface OneOff {
   period: Period;
   amount: number; // negative = credit
   label: string;
+  /** set when ticked off */
+  paidAt?: string;
 }
 
 /** Per-month close: salary varies, so it is captured per period. */
@@ -61,13 +76,15 @@ export interface MonthClose {
   updatedAt: string;
 }
 
-export type ChangeType = 'created' | 'amount' | 'archived' | 'restored' | 'edited';
+export type ChangeType = 'created' | 'amount' | 'corrected' | 'archived' | 'restored' | 'edited';
 
 export interface ChangeLog {
   id: string;
   at: string;
   positionId: string;
   type: ChangeType;
+  /** 'amount': month the new plan applies from */
+  validFrom?: Period;
   from?: unknown;
   to?: unknown;
 }
@@ -91,4 +108,5 @@ export interface Dataset {
   oneOffs: OneOff[];
   monthClose: MonthClose[];
   reminders: Reminder[];
+  changeLog: ChangeLog[];
 }
