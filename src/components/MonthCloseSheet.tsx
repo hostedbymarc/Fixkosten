@@ -56,7 +56,7 @@ function AmountField({
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={invalid}
           aria-describedby={`${id}-hint`}
-          className="num w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
+          className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
         />
       </div>
       <p id={`${id}-hint`} className="mt-1.5 min-h-[20px] text-[13px] text-ink-mute">

@@ -5,6 +5,8 @@ import {
   amountForPeriod,
   annualCost,
   annualizedSavingsFromChanges,
+  currentPlan,
+  dueDayInPeriod,
   defaultDueMonths,
   dueInPeriod,
   dueItems,
@@ -15,6 +17,7 @@ import {
   freeGap,
   groupByCategory,
   monthlyEquivalent,
+  openFromPrevious,
   periodProgress,
   plannedForPeriod,
   remindersForPeriod,
@@ -192,33 +195,57 @@ describe('due logic', () => {
   });
 });
 
-describe('amount history & archive', () => {
+/** Adds a plan version from `validFrom` with a new amount (schedule unchanged). */
+function changeAmount(p: Position, validFrom: string, amount: number): void {
+  const base = currentPlan(p, validFrom)!;
+  p.history.push({ ...base, validFrom, amount });
+}
+
+describe('versioned plans (history)', () => {
   it('amount change applies from validFrom, past months unchanged', () => {
     const ds = seed();
     const handy = position(ds, 'pos-handy');
-    handy.amountHistory.push({ validFrom: '2027-01', amount: 8 });
+    changeAmount(handy, '2027-01', 8);
     expect(amountForPeriod(handy, '2026-12')).toBe(10);
     expect(amountForPeriod(handy, '2027-01')).toBe(8);
     expect(plannedForPeriod(ds, OCT)).toBe(3403);
     expect(plannedForPeriod(ds, '2027-03')).toBe(2664 - 2);
   });
 
-  it('annualized savings from changes: Handy 15 → 10 saves € 60/year', () => {
+  it('schedule change: quarterly → annual from 2027 moves due months', () => {
+    const ds = seed();
+    const depot = position(ds, 'pos-depotentgelt');
+    depot.history.push({ validFrom: '2027-01', amount: 120, frequency: 'annual', dueMonths: [3] });
+    expect(dueInPeriod(depot, '2026-10')).toBe(true);
+    expect(dueInPeriod(depot, '2027-01')).toBe(false);
+    expect(dueInPeriod(depot, '2027-03')).toBe(true);
+    expect(monthlyEquivalent(depot, '2026-10')).toBeCloseTo(35 / 3, 9);
+    expect(monthlyEquivalent(depot, '2027-03')).toBe(10);
+  });
+
+  it('ticked months keep their payment snapshot even if the plan entry is corrected', () => {
+    const ds = seed();
+    position(ds, 'pos-handy').history[0]!.amount = 8; // typo correction of the Oct entry
+    const item = dueItems(ds, OCT).find((i) => i.position.id === 'pos-handy')!;
+    expect(item.planned).toBe(10);
+    expect(item.delta).toBe(0);
+    expect(sumMonthlyEquivalent(ds, OCT, { kind: 'expense', frequency: 'monthly' })).toBe(2662);
+  });
+
+  it('optimisations come from the ChangeLog: Handy 15 → 10 saves € 60/year, corrections never count', () => {
     const ds = seed();
     const handy = position(ds, 'pos-handy');
-    handy.amountHistory = [
-      { validFrom: '2026-01', amount: 15 },
-      { validFrom: '2026-10', amount: 10 },
-    ];
-    const gym = position(ds, 'pos-gym');
-    gym.amountHistory.push({ validFrom: '2027-01', amount: 40 }); // +5/month
-    const cash = position(ds, 'pos-cash'); // savings never count as optimisation
-    cash.amountHistory.push({ validFrom: '2027-01', amount: 300 });
-
+    const plan = (amount: number, validFrom: string) => ({ ...handy.history[0]!, validFrom, amount });
+    ds.changeLog.push(
+      { id: 'c1', at: '', positionId: 'pos-handy', type: 'amount', validFrom: '2026-10', from: plan(15, '2026-01'), to: plan(10, '2026-10') },
+      { id: 'c2', at: '', positionId: 'pos-gym', type: 'amount', validFrom: '2027-01', from: { ...plan(35, '2026-10') }, to: plan(40, '2027-01') },
+      { id: 'c3', at: '', positionId: 'pos-cash', type: 'amount', validFrom: '2027-01', from: plan(400, '2026-10'), to: plan(300, '2027-01') },
+      { id: 'c4', at: '', positionId: 'pos-strom', type: 'corrected', validFrom: '2026-10', from: plan(64, '2026-10'), to: plan(60, '2026-10') },
+    );
     const result = annualizedSavingsFromChanges(ds, { from: '2026-01', to: '2027-12' });
-    expect(result.changes.map((c) => [c.position.name, c.annualSavings])).toEqual([
-      ['Gym', -60],
-      ['Handy', 60],
+    expect(result.changes.map((c) => [c.position.name, c.annualSavings, c.annualDelta])).toEqual([
+      ['Gym', -60, 60],
+      ['Handy', 60, -60],
     ]);
     expect(result.total).toBe(0);
     expect(annualizedSavingsFromChanges(ds, { from: '2026-10', to: '2026-12' }).total).toBe(60);
@@ -226,29 +253,119 @@ describe('amount history & archive', () => {
 
   it('archived positions drop out from the archive month, history stays', () => {
     const ds = seed();
-    position(ds, 'pos-gym').archivedAt = '2026-12-15T10:00:00.000Z';
+    position(ds, 'pos-gym').archivedAt = '2026-12-15';
     expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
     expect(plannedForPeriod(ds, '2026-12')).toBeCloseTo(2978.02, 9);
   });
 
   it('a paid position archived in the same month still shows in that month', () => {
     const ds = seed();
-    position(ds, 'pos-gym').archivedAt = '2026-10-04T10:00:00.000Z';
+    position(ds, 'pos-gym').archivedAt = '2026-10-04';
     expect(dueItems(ds, OCT).some((i) => i.position.id === 'pos-gym')).toBe(true);
     expect(plannedForPeriod(ds, '2026-11')).toBe(2664 - 35);
+  });
+
+  it('pauses between archive and restore stay empty', () => {
+    const ds = seed();
+    position(ds, 'pos-gym').pauses = [{ from: '2026-11', to: '2027-01' }];
+    expect(plannedForPeriod(ds, '2026-12')).toBeCloseTo(2978.02, 9);
+    expect(dueInPeriod(position(ds, 'pos-gym'), '2027-01')).toBe(false);
+    expect(dueInPeriod(position(ds, 'pos-gym'), '2027-02')).toBe(true);
+  });
+
+  it('due day 31 means the last day of the month', () => {
+    expect(dueDayInPeriod(31, '2027-02')).toBe(28);
+    expect(dueDayInPeriod(31, '2028-02')).toBe(29);
+    expect(dueDayInPeriod(31, '2026-11')).toBe(30);
+    expect(dueDayInPeriod(3, '2026-10')).toBe(3);
   });
 });
 
 describe('actuals, deltas, one-offs', () => {
-  it('delta = actual − planned; one-offs count into actuals', () => {
+  it('delta = actual − planned; ticked one-offs count into actuals', () => {
     const ds = seed();
     const strom = ds.payments.find((p) => p.positionId === 'pos-strom')!;
     strom.actualAmount = 76;
     const item = dueItems(ds, OCT).find((i) => i.position.id === 'pos-strom')!;
     expect(item.delta).toBe(12);
     ds.oneOffs.push({ id: 'o1', positionId: 'pos-strom', period: OCT, amount: -40.5, label: 'Gutschrift' });
+    expect(actualForPeriod(ds, OCT)).toBe(3368 + 12);
+    ds.oneOffs[0]!.paidAt = '2026-10-20T10:00:00.000Z';
     expect(actualForPeriod(ds, OCT)).toBe(3368 + 12 - 40.5);
     expect(plannedForPeriod(ds, OCT)).toBe(3403);
+  });
+
+  it('Nachzahlung € 120 in Nov 2026: expectedSpend +120, plan and Ø pro Monat unchanged', () => {
+    const ds = seed();
+    const before = expectedSpend(ds, '2026-11');
+    ds.oneOffs.push({ id: 'o1', positionId: 'pos-strom', period: '2026-11', amount: 120, label: 'Jahresabrechnung' });
+    expect(expectedSpend(ds, '2026-11')).toBe(before + 120);
+    expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
+    expect(Math.round(trueMonthlyBurden(ds, '2026-11') * 100)).toBe(295217);
+    expect(annualizedSavingsFromChanges(ds, { from: '2026-01', to: '2027-12' }).total).toBe(0);
+    const strom = dueItems(ds, '2026-11').find((i) => i.position.id === 'pos-strom')!;
+    expect(strom.oneOffs.map((o) => o.amount)).toEqual([120]);
+  });
+
+  it('Gutschrift € 45: expectedSpend −45 and freeCalculated +45', () => {
+    const ds = seed();
+    ds.monthClose.push({ period: '2026-11', netSalary: 5000, updatedAt: '' });
+    const spend = expectedSpend(ds, '2026-11');
+    const free = freeCalculated(ds, '2026-11')!;
+    ds.oneOffs.push({ id: 'o2', positionId: 'pos-strom', period: '2026-11', amount: -45, label: 'Gutschrift' });
+    expect(expectedSpend(ds, '2026-11')).toBe(spend - 45);
+    expect(freeCalculated(ds, '2026-11')).toBe(free + 45);
+  });
+
+  it('a one-off on a position not due that month shows as a carrier, never counted as plan', () => {
+    const ds = seed();
+    ds.oneOffs.push({ id: 'o3', positionId: 'pos-baurechtszins', period: '2026-11', amount: 12, label: 'Nachverrechnung' });
+    const carrier = dueItems(ds, '2026-11').find((i) => i.position.id === 'pos-baurechtszins')!;
+    expect(carrier.due).toBe(false);
+    expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
+    expect(expectedSpend(ds, '2026-11')).toBe(2664 + 12);
+  });
+});
+
+describe('open from previous months', () => {
+  it('Depotentgelt open in Oct → shown in Nov under "Offen aus Oktober"; paid → Oct € 3.403, Nov unchanged', () => {
+    const ds = seed();
+    const groups = openFromPrevious(ds, '2026-11');
+    expect(groups.map((g) => [g.period, g.items.map((i) => i.position.name), g.planned])).toEqual([
+      ['2026-10', ['Depotentgelt'], 35],
+    ]);
+    expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
+    expect(periodProgress(ds, '2026-11').openCount).toBe(13);
+
+    ds.payments.push({
+      id: 'p-depot', positionId: 'pos-depotentgelt', period: OCT, status: 'paid',
+      plannedAmount: 35, actualAmount: 35, paidAt: '2026-11-02T08:00:00.000Z',
+    });
+    expect(openFromPrevious(ds, '2026-11')).toEqual([]);
+    expect(periodProgress(ds, OCT).paidActual).toBe(3403);
+    expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
+  });
+
+  it('"Entfallen" (skipped) counts nowhere and is no longer open', () => {
+    const ds = seed();
+    ds.monthClose.push({ period: OCT, netSalary: 5000, updatedAt: '' });
+    ds.payments.push({
+      id: 'p-skip', positionId: 'pos-depotentgelt', period: OCT, status: 'skipped',
+      plannedAmount: 35, actualAmount: 0, paidAt: '2026-11-02T08:00:00.000Z',
+    });
+    expect(openFromPrevious(ds, '2026-11')).toEqual([]);
+    expect(plannedForPeriod(ds, OCT)).toBe(3368);
+    expect(expectedSpend(ds, OCT)).toBe(3368);
+    expect(actualForPeriod(ds, OCT)).toBe(3368);
+    expect(periodProgress(ds, OCT)).toMatchObject({ openCount: 0, planned: 3368, paidActual: 3368, ratio: 1 });
+    expect(freeCalculated(ds, OCT)).toBe(5000 - 3368 - 800);
+  });
+
+  it('nothing before the first month with data is ever reported open', () => {
+    const ds = seed();
+    expect(openFromPrevious(ds, OCT)).toEqual([]);
+    const groups = openFromPrevious(ds, '2027-01');
+    expect(groups.map((g) => g.period)).toEqual(['2026-12', '2026-11', '2026-10']);
   });
 });
 

@@ -1,11 +1,12 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { fixtureBackup } from '../../tests/fixtures/dataset';
+import { fixtureBackup, fixtureRaw } from '../../tests/fixtures/dataset';
 import { periodProgress } from '../lib/calc';
 import { toPeriod } from '../lib/period';
 import type { Category, Payment, Position } from '../lib/types';
 import { BackupError, importIntoEmpty, needsSetup, parseBackup, startEmpty } from './backup';
 import { FixkostenDB, IMMOS_NAME_HASHES, nameHash } from './db';
+import type { PositionV2 } from './migrations';
 import { loadDataset, markPaid, removePayment, restorePayment, saveMonthClose, updatePayment } from './repo';
 
 const IMMOS = ['Kredit 1220', 'BK 1220', 'BK 1160', 'Baurechtszins'];
@@ -31,17 +32,17 @@ afterEach(async () => {
 
 /** The data exactly as the phase-1 auto seed wrote it into a v1 database. */
 function v1Seed() {
-  const { categories, positions, payments, reminders } = fixtureBackup().data;
+  const { categories, positions, payments, reminders } = fixtureRaw().data;
   return {
     categories: categories
       .filter((c) => c.id !== 'cat-immos')
-      .map((c): Category => ({ ...c, sortOrder: c.sortOrder - 1 })),
-    positions: positions.map((p) => ({
+      .map((c) => ({ ...c, sortOrder: c.sortOrder - 1 }) as Category),
+    positions: (positions as unknown as PositionV2[]).map((p) => ({
       ...p,
       categoryId: p.categoryId === 'cat-immos' ? 'cat-wohnen' : p.categoryId,
       isVariable: VARIABLE.includes(p.name),
     })),
-    payments,
+    payments: payments as unknown as Payment[],
     reminders,
   };
 }
@@ -52,7 +53,7 @@ async function createV1(mutate?: (seed: ReturnType<typeof v1Seed>) => void): Pro
   const v1 = openDb(1);
   await v1.transaction('rw', v1.tables, async () => {
     await v1.categories.bulkAdd(seed.categories);
-    await v1.positions.bulkAdd(seed.positions as Position[]);
+    await v1.positions.bulkAdd(seed.positions as unknown as Position[]);
     await v1.payments.bulkAdd(seed.payments);
     await v1.reminders.bulkAdd(seed.reminders);
     await v1.meta.bulkPut([
@@ -69,7 +70,7 @@ async function createV1(mutate?: (seed: ReturnType<typeof v1Seed>) => void): Pro
   v1.close();
 }
 
-describe('migration v1 → v2', () => {
+describe('migration v1 → v2 → v3', () => {
   it('name hashes match the four property positions', () => {
     expect(new Set(IMMOS.map(nameHash))).toEqual(IMMOS_NAME_HASHES);
     expect(IMMOS_NAME_HASHES.has(nameHash('Miete'))).toBe(false);
@@ -85,7 +86,7 @@ describe('migration v1 → v2', () => {
 
     const db = openDb();
     const payments = await db.payments.toArray();
-    expect(payments).toEqual(paymentsBefore);
+    expect(payments).toEqual(paymentsBefore.map((p) => ({ ...p, status: 'paid' })));
     expect(payments.find((p) => p.positionId === 'pos-strom')).toMatchObject({ actualAmount: 71.4, note: 'Nachzahlung' });
     expect(payments.find((p) => p.positionId === 'pos-depotentgelt')).toMatchObject({ actualAmount: 36.9, note: 'Gebühr erhöht' });
 
@@ -95,14 +96,22 @@ describe('migration v1 → v2', () => {
     const positions = await db.positions.toArray();
     expect(positions.filter((p) => p.categoryId === 'cat-immos').map((p) => p.name).sort()).toEqual([...IMMOS].sort());
     expect(positions.some((p) => 'isVariable' in p)).toBe(false);
-    // everything except categoryId/isVariable is untouched
-    for (const before of positionsBefore) {
-      const { isVariable: _drop, categoryId: _cat, ...rest } = before as Position & { isVariable?: boolean };
-      const after = positions.find((p) => p.id === before.id)!;
-      expect(after).toMatchObject(rest);
+    // everything else is carried over (v3: plan fields live in `history`)
+    for (const raw of positionsBefore as unknown as PositionV2[]) {
+      const after = positions.find((p) => p.id === raw.id)!;
+      expect(after).toMatchObject({ name: raw.name, sortOrder: raw.sortOrder, createdAt: raw.createdAt });
+      expect(after.history).toEqual(
+        raw.amountHistory.map((a) => ({
+          validFrom: a.validFrom,
+          amount: a.amount,
+          frequency: raw.frequency,
+          dueMonths: raw.dueMonths,
+          ...(raw.dueDay !== undefined ? { dueDay: raw.dueDay } : {}),
+        })),
+      );
     }
 
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(2);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(3);
     expect(await needsSetup(db)).toBe(false);
     const progress = periodProgress(await loadDataset(db), '2026-10');
     expect(progress.openCount).toBe(0);
@@ -180,8 +189,9 @@ describe('first start: import or empty', () => {
 
   it('rejects files that are not a backup', () => {
     expect(() => parseBackup({ hello: 'world' })).toThrow(BackupError);
-    expect(() => parseBackup({ ...fixtureBackup(), schemaVersion: 1 })).toThrow(/Version 1/);
-    const broken = fixtureBackup();
+    expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 1 })).toThrow(/Version 1/);
+    expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 4 })).toThrow(/Version 4/);
+    const broken = fixtureRaw();
     broken.data.positions[0]!.categoryId = 'cat-unknown';
     expect(() => parseBackup(broken)).toThrow(BackupError);
   });

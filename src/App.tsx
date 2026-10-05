@@ -10,6 +10,8 @@ import { toPeriod } from './lib/period';
 import type { Period } from './lib/types';
 import { MonthScreen } from './screens/MonthScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
+import { PositionsScreen } from './screens/PositionsScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 
 type Route = 'monat' | 'positionen' | 'analyse' | 'einstellungen';
 
@@ -62,11 +64,11 @@ export function App() {
           ) : route === 'monat' ? (
             <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
           ) : route === 'positionen' ? (
-            <PlaceholderScreen title="Positionen" phase={2} text="Positionen anlegen, bearbeiten, archivieren und sortieren." />
+            <PositionsScreen ds={ds} />
           ) : route === 'analyse' ? (
             <PlaceholderScreen title="Analyse" phase={3} text="Entwicklung, Plan vs. Ist, Jahresvorschau, Verteilung, Frei verfügbar (rechnerisch vs. tatsächlich), Sparquote und Optimierungen." />
           ) : (
-            <PlaceholderScreen title="Einstellungen" phase={4} text="Erinnerungen, Backup und Archiv." />
+            <SettingsScreen ds={ds} />
           )}
         </main>
         <TabBar route={route} />

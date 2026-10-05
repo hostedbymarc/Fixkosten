@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
 import { toPeriod } from '../lib/period';
+import { upgradePaymentV3, upgradePositionV3, type PositionV2 } from './migrations';
 import type {
   Category,
   ChangeLog,
@@ -12,7 +13,7 @@ import type {
 } from '../lib/types';
 
 /** Bump together with a new db.version(n) block (and a backup migration). */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** Schema v1 as shipped in phase 1. Never change it: devices already run it. */
 const SCHEMA_V1 = {
@@ -32,6 +33,9 @@ const SCHEMA_V2_CHANGES = {
   income: null,
   monthClose: 'period',
 };
+
+/** v3: no index changes, only the record shape (see migrateToV3). */
+const SCHEMA_V3_CHANGES = {};
 
 export const IMMOS_CATEGORY: Category = {
   id: 'cat-immos',
@@ -78,7 +82,7 @@ export const IMMOS_NAME_HASHES = new Set([
  */
 export async function migrateToV2(tx: Transaction): Promise<void> {
   const categories = tx.table<Category, string>('categories');
-  const positions = tx.table<Position & { isVariable?: boolean }, string>('positions');
+  const positions = tx.table<PositionV2, string>('positions');
 
   // A database that never got data stays empty; only existing setups get the category.
   if ((await categories.count()) > 0) {
@@ -118,6 +122,21 @@ export async function migrateToV2(tx: Transaction): Promise<void> {
   await tx.table<MetaEntry, string>('meta').put({ key: 'schemaVersion', value: 2 });
 }
 
+/**
+ * v2 → v3 data migration. Nothing is dropped:
+ * - positions: amountHistory + frequency/dueMonths/dueDay → versioned `history`
+ * - payments: status 'paid' for every existing tick
+ */
+export async function migrateToV3(tx: Transaction): Promise<void> {
+  await tx.table('positions').toCollection().modify((p: Record<string, unknown>) => {
+    upgradePositionV3(p);
+  });
+  await tx.table('payments').toCollection().modify((p: Record<string, unknown>) => {
+    upgradePaymentV3(p);
+  });
+  await tx.table<MetaEntry, string>('meta').put({ key: 'schemaVersion', value: 3 });
+}
+
 export class FixkostenDB extends Dexie {
   categories!: EntityTable<Category, 'id'>;
   positions!: EntityTable<Position, 'id'>;
@@ -135,6 +154,7 @@ export class FixkostenDB extends Dexie {
     // Only indexed fields are listed; all other fields are stored as-is.
     this.version(1).stores(SCHEMA_V1);
     if (maxVersion >= 2) this.version(2).stores(SCHEMA_V2_CHANGES).upgrade(migrateToV2);
+    if (maxVersion >= 3) this.version(3).stores(SCHEMA_V3_CHANGES).upgrade(migrateToV3);
   }
 }
 

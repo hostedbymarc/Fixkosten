@@ -1,28 +1,41 @@
+import { dueDayInPeriod } from '../lib/calc';
 import { formatDayMonth, formatDelta } from '../lib/format';
 import { shortMonthName } from '../lib/period';
-import type { Position } from '../lib/types';
+import type { Frequency, Period, PlanEntry } from '../lib/types';
 
-const FREQUENCY_LABEL: Record<Position['frequency'], string> = {
+export const FREQUENCY_LABEL: Record<Frequency, string> = {
   monthly: 'Monatlich',
   quarterly: 'Quartal',
   semiannual: 'Halbjährlich',
   annual: 'Jährlich',
 };
 
-export function frequencyLabel(position: Position): string {
-  return FREQUENCY_LABEL[position.frequency];
+/**
+ * 'Jährlich · 3.10.' / 'Quartal' / 'Halbjährlich · Jun, Dez'; null for monthly.
+ * `period` resolves day 31 to the real last day of that month.
+ */
+export function scheduleLabel(plan: PlanEntry, period?: Period): string | null {
+  if (plan.frequency === 'monthly') return null;
+  const base = FREQUENCY_LABEL[plan.frequency];
+  const months = [...plan.dueMonths].sort((a, b) => a - b);
+  if (plan.dueDay && months.length === 1) {
+    const month = months[0]!;
+    const year = period ? period.slice(0, 4) : '2025'; // non-leap year: Feb 28
+    const day = dueDayInPeriod(plan.dueDay, `${year}-${String(month).padStart(2, '0')}`)!;
+    return `${base} · ${formatDayMonth(day, month)}`;
+  }
+  if (plan.frequency === 'quarterly' && months.length === 4) return base;
+  return `${base} · ${months.map(shortMonthName).join(', ')}`;
 }
 
-/** 'Jährlich · 3.10.' / 'Quartal' / 'Halbjährlich · Jun, Dez' */
-export function scheduleLabel(position: Position): string | null {
-  if (position.frequency === 'monthly') return null;
-  const base = FREQUENCY_LABEL[position.frequency];
-  const months = position.dueMonths;
-  if (position.dueDay && months.length === 1) {
-    return `${base} · ${formatDayMonth(position.dueDay, months[0]!)}`;
+/** Full schedule for lists: 'Monatlich' / 'Monatlich · am 3.' / 'Quartal · Jan, Apr, Jul, Okt' */
+export function planDescription(plan: PlanEntry): string {
+  if (plan.frequency === 'monthly') {
+    return plan.dueDay ? `Monatlich · am ${plan.dueDay === 31 ? 'Monatsletzten' : `${plan.dueDay}.`}` : 'Monatlich';
   }
-  if (position.frequency === 'quarterly') return base;
-  return `${base} · ${months.map(shortMonthName).join(', ')}`;
+  const months = [...plan.dueMonths].sort((a, b) => a - b).map(shortMonthName).join(', ');
+  const day = plan.dueDay ? ` · am ${plan.dueDay === 31 ? 'Monatsletzten' : `${plan.dueDay}.`}` : '';
+  return `${FREQUENCY_LABEL[plan.frequency]} · ${months}${day}`;
 }
 
 export function Badge({
