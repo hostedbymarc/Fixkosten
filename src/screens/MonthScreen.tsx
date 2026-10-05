@@ -19,6 +19,7 @@ import {
   remindersForPeriod,
   reserveNeeded,
   savingsRate,
+  sumMonthlyEquivalent,
   trueMonthlyBurden,
   upcomingDue,
   type CategoryGroup,
@@ -78,9 +79,9 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:gap-3">
           <KpiTile label="Fällig diesen Monat" value={formatEUR(plannedForPeriod(ds, period))} />
           <KpiTile
-            label="Echte Monats­belastung"
+            label="Ø pro Monat"
             value={formatEUR(trueMonthlyBurden(ds, period))}
-            hint={`inkl. ${formatEUR(reserveNeeded(ds, period))} Rücklage`}
+            hint={`Jahreskosten verteilt · inkl. ${formatEUR(reserveNeeded(ds, period))} Rücklage`}
           />
           <FreeTile
             ref={closeTile}
@@ -105,6 +106,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               <GroupCard
                 key={group.category.id}
                 group={group}
+                spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
                 onToggle={toggle}
                 onOpen={(item) => setOpenPositionId(item.position.id)}
               />
@@ -306,21 +308,35 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
 
 function GroupCard({
   group,
+  spread,
   onToggle,
   onOpen,
 }: {
   group: CategoryGroup;
+  /** monthly equivalent of the whole category, incl. positions not due this month */
+  spread: number;
   onToggle: (item: DueItem) => void;
   onOpen: (item: DueItem) => void;
 }) {
   const savings = group.category.kind === 'savings';
+  const showSpread = Math.round(spread * 100) !== Math.round(group.planned * 100);
   return (
     <section className="card overflow-hidden" aria-label={group.category.name} data-testid="category-group">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
         <span className="h-2.5 w-2.5 rounded-full" style={{ background: group.category.color }} aria-hidden="true" />
         <h2 className="flex-1 text-[15px] font-semibold text-ink">{group.category.name}</h2>
         {savings && <Badge>Sparen · keine Fixkosten</Badge>}
-        <span className="num text-[14px] font-medium text-ink-mute">{formatEUR(group.planned)}</span>
+        <span
+          className="flex flex-col items-end"
+          aria-label={`fällig ${formatEUR(group.planned)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}`}
+        >
+          <span className="num text-[14px] font-medium text-ink-mute">{formatEUR(group.planned)}</span>
+          {showSpread && (
+            <span className="num whitespace-nowrap text-[12px] text-ink-faint" data-testid="group-spread">
+              Ø {formatEUR(spread)} / Monat
+            </span>
+          )}
+        </span>
       </header>
       <ul className="divide-y divide-line py-1 pl-1">
         {group.items.map((item) => (

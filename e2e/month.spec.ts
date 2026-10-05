@@ -13,8 +13,8 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
 
   test('KPI tiles', async ({ app }) => {
     await expect(app.getByText('Fällig diesen Monat').locator('..')).toContainText(eur('€ 3.403'));
-    await expect(app.getByText('Echte Monats­belastung').locator('..')).toContainText(eur('€ 2.952,17'));
-    await expect(app.getByText('Echte Monats­belastung').locator('..')).toContainText(eur('inkl. € 288,17 Rücklage'));
+    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
+    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('Jahreskosten verteilt · inkl. € 288,17 Rücklage'));
     await expect(app.getByTestId('free-tile')).toContainText('Gehalt eintragen');
   });
 
@@ -106,6 +106,9 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     const immos = app.getByRole('region', { name: 'Meine Immos' });
     await expect(immos.getByTestId('position-row')).toHaveCount(3);
     await expect(immos).toContainText(eur('€ 991'));
+    // Baurechtszins belongs to the category even when not due: visible in the spread amount
+    await expect(immos.getByTestId('group-spread')).toHaveText(eur('Ø € 1.034,67 / Monat'));
+    await expect(app.getByRole('region', { name: 'Wohnen & Leben' }).getByTestId('group-spread')).toHaveCount(0);
     await expect(row(app, 'pos-baurechtszins')).toHaveCount(0);
     await expect(app.getByRole('region', { name: 'Kommt bald' })).toContainText('Baurechtszins');
 
