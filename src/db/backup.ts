@@ -123,3 +123,138 @@ export async function readBackupFile(file: File): Promise<BackupFile> {
   }
   return parseBackup(raw);
 }
+
+// ---------------------------------------------------------------------------
+// Export, merge, replace, undo
+// ---------------------------------------------------------------------------
+
+const UNDO_KEY = 'undoImport';
+
+/** Complete snapshot of the user data in backup format. */
+export async function exportBackup(db: FixkostenDB): Promise<BackupFile> {
+  const [categories, positions, payments, oneOffs, monthClose, changeLog, reminders] = await Promise.all([
+    db.categories.toArray(),
+    db.positions.toArray(),
+    db.payments.toArray(),
+    db.oneOffs.toArray(),
+    db.monthClose.toArray(),
+    db.changeLog.toArray(),
+    db.reminders.toArray(),
+  ]);
+  return {
+    format: BACKUP_FORMAT,
+    schemaVersion: SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: { categories, positions, payments, oneOffs, monthClose, changeLog, reminders },
+  };
+}
+
+export function backupFileName(prefix = 'fixkosten'): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${prefix}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
+}
+
+export async function markExported(db: FixkostenDB): Promise<void> {
+  await db.meta.put({ key: 'lastBackupAt', value: new Date().toISOString() });
+}
+
+export interface BackupSummary {
+  positions: number;
+  archived: number;
+  payments: number;
+  monthClose: number;
+  oneOffs: number;
+  /** first and last month with a tick */
+  firstPeriod: string | null;
+  lastPeriod: string | null;
+}
+
+export function summarize(data: BackupFile['data']): BackupSummary {
+  const periods = data.payments.map((p) => p.period).sort();
+  return {
+    positions: data.positions.filter((p) => !p.archivedAt).length,
+    archived: data.positions.filter((p) => p.archivedAt).length,
+    payments: data.payments.length,
+    monthClose: data.monthClose.length,
+    oneOffs: data.oneOffs.length,
+    firstPeriod: periods[0] ?? null,
+    lastPeriod: periods[periods.length - 1] ?? null,
+  };
+}
+
+async function writeAll(db: FixkostenDB, data: BackupFile['data']) {
+  await db.categories.bulkAdd(data.categories);
+  await db.positions.bulkAdd(data.positions);
+  await db.payments.bulkAdd(data.payments);
+  await db.oneOffs.bulkAdd(data.oneOffs);
+  await db.monthClose.bulkAdd(data.monthClose);
+  await db.changeLog.bulkAdd(data.changeLog);
+  await db.reminders.bulkAdd(data.reminders);
+}
+
+async function clearAll(db: FixkostenDB) {
+  await Promise.all([
+    db.categories.clear(),
+    db.positions.clear(),
+    db.payments.clear(),
+    db.oneOffs.clear(),
+    db.monthClose.clear(),
+    db.changeLog.clear(),
+    db.reminders.clear(),
+  ]);
+}
+
+export type ImportMode = 'merge' | 'replace';
+
+/**
+ * Imports a backup into a database that already holds data. The current state
+ * is kept as a safety copy first, so the import can be undone.
+ * - 'merge': entries from the file win on conflicts (same id; payments: same
+ *   position and month); everything that only exists on this device stays.
+ * - 'replace': this device afterwards holds exactly the file's data.
+ */
+export async function importBackup(db: FixkostenDB, backup: BackupFile, mode: ImportMode): Promise<void> {
+  const snapshot = await exportBackup(db);
+  await db.transaction('rw', db.tables, async () => {
+    await db.meta.put({ key: UNDO_KEY, value: { snapshot, mode, at: new Date().toISOString() } });
+    if (mode === 'replace') {
+      await clearAll(db);
+      await writeAll(db, backup.data);
+    } else {
+      const d = backup.data;
+      await db.categories.bulkPut(d.categories);
+      await db.positions.bulkPut(d.positions);
+      // one tick per position and month: the file's entry replaces the local one
+      for (const p of d.payments) {
+        await db.payments.where({ positionId: p.positionId, period: p.period }).filter((x) => x.id !== p.id).delete();
+      }
+      await db.payments.bulkPut(d.payments);
+      await db.oneOffs.bulkPut(d.oneOffs);
+      await db.monthClose.bulkPut(d.monthClose);
+      await db.changeLog.bulkPut(d.changeLog);
+      await db.reminders.bulkPut(d.reminders);
+    }
+    await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
+  });
+}
+
+export async function lastImport(db: FixkostenDB): Promise<{ mode: ImportMode; at: string } | null> {
+  const entry = await db.meta.get(UNDO_KEY);
+  if (!entry) return null;
+  const { mode, at } = entry.value as { mode: ImportMode; at: string };
+  return { mode, at };
+}
+
+/** Restores the state from right before the last import. */
+export async function undoLastImport(db: FixkostenDB): Promise<boolean> {
+  return db.transaction('rw', db.tables, async () => {
+    const entry = await db.meta.get(UNDO_KEY);
+    if (!entry) return false;
+    const { snapshot } = entry.value as { snapshot: BackupFile };
+    await clearAll(db);
+    await writeAll(db, snapshot.data);
+    await db.meta.delete(UNDO_KEY);
+    return true;
+  });
+}
