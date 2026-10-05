@@ -48,3 +48,26 @@ export async function animationsDone(page: Page, testId: string) {
     .getByTestId(testId)
     .evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)));
 }
+
+export async function goTo(page: Page, route: 'monat' | 'positionen' | 'analyse' | 'einstellungen') {
+  await page.goto(`/#/${route}`);
+}
+
+/** Touch swipe made of real PointerEvents (Chromium has no native touch-move API in Playwright). */
+export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>, dx: number, dy = 0) {
+  const box = (await target.boundingBox())!;
+  const x = box.x + box.width * 0.8;
+  const y = box.y + box.height / 2;
+  const base = { pointerId: 7, pointerType: 'touch', isPrimary: true, bubbles: true, cancelable: true, button: 0 };
+  await target.dispatchEvent('pointerdown', { ...base, clientX: x, clientY: y, buttons: 1 });
+  for (let i = 1; i <= 10; i++) {
+    await target.dispatchEvent('pointermove', { ...base, clientX: x + (dx * i) / 10, clientY: y + (dy * i) / 10, buttons: 1 });
+  }
+  await target.dispatchEvent('pointerup', { ...base, clientX: x + dx, clientY: y + dy, buttons: 0 });
+  await page.waitForTimeout(250); // settle animation
+}
+
+/** Touch projects (iPhone, iPad) archive by swiping; desktop uses the ⋯ menu. */
+export function isTouchProject(): boolean {
+  return base.info().project.name !== 'desktop';
+}

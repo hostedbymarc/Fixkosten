@@ -3,13 +3,20 @@
 ## Phase 1 – Fundament ✅
 Setup, Dexie-Schema v1, `calc.ts` + Kontrollwerte, Monats-Screen mit Abhaken.
 
-## Phase 1.1 – Anpassungen ✅ (dieser Stand)
+## Phase 1.1 – Anpassungen ✅
 - Schema v2 mit Migration: Kategorie „Meine Immos“, `isVariable` entfernt, `IncomeEntry` → `MonthClose`
 - Monatsabschluss pro Monat: Netto-Gehalt, frei verfügbar (tatsächlich), Notiz; Kachel „Frei verfügbar“ mit Differenz und Sparquote
 - Seed nicht mehr im Bundle: Erststart mit Import-Dialog; `seed.local.json` lokal, Test-Fixture unter `tests/fixtures/`
 
-## Phase 2 – Positionen verwalten
-CRUD, Archiv + Undo, Betragsänderung mit Gültig-ab + ChangeLog, Kategorien, Sortierung, OneOffs, Monatswechsel inkl. „Offen aus Vormonat“.
+## Phase 2 – Positionen verwalten ✅ (dieser Stand)
+- Schema v3: versionierter Zahlungsplan `history` (Betrag, Häufigkeit, Monate, Tag ab `validFrom`), Payment-`status`, abhakbare OneOffs
+- Positionen anlegen/bearbeiten; Plan-Änderung „Ab wann gilt das?“ (ChangeLog = Optimierung/Erhöhung) oder „Tippfehler korrigieren“ (keine Optimierung)
+- Detailansicht mit Verlauf und letzten 12 Zahlungen
+- Archivieren (Swipe / ⋯ / Entf) mit Undo, Archiv in den Einstellungen: Wiederherstellen ab aktuellem Monat oder endgültig löschen
+- Kategorien: anlegen, umbenennen, 8 Farben, Typ, sortieren, löschen mit Verschieben-Dialog
+- Sortieren per Drag-Handle (Touch, Maus, Tastatur mit Screenreader-Ansage)
+- Einmalbeträge (Nachzahlung/Gutschrift) als Unterzeile im Monat
+- „Offen aus Vormonat“ mit Bezahlt / Entfallen
 
 ## Phase 3 – Analyse
 1. Entwicklung (echte Monatsbelastung, gestapelt nach Kategorie, 6M/12M/Alles)

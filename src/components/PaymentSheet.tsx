@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import type { DueItem } from '../lib/calc';
+import { gap, type DueItem } from '../lib/calc';
 import { amountToInput, formatDate, formatDelta, formatEUR, parseAmount } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { BottomSheet } from './BottomSheet';
@@ -9,19 +9,21 @@ interface Props {
   onClose: () => void;
   onSave: (actualAmount: number, note: string) => void;
   onUnpay: () => void;
+  onAddOneOff?: () => void;
 }
 
 /** Tap on a row: set actual amount, note, or remove the tick. */
-export function PaymentSheet({ item, onClose, onSave, onUnpay }: Props) {
+export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Props) {
   const { payment, planned, position } = item;
-  const [amountText, setAmountText] = useState(amountToInput(payment?.actualAmount ?? planned));
+  const paid = item.status === 'paid';
+  const [amountText, setAmountText] = useState(amountToInput(paid ? payment!.actualAmount : planned));
   const [note, setNote] = useState(payment?.note ?? '');
   const amountId = useId();
   const noteId = useId();
 
   const parsed = parseAmount(amountText);
   const invalid = parsed === null;
-  const delta = parsed !== null ? parsed - planned : 0;
+  const delta = gap(parsed, planned) ?? 0;
 
   return (
     <BottomSheet
@@ -29,7 +31,8 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay }: Props) {
       subtitle={
         <>
           Plan <span className="num">{formatEUR(planned)}</span> · {periodLabel(item.period)}
-          {payment && <> · bezahlt am {formatDate(payment.paidAt)}</>}
+          {paid && <> · bezahlt am {formatDate(payment!.paidAt)}</>}
+          {item.status === 'skipped' && <> · entfallen</>}
         </>
       }
       onClose={onClose}
@@ -61,7 +64,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay }: Props) {
               onFocus={(e) => e.currentTarget.select()}
               aria-invalid={invalid}
               aria-describedby={`${amountId}-hint`}
-              className="num w-full bg-transparent text-[22px] font-semibold text-ink outline-none"
+              className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none"
             />
           </div>
           <p id={`${amountId}-hint`} className="mt-1.5 min-h-[20px] text-[13px] text-ink-mute">
@@ -97,7 +100,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay }: Props) {
             disabled={invalid}
             className="focus-ring h-12 rounded-2xl bg-accent text-[16px] font-semibold text-white hover:bg-accent-strong disabled:opacity-40"
           >
-            {payment ? 'Speichern' : 'Als bezahlt speichern'}
+            {paid ? 'Speichern' : 'Als bezahlt speichern'}
           </button>
           {payment && (
             <button
@@ -105,7 +108,16 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay }: Props) {
               onClick={onUnpay}
               className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-ink-soft hover:bg-zinc-100"
             >
-              Haken entfernen
+              {paid ? 'Haken entfernen' : 'Entfallen zurücksetzen'}
+            </button>
+          )}
+          {onAddOneOff && (
+            <button
+              type="button"
+              onClick={onAddOneOff}
+              className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-accent hover:bg-accent-soft"
+            >
+              Einmalbetrag hinzufügen
             </button>
           )}
         </div>
