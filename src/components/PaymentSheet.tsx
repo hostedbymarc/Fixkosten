@@ -71,8 +71,6 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay }: Props) {
               <span className={delta > 0 ? 'text-over' : 'text-paid'}>
                 <span className="num">{formatDelta(delta)}</span> gegenüber Plan
               </span>
-            ) : position.isVariable ? (
-              'Variabler Betrag – Ist-Wert eintragen, sobald bekannt.'
             ) : (
               'Entspricht dem Planbetrag.'
             )}

@@ -11,6 +11,7 @@ import type {
   Dataset,
   Frequency,
   Kind,
+  MonthClose,
   Payment,
   Period,
   Position,
@@ -316,29 +317,70 @@ export function equivalentByCategory(ds: Dataset, period: Period, kind: Kind = '
 }
 
 // ---------------------------------------------------------------------------
-// Income
+// Month close: net salary is captured per month
 // ---------------------------------------------------------------------------
 
-export function incomeForPeriod(ds: Dataset, period: Period): number | null {
-  let match: { validFrom: Period; netMonthly: number } | null = null;
-  for (const entry of ds.income) {
-    if (entry.validFrom <= period && (!match || entry.validFrom > match.validFrom)) match = entry;
-  }
-  return match ? match.netMonthly : null;
+export function monthCloseFor(ds: Dataset, period: Period): MonthClose | undefined {
+  return ds.monthClose.find((m) => m.period === period);
 }
 
-/** Savings ÷ net income, 0–1. Null without income. */
+/** Net salary entered for exactly this month, or null (never 0 by default). */
+export function netSalaryForPeriod(ds: Dataset, period: Period): number | null {
+  return monthCloseFor(ds, period)?.netSalary ?? null;
+}
+
+/**
+ * What leaves the account this month: actual amount for ticked positions,
+ * plan for open ones, plus one-offs (credits negative). Expenses by default.
+ */
+export function expectedSpend(ds: Dataset, period: Period, kind: Kind = 'expense'): number {
+  const positions = new Map(ds.positions.map((p) => [p.id, p]));
+  const items = dueItems(ds, period)
+    .filter((i) => i.kind === kind)
+    .map((i) => (i.payment ? i.payment.actualAmount : i.planned));
+  const oneOffs = ds.oneOffs
+    .filter((o) => {
+      const position = o.positionId ? positions.get(o.positionId) : undefined;
+      return o.period === period && (position ? kindOf(ds, position) : 'expense') === kind;
+    })
+    .map((o) => o.amount);
+  return sumMoney([...items, ...oneOffs]);
+}
+
+/** Savings of the month, same rule as expectedSpend (actual if ticked, else plan). */
+export function expectedSavings(ds: Dataset, period: Period): number {
+  return expectedSpend(ds, period, 'savings');
+}
+
+/** salary − expectedSpend − savings for a given salary (used for live previews). */
+export function freeCalculatedWith(ds: Dataset, period: Period, netSalary: number): number {
+  return fromCents(
+    toCents(netSalary) - toCents(expectedSpend(ds, period)) - toCents(expectedSavings(ds, period)),
+  );
+}
+
+/** Calculated free money of the month. Null without salary. */
+export function freeCalculated(ds: Dataset, period: Period): number | null {
+  const salary = netSalaryForPeriod(ds, period);
+  return salary === null ? null : freeCalculatedWith(ds, period, salary);
+}
+
+/** actual − calculated; negative = less left than calculated. */
+export function gap(actual: number | null | undefined, calculated: number | null | undefined): number | null {
+  if (actual === null || actual === undefined || calculated === null || calculated === undefined) return null;
+  return fromCents(toCents(actual) - toCents(calculated));
+}
+
+/** freeActual − freeCalculated. Null unless both are known. */
+export function freeGap(ds: Dataset, period: Period): number | null {
+  return gap(monthCloseFor(ds, period)?.freeActual, freeCalculated(ds, period));
+}
+
+/** Savings ÷ net salary, 0–1. Null without salary. */
 export function savingsRate(ds: Dataset, period: Period): number | null {
-  const income = incomeForPeriod(ds, period);
-  if (income === null || income <= 0) return null;
-  return savingsForPeriod(ds, period) / income;
-}
-
-/** Income − expenses (spread) − savings. Null without income. */
-export function freeCashflow(ds: Dataset, period: Period): number | null {
-  const income = incomeForPeriod(ds, period);
-  if (income === null) return null;
-  return roundMoney(income - trueMonthlyBurden(ds, period) - savingsForPeriod(ds, period));
+  const salary = netSalaryForPeriod(ds, period);
+  if (salary === null || salary <= 0) return null;
+  return expectedSavings(ds, period) / salary;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,26 +1,30 @@
-import { useMemo, useState } from 'react';
+import { forwardRef, useMemo, useRef, useState } from 'react';
 import { BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
+import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { PaymentSheet } from '../components/PaymentSheet';
 import { PositionRow } from '../components/PositionRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
-import { markPaid, removePayment, restorePayment, updatePayment } from '../db/repo';
+import { markPaid, removePayment, restorePayment, saveMonthClose, updatePayment } from '../db/repo';
 import {
   dueItems,
-  freeCashflow,
+  freeCalculated,
+  freeGap,
   groupByCategory,
+  monthCloseFor,
   periodProgress,
   plannedForPeriod,
   remindersForPeriod,
   reserveNeeded,
+  savingsRate,
   trueMonthlyBurden,
   upcomingDue,
   type CategoryGroup,
   type DueItem,
 } from '../lib/calc';
-import { formatEUR } from '../lib/format';
+import { formatDelta, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import type { Dataset, Period } from '../lib/types';
 
@@ -33,6 +37,8 @@ interface Props {
 export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const toast = useToast();
   const [openPositionId, setOpenPositionId] = useState<string | null>(null);
+  const [closeOpen, setCloseOpen] = useState(false);
+  const closeTile = useRef<HTMLButtonElement>(null);
 
   const items = useMemo(() => dueItems(ds, period), [ds, period]);
   const groups = useMemo(() => groupByCategory(items), [items]);
@@ -67,16 +73,24 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
     <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8">
       <MonthHeader period={period} onChange={onPeriodChange} />
 
-      <div className="grid gap-3 lg:gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <div className="grid gap-3 lg:gap-4">
         <HeroCard progress={progress} />
-        <div className="grid grid-cols-3 gap-2 lg:gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:gap-3">
           <KpiTile label="Fällig diesen Monat" value={formatEUR(plannedForPeriod(ds, period))} />
           <KpiTile
             label="Echte Monats­belastung"
             value={formatEUR(trueMonthlyBurden(ds, period))}
             hint={`inkl. ${formatEUR(reserveNeeded(ds, period))} Rücklage`}
           />
-          <FreeTile value={freeCashflow(ds, period)} />
+          <FreeTile
+            ref={closeTile}
+            period={period}
+            freeActual={monthCloseFor(ds, period)?.freeActual ?? null}
+            calculated={freeCalculated(ds, period)}
+            difference={freeGap(ds, period)}
+            rate={savingsRate(ds, period)}
+            onOpen={() => setCloseOpen(true)}
+          />
         </div>
       </div>
 
@@ -144,6 +158,18 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           </section>
         </aside>
       </div>
+
+      {closeOpen && (
+        <MonthCloseSheet
+          ds={ds}
+          period={period}
+          returnFocusTo={closeTile.current}
+          onClose={() => setCloseOpen(false)}
+          onSave={(input) => {
+            void saveMonthClose(db, period, input).then(() => setCloseOpen(false));
+          }}
+        />
+      )}
 
       {openItem && (
         <PaymentSheet
@@ -222,20 +248,61 @@ function KpiTile({ label, value, hint }: { label: string; value: string; hint?: 
   );
 }
 
-function FreeTile({ value }: { value: number | null }) {
-  if (value === null) {
-    return (
-      <div className="card flex min-w-0 flex-col justify-between gap-2 p-3 lg:p-4">
-        <div className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Frei verfügbar</div>
-        <div>
-          <div className="text-[15px] font-semibold text-ink-faint sm:text-[17px] lg:text-[20px]">–</div>
-          <div className="mt-0.5 text-[11px] leading-tight text-ink-mute lg:text-[12px]">Einkommen fehlt</div>
-        </div>
-      </div>
-    );
-  }
-  return <KpiTile label="Frei verfügbar" value={formatEUR(value)} />;
+interface FreeTileProps {
+  period: Period;
+  freeActual: number | null;
+  calculated: number | null;
+  difference: number | null;
+  rate: number | null;
+  onOpen: () => void;
 }
+
+/** "Frei verfügbar": entered value large, calculated value and gap below. Opens the month close. */
+const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
+  { period, freeActual, calculated, difference, rate, onOpen },
+  ref,
+) {
+  const value = freeActual ?? calculated;
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onOpen}
+      aria-label={`Frei verfügbar – Monatsabschluss ${periodLabel(period)} öffnen`}
+      className="card focus-ring col-span-2 flex min-w-0 flex-col justify-between gap-2 p-3 text-left hover:border-zinc-300 sm:col-span-1 lg:p-4"
+      data-testid="free-tile"
+    >
+      <span className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Frei verfügbar</span>
+      <span className="block">
+        <span
+          className={`num block text-[15px] font-semibold sm:text-[17px] lg:text-[20px] ${value === null ? 'text-ink-faint' : 'text-ink'}`}
+          data-testid="free-value"
+        >
+          {value === null ? '–' : formatEUR(value)}
+        </span>
+        <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="free-sub">
+          {calculated === null ? (
+            <span className="font-semibold text-accent">Gehalt eintragen</span>
+          ) : freeActual === null ? (
+            <>rechnerisch · <span className="font-medium text-accent">tatsächlich eintragen</span></>
+          ) : (
+            <>
+              rechnerisch <span className="num whitespace-nowrap">{formatEUR(calculated)}</span> · Differenz{' '}
+              <span className={`num whitespace-nowrap font-semibold ${difference !== null && difference < 0 ? 'text-over' : ''}`}>
+                {formatDelta(difference ?? 0)}
+              </span>
+            </>
+          )}
+        </span>
+        {rate !== null && (
+          <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="savings-rate">
+            Sparquote <span className="num font-medium text-ink-soft">{formatPercent(rate)}</span>
+          </span>
+        )}
+      </span>
+    </button>
+  );
+});
 
 function GroupCard({
   group,
