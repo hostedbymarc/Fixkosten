@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --tabbar-h: 60px;
+  color-scheme: light;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --tabbar-h: 0px; /* sidebar layout, no bottom tab bar */
+  }
+}
+
+html,
+body {
+  background: #fafafa;
+  color: #18181b;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  overscroll-behavior-y: none;
+}
+
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .pt-safe {
+    padding-top: var(--safe-top);
+  }
+  .pb-safe {
+    padding-bottom: var(--safe-bottom);
+  }
+  .px-safe {
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-white shadow-card;
+  }
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+  }
+  .section-title {
+    @apply text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-mute;
+  }
+}
+
+@keyframes check-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 16;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes toast-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.anim-check {
+  animation: check-pop 180ms ease-out;
+}
+.anim-check path {
+  stroke-dasharray: 16;
+  animation: check-draw 180ms ease-out;
+}
+.anim-sheet {
+  animation: sheet-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.anim-fade {
+  animation: fade-in 160ms ease-out;
+}
+.anim-toast {
+  animation: toast-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-check,
+  .anim-check path,
+  .anim-sheet,
+  .anim-fade,
+  .anim-toast {
+    animation: none;
+  }
+  * {
+    transition-duration: 0ms !important;
+  }
+}
