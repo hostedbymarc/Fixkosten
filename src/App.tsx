@@ -1,6 +1,10 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
+import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { needsSetup } from './db/backup';
+import { db } from './db/db';
 import { useDataset } from './db/useDataset';
 import { toPeriod } from './lib/period';
 import type { Period } from './lib/types';
@@ -37,7 +41,11 @@ function useHashRoute(): Route {
 export function App() {
   const route = useHashRoute();
   const ds = useDataset();
+  const setup = useLiveQuery(() => needsSetup(db), []);
   const [period, setPeriod] = useState<Period>(() => toPeriod(new Date()));
+
+  if (setup === undefined) return null;
+  if (setup) return <SetupDialog />;
 
   return (
     <ToastProvider>
@@ -56,9 +64,9 @@ export function App() {
           ) : route === 'positionen' ? (
             <PlaceholderScreen title="Positionen" phase={2} text="Positionen anlegen, bearbeiten, archivieren und sortieren." />
           ) : route === 'analyse' ? (
-            <PlaceholderScreen title="Analyse" phase={3} text="Entwicklung, Plan vs. Ist, Jahresvorschau, Verteilung, Sparquote und Optimierungen." />
+            <PlaceholderScreen title="Analyse" phase={3} text="Entwicklung, Plan vs. Ist, Jahresvorschau, Verteilung, Frei verfügbar (rechnerisch vs. tatsächlich), Sparquote und Optimierungen." />
           ) : (
-            <PlaceholderScreen title="Einstellungen" phase={4} text="Einkommen, Erinnerungen, Backup und Archiv." />
+            <PlaceholderScreen title="Einstellungen" phase={4} text="Erinnerungen, Backup und Archiv." />
           )}
         </main>
         <TabBar route={route} />

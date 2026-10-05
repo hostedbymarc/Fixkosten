@@ -1,40 +1,21 @@
 import Dexie from 'dexie';
-import type { Dataset, Payment, Period } from '../lib/types';
-import { SCHEMA_VERSION, type FixkostenDB } from './db';
-import { SEED_PERIOD, buildSeed } from './seed';
+import type { Dataset, MonthClose, Payment, Period } from '../lib/types';
+import type { FixkostenDB } from './db';
 
 export function newId(): string {
   return crypto.randomUUID();
 }
 
-/** Imports the seed exactly once (first start). Returns true if it seeded. */
-export async function ensureSeeded(db: FixkostenDB): Promise<boolean> {
-  return db.transaction('rw', db.tables, async () => {
-    if (await db.meta.get('seededAt')) return false;
-    const seed = buildSeed();
-    await db.categories.bulkAdd(seed.categories);
-    await db.positions.bulkAdd(seed.positions);
-    await db.payments.bulkAdd(seed.payments);
-    await db.reminders.bulkAdd(seed.reminders);
-    await db.meta.bulkPut([
-      { key: 'schemaVersion', value: SCHEMA_VERSION },
-      { key: 'seededAt', value: new Date().toISOString() },
-      { key: 'trackingStart', value: SEED_PERIOD },
-    ]);
-    return true;
-  });
-}
-
 export async function loadDataset(db: FixkostenDB): Promise<Dataset> {
-  const [categories, positions, payments, oneOffs, income, reminders] = await Promise.all([
+  const [categories, positions, payments, oneOffs, monthClose, reminders] = await Promise.all([
     db.categories.toArray(),
     db.positions.toArray(),
     db.payments.toArray(),
     db.oneOffs.toArray(),
-    db.income.toArray(),
+    db.monthClose.toArray(),
     db.reminders.toArray(),
   ]);
-  return { categories, positions, payments, oneOffs, income, reminders };
+  return { categories, positions, payments, oneOffs, monthClose, reminders };
 }
 
 /** One tap on the circle: paid with the planned amount. Idempotent. */
@@ -86,4 +67,27 @@ export async function removePayment(db: FixkostenDB, id: string): Promise<Paymen
 
 export async function restorePayment(db: FixkostenDB, payment: Payment): Promise<void> {
   await db.payments.put(payment);
+}
+
+export interface MonthCloseInput {
+  netSalary?: number;
+  freeActual?: number;
+  note?: string;
+}
+
+/** Saves the month close; an entirely empty close is removed. */
+export async function saveMonthClose(db: FixkostenDB, period: Period, input: MonthCloseInput): Promise<void> {
+  const note = input.note?.trim() ? input.note.trim() : undefined;
+  if (input.netSalary === undefined && input.freeActual === undefined && note === undefined) {
+    await db.monthClose.delete(period);
+    return;
+  }
+  const close: MonthClose = {
+    period,
+    netSalary: input.netSalary,
+    freeActual: input.freeActual,
+    note,
+    updatedAt: new Date().toISOString(),
+  };
+  await db.monthClose.put(close);
 }

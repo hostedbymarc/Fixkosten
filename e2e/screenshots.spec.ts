@@ -1,11 +1,27 @@
 import { animationsDone, expect, test } from './fixtures';
 
-const DIR = 'docs/screenshots/phase-1';
+const DIR = 'docs/screenshots/phase-1.1';
 
 test.describe('Screenshots', () => {
+  test('setup dialog', async ({ fresh }, info) => {
+    await expect(fresh.getByTestId('setup-dialog')).toBeVisible();
+    await fresh.evaluate(() => document.fonts.ready);
+    await fresh.screenshot({ path: `${DIR}/${info.project.name}-setup.png` });
+  });
+
   test('all screens', async ({ app }, info) => {
     const name = info.project.name;
     await app.evaluate(() => document.fonts.ready);
+
+    // month close with values so the tile shows its full state
+    await app.getByTestId('free-tile').click();
+    await app.getByLabel('Netto-Gehalt').fill('5000');
+    await app.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
+    await animationsDone(app, 'bottom-sheet');
+    await app.screenshot({ path: `${DIR}/${name}-monatsabschluss.png` });
+    await app.getByRole('button', { name: 'Speichern' }).click();
+    await expect(app.getByRole('dialog')).toBeHidden();
+
     await app.screenshot({ path: `${DIR}/${name}-monat.png` });
     // full page: pin fixed navigation to the page edges so it is not painted mid-page
     const style = await app.addStyleTag({
