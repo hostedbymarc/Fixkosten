@@ -1,10 +1,24 @@
 import { useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
+import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
+import {
+  BackupError,
+  backupFileName,
+  exportBackup,
+  importBackup,
+  lastImport,
+  markExported,
+  readBackupFile,
+  undoLastImport,
+  type BackupFile,
+} from '../db/backup';
 import { db } from '../db/db';
+import { downloadJson } from '../lib/download';
 import { deletePositionPermanently, restorePosition } from '../db/repo';
 import { archivedPeriod, archivedPositions, currentPlan, positionUsage } from '../lib/calc';
-import { formatEUR } from '../lib/format';
+import { formatDate, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { useToday } from '../lib/useToday';
 import type { Dataset, Position } from '../lib/types';
@@ -81,12 +95,14 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
           )}
         </section>
 
+        <BackupSection ds={ds} />
+
         <section aria-labelledby="later-title">
           <h2 id="later-title" className="section-title mb-2 px-1">
-            Erinnerungen & Backup
+            Erinnerungen
           </h2>
           <div className="rounded-card border border-dashed border-zinc-300 px-4 py-5 text-[14px] text-ink-mute">
-            Kommt in Phase 4: Erinnerungen verwalten, JSON-/CSV-Export, Import, Backup-Hinweis.
+            Kommt in Phase 4: Erinnerungen verwalten, CSV-Export, Backup-Erinnerung.
           </div>
         </section>
       </div>
@@ -111,5 +127,111 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
         </ConfirmSheet>
       )}
     </div>
+  );
+}
+
+function BackupSection({ ds }: { ds: Dataset }) {
+  const toast = useToast();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [pending, setPending] = useState<{ backup: BackupFile; fileName: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const lastBackup = useLiveQuery(() => db.meta.get('lastBackupAt'), []);
+  const last = useLiveQuery(() => lastImport(db), []);
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setError(null);
+    try {
+      setPending({ backup: await readBackupFile(file), fileName: file.name });
+    } catch (err) {
+      setError(err instanceof BackupError ? err.message : 'Die Datei konnte nicht gelesen werden.');
+    } finally {
+      if (fileInput.current) fileInput.current.value = '';
+    }
+  }
+
+  async function undo() {
+    if (await undoLastImport(db)) toast({ message: 'Import rückgängig gemacht' });
+  }
+
+  return (
+    <section aria-labelledby="backup-title">
+      <h2 id="backup-title" className="section-title mb-2 px-1">
+        Sicherung
+      </h2>
+      <div className="card flex flex-col gap-3 p-4" data-testid="backup-section">
+        <p className="text-[14px] text-ink-soft">
+          Deine Daten liegen nur auf diesem Gerät. Eine Sicherung (JSON) kannst du auf einem anderen Gerät oder nach dem
+          Löschen der Website-Daten wieder importieren.
+        </p>
+        <p className="text-[13px] text-ink-mute" data-testid="last-backup">
+          {lastBackup ? `Letzte Sicherung: ${formatDate(lastBackup.value as string)}` : 'Noch keine Sicherung exportiert.'}
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={async () => {
+              downloadJson(await exportBackup(db), backupFileName());
+              await markExported(db);
+              toast({ message: 'Sicherung gespeichert' });
+            }}
+            className="focus-ring h-11 rounded-xl sm:flex-1 bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-strong"
+          >
+            Sicherung exportieren
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            className="focus-ring h-11 rounded-xl sm:flex-1 border border-line px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
+          >
+            Sicherung importieren
+          </button>
+        </div>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/json,.json"
+          className="sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
+          data-testid="backup-file"
+          onChange={(e) => void onFile(e.target.files?.[0])}
+        />
+        {error && (
+          <p role="alert" className="rounded-xl bg-over-soft px-3 py-2 text-[14px] text-over">
+            {error}
+          </p>
+        )}
+        {last && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3 text-[13px] text-ink-mute">
+            <span className="flex-1">
+              Letzter Import ({last.mode === 'merge' ? 'zusammengeführt' : 'ersetzt'}) am {formatDate(last.at)}
+            </span>
+            <button
+              type="button"
+              onClick={() => void undo()}
+              className="focus-ring h-11 rounded-xl px-3 text-[14px] font-medium text-accent hover:bg-accent-soft"
+            >
+              Import rückgängig machen
+            </button>
+          </div>
+        )}
+      </div>
+
+      {pending && (
+        <ImportSheet
+          ds={ds}
+          backup={pending.backup}
+          fileName={pending.fileName}
+          onClose={() => setPending(null)}
+          onImport={async (mode) => {
+            const backup = pending.backup;
+            setPending(null);
+            await importBackup(db, backup, mode);
+            toast({ message: 'Sicherung importiert', actionLabel: 'Rückgängig', onAction: () => void undo(), durationMs: 8000 });
+          }}
+        />
+      )}
+    </section>
   );
 }

@@ -90,6 +90,15 @@ test.describe('Layout Phase 2 (gemessen)', () => {
     await sheet(app);
   });
 
+  test('Sicherung: settings section and import sheet', async ({ app }) => {
+    await goTo(app, 'einstellungen');
+    await expectClean(app, 'main');
+    await app.getByTestId('backup-file').setInputFiles('tests/fixtures/seed.json');
+    await sheet(app);
+    await app.getByRole('button', { name: 'Zusammenführen', exact: true }).scrollIntoViewIfNeeded();
+    await expect(app.getByRole('button', { name: 'Zusammenführen', exact: true })).toBeInViewport();
+  });
+
   test('Monat with open items and one-off row', async ({ app }) => {
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await app.getByRole('button', { name: /Offen aus Oktober/ }).click();
