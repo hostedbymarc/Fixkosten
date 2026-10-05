@@ -54,7 +54,7 @@ function v1Data() {
   };
 }
 
-test('existing v1 database: no dialog, upgraded to v2, ticks and notes kept', async ({ page }) => {
+test('existing v1 database: no dialog, upgraded to v3, ticks and notes kept', async ({ page }) => {
   await page.clock.setFixedTime(TODAY);
   await page.route('**/__v1__', (route) => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>v1</title>' }));
   await page.goto('/__v1__');
@@ -115,5 +115,5 @@ test('existing v1 database: no dialog, upgraded to v2, ticks and notes kept', as
       };
     }),
   );
-  expect(version).toBe(20);
+  expect(version).toBe(30); // Dexie stores schema v3 × 10
 });
