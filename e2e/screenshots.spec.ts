@@ -75,3 +75,12 @@ test.describe('Screenshots Phase 2', () => {
     await shot(app, 'endgueltig-loeschen');
   });
 });
+
+test('Screenshots Sicherung', async ({ app }) => {
+  await app.evaluate(() => document.fonts.ready);
+  await goTo(app, 'einstellungen');
+  await app.screenshot({ path: `docs/screenshots/backup/${test.info().project.name}-einstellungen.png` });
+  await app.getByTestId('backup-file').setInputFiles('tests/fixtures/seed.json');
+  await animationsDone(app, 'bottom-sheet');
+  await app.screenshot({ path: `docs/screenshots/backup/${test.info().project.name}-import.png` });
+});
