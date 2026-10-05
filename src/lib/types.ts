@@ -26,7 +26,6 @@ export interface Position {
   frequency: Frequency;
   dueMonths: number[]; // 1–12; for monthly all twelve
   dueDay?: number;
-  isVariable: boolean;
   note?: string;
   amountHistory: AmountEntry[];
   createdAt: string;
@@ -52,9 +51,14 @@ export interface OneOff {
   label: string;
 }
 
-export interface IncomeEntry {
-  validFrom: Period;
-  netMonthly: number;
+/** Per-month close: salary varies, so it is captured per period. */
+export interface MonthClose {
+  period: Period; // primary key
+  netSalary?: number;
+  /** actually free money at month end (entered by the user) */
+  freeActual?: number;
+  note?: string;
+  updatedAt: string;
 }
 
 export type ChangeType = 'created' | 'amount' | 'archived' | 'restored' | 'edited';
@@ -85,6 +89,6 @@ export interface Dataset {
   positions: Position[];
   payments: Payment[];
   oneOffs: OneOff[];
-  income: IncomeEntry[];
+  monthClose: MonthClose[];
   reminders: Reminder[];
 }

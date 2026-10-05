@@ -2,12 +2,27 @@ import { test as base, expect, type Page } from '@playwright/test';
 
 /** Seed state is October 2026; freeze "today" to 05.10.2026. */
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
+export const FIXTURE = 'tests/fixtures/seed.json';
 
-export const test = base.extend<{ app: Page }>({
+/** First start on an empty database → import the fixture through the setup dialog. */
+export async function importFixture(page: Page) {
+  await expect(page.getByTestId('setup-dialog')).toBeVisible();
+  await page.getByTestId('import-file').setInputFiles(FIXTURE);
+  await expect(page.getByTestId('hero')).toBeVisible();
+}
+
+export const test = base.extend<{ app: Page; fresh: Page }>({
+  /** App with the fixture imported (October 2026). */
   app: async ({ page }, use) => {
     await page.clock.setFixedTime(TODAY);
     await page.goto('/');
-    await expect(page.getByTestId('hero')).toBeVisible();
+    await importFixture(page);
+    await use(page);
+  },
+  /** App on an empty database, before any setup. */
+  fresh: async ({ page }, use) => {
+    await page.clock.setFixedTime(TODAY);
+    await page.goto('/');
     await use(page);
   },
 });

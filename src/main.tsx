@@ -3,20 +3,12 @@ import './index.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-import { db } from './db/db';
-import { ensureSeeded } from './db/repo';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-async function start() {
-  try {
-    await ensureSeeded(db);
-  } catch (err) {
-    console.error('Seed import failed', err);
-  }
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ErrorBoundary>
       <App />
-    </StrictMode>,
-  );
-}
-
-void start();
+    </ErrorBoundary>
+  </StrictMode>,
+);

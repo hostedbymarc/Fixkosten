@@ -65,3 +65,14 @@ export function amountToInput(value: number): string {
   if (cents % 100 === 0) return String(cents / 100);
   return (cents / 100).toFixed(2).replace('.', ',');
 }
+
+const pct1 = new Intl.NumberFormat('de-AT', {
+  style: 'percent',
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** 0.16 → '16,0 %' */
+export function formatPercent(ratio: number): string {
+  return pct1.format(ratio);
+}

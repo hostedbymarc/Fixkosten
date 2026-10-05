@@ -15,7 +15,7 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     await expect(app.getByText('Fällig diesen Monat').locator('..')).toContainText(eur('€ 3.403'));
     await expect(app.getByText('Echte Monats­belastung').locator('..')).toContainText(eur('€ 2.952,17'));
     await expect(app.getByText('Echte Monats­belastung').locator('..')).toContainText(eur('inkl. € 288,17 Rücklage'));
-    await expect(app.getByText('Einkommen fehlt')).toBeVisible();
+    await expect(app.getByTestId('free-tile')).toContainText('Gehalt eintragen');
   });
 
   test('one tap on circle marks paid, tap again removes with undo', async ({ app }) => {
@@ -98,6 +98,27 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     for (let i = 0; i < 3; i++) await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(app.getByRole('heading', { level: 1, name: 'Februar 2027' })).toBeVisible();
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 4.610'));
+  });
+
+  test('Meine Immos: first group; Baurechtszins only in Kommt bald for October, due in December', async ({ app }) => {
+    const groups = app.getByTestId('category-group');
+    await expect(groups.first()).toHaveAttribute('aria-label', 'Meine Immos');
+    const immos = app.getByRole('region', { name: 'Meine Immos' });
+    await expect(immos.getByTestId('position-row')).toHaveCount(3);
+    await expect(immos).toContainText(eur('€ 991'));
+    await expect(row(app, 'pos-baurechtszins')).toHaveCount(0);
+    await expect(app.getByRole('region', { name: 'Kommt bald' })).toContainText('Baurechtszins');
+
+    await app.getByRole('button', { name: 'Nächster Monat' }).click();
+    await app.getByRole('button', { name: 'Nächster Monat' }).click();
+    await expect(app.getByRole('heading', { level: 1, name: 'Dezember 2026' })).toBeVisible();
+    await expect(immos.getByTestId('position-row')).toHaveCount(4);
+    await expect(immos).toContainText(eur('€ 1.253,02'));
+    await expect(row(app, 'pos-baurechtszins')).toBeVisible();
+  });
+
+  test('no "variabel" badge anywhere', async ({ app }) => {
+    await expect(app.getByText('variabel', { exact: true })).toHaveCount(0);
   });
 
   test('upcoming shows December payments', async ({ app }) => {
