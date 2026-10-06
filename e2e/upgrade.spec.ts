@@ -20,7 +20,7 @@ async function serveFrom(page: Page, dir: { current: string }) {
   });
 }
 
-test('live upgrade 2776e95 (v1) → main (v3) in the same browser profile', async ({ page }) => {
+test('live upgrade 2776e95 (v1) → main (v4) in the same browser profile', async ({ page }) => {
   expect(existsSync(join(LEGACY, 'index.html')), 'legacy build missing – run node scripts/build-legacy.mjs').toBe(true);
   await page.clock.setFixedTime(TODAY);
   const dir = { current: LEGACY };
@@ -60,10 +60,10 @@ test('live upgrade 2776e95 (v1) → main (v3) in the same browser profile', asyn
   await expect(page.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
   await expect(page.getByText('variabel', { exact: true })).toHaveCount(0);
 
-  const v3 = await page.evaluate(
+  const latest = await page.evaluate(
     () => new Promise<number>((r) => { const q = indexedDB.open('fixkosten'); q.onsuccess = () => { r(q.result.version); q.result.close(); }; }),
   );
-  expect(v3).toBe(30);
+  expect(latest).toBe(40);
 
   // positions screen and backup work on the migrated data
   await goTo(page, 'positionen');
