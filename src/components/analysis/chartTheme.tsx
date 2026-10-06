@@ -101,3 +101,25 @@ export function GroupLabels({
     </g>
   );
 }
+
+/**
+ * Small markers on the time axis of a point chart (area/line) for the months
+ * in `marked`; the tooltip of that month names the change.
+ */
+export function ChangeMarkers({ categories, marked }: { categories: string[]; marked: string[] }) {
+  const plot = usePlotArea();
+  if (!plot || categories.length === 0 || marked.length === 0) return null;
+  const step = categories.length > 1 ? plot.width / (categories.length - 1) : 0;
+  // just below the axis line, in the gap the x axis leaves above its labels (tickMargin)
+  const y = plot.y + plot.height + 2;
+  return (
+    <g data-testid="change-markers" aria-hidden="true">
+      {marked.map((label) => {
+        const i = categories.indexOf(label);
+        if (i < 0) return null;
+        const x = plot.x + i * step;
+        return <path key={label} d={`M${x} ${y} L${x + 5} ${y + 8} L${x - 5} ${y + 8} Z`} fill={COLORS.ink} />;
+      })}
+    </g>
+  );
+}

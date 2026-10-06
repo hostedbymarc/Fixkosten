@@ -16,6 +16,7 @@ import { BottomSheet } from './BottomSheet';
 import { FREQUENCY_LABEL } from './Chips';
 import {
   AmountField,
+  DateField,
   MonthChips,
   monthOptions,
   PrimaryButton,
@@ -34,7 +35,7 @@ interface Props {
   returnFocusTo?: HTMLElement | null;
 }
 
-const FREQUENCIES: Frequency[] = ['monthly', 'quarterly', 'semiannual', 'annual'];
+const RECURRING: Frequency[] = ['monthly', 'quarterly', 'semiannual', 'annual'];
 
 /** Create or edit a position. Plan changes on existing positions ask "Ab wann gilt das?". */
 export function PositionFormSheet({ ds, today, position, onClose, onSaved, returnFocusTo }: Props) {
@@ -49,15 +50,19 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
     plan && plan.frequency !== 'monthly' ? plan.dueMonths : defaultDueMonths('quarterly', monthOf(today)),
   );
   const [startMonth, setStartMonth] = useState<number>(plan && plan.frequency !== 'monthly' ? plan.dueMonths[0]! : monthOf(today));
-  const [dueDayText, setDueDayText] = useState(plan?.dueDay ? String(plan.dueDay) : '');
+  const [dueDayText, setDueDayText] = useState(plan?.dueDay && plan.frequency !== 'once' ? String(plan.dueDay) : '');
+  const [dueDate, setDueDate] = useState(plan?.dueDate ?? '');
   const [note, setNote] = useState(position?.note ?? '');
   const [validFrom, setValidFrom] = useState<Period>(today);
   const [changeMode, setChangeMode] = useState<'from' | 'correct'>('from');
   const [fromPeriod, setFromPeriod] = useState<Period>(today);
   // inline errors appear once a field was edited; the save button stays disabled until valid
-  const [dirty, setDirty] = useState({ name: false, amount: false });
+  const [dirty, setDirty] = useState({ name: false, amount: false, dueDate: false });
   const [saving, setSaving] = useState(false);
 
+  const once = frequency === 'once';
+  // an existing position keeps its kind: recurring ones never turn into a one-time payment and vice versa
+  const frequencies: Frequency[] = !position ? [...RECURRING, 'once'] : plan?.frequency === 'once' ? [] : RECURRING;
   const amount = parseAmount(amountText);
   const dueDay = dueDayText.trim() === '' ? undefined : Number(dueDayText);
   const errors = {
@@ -70,27 +75,30 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           : amount <= 0
             ? 'Der Betrag muss größer als 0 sein.'
             : null,
-    months: frequency !== 'monthly' && dueMonths.length === 0 ? 'Mindestens einen Monat wählen.' : null,
+    months: !once && frequency !== 'monthly' && dueMonths.length === 0 ? 'Mindestens einen Monat wählen.' : null,
     dueDay:
-      dueDay !== undefined && (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) ? 'Tag zwischen 1 und 31.' : null,
+      !once && dueDay !== undefined && (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) ? 'Tag zwischen 1 und 31.' : null,
+    dueDate: once && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? 'Bitte das Fälligkeitsdatum wählen.' : null,
   };
   const valid = !Object.values(errors).some(Boolean) && categoryId !== '';
 
   const nextPlan: PlanInput | null =
     amount !== null && amount > 0
-      ? { amount, frequency, dueMonths: frequency === 'monthly' ? ALL_MONTHS : dueMonths, ...(dueDay ? { dueDay } : {}) }
+      ? once
+        ? { amount, frequency, dueMonths: [Number(dueDate.slice(5, 7))], dueDay: Number(dueDate.slice(8, 10)), dueDate }
+        : { amount, frequency, dueMonths: frequency === 'monthly' ? ALL_MONTHS : dueMonths, ...(dueDay ? { dueDay } : {}) }
       : null;
   const planChanged = !!(position && plan && nextPlan && !samePlan(nextPlan, plan));
   const equivalent = useMemo(() => (nextPlan ? monthlyEquivalentOfPlan({ validFrom: today, ...nextPlan }) : null), [nextPlan, today]);
 
   function chooseFrequency(f: Frequency) {
     setFrequency(f);
-    if (f !== 'monthly') setDueMonths(defaultDueMonths(f, startMonth));
+    if (f !== 'monthly' && f !== 'once') setDueMonths(defaultDueMonths(f, startMonth));
   }
 
   function chooseStart(m: number) {
     setStartMonth(m);
-    if (frequency !== 'monthly') setDueMonths(defaultDueMonths(frequency, m));
+    if (frequency !== 'monthly' && frequency !== 'once') setDueMonths(defaultDueMonths(frequency, m));
   }
 
   async function save() {
@@ -104,7 +112,13 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
       }
       await updatePositionInfo(db, position.id, { name, categoryId, note });
       if (planChanged) {
-        await changePlan(db, position.id, nextPlan, changeMode === 'from' ? { type: 'from', validFrom: fromPeriod } : { type: 'correct' }, today);
+        await changePlan(
+          db,
+          position.id,
+          nextPlan,
+          once ? { type: 'once' } : changeMode === 'from' ? { type: 'from', validFrom: fromPeriod } : { type: 'correct' },
+          today,
+        );
       }
       onSaved(position.id);
     } finally {
@@ -115,7 +129,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
   return (
     <BottomSheet
       title={position ? 'Position bearbeiten' : 'Neue Position'}
-      subtitle={position ? position.name : 'Fixkosten oder Sparplan anlegen'}
+      subtitle={position ? position.name : 'Fixkosten, Sparplan oder einmalige Zahlung'}
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >
@@ -153,20 +167,45 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           }}
           error={dirty.amount ? errors.amount : null}
           hint={
-            equivalent !== null && frequency !== 'monthly' ? (
+            equivalent !== null && frequency !== 'monthly' && !once ? (
               <>
                 Ø <span className="num">{formatEUR(equivalent)}</span> pro Monat
               </>
             ) : undefined
           }
         />
-        <Segmented
-          label="Häufigkeit"
-          value={frequency}
-          onChange={chooseFrequency}
-          options={FREQUENCIES.map((f) => ({ value: f, label: FREQUENCY_LABEL[f] }))}
-        />
-        {frequency !== 'monthly' && (
+        {frequencies.length > 0 ? (
+          <Segmented
+            label="Häufigkeit"
+            value={frequency}
+            onChange={chooseFrequency}
+            options={frequencies.map((f) => ({ value: f, label: FREQUENCY_LABEL[f] }))}
+            gridClass={frequencies.length > 4 ? 'grid-cols-3 sm:grid-cols-5' : undefined}
+          />
+        ) : (
+          <p className="text-[14px] text-ink-mute">Häufigkeit: Einmalig</p>
+        )}
+        {once && (
+          <>
+            <DateField
+              label="Fällig am"
+              value={dueDate}
+              onChange={(v) => {
+                setDueDate(v);
+                setDirty((d) => ({ ...d, dueDate: true }));
+              }}
+              error={dirty.dueDate ? errors.dueDate : null}
+              hint={dueDate ? 'erscheint nur in diesem Monat' : 'Pflichtfeld – die Zahlung erscheint nur im Monat der Fälligkeit'}
+              testId="due-date"
+            />
+            {!position && (
+              <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="once-hint">
+                Gehört die Zahlung zu einer bestehenden Position (z. B. Strom-Nachzahlung)? Dann dort ‚Einmalbetrag hinzufügen‘.
+              </p>
+            )}
+          </>
+        )}
+        {frequency !== 'monthly' && !once && (
           <>
             <SelectField
               label="Startmonat"
@@ -178,6 +217,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
             <MonthChips label="Fällig in" value={dueMonths} onChange={setDueMonths} error={errors.months} />
           </>
         )}
+        {!once && (
         <TextField
           label="Fälligkeitstag"
           optional
@@ -188,13 +228,14 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           error={errors.dueDay}
           hint="31 = letzter Tag des Monats"
         />
+        )}
         <TextField label="Notiz" optional multiline value={note} onChange={setNote} placeholder="z. B. Vertrag bis 2027" />
 
-        {!position && (
+        {!position && !once && (
           <SelectField label="Gilt ab" value={validFrom} onChange={setValidFrom} options={monthOptions(today)} />
         )}
 
-        {planChanged && (
+        {planChanged && !once && (
           <fieldset className="rounded-2xl border border-accent/40 bg-accent-soft/60 p-3" data-testid="change-mode">
             <legend className="px-1 text-[14px] font-semibold text-ink">Betrag oder Zahlungsplan geändert</legend>
             <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl p-2">
