@@ -55,7 +55,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             {toast.actionLabel && (
               <button
                 type="button"
-                className="focus-ring min-h-[44px] rounded-xl px-3 font-semibold text-[#B4B4F5] hover:bg-white/10"
+                className="focus-ring min-h-[44px] rounded-xl px-3 font-semibold text-[#C2C0FF] hover:bg-white/10"
                 onClick={() => {
                   toast.onAction?.();
                   setToast(null);

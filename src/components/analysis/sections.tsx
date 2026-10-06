@@ -142,7 +142,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
                 isAnimationActive={false}
                 name="Einmalig"
                 fill={COLORS.accentLight}
-                stroke="#ffffff"
+                stroke={COLORS.surface}
                 strokeWidth={1}
                 className="bar-once"
               />
@@ -158,7 +158,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
                 fill: COLORS.inkSoft,
                 fontSize: 11,
                 fontWeight: 600,
-                stroke: '#ffffff',
+                stroke: COLORS.surface,
                 strokeWidth: 3,
                 paintOrder: 'stroke',
               }}
@@ -470,7 +470,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
                 name={c.name}
                 stackId="burden"
                 type="linear"
-                stroke="#ffffff"
+                stroke={COLORS.surface}
                 strokeWidth={1}
                 fill={c.color}
                 fillOpacity={1}
@@ -668,7 +668,7 @@ function OptimizationList({ title, entries, testId }: { title: string; entries: 
             <li key={e.id} className="relative flex gap-3 pb-4 pl-5 last:pb-0">
               <span
                 className={`absolute left-0 top-[7px] h-2.5 w-2.5 rounded-full ${
-                  e.planned ? 'border-2 bg-white ' + (saves ? 'border-paid' : 'border-over') : saves ? 'bg-paid' : e.annualDelta > 0 ? 'bg-over' : 'bg-zinc-300'
+                  e.planned ? 'border-2 bg-surface ' + (saves ? 'border-paid' : 'border-over') : saves ? 'bg-paid' : e.annualDelta > 0 ? 'bg-over' : 'bg-zinc-300'
                 }`}
                 aria-hidden="true"
               />

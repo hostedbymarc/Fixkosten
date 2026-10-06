@@ -1,16 +1,18 @@
 import { usePlotArea, useYAxisScale } from 'recharts';
 import { formatCompactEUR } from '../../lib/format';
 
+// CSS variables from index.css: charts follow light / dark without re-rendering.
 export const COLORS = {
-  accent: '#5B5BD6',
-  accentLight: '#C7C7F2',
-  neutral: '#D4D4D8',
-  grid: '#EDEDED',
-  axis: '#71717A',
-  ink: '#18181B',
-  inkSoft: '#52525B',
-  over: '#DC2626',
-  paid: '#16A34A',
+  accent: 'var(--chart-accent)',
+  accentLight: 'var(--chart-accent-light)',
+  neutral: 'var(--chart-neutral)',
+  grid: 'var(--chart-grid)',
+  axis: 'var(--chart-axis)',
+  ink: 'var(--chart-ink)',
+  inkSoft: 'var(--chart-ink-soft)',
+  over: 'var(--chart-over)',
+  paid: 'var(--chart-paid)',
+  surface: 'var(--chart-surface)',
 };
 
 export const AXIS_TICK = { fill: COLORS.axis, fontSize: 11 };
@@ -37,7 +39,7 @@ export const tooltipProps = {
   position: { y: 0 },
   isAnimationActive: false,
   allowEscapeViewBox: { x: false, y: true },
-  cursor: { fill: 'rgba(24,24,27,0.05)' },
+  cursor: { fill: 'var(--chart-cursor)' },
   wrapperStyle: { zIndex: 10, outline: 'none' },
 } as const;
 

@@ -285,26 +285,31 @@ function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Perio
 function HeroCard({ progress }: { progress: ReturnType<typeof periodProgress> }) {
   const allPaid = progress.totalCount > 0 && progress.openCount === 0;
   return (
-    <div className="card flex items-center gap-5 p-5" data-testid="hero">
+    <div className="hero flex items-center gap-5 p-5 lg:gap-6 lg:p-6" data-testid="hero">
       <ProgressRing
         ratio={progress.ratio}
         label={`${Math.floor(progress.ratio * 100)} Prozent abgebucht`}
       />
       <div className="min-w-0">
-        <div className="num text-[28px] font-semibold leading-tight tracking-tight text-ink" data-testid="hero-paid">
+        <div className="num text-[32px] font-semibold leading-tight tracking-[-0.035em] lg:text-[38px]" data-testid="hero-paid">
           {formatEUR(progress.paidActual)}
         </div>
-        <div className="text-[15px] text-ink-soft">
-          von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(progress.planned)}</span> abgebucht
+        <div className="text-[15px] text-white/80">
+          von <span className="num font-medium text-white" data-testid="hero-planned">{formatEUR(progress.planned)}</span> abgebucht
         </div>
-        <div className="mt-2">
+        <div className="mt-2.5">
           {allPaid ? (
-            <span className="text-[14px] font-medium text-paid">Alles abgebucht</span>
+            <span className="inline-flex h-7 items-center rounded-full bg-white/20 px-3 text-[13px] font-semibold">
+              Alles abgebucht
+            </span>
           ) : progress.totalCount === 0 ? (
-            <span className="text-[14px] text-ink-mute">Nichts fällig</span>
+            <span className="text-[14px] text-white/75">Nichts fällig</span>
           ) : (
-            <span className="text-[14px] font-medium text-ink-soft" data-testid="hero-open">
-              {progress.openCount} offen · <span className="num">{formatEUR(progress.openPlanned)}</span>
+            <span
+              className="num inline-flex h-7 items-center rounded-full bg-white/[0.16] px-3 text-[13px] font-semibold shadow-[inset_0_1px_0_rgb(255_255_255/0.2)]"
+              data-testid="hero-open"
+            >
+              {progress.openCount} offen · {formatEUR(progress.openPlanned)}
             </span>
           )}
         </div>
@@ -359,9 +364,9 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         </span>
         <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="free-sub">
           {calculated === null ? (
-            <span className="font-semibold text-accent">Gehalt eintragen</span>
+            <span className="font-semibold text-accent-ink">Gehalt eintragen</span>
           ) : freeActual === null ? (
-            <>rechnerisch · <span className="font-medium text-accent">tatsächlich eintragen</span></>
+            <>rechnerisch · <span className="font-medium text-accent-ink">tatsächlich eintragen</span></>
           ) : (
             <>
               rechnerisch <span className="num whitespace-nowrap">{formatEUR(calculated)}</span> · Differenz{' '}
@@ -402,7 +407,7 @@ function GroupCard({
   return (
     <section className="card overflow-hidden" aria-label={group.category.name} data-testid="category-group">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ background: group.category.color }} aria-hidden="true" />
+        <span className="h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-white/10" style={{ background: group.category.color }} aria-hidden="true" />
         <h2 className="flex-1 text-[15px] font-semibold text-ink">{group.category.name}</h2>
         {savings && <Badge>Sparen · keine Fixkosten</Badge>}
         <span
@@ -486,7 +491,7 @@ function OpenFromPrevious({
                       <button
                         type="button"
                         onClick={() => onPay(item)}
-                        className="focus-ring h-11 rounded-xl bg-accent-soft px-3 text-[14px] font-semibold text-accent-strong hover:bg-[#E2E2F8]"
+                        className="focus-ring h-11 rounded-xl bg-accent-soft px-3 text-[14px] font-semibold text-accent-strong hover:bg-accent-soft-hover"
                       >
                         Bezahlt
                       </button>

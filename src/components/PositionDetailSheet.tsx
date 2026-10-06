@@ -129,7 +129,7 @@ export function PositionDetailSheet({
                 return (
                   <li key={entryKey(entry)} className="relative flex items-start gap-1 py-1.5" data-testid="history-entry">
                     <span
-                      className={`absolute -left-[21px] top-[18px] h-2.5 w-2.5 rounded-full ${planned ? 'border-2 border-accent bg-white' : 'bg-accent'}`}
+                      className={`absolute -left-[21px] top-[18px] h-2.5 w-2.5 rounded-full ${planned ? 'border-2 border-accent-ink bg-surface' : 'bg-accent'}`}
                       aria-hidden="true"
                     />
                     <div className="min-w-0 flex-1 py-1">

@@ -16,7 +16,8 @@ pnpm test:e2e     # Playwright: iPhone 15, iPad hoch/quer, Desktop 1440 (erzeugt
 
 - `src/lib/calc.ts` – **einzige** Stelle für Berechnungen (Summen, Umlage, Fälligkeit, Sparquote). Reine Funktionen `(dataset, period)`; die UI rechnet nie selbst.
 - `src/db/db.ts` – Dexie-Schema (versioniert, v1 nie ändern; Migrationen per `db.version(n).upgrade`), `src/db/repo.ts` – Schreiboperationen, `src/db/backup.ts` – Import beim Erststart.
-- `src/screens/`, `src/components/` – UI (React + Tailwind).
+- `src/screens/`, `src/components/` – UI (React + Tailwind). Farben sind CSS-Variablen in `src/index.css` (hell/dunkel, Umschalter System/Hell/Dunkel in den Einstellungen, `src/lib/theme.ts`).
+- App-Icon: Quelle `scripts/brand/icon.svg`, PNGs in `public/` mit `node scripts/make-icons.mjs` neu erzeugen.
 
 ## Deploy (Netlify)
 

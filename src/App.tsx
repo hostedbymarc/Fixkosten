@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
-import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
+import { ChartIcon, ListIcon, MonthIcon, SettingsIcon } from './components/Icons';
+import { LogoMark } from './components/Logo';
 import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -18,7 +19,7 @@ const AnalyseScreen = lazy(() => import('./screens/AnalyseScreen'));
 type Route = 'monat' | 'positionen' | 'analyse' | 'einstellungen';
 
 const NAV: { route: Route; label: string; icon: ComponentType<{ size?: number }> }[] = [
-  { route: 'monat', label: 'Monat', icon: CalendarIcon },
+  { route: 'monat', label: 'Monat', icon: MonthIcon },
   { route: 'positionen', label: 'Positionen', icon: ListIcon },
   { route: 'analyse', label: 'Analyse', icon: ChartIcon },
   { route: 'einstellungen', label: 'Einstellungen', icon: SettingsIcon },
@@ -91,7 +92,7 @@ function TabBar({ route }: { route: Route }) {
   return (
     <nav
       aria-label="Hauptnavigation"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/90 backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-surface/80 backdrop-blur-xl backdrop-saturate-150 lg:hidden"
       style={{ paddingBottom: 'var(--safe-bottom)' }}
       data-testid="tabbar"
     >
@@ -103,11 +104,17 @@ function TabBar({ route }: { route: Route }) {
               <a
                 href={`#/${r}`}
                 aria-current={active ? 'page' : undefined}
-                className={`focus-ring flex h-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-medium ${
-                  active ? 'text-accent' : 'text-ink-mute'
+                className={`focus-ring flex h-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] ${
+                  active ? 'font-semibold text-accent-ink' : 'font-medium text-ink-mute'
                 }`}
               >
-                <Icon size={23} />
+                <span
+                  className={`flex h-[30px] w-[54px] items-center justify-center rounded-full transition-colors ${
+                    active ? 'bg-accent-soft' : ''
+                  }`}
+                >
+                  <Icon size={22} />
+                </span>
                 {label}
               </a>
             </li>
@@ -122,14 +129,12 @@ function Sidebar({ route }: { route: Route }) {
   return (
     <nav
       aria-label="Hauptnavigation"
-      className="fixed inset-y-0 left-0 z-30 hidden w-[240px] flex-col border-r border-line bg-white px-3 py-6 lg:flex"
+      className="fixed inset-y-0 left-0 z-30 hidden w-[240px] flex-col border-r border-line bg-surface px-3 py-6 lg:flex"
       data-testid="sidebar"
     >
       <div className="mb-6 flex items-center gap-2.5 px-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-accent text-[15px] font-bold text-white">
-          €
-        </span>
-        <span className="text-[16px] font-semibold tracking-tight text-ink">Fixkosten</span>
+        <LogoMark size={32} />
+        <span className="text-[18px] font-semibold tracking-[-0.03em] text-ink">fixkosten</span>
       </div>
       <ul className="flex flex-col gap-1">
         {NAV.map(({ route: r, label, icon: Icon }) => {

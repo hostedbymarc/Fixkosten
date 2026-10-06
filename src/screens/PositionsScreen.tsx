@@ -92,7 +92,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         <button
           type="button"
           onClick={(e) => open({ kind: 'categories' }, e)}
-          className="focus-ring h-11 rounded-xl border border-line bg-white px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
+          className="focus-ring h-11 rounded-xl border border-line bg-surface px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
         >
           Kategorien
         </button>
@@ -147,7 +147,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         type="button"
         onClick={(e) => open({ kind: 'new' }, e)}
         aria-label="Position hinzufügen"
-        className="focus-ring fixed right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg hover:bg-accent-strong lg:right-8"
+        className="focus-ring fixed right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-accent btn-gloss text-white shadow-lg hover:bg-accent-hover lg:right-8"
         style={{ bottom: 'calc(var(--tabbar-h) + var(--safe-bottom) + 16px)' }}
         data-testid="fab"
       >

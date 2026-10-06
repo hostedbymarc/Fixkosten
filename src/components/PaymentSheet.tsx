@@ -49,8 +49,8 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Pr
             Tatsächlich abgebucht
           </label>
           <div
-            className={`flex h-14 items-center rounded-2xl border bg-white px-4 focus-within:ring-2 ${
-              invalid ? 'border-over focus-within:ring-over/30' : 'border-line focus-within:border-accent focus-within:ring-accent/20'
+            className={`flex h-14 items-center rounded-2xl border bg-surface px-4 focus-within:ring-2 ${
+              invalid ? 'border-over focus-within:ring-over/30' : 'border-line focus-within:border-accent-ink focus-within:ring-accent-ink/20'
             }`}
           >
             <span className="mr-2 text-[20px] text-ink-mute">€</span>
@@ -90,7 +90,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Pr
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="z. B. Nachzahlung, Preiserhöhung …"
-            className="w-full resize-none rounded-2xl border border-line px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-accent focus:ring-2 focus:ring-accent/20"
+            className="w-full resize-none rounded-2xl border border-line px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-accent-ink focus:ring-2 focus:ring-accent-ink/20"
           />
         </div>
 
@@ -98,7 +98,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Pr
           <button
             type="submit"
             disabled={invalid}
-            className="focus-ring h-12 rounded-2xl bg-accent text-[16px] font-semibold text-white hover:bg-accent-strong disabled:opacity-40"
+            className="focus-ring h-12 rounded-2xl bg-accent btn-gloss text-[16px] font-semibold text-white hover:bg-accent-hover disabled:opacity-40"
           >
             {paid ? 'Speichern' : 'Als bezahlt speichern'}
           </button>
@@ -115,7 +115,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Pr
             <button
               type="button"
               onClick={onAddOneOff}
-              className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-accent hover:bg-accent-soft"
+              className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-accent-ink hover:bg-accent-soft"
             >
               Einmalbetrag hinzufügen
             </button>
