@@ -119,3 +119,8 @@ test.describe('Sicherung', () => {
     await expect(app.getByRole('alert')).toHaveText('Die Datei ist kein gültiges JSON.');
   });
 });
+
+test('settings show the build version', async ({ app }) => {
+  await goTo(app, 'einstellungen');
+  await expect(app.getByTestId('app-version')).toHaveText(/^Version (dev|[0-9a-f]{7}) · \d{2}\.\d{2}\.\d{4}$/);
+});
