@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
 import { toPeriod } from '../lib/period';
-import { upgradePaymentV3, upgradePositionV3, type PositionV2 } from './migrations';
+import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, type PositionV2 } from './migrations';
 import type {
   Category,
   ChangeLog,
@@ -13,7 +13,7 @@ import type {
 } from '../lib/types';
 
 /** Bump together with a new db.version(n) block (and a backup migration). */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /** Schema v1 as shipped in phase 1. Never change it: devices already run it. */
 const SCHEMA_V1 = {
@@ -36,6 +36,9 @@ const SCHEMA_V2_CHANGES = {
 
 /** v3: no index changes, only the record shape (see migrateToV3). */
 const SCHEMA_V3_CHANGES = {};
+
+/** v4: no index changes – 'once', dueDate and changedOn live inside `history`. */
+const SCHEMA_V4_CHANGES = {};
 
 export const IMMOS_CATEGORY: Category = {
   id: 'cat-immos',
@@ -137,6 +140,18 @@ export async function migrateToV3(tx: Transaction): Promise<void> {
   await tx.table<MetaEntry, string>('meta').put({ key: 'schemaVersion', value: 3 });
 }
 
+/**
+ * v3 → v4 data migration: history entries after the first get `changedOn`
+ * (first day of their month). Payments, one-offs, month closes and the
+ * ChangeLog stay untouched.
+ */
+export async function migrateToV4(tx: Transaction): Promise<void> {
+  await tx.table('positions').toCollection().modify((p: Record<string, unknown>) => {
+    upgradePositionV4(p);
+  });
+  await tx.table<MetaEntry, string>('meta').put({ key: 'schemaVersion', value: 4 });
+}
+
 export class FixkostenDB extends Dexie {
   categories!: EntityTable<Category, 'id'>;
   positions!: EntityTable<Position, 'id'>;
@@ -155,6 +170,7 @@ export class FixkostenDB extends Dexie {
     this.version(1).stores(SCHEMA_V1);
     if (maxVersion >= 2) this.version(2).stores(SCHEMA_V2_CHANGES).upgrade(migrateToV2);
     if (maxVersion >= 3) this.version(3).stores(SCHEMA_V3_CHANGES).upgrade(migrateToV3);
+    if (maxVersion >= 4) this.version(4).stores(SCHEMA_V4_CHANGES).upgrade(migrateToV4);
   }
 }
 

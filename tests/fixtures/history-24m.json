@@ -1,6 +1,6 @@
 {
  "format": "fixkosten-backup",
- "schemaVersion": 3,
+ "schemaVersion": 4,
  "exportedAt": "2026-10-05T10:00:00.000Z",
  "data": {
   "categories": [
@@ -71,6 +71,28 @@
        11,
        12
       ]
+     },
+     {
+      "validFrom": "2027-01",
+      "amount": 760,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "changedOn": "2027-01-01",
+      "reason": "Zinsanpassung",
+      "recordedAt": "2026-09-20T09:00:00.000Z"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -117,7 +139,8 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-07-01"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -210,7 +233,9 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-03-01",
+      "reason": "Indexanpassung"
      },
      {
       "validFrom": "2026-01",
@@ -229,7 +254,9 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2026-01-01",
+      "reason": "Indexanpassung"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -276,7 +303,9 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-12-01",
+      "reason": "Neuer Abschlag"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -379,7 +408,9 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-04-01",
+      "reason": "Tarifwechsel"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -426,7 +457,8 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-09-01"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -501,7 +533,8 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2026-01-01"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -548,7 +581,8 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-06-01"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -714,7 +748,9 @@
       "frequency": "annual",
       "dueMonths": [
        2
-      ]
+      ],
+      "changedOn": "2026-02-01",
+      "reason": "Preiserhöhung"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
@@ -789,11 +825,50 @@
        10,
        11,
        12
-      ]
+      ],
+      "changedOn": "2025-10-01"
      }
     ],
     "createdAt": "2024-11-01T09:00:00.000Z",
     "sortOrder": 22
+   },
+   {
+    "id": "pos-kaution",
+    "name": "Kaution Garage",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2026-03",
+      "amount": 600,
+      "frequency": "once",
+      "dueMonths": [
+       3
+      ],
+      "dueDay": 12,
+      "dueDate": "2026-03-12"
+     }
+    ],
+    "createdAt": "2026-03-01T09:00:00.000Z",
+    "sortOrder": 24
+   },
+   {
+    "id": "pos-waschmaschine",
+    "name": "Reparatur Waschmaschine",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2026-12",
+      "amount": 240,
+      "frequency": "once",
+      "dueMonths": [
+       12
+      ],
+      "dueDay": 3,
+      "dueDate": "2026-12-03"
+     }
+    ],
+    "createdAt": "2026-10-01T09:00:00.000Z",
+    "sortOrder": 25
    },
    {
     "id": "pos-netflix",
@@ -3356,6 +3431,15 @@
     "paidAt": "2026-03-01T08:00:00.000Z"
    },
    {
+    "id": "pay-pos-kaution-2026-03",
+    "positionId": "pos-kaution",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 600,
+    "actualAmount": 600,
+    "paidAt": "2026-03-12T08:00:00.000Z"
+   },
+   {
     "id": "pay-pos-kredit-1220-2026-04",
     "positionId": "pos-kredit-1220",
     "period": "2026-04",
@@ -4469,7 +4553,7 @@
    {
     "period": "2026-03",
     "netSalary": 5000,
-    "freeActual": 1535.8,
+    "freeActual": 935.8,
     "updatedAt": "2026-04-01T18:00:00.000Z"
    },
    {
@@ -4604,7 +4688,8 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-07-01"
     }
    },
    {
@@ -4717,7 +4802,9 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-03-01",
+     "reason": "Indexanpassung"
     }
    },
    {
@@ -4743,7 +4830,9 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-03-01",
+     "reason": "Indexanpassung"
     },
     "to": {
      "validFrom": "2026-01",
@@ -4762,7 +4851,9 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2026-01-01",
+     "reason": "Indexanpassung"
     }
    },
    {
@@ -4833,7 +4924,9 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-12-01",
+     "reason": "Neuer Abschlag"
     }
    },
    {
@@ -4956,7 +5049,9 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-04-01",
+     "reason": "Tarifwechsel"
     }
    },
    {
@@ -5027,7 +5122,8 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-09-01"
     }
    },
    {
@@ -5124,7 +5220,8 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2026-01-01"
     }
    },
    {
@@ -5195,7 +5292,8 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-06-01"
     }
    },
    {
@@ -5359,7 +5457,9 @@
      "frequency": "annual",
      "dueMonths": [
       2
-     ]
+     ],
+     "changedOn": "2026-02-01",
+     "reason": "Preiserhöhung"
     }
    },
    {
@@ -5456,7 +5556,8 @@
       10,
       11,
       12
-     ]
+     ],
+     "changedOn": "2025-10-01"
     }
    },
    {

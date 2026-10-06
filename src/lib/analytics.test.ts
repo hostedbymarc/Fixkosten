@@ -149,7 +149,7 @@ describe('6 · optimisations', () => {
   }
 
   it('Handy −€ 24/Jahr, Gym +€ 36/Jahr, net +€ 12/Jahr, typo not included', () => {
-    const t = optimizationTimeline(withChanges());
+    const t = optimizationTimeline(withChanges(), OCT);
     expect(t.entries.map((e) => [e.position.name, e.from.amount, e.to.amount, e.validFrom, e.annualDelta])).toEqual([
       ['Gym', 35, 38, '2027-01', 36],
       ['Handy', 10, 8, '2026-11', -24],
@@ -158,7 +158,7 @@ describe('6 · optimisations', () => {
   });
 
   it('empty without changes', () => {
-    expect(optimizationTimeline(fixtureDataset())).toEqual({ entries: [], netAnnual: 0 });
+    expect(optimizationTimeline(fixtureDataset(), OCT)).toEqual({ entries: [], netAnnual: 0, implementedAnnual: 0, plannedAnnual: 0 });
   });
 
   it('the forecast follows the changes month by month', () => {
@@ -237,7 +237,7 @@ describe('history fixture (24 months, Nov 2024 – Okt 2026)', () => {
   });
 
   it('optimisations from 24 months of changes, typo excluded', () => {
-    const t = optimizationTimeline(ds);
+    const t = optimizationTimeline(ds, OCT);
     expect(t.entries.length).toBeGreaterThanOrEqual(4);
     expect(t.entries.some((e) => e.position.id === 'pos-strom' && e.validFrom === '2024-11')).toBe(false);
     expect(t.entries.map((e) => e.position.id)).not.toContain('pos-tr-sparplaene'); // savings never count

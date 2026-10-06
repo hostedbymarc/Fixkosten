@@ -70,7 +70,7 @@ async function createV1(mutate?: (seed: ReturnType<typeof v1Seed>) => void): Pro
   v1.close();
 }
 
-describe('migration v1 → v2 → v3', () => {
+describe('migration v1 → v2 → v3 → v4', () => {
   it('name hashes match the four property positions', () => {
     expect(new Set(IMMOS.map(nameHash))).toEqual(IMMOS_NAME_HASHES);
     expect(IMMOS_NAME_HASHES.has(nameHash('Miete'))).toBe(false);
@@ -111,7 +111,7 @@ describe('migration v1 → v2 → v3', () => {
       );
     }
 
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(3);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
     expect(await needsSetup(db)).toBe(false);
     const progress = periodProgress(await loadDataset(db), '2026-10');
     expect(progress.openCount).toBe(0);
@@ -190,7 +190,7 @@ describe('first start: import or empty', () => {
   it('rejects files that are not a backup', () => {
     expect(() => parseBackup({ hello: 'world' })).toThrow(BackupError);
     expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 1 })).toThrow(/Version 1/);
-    expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 4 })).toThrow(/Version 4/);
+    expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 5 })).toThrow(/Version 5/);
     const broken = fixtureRaw();
     broken.data.positions[0]!.categoryId = 'cat-unknown';
     expect(() => parseBackup(broken)).toThrow(BackupError);

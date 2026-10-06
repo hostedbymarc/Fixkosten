@@ -18,7 +18,7 @@ import { loadDataset } from './repo';
 // exactly that with the data format the phase-1 app wrote.
 
 const OCT = '2026-10';
-const name = `v1-to-v3-${crypto.randomUUID()}`;
+const name = `v1-to-v4-${crypto.randomUUID()}`;
 
 afterEach(async () => {
   await new FixkostenDB(name).delete();
@@ -47,13 +47,13 @@ async function createLiveV1(): Promise<Payment[]> {
   return payments;
 }
 
-describe('live data: schema v1 (2776e95) → v3 in one step', () => {
+describe('live data: schema v1 (2776e95) → v4 in one step', () => {
   it('keeps every payment, actual and note; migrates categories, history and status', async () => {
     const before = await createLiveV1();
     expect(before.some((p) => p.positionId === 'pos-depotentgelt')).toBe(false);
 
     const db = new FixkostenDB(name);
-    expect(db.verno).toBe(3);
+    expect(db.verno).toBe(4);
     const ds = await loadDataset(db);
 
     // payments, actuals and notes identical; status 'paid' added
@@ -89,7 +89,7 @@ describe('live data: schema v1 (2776e95) → v3 in one step', () => {
 
     // no import dialog on the live device
     expect(await needsSetup(db)).toBe(false);
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(3);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
 
     // control values exact
     expect(sumMonthlyEquivalent(ds, OCT, { kind: 'expense', frequency: 'monthly' })).toBe(2664);

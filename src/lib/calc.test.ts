@@ -232,16 +232,17 @@ describe('versioned plans (history)', () => {
     expect(sumMonthlyEquivalent(ds, OCT, { kind: 'expense', frequency: 'monthly' })).toBe(2662);
   });
 
-  it('optimisations come from the ChangeLog: Handy 15 → 10 saves € 60/year, corrections never count', () => {
+  it('optimisations come from the history: Handy 15 → 10 saves € 60/year, corrections never count', () => {
     const ds = seed();
     const handy = position(ds, 'pos-handy');
-    const plan = (amount: number, validFrom: string) => ({ ...handy.history[0]!, validFrom, amount });
-    ds.changeLog.push(
-      { id: 'c1', at: '', positionId: 'pos-handy', type: 'amount', validFrom: '2026-10', from: plan(15, '2026-01'), to: plan(10, '2026-10') },
-      { id: 'c2', at: '', positionId: 'pos-gym', type: 'amount', validFrom: '2027-01', from: { ...plan(35, '2026-10') }, to: plan(40, '2027-01') },
-      { id: 'c3', at: '', positionId: 'pos-cash', type: 'amount', validFrom: '2027-01', from: plan(400, '2026-10'), to: plan(300, '2027-01') },
-      { id: 'c4', at: '', positionId: 'pos-strom', type: 'corrected', validFrom: '2026-10', from: plan(64, '2026-10'), to: plan(60, '2026-10') },
-    );
+    // Handy started at 15 in January, cheaper from October
+    handy.history = [
+      { ...handy.history[0]!, validFrom: '2026-01', amount: 15 },
+      { ...handy.history[0]!, validFrom: '2026-10', amount: 10, changedOn: '2026-10-01' },
+    ];
+    changeAmount(position(ds, 'pos-gym'), '2027-01', 40);
+    changeAmount(position(ds, 'pos-cash'), '2027-01', 300); // savings: never an optimisation
+    position(ds, 'pos-strom').history[0]!.amount = 60; // typo correction overwrites, no entry
     const result = annualizedSavingsFromChanges(ds, { from: '2026-01', to: '2027-12' });
     expect(result.changes.map((c) => [c.position.name, c.annualSavings, c.annualDelta])).toEqual([
       ['Gym', -60, 60],

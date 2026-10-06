@@ -36,5 +36,11 @@ Testdaten: `tests/fixtures/history-24m.json` (`node scripts/make-history-fixture
 
 Netto-Einkommen wird nicht mehr in den Einstellungen gepflegt, sondern pro Monat im Monatsabschluss.
 
+## Phase 3.1 – Einmalig & Wertänderungen ✓ (Schema v4)
+- Häufigkeit „Einmalig“ (`frequency: 'once'`, `dueDate`): nur im Fälligkeitsmonat fällig, zählt in Plan/Ist/Frei/Jahresvorschau, nie in Ø pro Monat, Verteilung, Entwicklung oder Optimierungen. Positionen: eingeklappte Sektion „Einmalige Zahlungen“ (kommend/erledigt).
+- „Betrag ändern“ mit Datum (`changedOn`, `reason`, `recordedAt`), Verlauf als Timeline mit Bearbeiten/Löschen (Undo). Optimierungen kommen aus dem Verlauf (geplant/umgesetzt), Tippfehler bleiben ohne Eintrag.
+- Snapshot-Regel: Ein Haken, der vor einer datierten Änderung für denselben Monat gesetzt wurde, zeigt den neuen Plan; der Haken selbst bleibt unverändert.
+- Migration v3 → v4: `changedOn` = erster Tag von `validFrom` für alle Einträge außer dem ersten.
+
 ## Phase 4 – PWA & Sicherheit
 Manifest, Icons, Offline, Install-Hinweis, `storage.persist()`, CSV-Export, Backup-Erinnerung, Lighthouse ≥ 95. (JSON-Export/Import ist bereits vorgezogen.)

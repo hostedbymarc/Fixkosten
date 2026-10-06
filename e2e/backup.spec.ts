@@ -64,7 +64,7 @@ test.describe('Sicherung', () => {
     const exported = await runBookmarklet(app);
     expect(exported.file).toMatch(/^fixkosten-export-\d{4}-\d{2}-\d{2}\.json$/);
     expect(exported.alert).toContain('23 Positionen, 18 Zahlungen');
-    expect(exported.json).toMatchObject({ format: 'fixkosten-backup', schemaVersion: 3 });
+    expect(exported.json).toMatchObject({ format: 'fixkosten-backup', schemaVersion: 4 });
 
     // "live": other device with its own month close
     await freshDevice(app);

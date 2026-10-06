@@ -30,6 +30,13 @@ const STEPS = {
   'pos-tr-sparplaene': [[START, 300], ['2025-10', 400]],
 };
 
+const REASONS = {
+  'pos-miete': ['Indexanpassung', 'Indexanpassung'],
+  'pos-handy': ['Tarifwechsel'],
+  'pos-strom': ['Neuer Abschlag'],
+  'pos-offi': ['Preiserhöhung'],
+};
+
 const changeLog = [];
 const positions = seed.data.positions.map((old) => {
   const frequency = old.frequency;
@@ -41,6 +48,10 @@ const positions = seed.data.positions.map((old) => {
     return plan;
   });
   history.forEach((entry, i) => {
+    if (i > 0) {
+      entry.changedOn = `${entry.validFrom}-01`;
+      if (REASONS[old.id]?.[i - 1]) entry.reason = REASONS[old.id][i - 1];
+    }
     const at = `${entry.validFrom}-01T09:00:00.000Z`;
     if (i === 0) changeLog.push({ id: `log-${old.id}-created`, at, positionId: old.id, type: 'created', validFrom: entry.validFrom, to: entry });
     else changeLog.push({ id: `log-${old.id}-${entry.validFrom}`, at, positionId: old.id, type: 'amount', validFrom: entry.validFrom, from: history[i - 1], to: entry });
@@ -49,6 +60,28 @@ const positions = seed.data.positions.map((old) => {
   if (old.note) p.note = old.note;
   return p;
 });
+
+// a planned increase (after "today") and two one-time payments
+const kredit = positions.find((p) => p.id === 'pos-kredit-1220');
+kredit.history.push({ ...kredit.history[0], validFrom: '2027-01', amount: 760, changedOn: '2027-01-01', reason: 'Zinsanpassung', recordedAt: '2026-09-20T09:00:00.000Z' });
+positions.push(
+  {
+    id: 'pos-kaution',
+    name: 'Kaution Garage',
+    categoryId: 'cat-wohnen',
+    history: [{ validFrom: '2026-03', amount: 600, frequency: 'once', dueMonths: [3], dueDay: 12, dueDate: '2026-03-12' }],
+    createdAt: '2026-03-01T09:00:00.000Z',
+    sortOrder: 24,
+  },
+  {
+    id: 'pos-waschmaschine',
+    name: 'Reparatur Waschmaschine',
+    categoryId: 'cat-wohnen',
+    history: [{ validFrom: '2026-12', amount: 240, frequency: 'once', dueMonths: [12], dueDay: 3, dueDate: '2026-12-03' }],
+    createdAt: '2026-10-01T09:00:00.000Z',
+    sortOrder: 25,
+  },
+);
 
 // a subscription that was cancelled (archived from Sep 2025)
 positions.push({
@@ -80,6 +113,7 @@ function planFor(position, period) {
 function due(position, period) {
   const plan = planFor(position, period);
   if (!plan) return null;
+  if (plan.frequency === 'once') return plan.dueDate.slice(0, 7) === period ? plan : null;
   if (position.archivedAt && period >= position.archivedAt.slice(0, 7)) return null;
   return plan.dueMonths.includes(Number(period.slice(5, 7))) ? plan : null;
 }
@@ -135,7 +169,7 @@ const monthClose = periods
 
 const file = {
   format: 'fixkosten-backup',
-  schemaVersion: 3,
+  schemaVersion: 4,
   exportedAt: '2026-10-05T10:00:00.000Z',
   data: { categories: seed.data.categories, positions, payments, oneOffs, monthClose, changeLog, reminders: seed.data.reminders },
 };
