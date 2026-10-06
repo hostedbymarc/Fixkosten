@@ -1,7 +1,7 @@
 import Dexie from 'dexie';
 import { format } from 'date-fns';
-import { archivedPeriod, currentPlan, planForPeriod } from '../lib/calc';
-import { addPeriods } from '../lib/period';
+import { archivedPeriod, compareEntries, currentPlan, entryKey, planForPeriod, planHistory } from '../lib/calc';
+import { addPeriods, periodLabel } from '../lib/period';
 import type {
   Category,
   ChangeLog,
@@ -162,7 +162,27 @@ export interface PositionDraft {
   plan: PlanInput;
 }
 
+const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+
+export function isIsoDate(value: string | undefined): value is string {
+  if (!value || !DATE_RE.test(value)) return false;
+  const [y, m, d] = value.split('-').map(Number);
+  const date = new Date(y!, m! - 1, d!);
+  return date.getFullYear() === y && date.getMonth() === m! - 1 && date.getDate() === d;
+}
+
+/** Schedule fields only (no history metadata); 'once' derives month and day from the due date. */
 function normalizePlan(plan: PlanInput): PlanInput {
+  if (plan.frequency === 'once') {
+    if (!isIsoDate(plan.dueDate)) throw new RepoError('Bitte ein gültiges Fälligkeitsdatum wählen.');
+    return {
+      amount: Math.round(plan.amount * 100) / 100,
+      frequency: 'once',
+      dueMonths: [Number(plan.dueDate.slice(5, 7))],
+      dueDay: Number(plan.dueDate.slice(8, 10)),
+      dueDate: plan.dueDate,
+    };
+  }
   const out: PlanInput = {
     amount: Math.round(plan.amount * 100) / 100,
     frequency: plan.frequency,
@@ -175,7 +195,17 @@ function normalizePlan(plan: PlanInput): PlanInput {
   return out;
 }
 
-export async function createPosition(db: FixkostenDB, draft: PositionDraft, validFrom: Period): Promise<string> {
+/** Schedule part of an entry, without amount and history metadata. */
+function scheduleOf(entry: PlanEntry): Omit<PlanInput, 'amount'> {
+  const out: Omit<PlanInput, 'amount'> = { frequency: entry.frequency, dueMonths: [...entry.dueMonths] };
+  if (entry.dueDay !== undefined) out.dueDay = entry.dueDay;
+  return out;
+}
+
+/** New position from `validFrom`; a one-time payment starts in the month of its due date. */
+export async function createPosition(db: FixkostenDB, draft: PositionDraft, startPeriod: Period): Promise<string> {
+  const plan = normalizePlan(draft.plan);
+  const validFrom = plan.frequency === 'once' ? plan.dueDate!.slice(0, 7) : startPeriod;
   return db.transaction('rw', db.positions, db.changeLog, async () => {
     const last = await db.positions.orderBy('sortOrder').last();
     const position: Position = {
@@ -183,7 +213,7 @@ export async function createPosition(db: FixkostenDB, draft: PositionDraft, vali
       name: draft.name.trim(),
       categoryId: draft.categoryId,
       note: trimmed(draft.note),
-      history: [{ validFrom, ...normalizePlan(draft.plan) }],
+      history: [{ validFrom, ...plan }],
       createdAt: new Date().toISOString(),
       sortOrder: (last?.sortOrder ?? -1) + 1,
     };
@@ -210,7 +240,7 @@ export async function updatePositionInfo(
   });
 }
 
-export type PlanChangeMode = { type: 'from'; validFrom: Period } | { type: 'correct' };
+export type PlanChangeMode = { type: 'from'; validFrom: Period } | { type: 'correct' } | { type: 'once' };
 
 /**
  * Changes amount or schedule.
@@ -233,20 +263,33 @@ export async function changePlan(
     const position = await db.positions.get(id);
     if (!position) throw new RepoError('Position nicht gefunden.');
 
+    if (mode.type === 'once') {
+      // a one-time payment has exactly one entry: amount and date are simply overwritten
+      const before = planHistory(position)[0]!;
+      const entry: PlanEntry = { validFrom: plan.dueDate!.slice(0, 7), ...plan };
+      await db.positions.update(id, { history: [entry] });
+      await db.changeLog.add(log({ positionId: id, type: 'corrected', validFrom: entry.validFrom, from: before, to: entry }));
+      return;
+    }
+
     if (mode.type === 'from') {
       const before = planForPeriod(position, mode.validFrom) ?? currentPlan(position, mode.validFrom)!;
-      const entry: PlanEntry = { validFrom: mode.validFrom, ...plan };
-      const history = [...position.history.filter((e) => e.validFrom !== mode.validFrom), entry].sort((a, b) =>
-        a.validFrom.localeCompare(b.validFrom),
-      );
+      const entry: PlanEntry = {
+        validFrom: mode.validFrom,
+        ...plan,
+        changedOn: `${mode.validFrom}-01`,
+        recordedAt: new Date().toISOString(),
+      };
+      const history = [...position.history.filter((e) => entryKey(e) !== entryKey(entry)), entry].sort(compareEntries);
       await db.positions.update(id, { history });
       await db.changeLog.add(log({ positionId: id, type: 'amount', validFrom: mode.validFrom, from: before, to: entry }));
       return;
     }
 
     const target = planForPeriod(position, today) ?? currentPlan(position, today)!;
-    const corrected: PlanEntry = { validFrom: target.validFrom, ...plan };
-    const history = position.history.map((e) => (e.validFrom === target.validFrom ? corrected : e));
+    // keeps date, reason and recordedAt: a typo is not a new change
+    const corrected: PlanEntry = { ...target, ...plan };
+    const history = position.history.map((e) => (e === target ? corrected : e));
     await db.positions.update(id, { history });
     await db.changeLog
       .where('positionId')
@@ -259,6 +302,113 @@ export async function changePlan(
     await db.changeLog.add(
       log({ positionId: id, type: 'corrected', validFrom: target.validFrom, from: target, to: corrected }),
     );
+  });
+}
+
+export interface AmountChangeInput {
+  amount: number;
+  /** 'YYYY-MM-DD'; the new amount applies from the month of this date */
+  changedOn: string;
+  reason?: string;
+}
+
+function validateChange(position: Position, input: AmountChangeInput, ignore?: PlanEntry): PlanEntry[] {
+  if (!(input.amount > 0)) throw new RepoError('Der Betrag muss größer als 0 sein.');
+  if (!isIsoDate(input.changedOn)) throw new RepoError('Bitte ein gültiges Datum wählen.');
+  const history = planHistory(position);
+  const first = history[0]!;
+  if (first.frequency === 'once') throw new RepoError('Bei einmaligen Zahlungen einfach den Betrag bearbeiten.');
+  if (input.changedOn.slice(0, 7) < first.validFrom) {
+    throw new RepoError(`Das Datum liegt vor dem Beginn der Position (${periodLabel(first.validFrom)}).`);
+  }
+  const others = history.filter((e) => e !== ignore);
+  if (others.some((e) => e.changedOn === input.changedOn)) {
+    throw new RepoError('Für dieses Datum gibt es schon eine Änderung – bitte diese bearbeiten.');
+  }
+  return others;
+}
+
+/**
+ * „Betrag ändern“: new amount from the month of `changedOn` (past or future).
+ * The schedule stays as it was in that month. Ticks keep their payment; months
+ * ticked before this change was entered show the new plan (see calc).
+ */
+export async function changeAmount(db: FixkostenDB, id: string, input: AmountChangeInput): Promise<PlanEntry> {
+  return db.transaction('rw', db.positions, db.changeLog, async () => {
+    const position = await db.positions.get(id);
+    if (!position) throw new RepoError('Position nicht gefunden.');
+    const others = validateChange(position, input);
+    const validFrom = input.changedOn.slice(0, 7);
+    const before = planForPeriod(position, validFrom) ?? currentPlan(position, validFrom)!;
+    const entry: PlanEntry = {
+      validFrom,
+      amount: Math.round(input.amount * 100) / 100,
+      ...scheduleOf(before),
+      changedOn: input.changedOn,
+      recordedAt: new Date().toISOString(),
+    };
+    const reason = trimmed(input.reason);
+    if (reason) entry.reason = reason;
+    await db.positions.update(id, { history: [...others, entry].sort(compareEntries) });
+    await db.changeLog.add(log({ positionId: id, type: 'amount', validFrom, from: before, to: entry }));
+    return entry;
+  });
+}
+
+/**
+ * Edits one history entry. The first entry (start of the position) keeps its
+ * month; only amount and reason change.
+ */
+export async function updatePlanEntry(db: FixkostenDB, id: string, key: string, input: AmountChangeInput): Promise<void> {
+  await db.transaction('rw', db.positions, db.changeLog, async () => {
+    const position = await db.positions.get(id);
+    if (!position) throw new RepoError('Position nicht gefunden.');
+    const history = planHistory(position);
+    const target = history.find((e) => entryKey(e) === key);
+    if (!target) throw new RepoError('Eintrag nicht gefunden.');
+    const reason = trimmed(input.reason);
+    let next: PlanEntry;
+    if (target === history[0]) {
+      if (!(input.amount > 0)) throw new RepoError('Der Betrag muss größer als 0 sein.');
+      next = { ...target, amount: Math.round(input.amount * 100) / 100 };
+    } else {
+      validateChange(position, input, target);
+      next = {
+        ...target,
+        validFrom: input.changedOn.slice(0, 7),
+        amount: Math.round(input.amount * 100) / 100,
+        changedOn: input.changedOn,
+        recordedAt: new Date().toISOString(),
+      };
+    }
+    if (reason) next.reason = reason;
+    else delete next.reason;
+    await db.positions.update(id, { history: history.map((e) => (e === target ? next : e)).sort(compareEntries) });
+    await db.changeLog.add(log({ positionId: id, type: 'corrected', validFrom: next.validFrom, from: target, to: next }));
+  });
+}
+
+/** Deletes a change from the history (never the first entry); returns it for undo. */
+export async function deletePlanEntry(db: FixkostenDB, id: string, key: string): Promise<PlanEntry> {
+  return db.transaction('rw', db.positions, async () => {
+    const position = await db.positions.get(id);
+    if (!position) throw new RepoError('Position nicht gefunden.');
+    const history = planHistory(position);
+    const index = history.findIndex((e) => entryKey(e) === key);
+    if (index < 0) throw new RepoError('Eintrag nicht gefunden.');
+    if (index === 0) throw new RepoError('Der erste Eintrag kann nicht gelöscht werden.');
+    const [removed] = history.splice(index, 1);
+    await db.positions.update(id, { history });
+    return removed!;
+  });
+}
+
+export async function restorePlanEntry(db: FixkostenDB, id: string, entry: PlanEntry): Promise<void> {
+  await db.transaction('rw', db.positions, async () => {
+    const position = await db.positions.get(id);
+    if (!position) return;
+    const history = [...position.history.filter((e) => entryKey(e) !== entryKey(entry)), entry].sort(compareEntries);
+    await db.positions.update(id, { history });
   });
 }
 
