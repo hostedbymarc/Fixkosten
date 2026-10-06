@@ -7,8 +7,11 @@ import { chromium } from '@playwright/test';
 const svg = readFileSync(new URL('./brand/icon.svg', import.meta.url), 'utf8');
 const outputs = [
   { file: 'apple-touch-icon.png', size: 180 },
+  { file: 'apple-touch-icon-167.png', size: 167 },
+  { file: 'apple-touch-icon-152.png', size: 152 },
   { file: 'icon-192.png', size: 192 },
   { file: 'icon-512.png', size: 512 },
+  { file: 'icon-1024.png', size: 1024 },
 ];
 
 const browser = await chromium.launch();
