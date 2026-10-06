@@ -22,14 +22,17 @@ Setup, Dexie-Schema v1, `calc.ts` + Kontrollwerte, Monats-Screen mit Abhaken.
 - JSON-Export in den Einstellungen, Import mit Vergleich, „Zusammenführen“ oder „Ersetzen“, Rückgängig
 - Lesezeichen-Export (`docs/export-bookmarklet.txt`) für Seiten ohne Export-Button, z. B. alte Deploy Previews
 
-## Phase 3 – Analyse
-1. Entwicklung (echte Monatsbelastung, gestapelt nach Kategorie, 6M/12M/Alles)
-2. Plan vs. Ist
-3. Jahresvorschau (fällige Beträge + Linie der Umlage)
-4. Verteilung (Donut nach Kategorie, umgelegt)
-5. **Frei verfügbar: rechnerisch vs. tatsächlich** – pro Monat aus `MonthClose` (`freeCalculated` vs. `freeActual`, Differenz hervorgehoben)
-6. **Sparquote** – Verlauf in %, aus `MonthClose.netSalary` (`savingsRate`)
-7. Optimierungen (Timeline aus ChangeLog, eingesparte €/Jahr)
+## Phase 3 – Analyse ✓
+Reihenfolge im Screen (Werte aus `src/lib/analytics.ts`, das nur auf `calc.ts` aufbaut):
+1. Jahresvorschau – fällige Ausgaben der nächsten 12 Monate, Linie Ø pro Monat (umgelegt), Monate über dem Schnitt hervorgehoben
+2. Verteilung nach Kategorie – horizontale Balken (kein Donut), absteigend, aufklappbar bis zur Position
+3. Frei verfügbar rechnerisch vs. tatsächlich + Sparquote (eigene Grafik in %), Lücken ohne Monatsabschluss
+4. Entwicklung – gestapelte Fläche nach Kategorie, Ø pro Monat aus `history`; unter 3 Monaten Daten eine Karte
+5. Plan vs. Ist – laufender Monat „läuft“, Top 5 Abweichungen
+6. Optimierungen – Timeline aus dem ChangeLog, Tippfehler-Korrekturen nie dabei
+
+Zeitraum 6M/12M/Alles (Default 12M) gilt gemeinsam für 3–5. Recharts wird nur mit dem Analyse-Tab geladen.
+Testdaten: `tests/fixtures/history-24m.json` (`node scripts/make-history-fixture.mjs`), nie im Bundle.
 
 Netto-Einkommen wird nicht mehr in den Einstellungen gepflegt, sondern pro Monat im Monatsabschluss.
 
