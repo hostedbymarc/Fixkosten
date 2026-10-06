@@ -1,5 +1,5 @@
 import { addMonths, format, parse } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { deAT as de } from 'date-fns/locale';
 import type { Period } from './types';
 
 const PERIOD_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
