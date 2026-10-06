@@ -123,7 +123,9 @@ export function PositionDetailSheet({
                 const planned = entry.validFrom > today;
                 const monthly = prev ? monthlyEquivalentOfPlan(entry) - monthlyEquivalentOfPlan(prev) : 0;
                 const yearly = prev ? annualCostOfPlan(entry) - annualCostOfPlan(prev) : 0;
-                const label = `${entryDate(entry, first)}: ${formatEUR(entry.amount)}`;
+                const label = first
+                  ? `Anfangsbetrag ${formatEUR(entry.amount)}`
+                  : `Änderung ab ${formatIsoDate(effectiveDate(entry))} auf ${formatEUR(entry.amount)}`;
                 return (
                   <li key={entryKey(entry)} className="relative flex items-start gap-1 py-1.5" data-testid="history-entry">
                     <span
@@ -149,7 +151,7 @@ export function PositionDetailSheet({
                     <button
                       type="button"
                       onClick={() => onEditEntry(entry)}
-                      aria-label={`${label} – bearbeiten`}
+                      aria-label={`${label} ändern`}
                       className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-mute hover:bg-zinc-100 hover:text-ink"
                     >
                       <PencilIcon size={18} />
@@ -160,7 +162,7 @@ export function PositionDetailSheet({
                       <button
                         type="button"
                         onClick={() => onDeleteEntry(entry)}
-                        aria-label={`${label} – löschen`}
+                        aria-label={`${label} löschen`}
                         className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink-mute hover:bg-over-soft hover:text-over"
                       >
                         <TrashIcon size={18} />
