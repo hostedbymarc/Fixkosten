@@ -94,7 +94,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
       ['September 2027', '€ 2.679'],
       ['Oktober 2027', '€ 3.403'],
     ]);
-    expect(rows[3]![2]).toBe('Steuerberater € 1.260, Offi (Jahreskarte) € 686');
+    expect(rows[3]!.slice(2)).toEqual(['–', 'Steuerberater € 1.260, Offi (Jahreskarte) € 686']);
     // „Als Tabelle anzeigen“ makes it visible
     const toggle = app.getByTestId('forecast').getByRole('button', { name: 'Als Tabelle anzeigen' });
     await toggle.click();
@@ -148,11 +148,15 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await app.getByTestId('position-form').getByRole('button', { name: 'Speichern' }).click();
     await app.keyboard.press('Escape');
     await openAnalyse(app);
-    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Netto-Effekt aller Änderungen: −€ 24 / Jahr'));
-    await expect(app.getByTestId('optimizations-list').locator('li')).toHaveCount(1);
-    await expect(app.getByTestId('optimizations-list')).toContainText(eur('Handy € 10 → € 8'));
-    await expect(app.getByTestId('optimizations-list')).toContainText(eur('ab Nov 2026'));
-    await expect(app.getByTestId('optimizations-list')).toContainText(eur('spart € 24/Jahr'));
+    // November lies after "today" (October): a planned change
+    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: −€ 24 / Jahr'));
+    const planned = app.getByTestId('optimizations-planned');
+    await expect(planned.locator('> li')).toHaveCount(1);
+    await expect(planned).toContainText(eur('Handy € 10 → € 8'));
+    await expect(planned).toContainText('geplant');
+    await expect(planned).toContainText(eur('ab 01.11.2026'));
+    await expect(planned).toContainText(eur('spart € 24/Jahr'));
+    await expect(app.getByTestId('optimizations-list')).toHaveCount(0);
     // the forecast follows the change: November € 2.662
     expect((await tableRows(app.getByTestId('forecast')))[0]!.slice(0, 2)).toEqual(['November 2026', '€ 2.662']);
   });
@@ -222,15 +226,20 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     for (const li of await page.getByTestId('top-deviations').locator('li').allTextContents()) expect(li).not.toContain('Okt 2026');
   });
 
-  test('optimisations from the ChangeLog, typo correction excluded', async ({ page }) => {
+  test('optimisations from the history: planned on top, implemented below, typo correction excluded', async ({ page }) => {
     await importHistory(page);
     await openAnalyse(page);
     const t = optimizationTimeline(historyDataset(), OCT);
+    const plain = (v: number) => formatDelta(v).replace(/ /g, ' ');
     await expect(page.getByTestId('optimizations-headline')).toHaveText(
-      eur(`Netto-Effekt aller Änderungen: ${formatDelta(t.netAnnual).replace(/ /g, ' ')} / Jahr`),
+      eur(`Umgesetzt: ${plain(t.implementedAnnual)} / Jahr · Geplant: ${plain(t.plannedAnnual)} / Jahr`),
     );
+    await expect(page.getByTestId('optimizations-planned').locator('> li')).toHaveCount(t.entries.filter((e) => e.planned).length);
+    await expect(page.getByTestId('optimizations-planned')).toContainText(eur('Kredit 1220 € 735 → € 760'));
+    await expect(page.getByTestId('optimizations-planned')).toContainText('Zinsanpassung');
     const list = page.getByTestId('optimizations-list');
-    await expect(list.locator('> li')).toHaveCount(t.entries.length);
+    await expect(list.locator('> li')).toHaveCount(t.entries.filter((e) => !e.planned).length);
+    await expect(list).toContainText('Tarifwechsel');
     await expect(list).toContainText(eur('Handy € 15 → € 10'));
     await expect(list).toContainText(eur('spart € 60/Jahr'));
     await expect(list).toContainText(eur('Gym € 32 → € 35'));
@@ -275,7 +284,7 @@ test.describe('Tooltips', () => {
     await page.touchscreen.tap(finger.x, finger.y);
     const tip = await tooltipOf(forecast);
     await expect(tip).toBeVisible();
-    await expect(tip).toContainText(eur('Februar 2027: € 4.610'));
+    await expect(tip).toContainText(eur('Februar 2027: € 4.635')); // fixture: Kredit +€ 25 from Jan 2027
     await expect(tip).toContainText(eur('Steuerberater€ 1.260'));
     const tipBox = (await tip.boundingBox())!;
     expect(tipBox.y + tipBox.height, 'tooltip ends above the finger').toBeLessThan(finger.y);
@@ -312,7 +321,7 @@ test.describe('Tooltips', () => {
     await expect(tip).toContainText(/2026|2027/);
     // walk to February with the arrow keys
     for (let i = 0; i < 12 && !/Februar 2027/.test(text((await tip.textContent()) ?? '')); i++) await page.keyboard.press('ArrowRight');
-    await expect(tip).toContainText(eur('Februar 2027: € 4.610'));
+    await expect(tip).toContainText(eur('Februar 2027: € 4.635')); // fixture: Kredit +€ 25 from Jan 2027
     await expect(tip).toContainText('Steuerberater');
 
     // hover works too
