@@ -52,7 +52,7 @@ export function RowMenu({ label, items, className = '' }: { label: string; items
           id={id}
           role="menu"
           aria-label={label}
-          className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-2xl border border-line bg-white p-1 shadow-lg"
+          className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-2xl border border-line bg-surface p-1 shadow-lg"
           onKeyDown={(e) => {
             const nodes = Array.from(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
             const index = nodes.indexOf(document.activeElement as HTMLElement);

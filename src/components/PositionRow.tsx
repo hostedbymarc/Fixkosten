@@ -12,10 +12,10 @@ interface Props {
 }
 
 function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; small?: boolean }) {
-  const size = small ? 'h-[22px] w-[22px]' : 'h-[26px] w-[26px]';
+  const size = small ? 'h-[22px] w-[22px]' : 'h-[28px] w-[28px]';
   if (state === 'paid') {
     return (
-      <span className={`anim-check flex ${size} items-center justify-center rounded-full bg-paid text-white`}>
+      <span className={`anim-check check-gloss flex ${size} items-center justify-center rounded-full bg-paid text-paid-on`}>
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -31,7 +31,11 @@ function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; sma
       </span>
     );
   }
-  return <span className={`${size} rounded-full border-[1.75px] border-zinc-300 bg-white transition-colors group-hover:border-accent`} />;
+  return (
+    <span
+      className={`${size} rounded-full border-2 border-dashed border-zinc-300 transition-colors group-hover:border-solid group-hover:border-accent-ink`}
+    />
+  );
 }
 
 export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneOff }: Props) {

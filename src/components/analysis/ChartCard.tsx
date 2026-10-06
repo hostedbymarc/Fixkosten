@@ -39,7 +39,7 @@ export function ChartCard({ id, title, headline, table, children }: Props) {
               aria-expanded={showTable}
               aria-controls={tableId}
               onClick={() => setShowTable((v) => !v)}
-              className="focus-ring -mx-2 h-11 rounded-xl px-2 text-[14px] font-medium text-accent hover:bg-accent-soft"
+              className="focus-ring -mx-2 h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
             >
               {showTable ? 'Tabelle ausblenden' : 'Als Tabelle anzeigen'}
             </button>
@@ -97,7 +97,7 @@ export function EmptyCard({ id, title, text }: { id: string; title: string; text
 /** Tooltip box shared by all charts (rendered by Recharts into its wrapper). */
 export function TooltipBox({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="max-w-[260px] rounded-xl border border-line bg-white px-3 py-2 text-[13px] shadow-card" data-testid="chart-tooltip">
+    <div className="max-w-[260px] rounded-xl border border-line bg-surface px-3 py-2 text-[13px] shadow-card" data-testid="chart-tooltip">
       <p className="font-semibold text-ink">{title}</p>
       <div className="mt-0.5 flex flex-col gap-0.5 text-ink-soft">{children}</div>
     </div>

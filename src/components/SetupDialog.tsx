@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { BackupError, importIntoEmpty, readBackupFile, startEmpty } from '../db/backup';
 import { db } from '../db/db';
+import { LogoMark } from './Logo';
 
 /** First start on an empty database: import a JSON backup or start empty. */
 export function SetupDialog() {
@@ -33,9 +34,7 @@ export function SetupDialog() {
         className="card w-full max-w-md p-6"
         data-testid="setup-dialog"
       >
-        <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-accent text-[20px] font-bold text-white" aria-hidden="true">
-          €
-        </span>
+        <LogoMark size={48} />
         <h1 id="setup-title" className="mt-4 text-[22px] font-semibold tracking-tight text-ink">
           Daten importieren
         </h1>
@@ -65,7 +64,7 @@ export function SetupDialog() {
             type="button"
             disabled={busy}
             onClick={() => fileInput.current?.click()}
-            className="focus-ring h-12 rounded-2xl bg-accent text-[16px] font-semibold text-white hover:bg-accent-strong disabled:opacity-50"
+            className="focus-ring h-12 rounded-2xl bg-accent btn-gloss text-[16px] font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
           >
             {busy ? 'Importiere …' : 'Daten importieren'}
           </button>

@@ -116,7 +116,7 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
 
   return createPortal(
     <div className="fixed inset-0 z-40">
-      <div className="anim-fade absolute inset-0 bg-zinc-900/30" onClick={onClose} aria-hidden="true" />
+      <div className="anim-fade absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
       <div
         className="absolute inset-x-0 flex justify-center lg:inset-0 lg:items-center lg:p-6"
         style={{ bottom: keyboard }}
@@ -127,7 +127,7 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="anim-sheet flex w-full max-w-lg flex-col overflow-hidden rounded-t-[22px] bg-white shadow-sheet outline-none lg:rounded-[22px]"
+          className="anim-sheet flex w-full max-w-lg flex-col overflow-hidden rounded-t-[22px] bg-surface shadow-sheet outline-none lg:rounded-[22px]"
           style={{ maxHeight: `calc(100dvh - ${keyboard}px - var(--safe-top) - 24px)` }}
           data-testid="bottom-sheet"
         >

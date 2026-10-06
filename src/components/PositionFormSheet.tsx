@@ -236,7 +236,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
         )}
 
         {planChanged && !once && (
-          <fieldset className="rounded-2xl border border-accent/40 bg-accent-soft/60 p-3" data-testid="change-mode">
+          <fieldset className="rounded-2xl border border-accent-ink/40 bg-accent-soft/60 p-3" data-testid="change-mode">
             <legend className="px-1 text-[14px] font-semibold text-ink">Betrag oder Zahlungsplan geändert</legend>
             <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl p-2">
               <input
@@ -244,7 +244,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
                 name="change-mode"
                 checked={changeMode === 'from'}
                 onChange={() => setChangeMode('from')}
-                className="mt-1 h-5 w-5 accent-[#5B5BD6]"
+                className="mt-1 h-5 w-5 accent-accent"
               />
               <span className="flex-1">
                 <span className="block text-[15px] font-medium text-ink">Ab wann gilt das?</span>
@@ -262,7 +262,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
                 name="change-mode"
                 checked={changeMode === 'correct'}
                 onChange={() => setChangeMode('correct')}
-                className="mt-1 h-5 w-5 accent-[#5B5BD6]"
+                className="mt-1 h-5 w-5 accent-accent"
               />
               <span className="flex-1">
                 <span className="block text-[15px] font-medium text-ink">Tippfehler korrigieren</span>

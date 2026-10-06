@@ -39,13 +39,13 @@ export function SwipeRow({
           setOffset(0);
           onAction();
         }}
-        className="absolute inset-y-0 right-0 flex items-center justify-center bg-over px-4 text-[15px] font-semibold text-white"
+        className="absolute inset-y-0 right-0 flex items-center justify-center bg-danger px-4 text-[15px] font-semibold text-white"
         style={{ width: ACTION_WIDTH }}
       >
         {actionLabel}
       </button>
       <div
-        className={`relative bg-white ${dragging ? '' : 'transition-transform duration-200 ease-out'}`}
+        className={`relative bg-surface ${dragging ? '' : 'transition-transform duration-200 ease-out'}`}
         style={{ transform: `translateX(${offset}px)`, touchAction: 'pan-y' }}
         onPointerDown={(e) => {
           if (e.pointerType === 'mouse') return;

@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fixkosten design tokens: RGB channels, consumed by tailwind.config.js.
+   Light is the default; dark applies for data-theme="dark" or, with "System",
+   when the device prefers dark. Keep both dark blocks in sync. */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -9,6 +12,162 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --tabbar-h: 60px;
   color-scheme: light;
+
+  --c-canvas: 246 246 249;
+  --c-surface: 255 255 255;
+  --c-surface-2: 250 250 253;
+  --c-raised: 255 255 255;
+  --c-line: 230 230 238;
+  --c-ink: 21 21 28;
+  --c-ink-soft: 74 74 87;
+  --c-ink-mute: 107 107 120;
+  --c-ink-faint: 161 161 174;
+  --c-accent: 95 91 240;
+  --c-accent-hover: 78 72 224;
+  --c-accent-ink: 95 91 240;
+  --c-accent-soft: 238 237 255;
+  --c-accent-soft-hover: 226 225 252;
+  --c-accent-strong: 70 64 208;
+  --c-paid: 14 138 82;
+  --c-paid-soft: 227 245 236;
+  --c-on-paid: 255 255 255;
+  --c-warn: 180 83 9;
+  --c-warn-soft: 253 241 226;
+  --c-over: 209 44 44;
+  --c-over-soft: 253 236 236;
+  --c-danger: 209 44 44;
+  --c-danger-hover: 180 35 35;
+  --c-zinc-50: 245 245 249;
+  --c-zinc-100: 238 238 243;
+  --c-zinc-200: 228 228 235;
+  --c-zinc-300: 206 206 216;
+  --c-zinc-900: 24 24 32;
+
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(20 20 40 / 0.05), 0 8px 24px rgb(20 20 40 / 0.05);
+  --shadow-sheet: 0 -8px 40px rgb(16 16 24 / 0.12);
+  --shadow-glow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 1px 2px rgb(40 30 160 / 0.25), 0 6px 16px rgb(95 91 240 / 0.28);
+  --hero-bg: radial-gradient(120% 80% at 30% -20%, rgb(255 255 255 / 0.38) 0%, rgb(255 255 255 / 0) 55%),
+    linear-gradient(160deg, #807cff 0%, #5f5bf0 55%, #4a42da 100%);
+  --hero-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 16px 36px rgb(95 91 240 / 0.3);
+
+  /* charts (SVG attributes take full colours) */
+  --chart-accent: #5f5bf0;
+  --chart-accent-light: #c9c7fb;
+  --chart-neutral: #d4d4de;
+  --chart-grid: #e6e6ee;
+  --chart-axis: #6b6b78;
+  --chart-ink: #15151c;
+  --chart-ink-soft: #4a4a57;
+  --chart-over: #d12c2c;
+  --chart-paid: #0e8a52;
+  --chart-cursor: rgb(21 21 28 / 0.05);
+  --chart-surface: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --c-canvas: 11 11 16;
+    --c-surface: 24 24 31;
+    --c-surface-2: 21 21 28;
+    --c-raised: 52 52 64;
+    --c-line: 42 42 53;
+    --c-ink: 243 243 247;
+    --c-ink-soft: 185 185 198;
+    --c-ink-mute: 139 139 153;
+    --c-ink-faint: 98 98 112;
+    --c-accent: 103 99 245;
+    --c-accent-hover: 118 114 255;
+    --c-accent-ink: 157 154 255;
+    --c-accent-soft: 36 34 74;
+    --c-accent-soft-hover: 46 44 92;
+    --c-accent-strong: 194 192 255;
+    --c-paid: 61 214 140;
+    --c-paid-soft: 18 51 38;
+    --c-on-paid: 11 11 16;
+    --c-warn: 242 169 59;
+    --c-warn-soft: 51 36 15;
+    --c-over: 255 122 122;
+    --c-over-soft: 58 21 23;
+    --c-danger: 214 52 52;
+    --c-danger-hover: 230 70 70;
+    --c-zinc-50: 30 30 39;
+    --c-zinc-100: 36 36 46;
+    --c-zinc-200: 46 46 58;
+    --c-zinc-300: 70 70 84;
+    --c-zinc-900: 52 52 64;
+
+    --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+    --shadow-sheet: 0 -8px 40px rgb(0 0 0 / 0.5);
+    --shadow-glow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 6px 18px rgb(110 106 255 / 0.3);
+    --hero-bg: radial-gradient(120% 80% at 30% -20%, rgb(255 255 255 / 0.3) 0%, rgb(255 255 255 / 0) 55%),
+      linear-gradient(160deg, #8a86ff 0%, #6763f5 55%, #4c43dd 100%);
+    --hero-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 16px 40px rgb(110 106 255 / 0.25);
+
+    --chart-accent: #9d9aff;
+    --chart-accent-light: #4a478f;
+    --chart-neutral: #3a3a48;
+    --chart-grid: #2a2a35;
+    --chart-axis: #8b8b99;
+    --chart-ink: #f3f3f7;
+    --chart-ink-soft: #b9b9c6;
+    --chart-over: #ff7a7a;
+    --chart-paid: #3dd68c;
+    --chart-cursor: rgb(255 255 255 / 0.06);
+    --chart-surface: #18181f;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-canvas: 11 11 16;
+  --c-surface: 24 24 31;
+  --c-surface-2: 21 21 28;
+  --c-raised: 52 52 64;
+  --c-line: 42 42 53;
+  --c-ink: 243 243 247;
+  --c-ink-soft: 185 185 198;
+  --c-ink-mute: 139 139 153;
+  --c-ink-faint: 98 98 112;
+  --c-accent: 103 99 245;
+  --c-accent-hover: 118 114 255;
+  --c-accent-ink: 157 154 255;
+  --c-accent-soft: 36 34 74;
+  --c-accent-soft-hover: 46 44 92;
+  --c-accent-strong: 194 192 255;
+  --c-paid: 61 214 140;
+  --c-paid-soft: 18 51 38;
+  --c-on-paid: 11 11 16;
+  --c-warn: 242 169 59;
+  --c-warn-soft: 51 36 15;
+  --c-over: 255 122 122;
+  --c-over-soft: 58 21 23;
+  --c-danger: 214 52 52;
+  --c-danger-hover: 230 70 70;
+  --c-zinc-50: 30 30 39;
+  --c-zinc-100: 36 36 46;
+  --c-zinc-200: 46 46 58;
+  --c-zinc-300: 70 70 84;
+  --c-zinc-900: 52 52 64;
+
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+  --shadow-sheet: 0 -8px 40px rgb(0 0 0 / 0.5);
+  --shadow-glow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 6px 18px rgb(110 106 255 / 0.3);
+  --hero-bg: radial-gradient(120% 80% at 30% -20%, rgb(255 255 255 / 0.3) 0%, rgb(255 255 255 / 0) 55%),
+    linear-gradient(160deg, #8a86ff 0%, #6763f5 55%, #4c43dd 100%);
+  --hero-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 16px 40px rgb(110 106 255 / 0.25);
+
+  --chart-accent: #9d9aff;
+  --chart-accent-light: #4a478f;
+  --chart-neutral: #3a3a48;
+  --chart-grid: #2a2a35;
+  --chart-axis: #8b8b99;
+  --chart-ink: #f3f3f7;
+  --chart-ink-soft: #b9b9c6;
+  --chart-over: #ff7a7a;
+  --chart-paid: #3dd68c;
+  --chart-cursor: rgb(255 255 255 / 0.06);
+  --chart-surface: #18181f;
 }
 
 @media (min-width: 1024px) {
@@ -19,16 +178,15 @@
 
 html,
 body {
-  background: #fafafa;
-  color: #18181b;
+  background: rgb(var(--c-canvas));
+  color: rgb(var(--c-ink));
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
-  font-feature-settings: 'cv11', 'ss01';
+  font-family: 'Geist Variable', Geist, system-ui, -apple-system, sans-serif;
   overscroll-behavior-y: none;
 }
 
@@ -49,14 +207,35 @@ body {
 }
 
 @layer components {
+  /* surfaces: a soft top light edge and a barely visible vertical sheen */
   .card {
-    @apply rounded-card border border-line bg-white shadow-card;
+    @apply rounded-card border border-line bg-surface shadow-card;
+    background-image: linear-gradient(180deg, rgb(var(--c-surface)) 0%, rgb(var(--c-surface-2)) 100%);
+  }
+  .hero {
+    @apply rounded-card text-white;
+    background: var(--hero-bg);
+    box-shadow: var(--hero-shadow);
+  }
+  /* filled accent buttons: glossy highlight over the accent fill */
+  .btn-gloss {
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.18) 0%, rgb(255 255 255 / 0) 55%);
+    box-shadow: var(--shadow-glow);
+  }
+  .check-gloss {
+    background-image: radial-gradient(80% 60% at 50% 10%, rgb(255 255 255 / 0.4) 0%, rgb(255 255 255 / 0) 60%);
+    box-shadow: 0 2px 6px rgb(var(--c-paid) / 0.3);
+  }
+  .logo-tile {
+    background: radial-gradient(120% 75% at 50% -12%, rgb(255 255 255 / 0.5) 0%, rgb(255 255 255 / 0) 56%),
+      linear-gradient(160deg, #8e8bff 0%, #5f5bf0 52%, #4a42da 100%);
+    box-shadow: inset 0 1px 1px rgb(255 255 255 / 0.55), 0 4px 12px rgb(95 91 240 / 0.3);
   }
   .focus-ring {
-    @apply outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-accent-ink focus-visible:ring-offset-2 focus-visible:ring-offset-canvas;
   }
   .section-title {
-    @apply text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-mute;
+    @apply text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-mute;
   }
 }
 

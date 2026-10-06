@@ -9,15 +9,16 @@ import { PrimaryButton, SecondaryButton, Segmented, SelectField, TextField } fro
 import { DragHandle, SortableList } from './Sortable';
 import { useToast } from './Toast';
 
+// Eight brand tones of similar lightness: distinguishable, readable in light and dark.
 export const CATEGORY_COLORS = [
-  { value: '#2E2E8A', name: 'Indigo dunkel' },
-  { value: '#5B5BD6', name: 'Indigo' },
-  { value: '#9494E8', name: 'Lavendel' },
-  { value: '#0F766E', name: 'Petrol' },
-  { value: '#B08968', name: 'Sand' },
-  { value: '#52525B', name: 'Schiefer' },
-  { value: '#A1A1AA', name: 'Grau' },
-  { value: '#27272A', name: 'Anthrazit' },
+  { value: '#8B4FD8', name: 'Violett' },
+  { value: '#5F5BF0', name: 'Indigo' },
+  { value: '#2F7BEA', name: 'Blau' },
+  { value: '#0E9AA7', name: 'Petrol' },
+  { value: '#1F9D5C', name: 'Grün' },
+  { value: '#C98A0E', name: 'Senf' },
+  { value: '#E0662F', name: 'Orange' },
+  { value: '#D9467A', name: 'Rosé' },
 ];
 
 type View = { mode: 'list' } | { mode: 'edit'; id?: string } | { mode: 'delete'; id: string };
@@ -40,7 +41,7 @@ export function CategoriesSheet({ ds, onClose, returnFocusTo }: { ds: Dataset; o
         <button
           type="button"
           onClick={() => setView({ mode: 'list' })}
-          className="focus-ring -ml-2 mb-2 flex h-11 items-center gap-1 rounded-xl px-2 text-[15px] font-medium text-accent"
+          className="focus-ring -ml-2 mb-2 flex h-11 items-center gap-1 rounded-xl px-2 text-[15px] font-medium text-accent-ink"
         >
           <ChevronLeft size={18} /> Alle Kategorien
         </button>
@@ -55,7 +56,7 @@ export function CategoriesSheet({ ds, onClose, returnFocusTo }: { ds: Dataset; o
               getName={(c) => c.name}
               onReorder={(ids) => void reorderCategories(db, ids)}
               renderItem={(c, handle) => (
-                <div className="flex items-center gap-1 bg-white pl-1 pr-2">
+                <div className="flex items-center gap-1 bg-surface pl-1 pr-2">
                   <DragHandle handle={handle} />
                   <button
                     type="button"

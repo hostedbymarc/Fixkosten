@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
+import { Segmented } from '../components/form';
+import { LogoMark } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
 import {
@@ -20,6 +22,7 @@ import { deletePositionPermanently, restorePosition } from '../db/repo';
 import { archivedPeriod, archivedPositions, currentPlan, positionUsage } from '../lib/calc';
 import { formatDate, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
+import { useThemePref, type ThemePref } from '../lib/theme';
 import { useToday } from '../lib/useToday';
 import { versionLabel } from '../lib/version';
 import type { Dataset, Position } from '../lib/types';
@@ -46,6 +49,8 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
       </header>
 
       <div className="flex max-w-2xl flex-col gap-6">
+        <AppearanceSection />
+
         <section aria-labelledby="archive-title">
           <h2 id="archive-title" className="section-title mb-2 px-1">
             Archiv
@@ -180,7 +185,7 @@ function BackupSection({ ds }: { ds: Dataset }) {
               await markExported(db);
               toast({ message: 'Sicherung gespeichert' });
             }}
-            className="focus-ring h-11 rounded-xl sm:flex-1 bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-strong"
+            className="focus-ring h-11 rounded-xl sm:flex-1 bg-accent btn-gloss px-4 text-[15px] font-semibold text-white hover:bg-accent-hover"
           >
             Sicherung exportieren
           </button>
@@ -215,7 +220,7 @@ function BackupSection({ ds }: { ds: Dataset }) {
             <button
               type="button"
               onClick={() => void undo()}
-              className="focus-ring h-11 rounded-xl px-3 text-[14px] font-medium text-accent hover:bg-accent-soft"
+              className="focus-ring h-11 rounded-xl px-3 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
             >
               Import rückgängig machen
             </button>
@@ -237,6 +242,44 @@ function BackupSection({ ds }: { ds: Dataset }) {
           }}
         />
       )}
+    </section>
+  );
+}
+
+const THEME_HINT: Record<ThemePref, string> = {
+  system: 'Folgt deinem Gerät: hell oder dunkel, je nach Systemeinstellung.',
+  light: 'Immer hell, auch wenn dein Gerät dunkel ist.',
+  dark: 'Immer dunkel, angenehm am Abend.',
+};
+
+/** Light, dark or "System"; stored per device, not in backups. */
+function AppearanceSection() {
+  const [theme, setTheme] = useThemePref();
+  return (
+    <section aria-labelledby="appearance-title">
+      <h2 id="appearance-title" className="section-title mb-2 px-1">
+        Darstellung
+      </h2>
+      <div className="card flex flex-col gap-3 p-4" data-testid="appearance">
+        <Segmented<ThemePref>
+          label="Design"
+          value={theme}
+          onChange={setTheme}
+          options={[
+            { value: 'system', label: 'System' },
+            { value: 'light', label: 'Hell' },
+            { value: 'dark', label: 'Dunkel' },
+          ]}
+        />
+        <p className="px-1 text-[13px] leading-snug text-ink-mute">{THEME_HINT[theme]}</p>
+        <div className="flex items-center gap-3 border-t border-line px-1 pt-3">
+          <LogoMark size={44} />
+          <p className="text-[13px] leading-snug text-ink-mute">
+            <span className="block text-[15px] font-semibold text-ink">Wie eine App öffnen</span>
+            In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

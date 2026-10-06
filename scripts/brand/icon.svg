@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Full-bleed app icon (iOS rounds the corners itself). Source for scripts/make-icons.mjs. -->
+  <defs>
+    <linearGradient id="bg" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#8E8BFF"/>
+      <stop offset="0.52" stop-color="#5F5BF0"/>
+      <stop offset="1" stop-color="#4A42DA"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0.5" cy="-0.1" r="0.72">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.5"/>
+      <stop offset="0.56" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.75" stop-color="#140A50" stop-opacity="0"/>
+      <stop offset="1" stop-color="#140A50" stop-opacity="0.22"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <rect width="1024" height="1024" fill="url(#shine)"/>
+  <rect width="1024" height="1024" fill="url(#floor)"/>
+  <g transform="translate(102.4 112.4) scale(8.192)" fill="none" stroke="#140A50" stroke-opacity="0.22" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="50" cy="50" r="30" stroke-dasharray="160 200" transform="rotate(-75 50 50)"/>
+    <circle cx="43.8" cy="20.7" r="4" fill="#140A50" fill-opacity="0.22" stroke="none"/>
+    <path d="M37.5 51 L46.5 60 L63 42.5"/>
+  </g>
+  <g transform="translate(102.4 102.4) scale(8.192)" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="50" cy="50" r="30" stroke-dasharray="160 200" transform="rotate(-75 50 50)"/>
+    <circle cx="43.8" cy="20.7" r="4" fill="#FFFFFF" stroke="none"/>
+    <path d="M37.5 51 L46.5 60 L63 42.5"/>
+  </g>
+</svg>
