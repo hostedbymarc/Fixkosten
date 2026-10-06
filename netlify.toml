@@ -3,7 +3,9 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22"
+  # pinned: same versions as local builds and tests
+  NODE_VERSION = "22.22.0"
+  PNPM_VERSION = "9.15.9"
 
 [[redirects]]
   from = "/*"
