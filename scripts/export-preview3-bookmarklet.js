@@ -6,11 +6,17 @@
   const T = ['categories', 'positions', 'payments', 'oneOffs', 'monthClose', 'changeLog', 'reminders'];
   const L = { categories: 'Kategorien', positions: 'Positionen', payments: 'Zahlungen', oneOffs: 'Einmalbeträge', monthClose: 'Monatsabschlüsse', changeLog: 'Änderungen', reminders: 'Erinnerungen' };
   const NODB = 'Keine Fixkosten-Datenbank gefunden – bist du auf der Preview-3-Seite in Safari, nicht in der Home-Bildschirm-App?';
+  // a bookmark tapped in an empty tab runs in about:blank, where IndexedDB is blocked
+  const go = () => {
+    alert('Das war ein leerer Tab. Ich öffne jetzt die Preview-3-Seite – sobald deine Monatsansicht da ist, das Lesezeichen dort nochmal antippen.');
+    location.href = 'https://deploy-preview-3--fixkosten.netlify.app/';
+  };
+  if (!/^https?:$/.test(location.protocol)) return go();
   let r;
   try {
     r = indexedDB.open('fixkosten');
   } catch (e) {
-    return alert('Export nicht möglich: ' + e.message);
+    return go();
   }
   // only fires if there is no database: abort instead of creating an empty one
   r.onupgradeneeded = () => r.transaction.abort();
@@ -20,7 +26,7 @@
     const v = Math.round(db.version / 10);
     if (v < 2 || v > 3) {
       db.close();
-      return alert('Datenbank-Version ' + v + ' wird vom Import nicht unterstützt (erwartet 3). Richtige Seite?');
+      return alert('Datenbank-Version ' + v + ' nicht unterstützt. Richtige Seite?');
     }
     if (!T.every((t) => db.objectStoreNames.contains(t))) {
       db.close();

@@ -198,6 +198,20 @@ test.describe('Preview 3 → Bookmarklet → main', () => {
     await live.context().close();
   });
 
+  test('empty tab (about:blank, IndexedDB blocked): explains and opens the preview', async ({ page }) => {
+    const target = 'https://deploy-preview-3--fixkosten.netlify.app/';
+    await page.route(target, (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>preview</title>' }));
+    expect(page.url()).toBe('about:blank');
+    const message = new Promise<string>((r) => page.once('dialog', async (d) => (r(d.message()), await d.accept())));
+    await Promise.all([
+      page.waitForURL(target),
+      page.evaluate((code) => new Function(code)(), BOOKMARKLET.replace(/^javascript:/, '')),
+    ]);
+    expect(await message).toBe(
+      'Das war ein leerer Tab. Ich öffne jetzt die Preview-3-Seite – sobald deine Monatsansicht da ist, das Lesezeichen dort nochmal antippen.',
+    );
+  });
+
   test('clear message when there is no database (e.g. Home-Bildschirm-App / wrong page)', async ({ page }) => {
     await page.route('**/__empty__', (r) => r.fulfill({ contentType: 'text/html', body: '<!doctype html><title>x</title>' }));
     await page.goto('/__empty__');
