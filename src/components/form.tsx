@@ -175,11 +175,14 @@ export function Segmented<T extends string>({
   value,
   onChange,
   options,
+  gridClass,
 }: {
   label: string;
   value: T;
   onChange: (v: T) => void;
   options: { value: T; label: string }[];
+  /** Tailwind grid columns (e.g. wrap to 3 per row on phones); default: one row */
+  gridClass?: string;
 }) {
   const id = useId();
   return (
@@ -187,7 +190,10 @@ export function Segmented<T extends string>({
       <div id={id} className={labelClass}>
         {label}
       </div>
-      <div className="grid gap-1 rounded-2xl bg-zinc-100 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      <div
+        className={`grid gap-1 rounded-2xl bg-zinc-100 p-1 ${gridClass ?? ''}`}
+        style={gridClass ? undefined : { gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
+      >
         {options.map((o) => {
           const active = o.value === value;
           return (
@@ -290,4 +296,73 @@ export function SecondaryButton({ children, onClick, danger, testId }: {
       {children}
     </button>
   );
+}
+
+/**
+ * Native date input (iOS shows its wheel picker). Value is 'YYYY-MM-DD';
+ * the hint repeats the date as TT.MM.JJJJ with the weekday.
+ */
+export function DateField({
+  label,
+  value,
+  onChange,
+  error,
+  hint,
+  testId,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string | null;
+  hint?: ReactNode;
+  testId?: string;
+}) {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        {label}
+      </label>
+      <div className={boxClass(!!error)}>
+        <input
+          id={id}
+          type="date"
+          lang="de-AT"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={!!error}
+          aria-describedby={`${id}-hint`}
+          data-testid={testId}
+          className="num h-12 w-full min-w-0 appearance-none bg-transparent px-4 text-[16px] text-ink outline-none"
+        />
+      </div>
+      {/* the field itself follows the device language; the hint always shows TT.MM.JJJJ */}
+      <p id={`${id}-hint`} className={hintClass} data-testid={testId ? `${testId}-hint` : undefined}>
+        {error ? (
+          <span className="text-over">{error}</span>
+        ) : (
+          <>
+            {value && <span className="num">{longDate(value)}</span>}
+            {value && hint && ' · '}
+            {hint}
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+const longDateFormat = new Intl.DateTimeFormat('de-AT', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+/** '2026-11-15' → 'Sonntag, 15.11.2026' */
+export function longDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return longDateFormat.format(new Date(y, m - 1, d));
+}
+
+/** Local calendar date of today as 'YYYY-MM-DD'. */
+export function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }

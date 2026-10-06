@@ -29,6 +29,7 @@ import {
   shortPeriodLabel,
   trendHeadline,
   trendTooShortText,
+  type TrendChange,
   yearForecast,
 } from '../../lib/analytics';
 import { formatCompactEUR, formatDelta, formatEUR, formatPercent, formatPercentShort } from '../../lib/format';
@@ -41,6 +42,7 @@ import {
   AXIS_TICK,
   CHART_MARGIN,
   COLORS,
+  ChangeMarkers,
   GroupLabels,
   tooltipProps,
   xAxisProps,
@@ -66,7 +68,13 @@ const deltaCompact = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${format
 
 export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
   const f = yearForecast(ds, today);
-  const rows = f.months.map((m) => ({ ...m, label: shortMonthName(monthOf(m.period)) }));
+  const rows = f.months.map((m) => ({
+    ...m,
+    label: shortMonthName(monthOf(m.period)),
+    // stacked: recurring part below, one-time payments as a lighter part on top
+    recurring: Math.round((m.due - m.once) * 100) / 100,
+  }));
+  const hasOnce = f.onceTotal !== 0;
   return (
     <ChartCard
       id="forecast"
@@ -74,11 +82,12 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
       headline={forecastHeadline(f)}
       table={{
         caption: 'Fällige Ausgaben der nächsten 12 Monate',
-        head: ['Monat', 'Fällig', 'davon nicht monatlich'],
+        head: ['Monat', 'Fällig', 'davon einmalig', 'nicht monatlich'],
         rows: f.months.map((m) => [
           periodLabel(m.period),
           formatEUR(m.due),
-          m.items.map((i) => `${i.name} ${formatEUR(i.amount)}`).join(', ') || '–',
+          m.once ? formatEUR(m.once) : '–',
+          m.items.map((i) => `${i.name}${i.once ? ' (einmalig)' : ''} ${formatEUR(i.amount)}`).join(', ') || '–',
         ]),
       }}
     >
@@ -98,17 +107,46 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
                     {m.items.length === 0 ? (
                       <p>Nur monatliche Posten</p>
                     ) : (
-                      m.items.map((i) => <TooltipRow key={i.name} label={i.name} value={formatEUR(i.amount)} />)
+                      m.items.map((i) => (
+                        <TooltipRow
+                          key={i.name}
+                          label={i.once ? `${i.name} (einmalig)` : i.name}
+                          value={formatEUR(i.amount)}
+                          swatch={i.once ? COLORS.accentLight : undefined}
+                        />
+                      ))
                     )}
                   </TooltipBox>
                 );
               }}
             />
-            <Bar dataKey="due" radius={[4, 4, 0, 0]} maxBarSize={36} isAnimationActive={false} name="Fällig">
+            <Bar
+              dataKey="recurring"
+              stackId="due"
+              radius={hasOnce ? 0 : [4, 4, 0, 0]}
+              maxBarSize={36}
+              isAnimationActive={false}
+              name="Fällig"
+              className="bar-recurring"
+            >
               {rows.map((m) => (
                 <Cell key={m.period} fill={m.aboveAverage ? COLORS.accent : COLORS.neutral} />
               ))}
             </Bar>
+            {hasOnce && (
+              <Bar
+                dataKey="once"
+                stackId="due"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={36}
+                isAnimationActive={false}
+                name="Einmalig"
+                fill={COLORS.accentLight}
+                stroke="#ffffff"
+                strokeWidth={1}
+                className="bar-once"
+              />
+            )}
             <ReferenceLine
               y={f.average}
               stroke={COLORS.inkSoft}
@@ -128,11 +166,17 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-2 flex items-center gap-2 text-[13px] text-ink-mute">
+      <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-mute">
         <span className="h-2.5 w-2.5 rounded-[3px] bg-accent" aria-hidden="true" />
         über dem Schnitt
         <span className="ml-2 h-0 w-4 border-t-2 border-dashed border-ink-soft" aria-hidden="true" />
         Ø pro Monat (umgelegt)
+        {hasOnce && (
+          <>
+            <span className="ml-2 h-2.5 w-2.5 rounded-[3px]" style={{ background: COLORS.accentLight }} aria-hidden="true" />
+            einmalig
+          </>
+        )}
       </p>
     </ChartCard>
   );
@@ -360,6 +404,11 @@ export function MonthCloseSection({ ds, periods }: { ds: Dataset; periods: Perio
 // 4 · Trend of the spread burden
 // ---------------------------------------------------------------------------
 
+/** 'Miete +€ 42/Monat · Indexanpassung' */
+function changeText(c: TrendChange): string {
+  return `${c.positionName} ${formatDelta(c.monthlyDelta)}/Monat${c.reason ? ` · ${c.reason}` : ''}`;
+}
+
 export function TrendSection({ ds, periods, today, months }: { ds: Dataset; periods: Period[]; today: Period; months: number }) {
   if (months < 3) {
     return <EmptyCard id="trend" title="Entwicklung der Fixkosten" text={trendTooShortText(ds, today)} />;
@@ -391,7 +440,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <AreaChart data={rows} margin={{ ...CHART_MARGIN, right: 8 }} accessibilityLayer>
             <CartesianGrid vertical={false} stroke={COLORS.grid} />
-            <XAxis dataKey="label" {...xAxisProps} />
+            <XAxis dataKey="label" {...xAxisProps} tickMargin={12} height={40} />
             <YAxis {...yAxisProps} />
             <Tooltip
               {...tooltipProps}
@@ -404,6 +453,11 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
                   <TooltipBox title={`${periodLabel(r.period)}: ${formatEUR(point.total)}`}>
                     {[...t.categories].reverse().map((c) => (
                       <TooltipRow key={c.id} label={c.name} value={formatEUR(point.byCategory[c.id] ?? 0)} swatch={c.color} />
+                    ))}
+                    {(t.changes[r.period] ?? []).map((c) => (
+                      <p key={c.positionName} className="mt-1 border-t border-line pt-1 text-ink" data-testid="trend-change">
+                        ▲ {changeText(c)}
+                      </p>
                     ))}
                   </TooltipBox>
                 );
@@ -423,6 +477,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
                 isAnimationActive={false}
               />
             ))}
+            <ChangeMarkers categories={rows.map((r) => r.label)} marked={rows.filter((r) => t.changes[r.period]).map((r) => r.label)} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -434,6 +489,11 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
             <span className="num text-ink">{formatEUR(last.byCategory[c.id] ?? 0)}</span>
           </li>
         ))}
+        {Object.keys(t.changes).length > 0 && (
+          <li className="flex items-center gap-1.5 text-ink-mute">
+            <span aria-hidden="true">▲</span> Betragsänderung
+          </li>
+        )}
       </ul>
     </ChartCard>
   );
@@ -571,15 +631,15 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
         Optimierungen
       </h2>
       <div className="card p-4">
-        <p className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] font-medium text-ink" data-testid="optimizations-headline">
+        <p className="text-[15px] font-medium text-ink" data-testid="optimizations-headline">
           {implemented.length > 0 && (
-            <span>
+            <span className="whitespace-nowrap">
               Umgesetzt: <DeltaPerYear value={t.implementedAnnual} />
             </span>
           )}
-          {implemented.length > 0 && planned.length > 0 && <span aria-hidden="true">·</span>}
+          {implemented.length > 0 && planned.length > 0 && ' · '}
           {planned.length > 0 && (
-            <span>
+            <span className="whitespace-nowrap">
               Geplant: <DeltaPerYear value={t.plannedAnnual} />
             </span>
           )}
