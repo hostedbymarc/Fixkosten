@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="focus-ring mt-4 h-11 w-full rounded-2xl bg-accent text-[15px] font-semibold text-white"
+            className="focus-ring mt-4 h-11 w-full rounded-2xl bg-accent btn-gloss text-[15px] font-semibold text-white"
           >
             Neu laden
           </button>

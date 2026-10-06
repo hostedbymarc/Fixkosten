@@ -73,7 +73,7 @@ export function ImportSheet({
                 name="import-mode"
                 checked={mode === value}
                 onChange={() => setMode(value)}
-                className="mt-1 h-5 w-5 accent-[#5B5BD6]"
+                className="mt-1 h-5 w-5 accent-accent"
               />
               <span>
                 <span className="block text-[15px] font-medium text-ink">{title}</span>
