@@ -21,6 +21,7 @@ import { archivedPeriod, archivedPositions, currentPlan, positionUsage } from '.
 import { formatDate, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { useToday } from '../lib/useToday';
+import { versionLabel } from '../lib/version';
 import type { Dataset, Position } from '../lib/types';
 
 function deleteText(usage: { payments: number; oneOffs: number }): string {
@@ -106,6 +107,10 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
           </div>
         </section>
       </div>
+
+      <p className="mt-10 text-center text-[12px] text-ink-faint" data-testid="app-version">
+        {versionLabel()}
+      </p>
 
       {confirm && (
         <ConfirmSheet
