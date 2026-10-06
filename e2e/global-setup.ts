@@ -1,6 +1,9 @@
 import { execSync } from 'node:child_process';
 
-/** Builds the currently live version (2776e95) once for the upgrade test. */
+/**
+ * Builds old app versions once for the upgrade/export tests:
+ * 2776e95 = version live on fixkosten.netlify.app, 0d997aa = Deploy Preview of PR #3.
+ */
 export default function globalSetup() {
-  execSync('node scripts/build-legacy.mjs 2776e95', { stdio: 'inherit' });
+  for (const sha of ['2776e95', '0d997aa']) execSync(`node scripts/build-legacy.mjs ${sha}`, { stdio: 'inherit' });
 }
