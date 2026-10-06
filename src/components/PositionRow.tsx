@@ -1,7 +1,7 @@
-import type { DueItem } from '../lib/calc';
+import { effectiveDate, nextPlannedChange, type DueItem } from '../lib/calc';
 import { formatDelta, formatEUR } from '../lib/format';
 import type { OneOff } from '../lib/types';
-import { Badge, DeltaChip, scheduleLabel } from './Chips';
+import { Badge, DeltaChip, formatIsoDate, scheduleLabel } from './Chips';
 
 interface Props {
   item: DueItem;
@@ -39,6 +39,7 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
   const done = status !== 'open';
   const schedule = item.plan ? scheduleLabel(item.plan, item.period) : null;
   const amount = status === 'paid' ? payment!.actualAmount : item.planned;
+  const next = nextPlannedChange(position, item.period);
 
   return (
     <li data-testid="position-row" data-position={position.id} data-paid={status === 'paid'} data-status={status}>
@@ -74,10 +75,17 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
               <span className={`block truncate text-[16px] font-medium transition-colors ${done ? 'text-ink-mute' : 'text-ink'}`}>
                 {position.name}
               </span>
-              {(schedule || payment?.note || status === 'skipped') && (
+              {(schedule || payment?.note || status === 'skipped' || next) && (
                 <span className="mt-1 flex flex-wrap items-center gap-1.5">
                   {status === 'skipped' && <Badge>entfallen</Badge>}
                   {schedule && <Badge tone="accent">{schedule}</Badge>}
+                  {next && (
+                    <span data-testid="next-change">
+                      <Badge>
+                        Ab {formatIsoDate(effectiveDate(next))}: {formatEUR(next.amount)}
+                      </Badge>
+                    </span>
+                  )}
                   {payment?.note && <span className="truncate text-[13px] text-ink-mute">{payment.note}</span>}
                 </span>
               )}

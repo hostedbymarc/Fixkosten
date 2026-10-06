@@ -8,7 +8,14 @@ export const FREQUENCY_LABEL: Record<Frequency, string> = {
   quarterly: 'Quartal',
   semiannual: 'Halbjährlich',
   annual: 'Jährlich',
+  once: 'Einmalig',
 };
+
+/** '2026-11-15' → '15.11.2026' */
+export function formatIsoDate(iso: string): string {
+  const [y, m, d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
 
 /**
  * 'Jährlich · 3.10.' / 'Quartal' / 'Halbjährlich · Jun, Dez'; null for monthly.
@@ -16,6 +23,9 @@ export const FREQUENCY_LABEL: Record<Frequency, string> = {
  */
 export function scheduleLabel(plan: PlanEntry, period?: Period): string | null {
   if (plan.frequency === 'monthly') return null;
+  if (plan.frequency === 'once' && plan.dueDate) {
+    return `Einmalig · ${formatDayMonth(Number(plan.dueDate.slice(8, 10)), Number(plan.dueDate.slice(5, 7)))}`;
+  }
   const base = FREQUENCY_LABEL[plan.frequency];
   const months = [...plan.dueMonths].sort((a, b) => a - b);
   if (plan.dueDay && months.length === 1) {
@@ -30,6 +40,7 @@ export function scheduleLabel(plan: PlanEntry, period?: Period): string | null {
 
 /** Full schedule for lists: 'Monatlich' / 'Monatlich · am 3.' / 'Quartal · Jan, Apr, Jul, Okt' */
 export function planDescription(plan: PlanEntry): string {
+  if (plan.frequency === 'once') return plan.dueDate ? `Einmalig · fällig ${formatIsoDate(plan.dueDate)}` : 'Einmalig';
   if (plan.frequency === 'monthly') {
     return plan.dueDay ? `Monatlich · am ${plan.dueDay === 31 ? 'Monatsletzten' : `${plan.dueDay}.`}` : 'Monatlich';
   }

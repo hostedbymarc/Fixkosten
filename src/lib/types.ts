@@ -3,7 +3,8 @@
 
 export type Period = string; // 'YYYY-MM'
 
-export type Frequency = 'monthly' | 'quarterly' | 'semiannual' | 'annual';
+/** 'once': a single payment on `dueDate` – never spread, never part of the fixed costs */
+export type Frequency = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'once';
 export type Kind = 'expense' | 'savings';
 
 export interface Category {
@@ -21,6 +22,17 @@ export interface PlanEntry {
   frequency: Frequency;
   dueMonths: number[]; // 1–12; for monthly all twelve
   dueDay?: number; // 1–31, 31 = last day of the month
+  /** 'once' only: 'YYYY-MM-DD'; validFrom, dueMonths and dueDay follow from it */
+  dueDate?: string;
+  /** dated change ('YYYY-MM-DD'); validFrom is its month. Empty for the first entry. */
+  changedOn?: string;
+  /** optional reason of a change, e.g. 'Indexanpassung' */
+  reason?: string;
+  /**
+   * When a dated change was entered (ISO). Ticks set before that moment were
+   * made against the old plan and show the new plan; later ticks keep their snapshot.
+   */
+  recordedAt?: string;
 }
 
 /** Closed gap between an archive and a restore (inclusive months). */

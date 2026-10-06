@@ -66,7 +66,7 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
           <MonthCloseSection ds={ds} periods={periods} />
           <TrendSection ds={ds} periods={periods} today={today} months={months} />
           <PlanActualSection ds={ds} periods={periods} today={today} />
-          <OptimizationSection ds={ds} />
+          <OptimizationSection ds={ds} today={today} />
         </div>
       </div>
     </div>

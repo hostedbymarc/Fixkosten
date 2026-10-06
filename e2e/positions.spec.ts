@@ -62,8 +62,9 @@ test.describe('Positionen verwalten', () => {
     await expect(mode.getByRole('radio', { name: /Ab wann gilt das/ })).toBeChecked();
     await mode.getByLabel('Gilt ab').selectOption({ label: 'November 2026' });
     await form.getByRole('button', { name: 'Speichern' }).click();
-    await expect(app.getByTestId('detail-timeline')).toContainText('ab November 2026');
-    await expect(app.getByTestId('detail-timeline')).toContainText('Geändert ab November 2026');
+    // the history shows the change with its date (first of the month for „Ab wann gilt das?“)
+    await expect(app.getByTestId('detail-timeline')).toContainText('ab 01.11.2026');
+    await expect(app.getByTestId('detail-timeline')).toContainText(eur('€ 10 → € 8'));
     await app.keyboard.press('Escape');
 
     await goTo(app, 'monat');
@@ -82,7 +83,9 @@ test.describe('Positionen verwalten', () => {
     await form.getByRole('radio', { name: /Tippfehler korrigieren/ }).check();
     await form.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByTestId('detail-amount')).toHaveText(eur('€ 8'));
-    await expect(app.getByTestId('detail-timeline')).toContainText('Tippfehler korrigiert');
+    // a typo correction is no change: no history entry
+    await expect(app.getByTestId('history-entry')).toHaveCount(1);
+    await expect(app.getByTestId('detail-timeline')).toContainText(eur('€ 8'));
     await app.keyboard.press('Escape');
     await expect(listRow(app, 'Handy')).toContainText(eur('€ 8'));
 

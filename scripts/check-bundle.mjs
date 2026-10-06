@@ -19,9 +19,13 @@ function files(dir) {
   });
 }
 
+// UI copy that happens to contain a generic seed word (dictated hint in the position form)
+const allowedPhrases = ['strom-nachzahlung'];
+
 const leaks = [];
 for (const file of files('dist').filter((f) => /\.(js|css|html|json|webmanifest|map)$/.test(f))) {
-  const text = readFileSync(file, 'utf8').toLowerCase();
+  let text = readFileSync(file, 'utf8').toLowerCase();
+  for (const phrase of allowedPhrases) text = text.split(phrase).join('');
   for (const term of terms) if (text.includes(term.toLowerCase())) leaks.push(`${file}: "${term}"`);
 }
 
