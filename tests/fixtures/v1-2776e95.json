@@ -1,0 +1,797 @@
+{
+ "source": "buildSeed() + ensureSeeded() from commit 2776e95 (schema v1)",
+ "categories": [
+  {
+   "id": "cat-wohnen",
+   "name": "Wohnen & Leben",
+   "kind": "expense",
+   "color": "#5B5BD6",
+   "sortOrder": 0
+  },
+  {
+   "id": "cat-abos",
+   "name": "Abos & Freizeit",
+   "kind": "expense",
+   "color": "#9494E8",
+   "sortOrder": 1
+  },
+  {
+   "id": "cat-banking",
+   "name": "Banking & Finanzen",
+   "kind": "expense",
+   "color": "#52525B",
+   "sortOrder": 2
+  },
+  {
+   "id": "cat-mobilitaet",
+   "name": "Mobilität",
+   "kind": "expense",
+   "color": "#A1A1AA",
+   "sortOrder": 3
+  },
+  {
+   "id": "cat-investing",
+   "name": "Investing",
+   "kind": "savings",
+   "color": "#27272A",
+   "sortOrder": 4
+  }
+ ],
+ "positions": [
+  {
+   "id": "pos-kredit-1220",
+   "name": "Kredit 1220",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 735
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 0
+  },
+  {
+   "id": "pos-bk-1220",
+   "name": "BK 1220",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 169
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 1
+  },
+  {
+   "id": "pos-miete",
+   "name": "Miete",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 1008
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 2
+  },
+  {
+   "id": "pos-strom",
+   "name": "Strom",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": true,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 64
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 3
+  },
+  {
+   "id": "pos-haushaltsversicherung",
+   "name": "Haushaltsversicherung",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 17
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 4
+  },
+  {
+   "id": "pos-internet",
+   "name": "Internet",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 23
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 5
+  },
+  {
+   "id": "pos-handy",
+   "name": "Handy",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 10
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 6
+  },
+  {
+   "id": "pos-lebensmittel",
+   "name": "Lebensmittel & Co",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": true,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 480
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 7
+  },
+  {
+   "id": "pos-bk-1160",
+   "name": "BK 1160",
+   "categoryId": "cat-wohnen",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 87
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 8
+  },
+  {
+   "id": "pos-baurechtszins",
+   "name": "Baurechtszins",
+   "categoryId": "cat-wohnen",
+   "frequency": "semiannual",
+   "dueMonths": [
+    6,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 262.02
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 9
+  },
+  {
+   "id": "pos-icloud",
+   "name": "iCloud",
+   "categoryId": "cat-abos",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 3
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 10
+  },
+  {
+   "id": "pos-gym",
+   "name": "Gym",
+   "categoryId": "cat-abos",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 35
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 11
+  },
+  {
+   "id": "pos-spotify",
+   "name": "Spotify",
+   "categoryId": "cat-abos",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 11
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 12
+  },
+  {
+   "id": "pos-claude",
+   "name": "Claude",
+   "categoryId": "cat-abos",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 22
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 13
+  },
+  {
+   "id": "pos-parqet",
+   "name": "Parqet",
+   "categoryId": "cat-abos",
+   "frequency": "annual",
+   "dueMonths": [
+    12
+   ],
+   "dueDay": 1,
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 87
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 14
+  },
+  {
+   "id": "pos-depotentgelt",
+   "name": "Depotentgelt",
+   "categoryId": "cat-banking",
+   "frequency": "quarterly",
+   "dueMonths": [
+    1,
+    4,
+    7,
+    10
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 35
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 15
+  },
+  {
+   "id": "pos-kontofuehrung",
+   "name": "Entgelt Kontoführung",
+   "categoryId": "cat-banking",
+   "frequency": "quarterly",
+   "dueMonths": [
+    1,
+    4,
+    7,
+    10
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 14
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 16
+  },
+  {
+   "id": "pos-amex-gebuehr",
+   "name": "Amex Gebühr",
+   "categoryId": "cat-banking",
+   "frequency": "annual",
+   "dueMonths": [
+    10
+   ],
+   "dueDay": 3,
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 690
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 17
+  },
+  {
+   "id": "pos-amex-mr-turbo",
+   "name": "Amex Membership Rewards Turbo",
+   "categoryId": "cat-banking",
+   "frequency": "annual",
+   "dueMonths": [
+    9
+   ],
+   "dueDay": 28,
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 15
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 18
+  },
+  {
+   "id": "pos-steuerberater",
+   "name": "Steuerberater",
+   "categoryId": "cat-banking",
+   "frequency": "annual",
+   "dueMonths": [
+    2
+   ],
+   "dueDay": 14,
+   "isVariable": true,
+   "note": "ca. 1.260",
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 1260
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 19
+  },
+  {
+   "id": "pos-offi",
+   "name": "Offi (Jahreskarte)",
+   "categoryId": "cat-mobilitaet",
+   "frequency": "annual",
+   "dueMonths": [
+    2
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 686
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 20
+  },
+  {
+   "id": "pos-cash",
+   "name": "Cash",
+   "categoryId": "cat-investing",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 400
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 21
+  },
+  {
+   "id": "pos-tr-sparplaene",
+   "name": "TR Sparpläne",
+   "categoryId": "cat-investing",
+   "frequency": "monthly",
+   "dueMonths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "isVariable": false,
+   "amountHistory": [
+    {
+     "validFrom": "2026-10",
+     "amount": 400
+    }
+   ],
+   "createdAt": "2026-10-01T08:00:00.000Z",
+   "sortOrder": 22
+  }
+ ],
+ "payments": [
+  {
+   "id": "pay-pos-kredit-1220-2026-10",
+   "positionId": "pos-kredit-1220",
+   "period": "2026-10",
+   "plannedAmount": 735,
+   "actualAmount": 735,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-bk-1220-2026-10",
+   "positionId": "pos-bk-1220",
+   "period": "2026-10",
+   "plannedAmount": 169,
+   "actualAmount": 169,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-miete-2026-10",
+   "positionId": "pos-miete",
+   "period": "2026-10",
+   "plannedAmount": 1008,
+   "actualAmount": 1008,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-strom-2026-10",
+   "positionId": "pos-strom",
+   "period": "2026-10",
+   "plannedAmount": 64,
+   "actualAmount": 64,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-haushaltsversicherung-2026-10",
+   "positionId": "pos-haushaltsversicherung",
+   "period": "2026-10",
+   "plannedAmount": 17,
+   "actualAmount": 17,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-internet-2026-10",
+   "positionId": "pos-internet",
+   "period": "2026-10",
+   "plannedAmount": 23,
+   "actualAmount": 23,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-handy-2026-10",
+   "positionId": "pos-handy",
+   "period": "2026-10",
+   "plannedAmount": 10,
+   "actualAmount": 10,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-lebensmittel-2026-10",
+   "positionId": "pos-lebensmittel",
+   "period": "2026-10",
+   "plannedAmount": 480,
+   "actualAmount": 480,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-bk-1160-2026-10",
+   "positionId": "pos-bk-1160",
+   "period": "2026-10",
+   "plannedAmount": 87,
+   "actualAmount": 87,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-icloud-2026-10",
+   "positionId": "pos-icloud",
+   "period": "2026-10",
+   "plannedAmount": 3,
+   "actualAmount": 3,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-gym-2026-10",
+   "positionId": "pos-gym",
+   "period": "2026-10",
+   "plannedAmount": 35,
+   "actualAmount": 35,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-spotify-2026-10",
+   "positionId": "pos-spotify",
+   "period": "2026-10",
+   "plannedAmount": 11,
+   "actualAmount": 11,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-claude-2026-10",
+   "positionId": "pos-claude",
+   "period": "2026-10",
+   "plannedAmount": 22,
+   "actualAmount": 22,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-kontofuehrung-2026-10",
+   "positionId": "pos-kontofuehrung",
+   "period": "2026-10",
+   "plannedAmount": 14,
+   "actualAmount": 14,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-amex-gebuehr-2026-10",
+   "positionId": "pos-amex-gebuehr",
+   "period": "2026-10",
+   "plannedAmount": 690,
+   "actualAmount": 690,
+   "paidAt": "2026-10-03T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-cash-2026-10",
+   "positionId": "pos-cash",
+   "period": "2026-10",
+   "plannedAmount": 400,
+   "actualAmount": 400,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  },
+  {
+   "id": "pay-pos-tr-sparplaene-2026-10",
+   "positionId": "pos-tr-sparplaene",
+   "period": "2026-10",
+   "plannedAmount": 400,
+   "actualAmount": 400,
+   "paidAt": "2026-10-01T08:00:00.000Z"
+  }
+ ],
+ "reminders": [
+  {
+   "id": "rem-strom-gas",
+   "month": 11,
+   "text": "Jahresabrechnung Strom/Gas/Wiener Netze"
+  },
+  {
+   "id": "rem-bk-1220",
+   "month": 6,
+   "text": "Jahresabrechnung BK 1220"
+  }
+ ],
+ "meta": [
+  {
+   "key": "schemaVersion",
+   "value": 1
+  },
+  {
+   "key": "seededAt",
+   "value": "2026-10-05T12:40:00.000Z"
+  },
+  {
+   "key": "trackingStart",
+   "value": "2026-10"
+  }
+ ]
+}
