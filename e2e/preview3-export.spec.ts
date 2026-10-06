@@ -15,6 +15,7 @@ import { eur, expect, FIXTURE, goTo, row, test, TODAY } from './fixtures';
 const PREVIEW3 = resolve('.legacy/0d997aa/dist');
 const MAIN = resolve('dist');
 const BOOKMARKLET = readFileSync('docs/export-preview3-bookmarklet.txt', 'utf8').trim();
+const SHORTCUT = readFileSync('docs/export-preview3-shortcut.js', 'utf8');
 const TABLES = ['categories', 'positions', 'payments', 'oneOffs', 'monthClose', 'changeLog', 'reminders'] as const;
 const OCT = '2026-10';
 
@@ -141,6 +142,17 @@ test.describe('Preview 3 → Bookmarklet → main', () => {
     expect(Object.keys(file.data)).toEqual([...TABLES]);
     expect(file.data).toEqual(content(preview)); // identical content, no meta
     expect(file.data).not.toHaveProperty('meta');
+
+    // iOS Shortcuts "Run JavaScript on Web Page" variant: hands the JSON to completion()
+    const viaShortcut = JSON.parse(
+      await page.evaluate(
+        (code) => new Promise<string>((done) => new Function('completion', code)(done)),
+        SHORTCUT,
+      ),
+    );
+    expect(Object.keys(viaShortcut)).toEqual(Object.keys(file));
+    expect(viaShortcut).toMatchObject({ format: 'fixkosten-backup', schemaVersion: 3 });
+    expect(viaShortcut.data).toEqual(file.data);
 
     // control values on the exported data
     const ds = file.data as Dataset;
