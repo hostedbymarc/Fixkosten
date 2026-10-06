@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
+import { HISTORY, importHistory, openAnalyse } from './analyse-helpers';
 import { animationsDone, expect, goTo, test } from './fixtures';
 
 const DIR = 'docs/screenshots/phase-2';
@@ -83,4 +85,51 @@ test('Screenshots Sicherung', async ({ app }) => {
   await app.getByTestId('backup-file').setInputFiles('tests/fixtures/seed.json');
   await animationsDone(app, 'bottom-sheet');
   await app.screenshot({ path: `docs/screenshots/backup/${test.info().project.name}-import.png` });
+});
+
+test.describe('Screenshots Phase 3 – Analyse', () => {
+  const SECTIONS = ['forecast', 'distribution', 'monthclose', 'trend', 'planactual', 'optimizations'];
+
+  async function shoot(page: Page, state: string) {
+    await page.evaluate(() => document.fonts.ready);
+    await page.addStyleTag({ content: '[data-testid=tabbar]{display:none!important}' });
+    for (const id of SECTIONS) {
+      const section = page.getByTestId(id);
+      await section.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      await section.screenshot({ path: `docs/screenshots/phase-3/${test.info().project.name}-${state}-${id}.png` });
+    }
+  }
+
+  test.beforeEach(() => {
+    test.skip(!['iphone-15', 'desktop'].includes(test.info().project.name), 'iPhone and desktop only');
+  });
+
+  test('1 Monat Daten (Seed + Monatsabschluss Oktober)', async ({ app }) => {
+    await app.getByTestId('free-tile').click();
+    await app.getByLabel('Netto-Gehalt').fill('5000');
+    await app.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
+    await app.getByRole('button', { name: 'Speichern' }).click();
+    await openAnalyse(app);
+    await shoot(app, '1m');
+  });
+
+  test('6 Monate Daten', async ({ page }) => {
+    const file = JSON.parse(readFileSync(HISTORY, 'utf8'));
+    const keep = (p: string) => p >= '2026-05';
+    file.data.payments = file.data.payments.filter((p: { period: string }) => keep(p.period));
+    file.data.monthClose = file.data.monthClose.filter((p: { period: string }) => keep(p.period));
+    file.data.oneOffs = file.data.oneOffs.filter((p: { period: string }) => keep(p.period));
+    file.data.changeLog = file.data.changeLog.filter((c: { validFrom?: string }) => c.validFrom && keep(c.validFrom));
+    await importHistory(page, { name: 'history-6m.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+    await openAnalyse(page);
+    await shoot(page, '6m');
+  });
+
+  test('24 Monate Daten', async ({ page }) => {
+    await importHistory(page);
+    await openAnalyse(page);
+    await page.getByTestId('range').getByRole('radio', { name: 'Gesamter Zeitraum' }).click();
+    await page.getByTestId('distribution').locator('li[data-category="cat-banking"] > button').click();
+    await shoot(page, '24m');
+  });
 });

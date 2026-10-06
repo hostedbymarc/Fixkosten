@@ -76,3 +76,18 @@ const pct1 = new Intl.NumberFormat('de-AT', {
 export function formatPercent(ratio: number): string {
   return pct1.format(ratio);
 }
+
+const compact = new Intl.NumberFormat('de-AT', { maximumFractionDigits: 1 });
+
+/** Axis label: '€ 3,4k', '€ 850', '−€ 1,2k' */
+export function formatCompactEUR(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 && Math.round(abs) !== 0 ? '−' : '';
+  const body = abs >= 1000 ? `${compact.format(abs / 1000)}k` : String(Math.round(abs));
+  return `${sign}€ ${body}`;
+}
+
+/** Axis label for ratios: 0.16 → '16 %' */
+export function formatPercentShort(ratio: number): string {
+  return `${Math.round(ratio * 100)} %`;
+}

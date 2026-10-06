@@ -1,0 +1,5527 @@
+{
+ "format": "fixkosten-backup",
+ "schemaVersion": 3,
+ "exportedAt": "2026-10-05T10:00:00.000Z",
+ "data": {
+  "categories": [
+   {
+    "id": "cat-immos",
+    "name": "Meine Immos",
+    "kind": "expense",
+    "color": "#2E2E8A",
+    "sortOrder": 0
+   },
+   {
+    "id": "cat-wohnen",
+    "name": "Wohnen & Leben",
+    "kind": "expense",
+    "color": "#5B5BD6",
+    "sortOrder": 1
+   },
+   {
+    "id": "cat-abos",
+    "name": "Abos & Freizeit",
+    "kind": "expense",
+    "color": "#9494E8",
+    "sortOrder": 2
+   },
+   {
+    "id": "cat-banking",
+    "name": "Banking & Finanzen",
+    "kind": "expense",
+    "color": "#52525B",
+    "sortOrder": 3
+   },
+   {
+    "id": "cat-mobilitaet",
+    "name": "Mobilität",
+    "kind": "expense",
+    "color": "#A1A1AA",
+    "sortOrder": 4
+   },
+   {
+    "id": "cat-investing",
+    "name": "Investing",
+    "kind": "savings",
+    "color": "#27272A",
+    "sortOrder": 5
+   }
+  ],
+  "positions": [
+   {
+    "id": "pos-kredit-1220",
+    "name": "Kredit 1220",
+    "categoryId": "cat-immos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 735,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 0
+   },
+   {
+    "id": "pos-bk-1220",
+    "name": "BK 1220",
+    "categoryId": "cat-immos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 155,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-07",
+      "amount": 169,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 1
+   },
+   {
+    "id": "pos-bk-1160",
+    "name": "BK 1160",
+    "categoryId": "cat-immos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 87,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 2
+   },
+   {
+    "id": "pos-baurechtszins",
+    "name": "Baurechtszins",
+    "categoryId": "cat-immos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 262.02,
+      "frequency": "semiannual",
+      "dueMonths": [
+       6,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 3
+   },
+   {
+    "id": "pos-miete",
+    "name": "Miete",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 950,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-03",
+      "amount": 980,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2026-01",
+      "amount": 1008,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 4
+   },
+   {
+    "id": "pos-strom",
+    "name": "Strom",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 58,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-12",
+      "amount": 64,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 5
+   },
+   {
+    "id": "pos-haushaltsversicherung",
+    "name": "Haushaltsversicherung",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 17,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 6
+   },
+   {
+    "id": "pos-internet",
+    "name": "Internet",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 23,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 7
+   },
+   {
+    "id": "pos-handy",
+    "name": "Handy",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 15,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-04",
+      "amount": 10,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 8
+   },
+   {
+    "id": "pos-lebensmittel",
+    "name": "Lebensmittel & Co",
+    "categoryId": "cat-wohnen",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 450,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-09",
+      "amount": 480,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 9
+   },
+   {
+    "id": "pos-icloud",
+    "name": "iCloud",
+    "categoryId": "cat-abos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 3,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 10
+   },
+   {
+    "id": "pos-gym",
+    "name": "Gym",
+    "categoryId": "cat-abos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 32,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2026-01",
+      "amount": 35,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 11
+   },
+   {
+    "id": "pos-spotify",
+    "name": "Spotify",
+    "categoryId": "cat-abos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 10,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-06",
+      "amount": 11,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 12
+   },
+   {
+    "id": "pos-claude",
+    "name": "Claude",
+    "categoryId": "cat-abos",
+    "history": [
+     {
+      "validFrom": "2025-04",
+      "amount": 22,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2025-04-01T09:00:00.000Z",
+    "sortOrder": 13
+   },
+   {
+    "id": "pos-parqet",
+    "name": "Parqet",
+    "categoryId": "cat-abos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 87,
+      "frequency": "annual",
+      "dueMonths": [
+       12
+      ],
+      "dueDay": 1
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 14
+   },
+   {
+    "id": "pos-depotentgelt",
+    "name": "Depotentgelt",
+    "categoryId": "cat-banking",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 35,
+      "frequency": "quarterly",
+      "dueMonths": [
+       1,
+       4,
+       7,
+       10
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 15
+   },
+   {
+    "id": "pos-kontofuehrung",
+    "name": "Entgelt Kontoführung",
+    "categoryId": "cat-banking",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 14,
+      "frequency": "quarterly",
+      "dueMonths": [
+       1,
+       4,
+       7,
+       10
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 16
+   },
+   {
+    "id": "pos-amex-gebuehr",
+    "name": "Amex Gebühr",
+    "categoryId": "cat-banking",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 690,
+      "frequency": "annual",
+      "dueMonths": [
+       10
+      ],
+      "dueDay": 3
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 17
+   },
+   {
+    "id": "pos-amex-mr-turbo",
+    "name": "Amex Membership Rewards Turbo",
+    "categoryId": "cat-banking",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 15,
+      "frequency": "annual",
+      "dueMonths": [
+       9
+      ],
+      "dueDay": 28
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 18
+   },
+   {
+    "id": "pos-steuerberater",
+    "name": "Steuerberater",
+    "categoryId": "cat-banking",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 1260,
+      "frequency": "annual",
+      "dueMonths": [
+       2
+      ],
+      "dueDay": 14
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 19,
+    "note": "ca. 1.260"
+   },
+   {
+    "id": "pos-offi",
+    "name": "Offi (Jahreskarte)",
+    "categoryId": "cat-mobilitaet",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 590,
+      "frequency": "annual",
+      "dueMonths": [
+       2
+      ]
+     },
+     {
+      "validFrom": "2026-02",
+      "amount": 686,
+      "frequency": "annual",
+      "dueMonths": [
+       2
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 20
+   },
+   {
+    "id": "pos-cash",
+    "name": "Cash",
+    "categoryId": "cat-investing",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 400,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 21
+   },
+   {
+    "id": "pos-tr-sparplaene",
+    "name": "TR Sparpläne",
+    "categoryId": "cat-investing",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 300,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "validFrom": "2025-10",
+      "amount": 400,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "sortOrder": 22
+   },
+   {
+    "id": "pos-netflix",
+    "name": "Netflix",
+    "categoryId": "cat-abos",
+    "history": [
+     {
+      "validFrom": "2024-11",
+      "amount": 13,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2024-11-01T09:00:00.000Z",
+    "archivedAt": "2025-09-10T09:00:00.000Z",
+    "sortOrder": 23
+   }
+  ],
+  "payments": [
+   {
+    "id": "pay-pos-kredit-1220-2024-11",
+    "positionId": "pos-kredit-1220",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2024-11",
+    "positionId": "pos-bk-1220",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2024-11",
+    "positionId": "pos-bk-1160",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2024-11",
+    "positionId": "pos-miete",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 950,
+    "actualAmount": 950,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2024-11",
+    "positionId": "pos-strom",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 52.5,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2024-11",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2024-11",
+    "positionId": "pos-internet",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2024-11",
+    "positionId": "pos-handy",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2024-11",
+    "positionId": "pos-lebensmittel",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 412,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2024-11",
+    "positionId": "pos-icloud",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2024-11",
+    "positionId": "pos-gym",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2024-11",
+    "positionId": "pos-spotify",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2024-11",
+    "positionId": "pos-cash",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2024-11",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2024-11",
+    "positionId": "pos-netflix",
+    "period": "2024-11",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2024-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2024-12",
+    "positionId": "pos-kredit-1220",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2024-12",
+    "positionId": "pos-bk-1220",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2024-12",
+    "positionId": "pos-bk-1160",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-baurechtszins-2024-12",
+    "positionId": "pos-baurechtszins",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 262.02,
+    "actualAmount": 262.02,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2024-12",
+    "positionId": "pos-miete",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 950,
+    "actualAmount": 950,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2024-12",
+    "positionId": "pos-strom",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 60.2,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2024-12",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2024-12",
+    "positionId": "pos-internet",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2024-12",
+    "positionId": "pos-handy",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2024-12",
+    "positionId": "pos-lebensmittel",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 450,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2024-12",
+    "positionId": "pos-icloud",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2024-12",
+    "positionId": "pos-gym",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2024-12",
+    "positionId": "pos-spotify",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-parqet-2024-12",
+    "positionId": "pos-parqet",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2024-12",
+    "positionId": "pos-cash",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2024-12",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2024-12",
+    "positionId": "pos-netflix",
+    "period": "2024-12",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2024-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-01",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-01",
+    "positionId": "pos-bk-1220",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-01",
+    "positionId": "pos-bk-1160",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-01",
+    "positionId": "pos-miete",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 950,
+    "actualAmount": 950,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-01",
+    "positionId": "pos-strom",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 55.8,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-01",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-01",
+    "positionId": "pos-internet",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-01",
+    "positionId": "pos-handy",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-01",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 488,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-01",
+    "positionId": "pos-icloud",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-01",
+    "positionId": "pos-gym",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-01",
+    "positionId": "pos-spotify",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2025-01",
+    "positionId": "pos-depotentgelt",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2025-01",
+    "positionId": "pos-kontofuehrung",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-01",
+    "positionId": "pos-cash",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-01",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-01",
+    "positionId": "pos-netflix",
+    "period": "2025-01",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-02",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-02",
+    "positionId": "pos-bk-1220",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-02",
+    "positionId": "pos-bk-1160",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-02",
+    "positionId": "pos-miete",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 950,
+    "actualAmount": 950,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-02",
+    "positionId": "pos-strom",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 63.5,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-02",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-02",
+    "positionId": "pos-internet",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-02",
+    "positionId": "pos-handy",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-02",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 440.5,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-02",
+    "positionId": "pos-icloud",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-02",
+    "positionId": "pos-gym",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-02",
+    "positionId": "pos-spotify",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-steuerberater-2025-02",
+    "positionId": "pos-steuerberater",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 1260,
+    "actualAmount": 1195,
+    "paidAt": "2025-02-14T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-offi-2025-02",
+    "positionId": "pos-offi",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 590,
+    "actualAmount": 590,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-02",
+    "positionId": "pos-cash",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-02",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-02",
+    "positionId": "pos-netflix",
+    "period": "2025-02",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-03",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-03",
+    "positionId": "pos-bk-1220",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-03",
+    "positionId": "pos-bk-1160",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-03",
+    "positionId": "pos-miete",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-03",
+    "positionId": "pos-strom",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 59.1,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-03",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-03",
+    "positionId": "pos-internet",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-03",
+    "positionId": "pos-handy",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-03",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 478.5,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-03",
+    "positionId": "pos-icloud",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-03",
+    "positionId": "pos-gym",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-03",
+    "positionId": "pos-spotify",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-03",
+    "positionId": "pos-cash",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-03",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-03",
+    "positionId": "pos-netflix",
+    "period": "2025-03",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-04",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-04",
+    "positionId": "pos-bk-1220",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-04",
+    "positionId": "pos-bk-1160",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-04",
+    "positionId": "pos-miete",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-04",
+    "positionId": "pos-strom",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 54.7,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-04",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-04",
+    "positionId": "pos-internet",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-04",
+    "positionId": "pos-handy",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-04",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 431,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-04",
+    "positionId": "pos-icloud",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-04",
+    "positionId": "pos-gym",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-04",
+    "positionId": "pos-spotify",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-04",
+    "positionId": "pos-claude",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2025-04",
+    "positionId": "pos-depotentgelt",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2025-04",
+    "positionId": "pos-kontofuehrung",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-04",
+    "positionId": "pos-cash",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-04",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-04",
+    "positionId": "pos-netflix",
+    "period": "2025-04",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-05",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-05",
+    "positionId": "pos-bk-1220",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-05",
+    "positionId": "pos-bk-1160",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-05",
+    "positionId": "pos-miete",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-05",
+    "positionId": "pos-strom",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 62.4,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-05",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-05",
+    "positionId": "pos-internet",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-05",
+    "positionId": "pos-handy",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-05",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 469,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-05",
+    "positionId": "pos-icloud",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-05",
+    "positionId": "pos-gym",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-05",
+    "positionId": "pos-spotify",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-05",
+    "positionId": "pos-claude",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-05",
+    "positionId": "pos-cash",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-05",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-05",
+    "positionId": "pos-netflix",
+    "period": "2025-05",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-06",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-06",
+    "positionId": "pos-bk-1220",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 155,
+    "actualAmount": 155,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-06",
+    "positionId": "pos-bk-1160",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-baurechtszins-2025-06",
+    "positionId": "pos-baurechtszins",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 262.02,
+    "actualAmount": 262.02,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-06",
+    "positionId": "pos-miete",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-06",
+    "positionId": "pos-strom",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 58,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-06",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-06",
+    "positionId": "pos-internet",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-06",
+    "positionId": "pos-handy",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-06",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 421.5,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-06",
+    "positionId": "pos-icloud",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-06",
+    "positionId": "pos-gym",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-06",
+    "positionId": "pos-spotify",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-06",
+    "positionId": "pos-claude",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-06",
+    "positionId": "pos-cash",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-06",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-06",
+    "positionId": "pos-netflix",
+    "period": "2025-06",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-07",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-07",
+    "positionId": "pos-bk-1220",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-07",
+    "positionId": "pos-bk-1160",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-07",
+    "positionId": "pos-miete",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-07",
+    "positionId": "pos-strom",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 53.6,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-07",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-07",
+    "positionId": "pos-internet",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-07",
+    "positionId": "pos-handy",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-07",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 459.5,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-07",
+    "positionId": "pos-icloud",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-07",
+    "positionId": "pos-gym",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-07",
+    "positionId": "pos-spotify",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-07",
+    "positionId": "pos-claude",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2025-07",
+    "positionId": "pos-depotentgelt",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2025-07",
+    "positionId": "pos-kontofuehrung",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-07",
+    "positionId": "pos-cash",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-07",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-07",
+    "positionId": "pos-netflix",
+    "period": "2025-07",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-08",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-08",
+    "positionId": "pos-bk-1220",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-08",
+    "positionId": "pos-bk-1160",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-08",
+    "positionId": "pos-miete",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-08",
+    "positionId": "pos-strom",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 61.3,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-08",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-08",
+    "positionId": "pos-internet",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-08",
+    "positionId": "pos-handy",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-08",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 450,
+    "actualAmount": 412,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-08",
+    "positionId": "pos-icloud",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-08",
+    "positionId": "pos-gym",
+    "period": "2025-08",
+    "status": "skipped",
+    "plannedAmount": 32,
+    "actualAmount": 0,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-08",
+    "positionId": "pos-spotify",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-08",
+    "positionId": "pos-claude",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-08",
+    "positionId": "pos-cash",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-08",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-netflix-2025-08",
+    "positionId": "pos-netflix",
+    "period": "2025-08",
+    "status": "paid",
+    "plannedAmount": 13,
+    "actualAmount": 13,
+    "paidAt": "2025-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-09",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-09",
+    "positionId": "pos-bk-1220",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-09",
+    "positionId": "pos-bk-1160",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-09",
+    "positionId": "pos-miete",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-09",
+    "positionId": "pos-strom",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 56.9,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-09",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-09",
+    "positionId": "pos-internet",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-09",
+    "positionId": "pos-handy",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-09",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 480,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-09",
+    "positionId": "pos-icloud",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-09",
+    "positionId": "pos-gym",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-09",
+    "positionId": "pos-spotify",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-09",
+    "positionId": "pos-claude",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-amex-mr-turbo-2025-09",
+    "positionId": "pos-amex-mr-turbo",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2025-09-28T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-09",
+    "positionId": "pos-cash",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-09",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-09",
+    "status": "paid",
+    "plannedAmount": 300,
+    "actualAmount": 300,
+    "paidAt": "2025-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-10",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-10",
+    "positionId": "pos-bk-1220",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-10",
+    "positionId": "pos-bk-1160",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-10",
+    "positionId": "pos-miete",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-10",
+    "positionId": "pos-strom",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 52.5,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-10",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-10",
+    "positionId": "pos-internet",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-10",
+    "positionId": "pos-handy",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-10",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 518,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-10",
+    "positionId": "pos-icloud",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-10",
+    "positionId": "pos-gym",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-10",
+    "positionId": "pos-spotify",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-10",
+    "positionId": "pos-claude",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2025-10",
+    "positionId": "pos-depotentgelt",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2025-10",
+    "positionId": "pos-kontofuehrung",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-amex-gebuehr-2025-10",
+    "positionId": "pos-amex-gebuehr",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 690,
+    "actualAmount": 690,
+    "paidAt": "2025-10-03T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-10",
+    "positionId": "pos-cash",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-10",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-10",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-11",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-11",
+    "positionId": "pos-bk-1220",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-11",
+    "positionId": "pos-bk-1160",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-11",
+    "positionId": "pos-miete",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-11",
+    "positionId": "pos-strom",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 58,
+    "actualAmount": 60.2,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-11",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-11",
+    "positionId": "pos-internet",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-11",
+    "positionId": "pos-handy",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-11",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 470.5,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-11",
+    "positionId": "pos-icloud",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-11",
+    "positionId": "pos-gym",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-11",
+    "positionId": "pos-spotify",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-11",
+    "positionId": "pos-claude",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-11",
+    "positionId": "pos-cash",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-11",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-11",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-11-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2025-12",
+    "positionId": "pos-kredit-1220",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2025-12",
+    "positionId": "pos-bk-1220",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2025-12",
+    "positionId": "pos-bk-1160",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-baurechtszins-2025-12",
+    "positionId": "pos-baurechtszins",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 262.02,
+    "actualAmount": 262.02,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2025-12",
+    "positionId": "pos-miete",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 980,
+    "actualAmount": 980,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2025-12",
+    "positionId": "pos-strom",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 61.8,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2025-12",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2025-12",
+    "positionId": "pos-internet",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2025-12",
+    "positionId": "pos-handy",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2025-12",
+    "positionId": "pos-lebensmittel",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 508.5,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2025-12",
+    "positionId": "pos-icloud",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2025-12",
+    "positionId": "pos-gym",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 32,
+    "actualAmount": 32,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2025-12",
+    "positionId": "pos-spotify",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2025-12",
+    "positionId": "pos-claude",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-parqet-2025-12",
+    "positionId": "pos-parqet",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2025-12",
+    "positionId": "pos-cash",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2025-12",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2025-12",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2025-12-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-01",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-01",
+    "positionId": "pos-bk-1220",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-01",
+    "positionId": "pos-bk-1160",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-01",
+    "positionId": "pos-miete",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-01",
+    "positionId": "pos-strom",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 69.5,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-01",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-01",
+    "positionId": "pos-internet",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-01",
+    "positionId": "pos-handy",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-01",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 461,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-01",
+    "positionId": "pos-icloud",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-01",
+    "positionId": "pos-gym",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-01",
+    "positionId": "pos-spotify",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-01",
+    "positionId": "pos-claude",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2026-01",
+    "positionId": "pos-depotentgelt",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2026-01",
+    "positionId": "pos-kontofuehrung",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-01",
+    "positionId": "pos-cash",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-01",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-01",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-01-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-02",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-02",
+    "positionId": "pos-bk-1220",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-02",
+    "positionId": "pos-bk-1160",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-02",
+    "positionId": "pos-miete",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-02",
+    "positionId": "pos-strom",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 65.1,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-02",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-02",
+    "positionId": "pos-internet",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-02",
+    "positionId": "pos-handy",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-02",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 499,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-02",
+    "positionId": "pos-icloud",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-02",
+    "positionId": "pos-gym",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-02",
+    "positionId": "pos-spotify",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-02",
+    "positionId": "pos-claude",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-steuerberater-2026-02",
+    "positionId": "pos-steuerberater",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 1260,
+    "actualAmount": 1340,
+    "paidAt": "2026-02-14T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-offi-2026-02",
+    "positionId": "pos-offi",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 686,
+    "actualAmount": 686,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-02",
+    "positionId": "pos-cash",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-02",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-02",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-02-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-03",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-03",
+    "positionId": "pos-bk-1220",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-03",
+    "positionId": "pos-bk-1160",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-03",
+    "positionId": "pos-miete",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-03",
+    "positionId": "pos-strom",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 60.7,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-03",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-03",
+    "positionId": "pos-internet",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-03",
+    "positionId": "pos-handy",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-03",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 451.5,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-03",
+    "positionId": "pos-icloud",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-03",
+    "positionId": "pos-gym",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-03",
+    "positionId": "pos-spotify",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-03",
+    "positionId": "pos-claude",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-03",
+    "positionId": "pos-cash",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-03",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-03",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-03-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-04",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-04",
+    "positionId": "pos-bk-1220",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-04",
+    "positionId": "pos-bk-1160",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-04",
+    "positionId": "pos-miete",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-04",
+    "positionId": "pos-strom",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 68.4,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-04",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-04",
+    "positionId": "pos-internet",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-04",
+    "positionId": "pos-handy",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-04",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 489.5,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-04",
+    "positionId": "pos-icloud",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-04",
+    "positionId": "pos-gym",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-04",
+    "positionId": "pos-spotify",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-04",
+    "positionId": "pos-claude",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2026-04",
+    "positionId": "pos-depotentgelt",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2026-04",
+    "positionId": "pos-kontofuehrung",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-04",
+    "positionId": "pos-cash",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-04",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-04",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-04-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-05",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-05",
+    "positionId": "pos-bk-1220",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-05",
+    "positionId": "pos-bk-1160",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-05",
+    "positionId": "pos-miete",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-05",
+    "positionId": "pos-strom",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 64,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-05",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-05",
+    "positionId": "pos-internet",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-05",
+    "positionId": "pos-handy",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-05",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 442,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-05",
+    "positionId": "pos-icloud",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-05",
+    "positionId": "pos-gym",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-05",
+    "positionId": "pos-spotify",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-05",
+    "positionId": "pos-claude",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-05",
+    "positionId": "pos-cash",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-05",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-05",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-05-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-06",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-06",
+    "positionId": "pos-bk-1220",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-06",
+    "positionId": "pos-bk-1160",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-baurechtszins-2026-06",
+    "positionId": "pos-baurechtszins",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 262.02,
+    "actualAmount": 262.02,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-06",
+    "positionId": "pos-miete",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-06",
+    "positionId": "pos-strom",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 59.6,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-06",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-06",
+    "positionId": "pos-internet",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-06",
+    "positionId": "pos-handy",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-06",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 480,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-06",
+    "positionId": "pos-icloud",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-06",
+    "positionId": "pos-gym",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-06",
+    "positionId": "pos-spotify",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-06",
+    "positionId": "pos-claude",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-06",
+    "positionId": "pos-cash",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-06",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-06",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-06-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-07",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-07",
+    "positionId": "pos-bk-1220",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-07",
+    "positionId": "pos-bk-1160",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-07",
+    "positionId": "pos-miete",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-07",
+    "positionId": "pos-strom",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 67.3,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-07",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-07",
+    "positionId": "pos-internet",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-07",
+    "positionId": "pos-handy",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-07",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 518,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-07",
+    "positionId": "pos-icloud",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-07",
+    "positionId": "pos-gym",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-07",
+    "positionId": "pos-spotify",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-07",
+    "positionId": "pos-claude",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-depotentgelt-2026-07",
+    "positionId": "pos-depotentgelt",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2026-07",
+    "positionId": "pos-kontofuehrung",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-07",
+    "positionId": "pos-cash",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-07",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-07",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-07-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-08",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-08",
+    "positionId": "pos-bk-1220",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-08",
+    "positionId": "pos-bk-1160",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-08",
+    "positionId": "pos-miete",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-08",
+    "positionId": "pos-strom",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 62.9,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-08",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-08",
+    "positionId": "pos-internet",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-08",
+    "positionId": "pos-handy",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-08",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 470.5,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-08",
+    "positionId": "pos-icloud",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-08",
+    "positionId": "pos-gym",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-08",
+    "positionId": "pos-spotify",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-08",
+    "positionId": "pos-claude",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-08",
+    "positionId": "pos-cash",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-08",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-08",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-08-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-09",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-09",
+    "positionId": "pos-bk-1220",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-09",
+    "positionId": "pos-bk-1160",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-09",
+    "positionId": "pos-miete",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-09",
+    "positionId": "pos-strom",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 58.5,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-09",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-09",
+    "positionId": "pos-internet",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-09",
+    "positionId": "pos-handy",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-lebensmittel-2026-09",
+    "positionId": "pos-lebensmittel",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 508.5,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-09",
+    "positionId": "pos-icloud",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-09",
+    "positionId": "pos-gym",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-09",
+    "positionId": "pos-spotify",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-09",
+    "positionId": "pos-claude",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-amex-mr-turbo-2026-09",
+    "positionId": "pos-amex-mr-turbo",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2026-09-28T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-09",
+    "positionId": "pos-cash",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-tr-sparplaene-2026-09",
+    "positionId": "pos-tr-sparplaene",
+    "period": "2026-09",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-09-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kredit-1220-2026-10",
+    "positionId": "pos-kredit-1220",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1220-2026-10",
+    "positionId": "pos-bk-1220",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-bk-1160-2026-10",
+    "positionId": "pos-bk-1160",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-miete-2026-10",
+    "positionId": "pos-miete",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-strom-2026-10",
+    "positionId": "pos-strom",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 71.4,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-haushaltsversicherung-2026-10",
+    "positionId": "pos-haushaltsversicherung",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-internet-2026-10",
+    "positionId": "pos-internet",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-handy-2026-10",
+    "positionId": "pos-handy",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-icloud-2026-10",
+    "positionId": "pos-icloud",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-gym-2026-10",
+    "positionId": "pos-gym",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-spotify-2026-10",
+    "positionId": "pos-spotify",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-claude-2026-10",
+    "positionId": "pos-claude",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-kontofuehrung-2026-10",
+    "positionId": "pos-kontofuehrung",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-amex-gebuehr-2026-10",
+    "positionId": "pos-amex-gebuehr",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 690,
+    "actualAmount": 690,
+    "paidAt": "2026-10-03T08:00:00.000Z"
+   },
+   {
+    "id": "pay-pos-cash-2026-10",
+    "positionId": "pos-cash",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-10-01T08:00:00.000Z"
+   }
+  ],
+  "oneOffs": [
+   {
+    "id": "oo-strom-2024-11",
+    "positionId": "pos-strom",
+    "period": "2024-11",
+    "amount": -45,
+    "label": "Gutschrift Jahresabrechnung",
+    "paidAt": "2024-11-20T08:00:00.000Z"
+   },
+   {
+    "id": "oo-strom-2025-11",
+    "positionId": "pos-strom",
+    "period": "2025-11",
+    "amount": 120,
+    "label": "Nachzahlung Jahresabrechnung",
+    "paidAt": "2025-11-20T08:00:00.000Z"
+   },
+   {
+    "id": "oo-bk-1220-2025-06",
+    "positionId": "pos-bk-1220",
+    "period": "2025-06",
+    "amount": 210.5,
+    "label": "Nachzahlung Betriebskosten",
+    "paidAt": "2025-06-25T08:00:00.000Z"
+   }
+  ],
+  "monthClose": [
+   {
+    "period": "2024-11",
+    "netSalary": 4800,
+    "freeActual": 1660.5,
+    "updatedAt": "2024-12-01T18:00:00.000Z"
+   },
+   {
+    "period": "2024-12",
+    "netSalary": 4800,
+    "freeActual": 1167.78,
+    "updatedAt": "2025-01-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-01",
+    "netSalary": 4800,
+    "freeActual": 1381.2,
+    "updatedAt": "2025-02-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-02",
+    "netSalary": 4800,
+    "freeActual": -368,
+    "updatedAt": "2025-03-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-03",
+    "netSalary": 4800,
+    "freeActual": 1300.4,
+    "updatedAt": "2025-04-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-04",
+    "netSalary": 4800,
+    "freeActual": 1463.3,
+    "updatedAt": "2025-05-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-06",
+    "netSalary": 4800,
+    "freeActual": 991.98,
+    "updatedAt": "2025-07-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-07",
+    "netSalary": 4900,
+    "freeActual": 1414.9,
+    "updatedAt": "2025-08-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-08",
+    "netSalary": 4900,
+    "freeActual": 1482.7,
+    "updatedAt": "2025-09-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-09",
+    "netSalary": 4900,
+    "freeActual": 1562.1,
+    "updatedAt": "2025-10-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-10",
+    "netSalary": 4900,
+    "freeActual": 651.5,
+    "updatedAt": "2025-11-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-11",
+    "netSalary": 4900,
+    "freeActual": 1257.3,
+    "updatedAt": "2025-12-01T18:00:00.000Z"
+   },
+   {
+    "period": "2025-12",
+    "netSalary": 4900,
+    "freeActual": 935.68,
+    "updatedAt": "2026-01-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-01",
+    "netSalary": 5000,
+    "freeActual": 1291.5,
+    "updatedAt": "2026-02-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-03",
+    "netSalary": 5000,
+    "freeActual": 1535.8,
+    "updatedAt": "2026-04-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-04",
+    "netSalary": 5000,
+    "freeActual": 1388.1,
+    "updatedAt": "2026-05-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-05",
+    "netSalary": 5000,
+    "freeActual": 1436,
+    "updatedAt": "2026-06-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-06",
+    "netSalary": 5000,
+    "freeActual": 1087.38,
+    "updatedAt": "2026-07-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-07",
+    "netSalary": 5000,
+    "freeActual": 1431.7,
+    "updatedAt": "2026-08-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-08",
+    "netSalary": 5000,
+    "freeActual": 1479.6,
+    "updatedAt": "2026-09-01T18:00:00.000Z"
+   },
+   {
+    "period": "2026-09",
+    "netSalary": 5000,
+    "freeActual": 1378,
+    "updatedAt": "2026-10-01T18:00:00.000Z"
+   }
+  ],
+  "changeLog": [
+   {
+    "id": "log-pos-kredit-1220-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-kredit-1220",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 735,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-bk-1220-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-bk-1220",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 155,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-bk-1220-2025-07",
+    "at": "2025-07-01T09:00:00.000Z",
+    "positionId": "pos-bk-1220",
+    "type": "amount",
+    "validFrom": "2025-07",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 155,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-07",
+     "amount": 169,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-bk-1160-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-bk-1160",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 87,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-baurechtszins-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-baurechtszins",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 262.02,
+     "frequency": "semiannual",
+     "dueMonths": [
+      6,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-miete-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-miete",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 950,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-miete-2025-03",
+    "at": "2025-03-01T09:00:00.000Z",
+    "positionId": "pos-miete",
+    "type": "amount",
+    "validFrom": "2025-03",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 950,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-03",
+     "amount": 980,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-miete-2026-01",
+    "at": "2026-01-01T09:00:00.000Z",
+    "positionId": "pos-miete",
+    "type": "amount",
+    "validFrom": "2026-01",
+    "from": {
+     "validFrom": "2025-03",
+     "amount": 980,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2026-01",
+     "amount": 1008,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-strom-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-strom",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 58,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-strom-2025-12",
+    "at": "2025-12-01T09:00:00.000Z",
+    "positionId": "pos-strom",
+    "type": "amount",
+    "validFrom": "2025-12",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 58,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-12",
+     "amount": 64,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-haushaltsversicherung-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-haushaltsversicherung",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 17,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-internet-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-internet",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 23,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-handy-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-handy",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 15,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-handy-2025-04",
+    "at": "2025-04-01T09:00:00.000Z",
+    "positionId": "pos-handy",
+    "type": "amount",
+    "validFrom": "2025-04",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 15,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-04",
+     "amount": 10,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-lebensmittel-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-lebensmittel",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 450,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-lebensmittel-2025-09",
+    "at": "2025-09-01T09:00:00.000Z",
+    "positionId": "pos-lebensmittel",
+    "type": "amount",
+    "validFrom": "2025-09",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 450,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-09",
+     "amount": 480,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-icloud-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-icloud",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 3,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-gym-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-gym",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 32,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-gym-2026-01",
+    "at": "2026-01-01T09:00:00.000Z",
+    "positionId": "pos-gym",
+    "type": "amount",
+    "validFrom": "2026-01",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 32,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2026-01",
+     "amount": 35,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-spotify-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-spotify",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 10,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-spotify-2025-06",
+    "at": "2025-06-01T09:00:00.000Z",
+    "positionId": "pos-spotify",
+    "type": "amount",
+    "validFrom": "2025-06",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 10,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-06",
+     "amount": 11,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-claude-created",
+    "at": "2025-04-01T09:00:00.000Z",
+    "positionId": "pos-claude",
+    "type": "created",
+    "validFrom": "2025-04",
+    "to": {
+     "validFrom": "2025-04",
+     "amount": 22,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-parqet-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-parqet",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 87,
+     "frequency": "annual",
+     "dueMonths": [
+      12
+     ],
+     "dueDay": 1
+    }
+   },
+   {
+    "id": "log-pos-depotentgelt-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-depotentgelt",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 35,
+     "frequency": "quarterly",
+     "dueMonths": [
+      1,
+      4,
+      7,
+      10
+     ]
+    }
+   },
+   {
+    "id": "log-pos-kontofuehrung-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-kontofuehrung",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 14,
+     "frequency": "quarterly",
+     "dueMonths": [
+      1,
+      4,
+      7,
+      10
+     ]
+    }
+   },
+   {
+    "id": "log-pos-amex-gebuehr-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-amex-gebuehr",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 690,
+     "frequency": "annual",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 3
+    }
+   },
+   {
+    "id": "log-pos-amex-mr-turbo-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-amex-mr-turbo",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 15,
+     "frequency": "annual",
+     "dueMonths": [
+      9
+     ],
+     "dueDay": 28
+    }
+   },
+   {
+    "id": "log-pos-steuerberater-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-steuerberater",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 1260,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ],
+     "dueDay": 14
+    }
+   },
+   {
+    "id": "log-pos-offi-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-offi",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 590,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    }
+   },
+   {
+    "id": "log-pos-offi-2026-02",
+    "at": "2026-02-01T09:00:00.000Z",
+    "positionId": "pos-offi",
+    "type": "amount",
+    "validFrom": "2026-02",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 590,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    },
+    "to": {
+     "validFrom": "2026-02",
+     "amount": 686,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    }
+   },
+   {
+    "id": "log-pos-cash-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-cash",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 400,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-tr-sparplaene-created",
+    "at": "2024-11-01T09:00:00.000Z",
+    "positionId": "pos-tr-sparplaene",
+    "type": "created",
+    "validFrom": "2024-11",
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 300,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-tr-sparplaene-2025-10",
+    "at": "2025-10-01T09:00:00.000Z",
+    "positionId": "pos-tr-sparplaene",
+    "type": "amount",
+    "validFrom": "2025-10",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 300,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2025-10",
+     "amount": 400,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "log-pos-netflix-archived",
+    "at": "2025-09-10T09:00:00.000Z",
+    "positionId": "pos-netflix",
+    "type": "archived"
+   },
+   {
+    "id": "log-pos-strom-typo",
+    "at": "2024-11-03T09:00:00.000Z",
+    "positionId": "pos-strom",
+    "type": "corrected",
+    "validFrom": "2024-11",
+    "from": {
+     "validFrom": "2024-11",
+     "amount": 85,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    },
+    "to": {
+     "validFrom": "2024-11",
+     "amount": 58,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   }
+  ],
+  "reminders": [
+   {
+    "id": "rem-strom-gas",
+    "month": 11,
+    "text": "Jahresabrechnung Strom/Gas/Wiener Netze"
+   },
+   {
+    "id": "rem-bk-1220",
+    "month": 6,
+    "text": "Jahresabrechnung BK 1220"
+   }
+  ]
+ }
+}
