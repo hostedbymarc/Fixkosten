@@ -6,6 +6,11 @@ const seed = JSON.parse(readFileSync(new URL('../tests/fixtures/seed.json', impo
 const terms = new Set(['Kredit 1220', 'Baurechtszins', '1008', '262.02', '262,02']);
 for (const p of seed.data.positions) terms.add(p.name);
 for (const r of seed.data.reminders) terms.add(r.text);
+// synthetic 24-month history (tests and screenshots only)
+const history = JSON.parse(readFileSync(new URL('../tests/fixtures/history-24m.json', import.meta.url), 'utf8'));
+for (const p of history.data.positions) terms.add(p.name);
+for (const o of history.data.oneOffs) terms.add(o.label);
+terms.add('history-24m');
 
 function files(dir) {
   return readdirSync(dir).flatMap((f) => {
