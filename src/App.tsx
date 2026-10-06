@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from 'react';
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
 import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
@@ -9,9 +9,11 @@ import { useDataset } from './db/useDataset';
 import { toPeriod } from './lib/period';
 import type { Period } from './lib/types';
 import { MonthScreen } from './screens/MonthScreen';
-import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { PositionsScreen } from './screens/PositionsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+
+// Recharts is only loaded with the analysis tab, the month view stays light
+const AnalyseScreen = lazy(() => import('./screens/AnalyseScreen'));
 
 type Route = 'monat' | 'positionen' | 'analyse' | 'einstellungen';
 
@@ -66,7 +68,15 @@ export function App() {
           ) : route === 'positionen' ? (
             <PositionsScreen ds={ds} />
           ) : route === 'analyse' ? (
-            <PlaceholderScreen title="Analyse" phase={3} text="Entwicklung, Plan vs. Ist, Jahresvorschau, Verteilung, Frei verfügbar (rechnerisch vs. tatsächlich), Sparquote und Optimierungen." />
+            <Suspense
+              fallback={
+                <div className="p-8 text-center text-ink-mute" aria-busy="true">
+                  Lädt …
+                </div>
+              }
+            >
+              <AnalyseScreen ds={ds} />
+            </Suspense>
           ) : (
             <SettingsScreen ds={ds} />
           )}
