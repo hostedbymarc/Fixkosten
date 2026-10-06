@@ -8,7 +8,7 @@ import type {
   Reminder,
 } from '../lib/types';
 import { SCHEMA_VERSION, type FixkostenDB } from './db';
-import { upgradePaymentV3, upgradePositionV3 } from './migrations';
+import { upgradePaymentV3, upgradePositionV3, upgradePositionV4 } from './migrations';
 
 /** Oldest backup version that can still be imported (migrated on the fly). */
 const MIN_IMPORT_VERSION = 2;
@@ -61,8 +61,13 @@ export function parseBackup(raw: unknown): BackupFile {
   if (version < 3) {
     data.positions = (data.positions as Record<string, unknown>[]).map((p) => upgradePositionV3({ ...p }));
     data.payments = (data.payments as Record<string, unknown>[]).map((p) => upgradePaymentV3({ ...p }));
-    raw.schemaVersion = 3;
   }
+  if (version < 4) {
+    data.positions = (data.positions as Record<string, unknown>[]).map((p) =>
+      upgradePositionV4({ ...p, history: ((p.history as Record<string, unknown>[] | undefined) ?? []).map((e) => ({ ...e })) }),
+    );
+  }
+  raw.schemaVersion = SCHEMA_VERSION;
   const positions = data.positions as Position[];
   const categoryIds = new Set((data.categories as Category[]).map((c) => c.id));
   for (const p of positions) {

@@ -3,7 +3,6 @@
 
 import {
   actualForPeriod,
-  annualizedSavingsFromChanges,
   dueItems,
   freeCalculated,
   freeGap,
@@ -11,7 +10,7 @@ import {
   kindOf,
   monthCloseFor,
   monthlyEquivalent,
-  paymentDelta,
+  planChanges,
   plannedForPeriod,
   savingsRate,
   sortedCategories,
@@ -19,7 +18,7 @@ import {
   sumMonthlyEquivalent,
   trueMonthlyBurden,
 } from './calc';
-import { formatEUR, formatPercent } from './format';
+import { formatDelta, formatEUR, formatPercent } from './format';
 import { addPeriods, periodLabel, periodRange, shortMonthName, monthOf, yearOf } from './period';
 import type { Category, Dataset, Period, PlanEntry, Position } from './types';
 
@@ -56,12 +55,16 @@ function positionName(ds: Dataset, id: string | undefined): string | undefined {
 export interface ForecastItem {
   name: string;
   amount: number;
+  /** one-time payment (frequency 'once') – not part of the fixed costs */
+  once?: boolean;
 }
 
 export interface ForecastMonth {
   period: Period;
   /** what is actually debited: due expenses of the month plus its one-offs */
   due: number;
+  /** part of `due` from one-time payments (frequency 'once') */
+  once: number;
   aboveAverage: boolean;
   /** non-monthly positions and one-offs of the month (the reason it is above average) */
   items: ForecastItem[];
@@ -72,6 +75,8 @@ export interface YearForecast {
   /** spread monthly burden, averaged over the window */
   average: number;
   total: number;
+  /** one-time payments in the window; total = count × average + onceTotal */
+  onceTotal: number;
   peak: ForecastMonth | null;
   /** peak.due − average */
   peakAboveAverage: number;
@@ -84,19 +89,24 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
   const months = periods.map((period): ForecastMonth => {
     const oneOffs = expenseOneOffs(ds, period);
     const due = sumMoney([plannedForPeriod(ds, period), ...oneOffs.map((o) => o.amount)]);
+    const nonMonthly = dueItems(ds, period).filter(
+      (i) => i.due && i.status !== 'skipped' && i.kind === 'expense' && i.plan?.frequency !== 'monthly',
+    );
     const items: ForecastItem[] = [
-      ...dueItems(ds, period)
-        .filter((i) => i.due && i.status !== 'skipped' && i.kind === 'expense' && i.plan?.frequency !== 'monthly')
-        .map((i) => ({ name: i.position.name, amount: i.planned })),
+      ...nonMonthly.map((i) =>
+        i.plan?.frequency === 'once' ? { name: i.position.name, amount: i.planned, once: true } : { name: i.position.name, amount: i.planned },
+      ),
       ...oneOffs.map((o) => ({ name: positionName(ds, o.positionId) ? `${positionName(ds, o.positionId)}: ${o.label}` : o.label, amount: o.amount })),
     ];
-    return { period, due, aboveAverage: cents(due) > cents(average), items };
+    const once = sumMoney(nonMonthly.filter((i) => i.plan?.frequency === 'once').map((i) => i.planned));
+    return { period, due, once, aboveAverage: cents(due) > cents(average), items };
   });
   const peak = months.reduce<ForecastMonth | null>((best, m) => (!best || m.due > best.due ? m : best), null);
   return {
     months,
     average,
     total: sumMoney(months.map((m) => m.due)),
+    onceTotal: sumMoney(months.map((m) => m.once)),
     peak,
     peakAboveAverage: peak ? peak.due - average : 0,
   };
@@ -247,10 +257,19 @@ export interface TrendPoint {
   byCategory: Record<string, number>;
 }
 
+export interface TrendChange {
+  positionName: string;
+  /** change of the spread monthly amount */
+  monthlyDelta: number;
+  reason?: string;
+}
+
 export interface BurdenTrend {
   /** expense categories that appear in the window, in their sort order (stack order) */
   categories: Category[];
   points: TrendPoint[];
+  /** period → plan changes taking effect in that month (markers on the time axis) */
+  changes: Record<Period, TrendChange[]>;
 }
 
 export function burdenTrend(ds: Dataset, periods: Period[]): BurdenTrend {
@@ -263,7 +282,13 @@ export function burdenTrend(ds: Dataset, periods: Period[]): BurdenTrend {
     ),
   }));
   const categories = expense.filter((c) => points.some((p) => p.byCategory[c.id]! > 0));
-  return { categories, points };
+  const inWindow = new Set(periods);
+  const changes: Record<Period, TrendChange[]> = {};
+  for (const c of [...planChanges(ds)].reverse()) {
+    if (!inWindow.has(c.validFrom) || cents(c.monthlyDelta) === 0) continue;
+    (changes[c.validFrom] ??= []).push({ positionName: c.position.name, monthlyDelta: c.monthlyDelta, reason: c.reason });
+  }
+  return { categories, points, changes };
 }
 
 export function trendHeadline(t: BurdenTrend): string {
@@ -327,9 +352,12 @@ export function planVsActual(ds: Dataset, periods: Period[], today: Period, top 
     return !position || kindOf(ds, position) === 'expense';
   };
   const deviations: Deviation[] = [
-    ...ds.payments
-      .filter((p) => closed.has(p.period) && p.status === 'paid' && isExpense(p.positionId))
-      .map((p) => ({ positionName: positionName(ds, p.positionId) ?? '–', period: p.period, delta: paymentDelta(p) })),
+    // per item, so a plan change entered after the tick shows as a deviation too
+    ...[...closed].flatMap((period) =>
+      dueItems(ds, period)
+        .filter((i) => i.kind === 'expense' && i.delta !== null)
+        .map((i) => ({ positionName: i.position.name, period, delta: i.delta! })),
+    ),
     ...ds.oneOffs
       .filter((o) => closed.has(o.period) && o.paidAt && isExpense(o.positionId))
       .map((o) => ({ positionName: positionName(ds, o.positionId) ?? o.label, label: o.label, period: o.period, delta: o.amount })),
@@ -358,28 +386,53 @@ export interface OptimizationEntry {
   id: string;
   position: Position;
   validFrom: Period;
+  /** 'YYYY-MM-DD' */
+  changedOn: string;
+  reason?: string;
   from: PlanEntry;
   to: PlanEntry;
   /** change of the yearly cost: negative = saves money */
   annualDelta: number;
+  /** takes effect after the current month */
+  planned: boolean;
 }
 
 export interface OptimizationTimeline {
+  /** future changes first, then the implemented ones; newest first within each */
   entries: OptimizationEntry[];
   /** net effect of all changes per year: negative = saves money */
   netAnnual: number;
+  implementedAnnual: number;
+  plannedAnnual: number;
 }
 
-/** Plan changes from the ChangeLog, newest first. Typo corrections never appear. */
-export function optimizationTimeline(ds: Dataset): OptimizationTimeline {
-  const { changes } = annualizedSavingsFromChanges(ds, { from: '0000-01', to: '9999-12' });
-  const entries = changes.map((c, i) => ({
-    id: `${c.position.id}-${c.validFrom}-${i}`,
+/** Plan changes from the history. Typo corrections and one-time payments never appear. */
+export function optimizationTimeline(ds: Dataset, today: Period): OptimizationTimeline {
+  const all = planChanges(ds).map((c, i) => ({
+    id: `${c.position.id}-${c.changedOn}-${i}`,
     position: c.position,
     validFrom: c.validFrom,
+    changedOn: c.changedOn,
+    reason: c.reason,
     from: c.from,
     to: c.to,
     annualDelta: c.annualDelta,
+    planned: c.validFrom > today,
   }));
-  return { entries, netAnnual: sumMoney(entries.map((e) => e.annualDelta)) };
+  const planned = all.filter((e) => e.planned);
+  const implemented = all.filter((e) => !e.planned);
+  return {
+    entries: [...planned, ...implemented],
+    netAnnual: sumMoney(all.map((e) => e.annualDelta)),
+    implementedAnnual: sumMoney(implemented.map((e) => e.annualDelta)),
+    plannedAnnual: sumMoney(planned.map((e) => e.annualDelta)),
+  };
+}
+
+/** „Umgesetzt: −€ 24 / Jahr · Geplant: +€ 504 / Jahr“ (only the parts that exist) */
+export function optimizationHeadline(t: OptimizationTimeline): string {
+  const parts: string[] = [];
+  if (t.entries.some((e) => !e.planned)) parts.push(`Umgesetzt: ${formatDelta(t.implementedAnnual)} / Jahr`);
+  if (t.entries.some((e) => e.planned)) parts.push(`Geplant: ${formatDelta(t.plannedAnnual)} / Jahr`);
+  return parts.join(' · ');
 }

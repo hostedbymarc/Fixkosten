@@ -88,7 +88,7 @@ describe('migration v2 → v3 (realistic data)', () => {
     v2.close();
 
     const db = openDb();
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(3);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
     expect(await db.payments.toArray()).toEqual(paymentsBefore.map((p) => ({ ...p, status: 'paid' })));
     expect(await db.monthClose.get(OCT)).toEqual({ period: OCT, netSalary: 4700, freeActual: 450, note: 'Urlaub', updatedAt: '2026-10-05T09:00:00.000Z' });
 

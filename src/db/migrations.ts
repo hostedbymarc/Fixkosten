@@ -51,3 +51,19 @@ export function upgradePaymentV3(record: Record<string, unknown>): Payment {
   if (record.status !== 'paid' && record.status !== 'skipped') record.status = 'paid';
   return record as unknown as Payment;
 }
+
+/**
+ * v3 → v4: dated changes. Every history entry except the first gets
+ * `changedOn` = first day of its month. Mutates in place and returns the
+ * record. Idempotent; nothing else changes.
+ */
+export function upgradePositionV4(record: Record<string, unknown>): Position {
+  const position = record as unknown as Position;
+  const history = position.history ?? [];
+  if (history.length === 0) return position;
+  const first = history.reduce((a, b) => (b.validFrom < a.validFrom ? b : a));
+  for (const entry of history) {
+    if (entry !== first && !entry.changedOn) entry.changedOn = `${entry.validFrom}-01`;
+  }
+  return position;
+}
