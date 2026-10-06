@@ -225,7 +225,7 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
   test('optimisations from the ChangeLog, typo correction excluded', async ({ page }) => {
     await importHistory(page);
     await openAnalyse(page);
-    const t = optimizationTimeline(historyDataset());
+    const t = optimizationTimeline(historyDataset(), OCT);
     await expect(page.getByTestId('optimizations-headline')).toHaveText(
       eur(`Netto-Effekt aller Änderungen: ${formatDelta(t.netAnnual).replace(/ /g, ' ')} / Jahr`),
     );

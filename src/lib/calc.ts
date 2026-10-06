@@ -28,6 +28,7 @@ export const PERIODS_PER_YEAR: Record<Frequency, number> = {
   quarterly: 4,
   semiannual: 2,
   annual: 1,
+  once: 1,
 };
 
 export const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -49,22 +50,53 @@ export function roundMoney(value: number): number {
 // Position level: every month reads the plan entry valid in that month
 // ---------------------------------------------------------------------------
 
-/** Plan entry valid in `period` (latest validFrom ≤ period), or null if not yet valid. */
+/**
+ * Order of the history: by month, then by change date. A change dated in the
+ * first month (01.10.2026) therefore wins over the entry the position started with.
+ */
+export function compareEntries(a: PlanEntry, b: PlanEntry): number {
+  return a.validFrom.localeCompare(b.validFrom) || (a.changedOn ?? '').localeCompare(b.changedOn ?? '');
+}
+
+/** The history in chronological order (first entry = start of the position). */
+export function planHistory(position: Position): PlanEntry[] {
+  return [...position.history].sort(compareEntries);
+}
+
+/** Stable identity of a history entry (validFrom alone is not unique). */
+export function entryKey(entry: Pick<PlanEntry, 'validFrom' | 'changedOn'>): string {
+  return `${entry.validFrom}|${entry.changedOn ?? ''}`;
+}
+
+/** Plan entry valid in `period` (latest entry with validFrom ≤ period), or null if not yet valid. */
 export function planForPeriod(position: Position, period: Period): PlanEntry | null {
   let match: PlanEntry | null = null;
   for (const entry of position.history) {
-    if (entry.validFrom <= period && (!match || entry.validFrom > match.validFrom)) match = entry;
+    if (entry.validFrom <= period && (!match || compareEntries(entry, match) > 0)) match = entry;
   }
   return match;
 }
 
 /** Plan that applies in `period`, or the first future one for positions that start later. */
 export function currentPlan(position: Position, period: Period): PlanEntry | null {
-  return (
-    planForPeriod(position, period) ??
-    [...position.history].sort((a, b) => a.validFrom.localeCompare(b.validFrom))[0] ??
-    null
-  );
+  return planForPeriod(position, period) ?? planHistory(position)[0] ?? null;
+}
+
+/** First change that takes effect after `period` (for the badge „Ab 01.04.2027: € 1.050“). */
+export function nextPlannedChange(position: Position, period: Period): PlanEntry | null {
+  const current = planForPeriod(position, period);
+  if (!current || current.frequency === 'once') return null;
+  return planHistory(position).find((e) => e.validFrom > period) ?? null;
+}
+
+/** Date a change applies from: its change date, else the first of its month. */
+export function effectiveDate(entry: PlanEntry): string {
+  return entry.changedOn ?? `${entry.validFrom}-01`;
+}
+
+/** 'once' entries: the month of the due date. */
+export function oncePeriod(plan: PlanEntry): Period | null {
+  return plan.frequency === 'once' && plan.dueDate ? plan.dueDate.slice(0, 7) : null;
 }
 
 export function amountForPeriod(position: Position, period: Period): number | null {
@@ -93,14 +125,20 @@ export function dueMonthsOfPlan(plan: PlanEntry): number[] {
   return plan.frequency === 'monthly' ? ALL_MONTHS : plan.dueMonths;
 }
 
-/** Is the position debited in this month? */
+/** Is the position debited in this month? 'once' only in the month of its due date. */
 export function dueInPeriod(position: Position, period: Period): boolean {
   const plan = planForPeriod(position, period);
-  return plan !== null && isActiveInPeriod(position, period) && dueMonthsOfPlan(plan).includes(monthOf(period));
+  if (plan === null || !isActiveInPeriod(position, period)) return false;
+  if (plan.frequency === 'once') return oncePeriod(plan) === period;
+  return dueMonthsOfPlan(plan).includes(monthOf(period));
 }
 
-/** cents × number of due months per year; ÷1200 gives the monthly equivalent */
+/**
+ * cents × number of due months per year; ÷1200 gives the monthly equivalent.
+ * One-time payments are no fixed costs: they are never spread.
+ */
 function planNumerator(plan: PlanEntry): number {
+  if (plan.frequency === 'once') return 0;
   return toCents(plan.amount) * dueMonthsOfPlan(plan).length;
 }
 
@@ -130,7 +168,8 @@ export function samePlan(a: Omit<PlanEntry, 'validFrom'>, b: Omit<PlanEntry, 'va
     toCents(a.amount) === toCents(b.amount) &&
     a.frequency === b.frequency &&
     months(a) === months(b) &&
-    (a.dueDay ?? null) === (b.dueDay ?? null)
+    (a.dueDay ?? null) === (b.dueDay ?? null) &&
+    (a.dueDate ?? null) === (b.dueDate ?? null)
   );
 }
 
@@ -222,7 +261,7 @@ export function dueItems(ds: Dataset, period: Period): DueItem[] {
     const due = dueInPeriod(position, period) || payment !== undefined;
     if (!due && oneOffs.length === 0) continue;
     const plan = planForPeriod(position, period);
-    const planned = due ? (payment?.plannedAmount ?? plan?.amount ?? 0) : 0;
+    const planned = due ? plannedAmount(plan, payment) : 0;
     const status: ItemStatus = payment ? payment.status : 'open';
     items.push({
       position,
@@ -240,6 +279,18 @@ export function dueItems(ds: Dataset, period: Period): DueItem[] {
   }
   const order = new Map(sortedCategories(ds).map((c, i) => [c.id, i]));
   return items.sort((a, b) => (order.get(a.category.id) ?? 0) - (order.get(b.category.id) ?? 0));
+}
+
+/**
+ * Planned amount of a month. A tick keeps its snapshot – unless it was set
+ * before a dated change for that month was entered: then the month was
+ * ticked against an outdated plan and shows the new one (e.g. Miete ab
+ * 01.10. € 1.050, October already ticked with € 1.008 → plan € 1.050, Ist € 1.008).
+ */
+function plannedAmount(plan: PlanEntry | null, payment: Payment | undefined): number {
+  if (!payment) return plan?.amount ?? 0;
+  if (plan?.recordedAt && payment.paidAt < plan.recordedAt) return plan.amount;
+  return payment.plannedAmount;
 }
 
 /** Items that count towards the plan: due and not skipped. */
@@ -545,35 +596,68 @@ export function remindersForPeriod(ds: Dataset, period: Period): Reminder[] {
 export interface PlanChange {
   position: Position;
   validFrom: Period;
+  /** change date ('YYYY-MM-DD'), first of the month for older entries */
+  changedOn: string;
+  reason?: string;
   from: PlanEntry;
   to: PlanEntry;
   /** change of the yearly cost: negative = cheaper (optimisation), positive = increase */
   annualDelta: number;
   /** positive = saved per year */
   annualSavings: number;
+  /** change of the spread monthly amount */
+  monthlyDelta: number;
+}
+
+/** Every dated change of every expense position, from consecutive history entries. */
+export function planChanges(ds: Dataset): PlanChange[] {
+  const changes: PlanChange[] = [];
+  for (const position of ds.positions) {
+    if (kindOf(ds, position) !== 'expense') continue;
+    const history = planHistory(position);
+    for (let i = 1; i < history.length; i++) {
+      const from = history[i - 1]!;
+      const to = history[i]!;
+      if (from.frequency === 'once' || to.frequency === 'once') continue;
+      const annualDelta = fromCents(planNumerator(to) - planNumerator(from));
+      changes.push({
+        position,
+        validFrom: to.validFrom,
+        changedOn: effectiveDate(to),
+        reason: to.reason,
+        from,
+        to,
+        annualDelta,
+        annualSavings: -annualDelta || 0,
+        monthlyDelta: fromEquivalentNumerator(planNumerator(to) - planNumerator(from)),
+      });
+    }
+  }
+  return changes.sort((a, b) => b.changedOn.localeCompare(a.changedOn) || a.position.sortOrder - b.position.sortOrder);
 }
 
 /**
- * Plan changes ("Ab wann gilt das?") whose validFrom lies in [from, to], from
- * the ChangeLog. Typo corrections are logged as 'corrected' and never count.
- * Only expense positions count; one-offs are never optimisations.
+ * Plan changes ("Ab wann gilt das?" / "Betrag ändern") whose validFrom lies in
+ * [from, to], taken from the history itself – editing or deleting an entry
+ * recalculates them. Typo corrections overwrite an entry and never count.
+ * Only expense positions count; one-offs and one-time payments are never optimisations.
  */
 export function annualizedSavingsFromChanges(
   ds: Dataset,
   range: { from: Period; to: Period },
 ): { changes: PlanChange[]; total: number } {
-  const positions = new Map(ds.positions.map((p) => [p.id, p]));
-  const changes: PlanChange[] = [];
-  for (const entry of ds.changeLog) {
-    if (entry.type !== 'amount' || !entry.validFrom) continue;
-    if (entry.validFrom < range.from || entry.validFrom > range.to) continue;
-    const position = positions.get(entry.positionId);
-    if (!position || kindOf(ds, position) !== 'expense') continue;
-    const from = entry.from as PlanEntry;
-    const to = entry.to as PlanEntry;
-    const annualDelta = fromCents(planNumerator(to) - planNumerator(from));
-    changes.push({ position, validFrom: entry.validFrom, from, to, annualDelta, annualSavings: -annualDelta || 0 });
-  }
-  changes.sort((a, b) => b.validFrom.localeCompare(a.validFrom));
+  const changes = planChanges(ds).filter((c) => c.validFrom >= range.from && c.validFrom <= range.to);
   return { changes, total: sumMoney(changes.map((c) => c.annualSavings)) };
+}
+
+/** One-time payments whose month has passed or that are ticked (shown under „Einmalige Zahlungen“). */
+export function isOnceDone(ds: Dataset, position: Position, today: Period): boolean {
+  const plan = planHistory(position)[0];
+  const period = plan ? oncePeriod(plan) : null;
+  if (!period) return false;
+  return period < today || ds.payments.some((p) => p.positionId === position.id && p.period === period);
+}
+
+export function isOncePosition(position: Position): boolean {
+  return position.history.some((e) => e.frequency === 'once');
 }

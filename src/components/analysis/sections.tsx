@@ -23,6 +23,7 @@ import {
   monthCloseHeadline,
   monthCloseSeries,
   optimizationTimeline,
+  type OptimizationEntry,
   planVsActual,
   planVsActualHeadline,
   shortPeriodLabel,
@@ -34,7 +35,7 @@ import { formatCompactEUR, formatDelta, formatEUR, formatPercent, formatPercentS
 import { periodLabel, shortMonthName, monthOf } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { ChevronRight } from '../Icons';
-import { planDescription } from '../Chips';
+import { formatIsoDate, planDescription } from '../Chips';
 import { ChartCard, EmptyCard, TooltipBox, TooltipRow } from './ChartCard';
 import {
   AXIS_TICK,
@@ -551,8 +552,8 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
 // 6 · Optimisations
 // ---------------------------------------------------------------------------
 
-export function OptimizationSection({ ds }: { ds: Dataset }) {
-  const t = optimizationTimeline(ds);
+export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period }) {
+  const t = optimizationTimeline(ds, today);
   if (t.entries.length === 0) {
     return (
       <EmptyCard
@@ -562,50 +563,80 @@ export function OptimizationSection({ ds }: { ds: Dataset }) {
       />
     );
   }
-  const net = Math.round(t.netAnnual * 100);
+  const planned = t.entries.filter((e) => e.planned);
+  const implemented = t.entries.filter((e) => !e.planned);
   return (
     <section aria-labelledby="optimizations-title" data-testid="optimizations">
       <h2 id="optimizations-title" className="section-title mb-2 px-1">
         Optimierungen
       </h2>
       <div className="card p-4">
-        <p className="text-[15px] font-medium text-ink" data-testid="optimizations-headline">
-          Netto-Effekt aller Änderungen:{' '}
-          <span className={`num font-semibold ${net < 0 ? 'text-paid' : net > 0 ? 'text-over' : 'text-ink'}`}>
-            {formatDelta(t.netAnnual)} / Jahr
-          </span>
+        <p className="flex flex-wrap gap-x-3 gap-y-1 text-[15px] font-medium text-ink" data-testid="optimizations-headline">
+          {implemented.length > 0 && (
+            <span>
+              Umgesetzt: <DeltaPerYear value={t.implementedAnnual} />
+            </span>
+          )}
+          {implemented.length > 0 && planned.length > 0 && <span aria-hidden="true">·</span>}
+          {planned.length > 0 && (
+            <span>
+              Geplant: <DeltaPerYear value={t.plannedAnnual} />
+            </span>
+          )}
         </p>
-        <ol className="mt-3 flex flex-col" data-testid="optimizations-list">
-          {t.entries.map((e) => {
-            const saves = e.annualDelta < 0;
-            const sameSchedule = planDescription(e.from) === planDescription(e.to);
-            return (
-              <li key={e.id} className="relative flex gap-3 pb-4 pl-5 last:pb-0">
-                <span
-                  className={`absolute left-0 top-[7px] h-2.5 w-2.5 rounded-full ${saves ? 'bg-paid' : e.annualDelta > 0 ? 'bg-over' : 'bg-zinc-300'}`}
-                  aria-hidden="true"
-                />
-                <span className="absolute bottom-0 left-[4.5px] top-[20px] w-px bg-line last:hidden" aria-hidden="true" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] text-ink">
-                    <span className="font-medium">{e.position.name}</span>{' '}
-                    <span className="num">
-                      {formatEUR(e.from.amount)} → {formatEUR(e.to.amount)}
-                    </span>
-                  </span>
-                  <span className="block text-[13px] text-ink-mute">
-                    ab {shortPeriodLabel(e.validFrom)}
-                    {!sameSchedule && ` · ${planDescription(e.from)} → ${planDescription(e.to)}`}
-                  </span>
-                </span>
-                <span className={`num shrink-0 text-[14px] font-semibold ${saves ? 'text-paid' : e.annualDelta > 0 ? 'text-over' : 'text-ink-mute'}`}>
-                  {saves ? `spart ${formatEUR(-e.annualDelta)}/Jahr` : `${formatDelta(e.annualDelta)}/Jahr`}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+        {planned.length > 0 && <OptimizationList title="Geplant" entries={planned} testId="optimizations-planned" />}
+        {implemented.length > 0 && <OptimizationList title="Umgesetzt" entries={implemented} testId="optimizations-list" />}
       </div>
     </section>
+  );
+}
+
+function DeltaPerYear({ value }: { value: number }) {
+  const c = Math.round(value * 100);
+  return <span className={`num font-semibold ${c < 0 ? 'text-paid' : c > 0 ? 'text-over' : 'text-ink'}`}>{formatDelta(value)} / Jahr</span>;
+}
+
+function OptimizationList({ title, entries, testId }: { title: string; entries: OptimizationEntry[]; testId: string }) {
+  return (
+    <div className="mt-4">
+      <h3 className="mb-2 text-[13px] font-medium text-ink-soft">{title}</h3>
+      <ol className="flex flex-col" data-testid={testId}>
+        {entries.map((e) => {
+          const saves = e.annualDelta < 0;
+          const sameSchedule = planDescription(e.from) === planDescription(e.to);
+          return (
+            <li key={e.id} className="relative flex gap-3 pb-4 pl-5 last:pb-0">
+              <span
+                className={`absolute left-0 top-[7px] h-2.5 w-2.5 rounded-full ${
+                  e.planned ? 'border-2 bg-white ' + (saves ? 'border-paid' : 'border-over') : saves ? 'bg-paid' : e.annualDelta > 0 ? 'bg-over' : 'bg-zinc-300'
+                }`}
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] text-ink">
+                  <span className="font-medium">{e.position.name}</span>{' '}
+                  <span className="num">
+                    {formatEUR(e.from.amount)} → {formatEUR(e.to.amount)}
+                  </span>
+                  {e.planned && (
+                    <span className="ml-2 inline-flex h-[20px] items-center rounded-md bg-accent-soft px-1.5 align-middle text-[12px] font-medium text-accent-strong">
+                      geplant
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[13px] text-ink-mute">
+                  ab {formatIsoDate(e.changedOn)}
+                  {e.reason && ` · ${e.reason}`}
+                  {!sameSchedule && ` · ${planDescription(e.from)} → ${planDescription(e.to)}`}
+                </span>
+              </span>
+              <span className={`num shrink-0 text-[14px] font-semibold ${saves ? 'text-paid' : e.annualDelta > 0 ? 'text-over' : 'text-ink-mute'}`}>
+                {saves ? `spart ${formatEUR(-e.annualDelta)}/Jahr` : `${formatDelta(e.annualDelta)}/Jahr`}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
