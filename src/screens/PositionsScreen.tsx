@@ -1,7 +1,6 @@
 import { useRef, useState, type MouseEvent } from 'react';
 import { AmountChangeSheet } from '../components/AmountChangeSheet';
 import { CategoriesSheet } from '../components/CategoriesSheet';
-import { ChevronRight } from '../components/Icons';
 import { Badge, formatIsoDate, planDescription } from '../components/Chips';
 import { OneOffSheet } from '../components/OneOffSheet';
 import { PositionDetailSheet } from '../components/PositionDetailSheet';
@@ -17,10 +16,8 @@ import {
   currentPlan,
   effectiveDate,
   entryKey,
-  isOnceDone,
   isOncePosition,
   nextPlannedChange,
-  paymentFor,
   planHistory,
   monthlyEquivalentOfPlan,
   planForPeriod,
@@ -47,10 +44,9 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const categories = sortedCategories(ds);
-  // one-time payments leave the active lists once ticked or once their month has passed
-  const listed = (categoryId?: string) => activePositions(ds, categoryId).filter((p) => !isOnceDone(ds, p, today));
+  // fixed costs only: one-time payments live in their month (Monat → „Einmalige Zahlung“)
+  const listed = (categoryId?: string) => activePositions(ds, categoryId).filter((p) => !isOncePosition(p));
   const active = listed();
-  const oncePositions = ds.positions.filter((p) => !p.archivedAt && isOncePosition(p));
   const position = sheet && 'id' in sheet ? ds.positions.find((p) => p.id === sheet.id) : undefined;
 
   function open(next: Sheet, e?: MouseEvent<HTMLElement>) {
@@ -138,9 +134,6 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
             </section>
           );
         })}
-        {oncePositions.length > 0 && (
-          <OnceSection ds={ds} today={today} positions={oncePositions} onOpen={(id, e) => open({ kind: 'detail', id }, e)} />
-        )}
       </div>
 
       <button
@@ -285,83 +278,5 @@ function PositionListRow({
         ]}
       />
     </div>
-  );
-}
-
-/** Collapsed list of one-time payments: upcoming first (by date), done below (newest first). */
-function OnceSection({
-  ds,
-  today,
-  positions,
-  onOpen,
-}: {
-  ds: Dataset;
-  today: string;
-  positions: Position[];
-  onOpen: (id: string, e: MouseEvent<HTMLElement>) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const dateOf = (p: Position) => planHistory(p)[0]!.dueDate ?? '';
-  const upcoming = positions.filter((p) => !isOnceDone(ds, p, today)).sort((a, b) => dateOf(a).localeCompare(dateOf(b)));
-  const done = positions.filter((p) => isOnceDone(ds, p, today)).sort((a, b) => dateOf(b).localeCompare(dateOf(a)));
-  const row = (p: Position) => {
-    const plan = planHistory(p)[0]!;
-    const payment = paymentFor(ds, p.id, plan.validFrom);
-    const status = payment?.status === 'paid' ? 'bezahlt' : payment?.status === 'skipped' ? 'entfallen' : plan.validFrom < today ? 'offen' : null;
-    return (
-      <li key={p.id} data-position={p.id}>
-        <button
-          type="button"
-          onClick={(e) => onOpen(p.id, e)}
-          aria-label={`${p.name} – Details`}
-          className="focus-ring flex min-h-[56px] w-full items-center gap-3 rounded-xl px-4 py-2 text-left hover:bg-zinc-50"
-        >
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-[15px] font-medium text-ink">{p.name}</span>
-            <span className="flex flex-wrap items-center gap-1.5 text-[13px] text-ink-mute">
-              {plan.dueDate ? formatIsoDate(plan.dueDate) : ''}
-              {status && <Badge tone={status === 'offen' ? 'warn' : 'neutral'}>{status}</Badge>}
-            </span>
-          </span>
-          <span className="num shrink-0 text-[15px] font-semibold text-ink">
-            {formatEUR(payment?.status === 'paid' ? payment.actualAmount : plan.amount)}
-          </span>
-        </button>
-      </li>
-    );
-  };
-  return (
-    <section className="card overflow-hidden" aria-labelledby="once-title" data-testid="once-section">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="focus-ring flex min-h-[52px] w-full items-center gap-2 px-4 py-3 text-left"
-      >
-        <ChevronRight size={16} className={`shrink-0 text-ink-faint transition-transform ${open ? 'rotate-90' : ''}`} />
-        <h2 id="once-title" className="flex-1 text-[15px] font-semibold text-ink">
-          Einmalige Zahlungen
-        </h2>
-        <span className="text-[13px] text-ink-mute">
-          {upcoming.length} kommend · {done.length} erledigt
-        </span>
-      </button>
-      {open && (
-        <div className="border-t border-line pb-2">
-          {upcoming.length > 0 && (
-            <>
-              <h3 className="px-4 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-mute">Kommend</h3>
-              <ul data-testid="once-upcoming">{upcoming.map(row)}</ul>
-            </>
-          )}
-          {done.length > 0 && (
-            <>
-              <h3 className="px-4 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-mute">Erledigt</h3>
-              <ul data-testid="once-done">{done.map(row)}</ul>
-            </>
-          )}
-        </div>
-      )}
-    </section>
   );
 }

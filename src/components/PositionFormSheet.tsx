@@ -64,7 +64,8 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
 
   const once = frequency === 'once';
   // an existing position keeps its kind: recurring ones never turn into a one-time payment and vice versa
-  const frequencies: Frequency[] = onceOnly ? [] : !position ? [...RECURRING, 'once'] : plan?.frequency === 'once' ? [] : RECURRING;
+  // the Positionen tab is for fixed costs; one-time payments are created in their month
+  const frequencies: Frequency[] = onceOnly || plan?.frequency === 'once' ? [] : RECURRING;
   const amount = parseAmount(amountText);
   const dueDay = dueDayText.trim() === '' ? undefined : Number(dueDayText);
   const errors = {
@@ -130,13 +131,15 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
 
   return (
     <BottomSheet
-      title={position ? 'Position bearbeiten' : onceOnly ? 'Einmalige Zahlung' : 'Neue Position'}
+      title={
+        position ? (plan?.frequency === 'once' ? 'Einmalige Zahlung bearbeiten' : 'Position bearbeiten') : onceOnly ? 'Einmalige Zahlung' : 'Neue Position'
+      }
       subtitle={
         position
           ? position.name
           : onceOnly
             ? `für ${periodLabel(onceOnly.period)} – zählt nicht zu den Fixkosten`
-            : 'Fixkosten, Sparplan oder einmalige Zahlung'
+            : 'Fixkosten oder Sparplan'
       }
       onClose={onClose}
       returnFocusTo={returnFocusTo}
