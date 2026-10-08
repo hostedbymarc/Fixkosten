@@ -1,4 +1,4 @@
-import { eur, expect, test } from './fixtures';
+import { animationsDone, eur, expect, test } from './fixtures';
 
 test.describe('Monatsabschluss', () => {
   test('enter salary and free money → reload → values and difference', async ({ app }) => {
@@ -45,6 +45,7 @@ test.describe('Monatsabschluss', () => {
 
   test('"Wie Vormonat" copies previous values; nothing is saved automatically', async ({ app }) => {
     await app.getByTestId('free-tile').click();
+    await animationsDone(app, 'bottom-sheet');
     await app.getByLabel('Netto-Gehalt').fill('5000');
     await app.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
     await app.getByRole('button', { name: 'Speichern' }).click();
@@ -52,6 +53,7 @@ test.describe('Monatsabschluss', () => {
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
     await app.getByTestId('free-tile').click();
+    await animationsDone(app, 'bottom-sheet');
     await expect(app.getByLabel('Netto-Gehalt')).toHaveValue('');
     await expect(app.getByLabel('Netto-Gehalt')).toHaveAttribute('placeholder', '5000');
     await app.getByRole('button', { name: 'Wie Vormonat' }).click();

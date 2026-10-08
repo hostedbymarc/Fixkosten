@@ -38,13 +38,22 @@ export const xAxisProps = {
 
 export const CHART_MARGIN = { top: 22, right: 4, bottom: 0, left: 0 };
 
+/**
+ * Touch devices open the tooltip with a tap and keep it until the next tap; with the
+ * hover trigger the browser's emulated mouse leaves the chart right after a tap and
+ * the tooltip closed again. Mouse devices keep hover.
+ */
+const TOUCH = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+
 /** Fixed at the top of the plot so the finger never covers it. */
 export const tooltipProps = {
+  trigger: TOUCH ? ('click' as const) : ('hover' as const),
   position: { y: 0 },
   isAnimationActive: false,
   allowEscapeViewBox: { x: false, y: true },
   cursor: { fill: 'var(--chart-cursor)' },
-  wrapperStyle: { zIndex: 10, outline: 'none' },
+  // never catches the finger: a tooltip under the touch point would close itself (mouseleave)
+  wrapperStyle: { zIndex: 10, outline: 'none', pointerEvents: 'none' },
 } as const;
 
 export interface GroupLabel {
