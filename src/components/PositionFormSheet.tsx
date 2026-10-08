@@ -33,25 +33,27 @@ interface Props {
   onClose: () => void;
   onSaved: (positionId: string) => void;
   returnFocusTo?: HTMLElement | null;
+  /** create a one-time payment straight from the month view (frequency fixed, date preset) */
+  once?: { dueDate: string; period: Period };
 }
 
 const RECURRING: Frequency[] = ['monthly', 'quarterly', 'semiannual', 'annual'];
 
 /** Create or edit a position. Plan changes on existing positions ask "Ab wann gilt das?". */
-export function PositionFormSheet({ ds, today, position, onClose, onSaved, returnFocusTo }: Props) {
+export function PositionFormSheet({ ds, today, position, onClose, onSaved, returnFocusTo, once: onceOnly }: Props) {
   const categories = sortedCategories(ds);
   const plan = position ? currentPlan(position, today) : null;
 
   const [name, setName] = useState(position?.name ?? '');
   const [categoryId, setCategoryId] = useState(position?.categoryId ?? categories.find((c) => c.kind === 'expense')?.id ?? categories[0]?.id ?? '');
   const [amountText, setAmountText] = useState(plan ? amountToInput(plan.amount) : '');
-  const [frequency, setFrequency] = useState<Frequency>(plan?.frequency ?? 'monthly');
+  const [frequency, setFrequency] = useState<Frequency>(plan?.frequency ?? (onceOnly ? 'once' : 'monthly'));
   const [dueMonths, setDueMonths] = useState<number[]>(
     plan && plan.frequency !== 'monthly' ? plan.dueMonths : defaultDueMonths('quarterly', monthOf(today)),
   );
   const [startMonth, setStartMonth] = useState<number>(plan && plan.frequency !== 'monthly' ? plan.dueMonths[0]! : monthOf(today));
   const [dueDayText, setDueDayText] = useState(plan?.dueDay && plan.frequency !== 'once' ? String(plan.dueDay) : '');
-  const [dueDate, setDueDate] = useState(plan?.dueDate ?? '');
+  const [dueDate, setDueDate] = useState(plan?.dueDate ?? onceOnly?.dueDate ?? '');
   const [note, setNote] = useState(position?.note ?? '');
   const [validFrom, setValidFrom] = useState<Period>(today);
   const [changeMode, setChangeMode] = useState<'from' | 'correct'>('from');
@@ -62,7 +64,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
 
   const once = frequency === 'once';
   // an existing position keeps its kind: recurring ones never turn into a one-time payment and vice versa
-  const frequencies: Frequency[] = !position ? [...RECURRING, 'once'] : plan?.frequency === 'once' ? [] : RECURRING;
+  const frequencies: Frequency[] = onceOnly ? [] : !position ? [...RECURRING, 'once'] : plan?.frequency === 'once' ? [] : RECURRING;
   const amount = parseAmount(amountText);
   const dueDay = dueDayText.trim() === '' ? undefined : Number(dueDayText);
   const errors = {
@@ -128,8 +130,14 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
 
   return (
     <BottomSheet
-      title={position ? 'Position bearbeiten' : 'Neue Position'}
-      subtitle={position ? position.name : 'Fixkosten, Sparplan oder einmalige Zahlung'}
+      title={position ? 'Position bearbeiten' : onceOnly ? 'Einmalige Zahlung' : 'Neue Position'}
+      subtitle={
+        position
+          ? position.name
+          : onceOnly
+            ? `für ${periodLabel(onceOnly.period)} – zählt nicht zu den Fixkosten`
+            : 'Fixkosten, Sparplan oder einmalige Zahlung'
+      }
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >
@@ -149,7 +157,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
             setName(v);
             setDirty((d) => ({ ...d, name: true }));
           }}
-          placeholder="z. B. Versicherung"
+          placeholder={onceOnly ? 'z. B. Hotel, Reparatur' : 'z. B. Versicherung'}
           error={dirty.name ? errors.name : null}
         />
         <SelectField
@@ -180,10 +188,10 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
             value={frequency}
             onChange={chooseFrequency}
             options={frequencies.map((f) => ({ value: f, label: FREQUENCY_LABEL[f] }))}
-            gridClass={frequencies.length > 4 ? 'grid-cols-3 sm:grid-cols-5' : undefined}
+            gridClass={frequencies.length > 4 ? 'grid-cols-3 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-4'}
           />
         ) : (
-          <p className="text-[14px] text-ink-mute">Häufigkeit: Einmalig</p>
+          !onceOnly && <p className="text-[14px] text-ink-mute">Häufigkeit: Einmalig</p>
         )}
         {once && (
           <>
@@ -275,7 +283,9 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
         )}
 
         <div className="pt-1">
-          <PrimaryButton disabled={!valid || saving}>{position ? 'Speichern' : 'Position anlegen'}</PrimaryButton>
+          <PrimaryButton disabled={!valid || saving}>
+            {position ? 'Speichern' : onceOnly ? 'Zahlung anlegen' : 'Position anlegen'}
+          </PrimaryButton>
         </div>
       </form>
     </BottomSheet>

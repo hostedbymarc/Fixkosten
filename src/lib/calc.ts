@@ -553,6 +553,23 @@ export function freeCalculated(ds: Dataset, period: Period): number | null {
   return salary === null ? null : freeCalculatedWith(ds, period, salary);
 }
 
+/**
+ * Free money of an average month: salary − Ø pro Monat (all fixed costs spread
+ * over the year) − planned savings. One-time payments and one-offs do not
+ * distort it. Null without salary.
+ */
+export function freeAverage(ds: Dataset, period: Period): number | null {
+  const salary = netSalaryForPeriod(ds, period);
+  return salary === null ? null : freeAverageWith(ds, period, salary);
+}
+
+/** freeAverage for a given salary (live preview in the month close). */
+export function freeAverageWith(ds: Dataset, period: Period, netSalary: number): number {
+  return fromCents(
+    toCents(netSalary) - Math.round(trueMonthlyBurden(ds, period) * 100) - Math.round(savingsForPeriod(ds, period) * 100),
+  );
+}
+
 /** actual − calculated; negative = less left than calculated. */
 export function gap(actual: number | null | undefined, calculated: number | null | undefined): number | null {
   if (actual === null || actual === undefined || calculated === null || calculated === undefined) return null;

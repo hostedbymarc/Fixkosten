@@ -205,11 +205,35 @@ test.describe('Sortieren', () => {
       immos.getByTestId('position-list-row').evaluateAll((rows) => rows.map((r) => r.getAttribute('data-position')));
     expect((await names()).slice(0, 2)).toEqual(['pos-kredit-1220', 'pos-bk-1220']);
     await app.getByRole('button', { name: 'Position „Kredit 1220“ verschieben' }).focus();
+    // wait for each step's screen-reader announcement: keys pressed before the
+    // drag has started (or moved) are lost, which made this test flaky
+    const live = app.getByText(/„Kredit 1220“ (aufgenommen|ist jetzt an Position)/);
     await app.keyboard.press('Space');
+    await expect(live).toBeAttached(); // „aufgenommen“, immediately followed by „ist jetzt an Position 1“
     await app.keyboard.press('ArrowDown');
+    await expect(live).toContainText('ist jetzt an Position 2');
     await app.keyboard.press('Space');
     const sorted = ['pos-bk-1220', 'pos-kredit-1220', 'pos-bk-1160', 'pos-baurechtszins'];
     await expect.poll(names).toEqual(sorted);
+    // the list reorders optimistically; reload only once IndexedDB has the new order
+    await expect
+      .poll(() =>
+        app.evaluate(
+          () =>
+            new Promise<string[]>((resolve) => {
+              const req = indexedDB.open('fixkosten');
+              req.onsuccess = () => {
+                const all = req.result.transaction('positions').objectStore('positions').getAll();
+                all.onsuccess = () => {
+                  req.result.close();
+                  const rows = all.result as { id: string; categoryId: string; sortOrder: number }[];
+                  resolve(rows.filter((r) => r.categoryId === 'cat-immos').sort((a, b) => a.sortOrder - b.sortOrder).map((r) => r.id));
+                };
+              };
+            }),
+        ),
+      )
+      .toEqual(sorted);
     await app.reload();
     await expect.poll(names).toEqual(sorted);
     await goTo(app, 'monat');
