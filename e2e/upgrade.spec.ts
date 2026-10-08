@@ -73,5 +73,5 @@ test('live upgrade 2776e95 (v1) → main (v4) in the same browser profile', asyn
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Sicherung exportieren' }).click(),
   ]);
-  expect(download.suggestedFilename()).toMatch(/^fixkosten-2026-10-05\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^erbse-backup-2026-10-05\.json$/);
 });

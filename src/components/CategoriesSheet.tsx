@@ -8,18 +8,7 @@ import { ChevronLeft } from './Icons';
 import { PrimaryButton, SecondaryButton, Segmented, SelectField, TextField } from './form';
 import { DragHandle, SortableList } from './Sortable';
 import { useToast } from './Toast';
-
-// Eight brand tones of similar lightness: distinguishable, readable in light and dark.
-export const CATEGORY_COLORS = [
-  { value: '#8B4FD8', name: 'Violett' },
-  { value: '#5F5BF0', name: 'Indigo' },
-  { value: '#2F7BEA', name: 'Blau' },
-  { value: '#0E9AA7', name: 'Petrol' },
-  { value: '#1F9D5C', name: 'Grün' },
-  { value: '#C98A0E', name: 'Senf' },
-  { value: '#E0662F', name: 'Orange' },
-  { value: '#D9467A', name: 'Rosé' },
-];
+import { CATEGORY_SLOTS, DEFAULT_COLOR_KEY, categoryColor, categoryKey } from '../lib/categoryColors';
 
 type View = { mode: 'list' } | { mode: 'edit'; id?: string } | { mode: 'delete'; id: string };
 
@@ -49,7 +38,7 @@ export function CategoriesSheet({ ds, onClose, returnFocusTo }: { ds: Dataset; o
 
       {view.mode === 'list' && (
         <div className="flex flex-col gap-3" data-testid="categories-list">
-          <div className="overflow-hidden rounded-2xl border border-line">
+          <div className="overflow-hidden rounded-2xl border border-edge">
             <SortableList
               items={categories}
               noun="Kategorie"
@@ -64,7 +53,7 @@ export function CategoriesSheet({ ds, onClose, returnFocusTo }: { ds: Dataset; o
                     className="focus-ring flex min-h-[56px] flex-1 items-center gap-3 rounded-xl px-2 text-left hover:bg-zinc-50"
                     aria-label={`${c.name} bearbeiten`}
                   >
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: c.color }} aria-hidden="true" />
+                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: categoryColor(c.color) }} aria-hidden="true" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-medium text-ink">{c.name}</span>
                       <span className="block text-[13px] text-ink-mute">
@@ -128,7 +117,7 @@ function CategoryForm({
   onDelete: (category: Category) => void;
 }) {
   const [name, setName] = useState(category?.name ?? '');
-  const [color, setColor] = useState(category?.color ?? CATEGORY_COLORS[1]!.value);
+  const [color, setColor] = useState(category?.color ?? DEFAULT_COLOR_KEY);
   const [kind, setKind] = useState<Kind>(category?.kind ?? 'expense');
   const [error, setError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
@@ -164,17 +153,17 @@ function CategoryForm({
       <div role="radiogroup" aria-label="Farbe">
         <div className="mb-1.5 text-[14px] font-medium text-ink-soft">Farbe</div>
         <div className="grid grid-cols-8 gap-1.5">
-          {CATEGORY_COLORS.map((c) => (
+          {CATEGORY_SLOTS.map((c) => (
             <button
-              key={c.value}
+              key={c.key}
               type="button"
               role="radio"
-              aria-checked={color === c.value}
+              aria-checked={categoryKey(color) === c.key}
               aria-label={c.name}
-              onClick={() => setColor(c.value)}
-              className={`focus-ring flex h-11 items-center justify-center rounded-xl border-2 ${color === c.value ? 'border-ink' : 'border-transparent'}`}
+              onClick={() => setColor(c.key)}
+              className={`focus-ring flex h-11 items-center justify-center rounded-xl border-2 ${categoryKey(color) === c.key ? 'border-ink' : 'border-transparent'}`}
             >
-              <span className="h-6 w-6 rounded-full" style={{ background: c.value }} />
+              <span className="h-6 w-6 rounded-full" style={{ background: c.color }} />
             </button>
           ))}
         </div>

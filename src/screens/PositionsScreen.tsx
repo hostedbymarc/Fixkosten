@@ -1,4 +1,5 @@
 import { useRef, useState, type MouseEvent } from 'react';
+import { categoryColor } from '../lib/categoryColors';
 import { AmountChangeSheet } from '../components/AmountChangeSheet';
 import { CategoriesSheet } from '../components/CategoriesSheet';
 import { Badge, formatIsoDate, planDescription } from '../components/Chips';
@@ -88,7 +89,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         <button
           type="button"
           onClick={(e) => open({ kind: 'categories' }, e)}
-          className="focus-ring h-11 rounded-xl border border-line bg-surface px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
+          className="focus-ring h-11 rounded-xl border border-edge bg-field px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
         >
           Kategorien
         </button>
@@ -98,9 +99,9 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         {categories.map((category) => {
           const items = listed(category.id);
           return (
-            <section key={category.id} className="card overflow-hidden" aria-label={category.name} data-testid="positions-group">
+            <section key={category.id} className="glass overflow-hidden" aria-label={category.name} data-testid="positions-group">
               <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: category.color }} aria-hidden="true" />
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: categoryColor(category.color) }} aria-hidden="true" />
                 <h2 className="flex-1 text-[15px] font-semibold text-ink">
                   {category.name}
                   {category.kind === 'savings' && <span className="ml-2 text-[12px] font-medium text-ink-mute">Sparen</span>}
@@ -140,8 +141,8 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         type="button"
         onClick={(e) => open({ kind: 'new' }, e)}
         aria-label="Position hinzufügen"
-        className="focus-ring fixed right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-accent btn-gloss text-white shadow-lg hover:bg-accent-hover lg:right-8"
-        style={{ bottom: 'calc(var(--tabbar-h) + var(--safe-bottom) + 16px)' }}
+        className="focus-ring fixed right-4 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-lg hover:bg-accent-hover lg:right-8"
+        style={{ bottom: 'calc(var(--tabbar-space) + 16px)' }}
         data-testid="fab"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">

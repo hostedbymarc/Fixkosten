@@ -12,6 +12,10 @@ export const COLORS = {
   inkSoft: 'var(--chart-ink-soft)',
   over: 'var(--chart-over)',
   paid: 'var(--chart-paid)',
+  /** text in the plot (labels): darker than the bar colour for 4.5:1 on glass */
+  paidText: 'var(--chart-paid-text)',
+  /** Ø line: neutral grey */
+  avg: 'var(--chart-avg)',
   surface: 'var(--chart-surface)',
 };
 

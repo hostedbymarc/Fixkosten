@@ -1,31 +1,31 @@
 {
-  "name": "Fixkosten",
-  "short_name": "Fixkosten",
+  "name": "Erbse",
+  "short_name": "Erbse",
   "description": "Monatliche Fixkosten abhaken – Daten bleiben auf dem Gerät.",
   "lang": "de-AT",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#5F5BF0",
-  "theme_color": "#F6F6F9",
+  "background_color": "#F4F5F1",
+  "theme_color": "#5A7A2E",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-1024.png",
-      "sizes": "1024x1024",
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }

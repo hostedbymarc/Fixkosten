@@ -92,7 +92,7 @@ export function ImportSheet({
             {mode === 'merge' ? 'Zusammenführen' : 'Ersetzen'}
           </PrimaryButton>
           <SecondaryButton
-            onClick={async () => downloadJson(await exportBackup(db), backupFileName('fixkosten-vor-import'))}
+            onClick={async () => downloadJson(await exportBackup(db), backupFileName('erbse-vor-import'))}
           >
             Aktuellen Stand vorher als Datei sichern
           </SecondaryButton>

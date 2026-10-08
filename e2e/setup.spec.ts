@@ -25,7 +25,7 @@ test.describe('Erststart: Import oder leer', () => {
       mimeType: 'application/json',
       buffer: Buffer.from('{"hello":"world"}'),
     });
-    await expect(fresh.getByRole('alert')).toHaveText('Das ist keine Fixkosten-Sicherung.');
+    await expect(fresh.getByRole('alert')).toHaveText('Das ist keine Erbse-Sicherung.');
     await expect(fresh.getByTestId('setup-dialog')).toBeVisible();
   });
 });

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { Segmented } from '../components/form';
-import { LogoMark } from '../components/Logo';
+import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
 import {
@@ -56,11 +56,11 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
             Archiv
           </h2>
           {archived.length === 0 ? (
-            <div className="rounded-card border border-dashed border-zinc-300 px-4 py-5 text-[14px] text-ink-mute">
+            <div className="glass px-4 py-5 text-[14px] text-ink-mute">
               Keine archivierten Positionen. Archivieren geht in „Positionen“ per Wischen nach links oder über das ⋯-Menü.
             </div>
           ) : (
-            <ul className="card divide-y divide-line" data-testid="archive-list">
+            <ul className="glass divide-y divide-line" data-testid="archive-list">
               {archived.map((p) => {
                 const plan = currentPlan(p, today)!;
                 return (
@@ -79,7 +79,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
                           await restorePosition(db, p.id, today);
                           toast({ message: `„${p.name}“ ist ab ${periodLabel(today)} wieder aktiv` });
                         }}
-                        className="focus-ring h-11 rounded-xl border border-line px-3 text-[14px] font-medium text-ink hover:border-zinc-300"
+                        className="focus-ring h-11 rounded-xl border border-edge bg-field px-3 text-[14px] font-medium text-ink hover:border-zinc-300"
                       >
                         Wiederherstellen
                       </button>
@@ -107,13 +107,13 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
           <h2 id="later-title" className="section-title mb-2 px-1">
             Erinnerungen
           </h2>
-          <div className="rounded-card border border-dashed border-zinc-300 px-4 py-5 text-[14px] text-ink-mute">
+          <div className="glass px-4 py-5 text-[14px] text-ink-mute">
             Kommt in Phase 4: Erinnerungen verwalten, CSV-Export, Backup-Erinnerung.
           </div>
         </section>
       </div>
 
-      <p className="mt-10 text-center text-[12px] text-ink-faint" data-testid="app-version">
+      <p className="mt-10 text-center text-[12px] text-ink-mute" data-testid="app-version">
         {versionLabel()}
       </p>
 
@@ -169,7 +169,7 @@ function BackupSection({ ds }: { ds: Dataset }) {
       <h2 id="backup-title" className="section-title mb-2 px-1">
         Sicherung
       </h2>
-      <div className="card flex flex-col gap-3 p-4" data-testid="backup-section">
+      <div className="glass flex flex-col gap-3 p-4" data-testid="backup-section">
         <p className="text-[14px] text-ink-soft">
           Deine Daten liegen nur auf diesem Gerät. Eine Sicherung (JSON) kannst du auf einem anderen Gerät oder nach dem
           Löschen der Website-Daten wieder importieren.
@@ -185,14 +185,14 @@ function BackupSection({ ds }: { ds: Dataset }) {
               await markExported(db);
               toast({ message: 'Sicherung gespeichert' });
             }}
-            className="focus-ring h-11 rounded-xl sm:flex-1 bg-accent btn-gloss px-4 text-[15px] font-semibold text-white hover:bg-accent-hover"
+            className="focus-ring h-11 rounded-xl sm:flex-1 bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover"
           >
             Sicherung exportieren
           </button>
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
-            className="focus-ring h-11 rounded-xl sm:flex-1 border border-line px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
+            className="focus-ring h-11 rounded-xl sm:flex-1 border border-edge bg-field px-4 text-[15px] font-medium text-ink hover:border-zinc-300"
           >
             Sicherung importieren
           </button>
@@ -260,7 +260,7 @@ function AppearanceSection() {
       <h2 id="appearance-title" className="section-title mb-2 px-1">
         Darstellung
       </h2>
-      <div className="card flex flex-col gap-3 p-4" data-testid="appearance">
+      <div className="glass flex flex-col gap-3 p-4" data-testid="appearance">
         <Segmented<ThemePref>
           label="Design"
           value={theme}
@@ -273,9 +273,9 @@ function AppearanceSection() {
         />
         <p className="px-1 text-[13px] leading-snug text-ink-mute">{THEME_HINT[theme]}</p>
         <div className="flex items-center gap-3 border-t border-line px-1 pt-3">
-          <LogoMark size={44} />
+          <Logo size={44} />
           <p className="text-[13px] leading-snug text-ink-mute">
-            <span className="block text-[15px] font-semibold text-ink">Wie eine App öffnen</span>
+            <span className="block text-[15px] font-semibold text-ink">Erbse wie eine App öffnen</span>
             In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.
           </p>
         </div>
