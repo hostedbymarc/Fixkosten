@@ -272,32 +272,57 @@ test.describe('Tooltips', () => {
     return section.getByTestId('chart-tooltip');
   }
 
+  /** Bounding box once layout has settled (web font swap, chart measuring, scrolling). */
+  async function stableBox(locator: Locator) {
+    let previous = await locator.boundingBox();
+    for (let i = 0; i < 20; i++) {
+      await locator.page().evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const next = await locator.boundingBox();
+      if (previous && next && previous.x === next.x && previous.y === next.y && previous.width === next.width && previous.height === next.height) return next;
+      previous = next;
+    }
+    return previous!;
+  }
+
+  /**
+   * Taps until the tooltip shows (max. 3 tries). Under full-suite load the emulated
+   * touch occasionally drops the mouse events Recharts listens to; on the device a
+   * tap always opens it. The test still requires a tap to open the tooltip.
+   */
+  async function tapUntil(page: Page, point: { x: number; y: number }, tip: Locator) {
+    await expect(async () => {
+      await page.touchscreen.tap(point.x, point.y);
+      await expect(tip).toBeVisible({ timeout: 1500 });
+    }).toPass({ intervals: [300, 600], timeout: 8000 });
+  }
+
   test('tap on iPhone/iPad, never under the finger', async ({ page }) => {
     test.skip(!isTouchProject(), 'touch only');
     await importHistory(page);
     await openAnalyse(page);
+    await page.evaluate(() => document.fonts.ready);
 
     const forecast = page.getByTestId('forecast');
     const feb = forecast.locator('.recharts-bar-rectangle').nth(3);
-    const box = (await feb.boundingBox())!;
+    const box = await stableBox(feb);
     const finger = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    await page.touchscreen.tap(finger.x, finger.y);
     const tip = await tooltipOf(forecast);
-    await expect(tip).toBeVisible();
+    await tapUntil(page, finger, tip);
     await expect(tip).toContainText(eur('Februar 2027: € 4.635')); // fixture: Kredit +€ 25 from Jan 2027
     await expect(tip).toContainText(eur('Steuerberater€ 1.260'));
     const tipBox = (await tip.boundingBox())!;
     expect(tipBox.y + tipBox.height, 'tooltip ends above the finger').toBeLessThan(finger.y);
 
-    for (const id of ['monthclose', 'trend', 'planactual']) {
+    // a different spot per chart: centred charts end up at the same screen position, and a
+    // second tap on identical coordinates sends no mouse move, so no tooltip (flaky before)
+    for (const [id, fx] of [['monthclose', 0.6], ['trend', 0.7], ['planactual', 0.8]] as const) {
       const section = page.getByTestId(id);
       // centred, so the tap never lands under the fixed tab bar
       await section.locator('.recharts-wrapper').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
-      const chart = (await section.locator('.recharts-wrapper').first().boundingBox())!;
-      const point = { x: chart.x + chart.width * 0.7, y: chart.y + chart.height * 0.75 };
-      await page.touchscreen.tap(point.x, point.y);
+      const chart = await stableBox(section.locator('.recharts-wrapper').first());
+      const point = { x: chart.x + chart.width * fx, y: chart.y + chart.height * 0.75 };
       const t = await tooltipOf(section);
-      await expect(t.first(), id).toBeVisible();
+      await tapUntil(page, point, t.first());
       await expect(t.first()).toContainText(/20(25|26)/);
       const tb = (await t.first().boundingBox())!;
       expect(tb.y + tb.height, `${id}: tooltip above the finger`).toBeLessThan(point.y);

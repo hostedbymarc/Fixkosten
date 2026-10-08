@@ -1,5 +1,6 @@
 import { forwardRef, useId, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
+import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { OneOffSheet } from '../components/OneOffSheet';
@@ -59,6 +60,10 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const [openKey, setOpenKey] = useState<{ positionId: string; period: Period } | null>(null);
   const [oneOffSheet, setOneOffSheet] = useState<{ positionId: string; oneOff?: OneOff } | null>(null);
   const [closeOpen, setCloseOpen] = useState(false);
+  const swipe = useMonthSwipe(
+    () => onPeriodChange(addPeriods(period, 1)),
+    () => onPeriodChange(addPeriods(period, -1)),
+  );
   const salaryTile = useRef<HTMLButtonElement>(null);
   const closeTrigger = useRef<HTMLElement | null>(null);
   const [editOnce, setEditOnce] = useState<string | null>(null);
@@ -144,8 +149,14 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8">
+    <div
+      className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8"
+      style={{ touchAction: 'pan-y' }}
+      data-testid="month-screen"
+      {...swipe.handlers}
+    >
       <MonthHeader period={period} onChange={onPeriodChange} />
+      <div key={swipe.enterKey} className={swipe.enterClass} style={swipe.style}>
 
       {openGroups.length > 0 && (
         <OpenFromPrevious
@@ -258,6 +269,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             )}
           </section>
         </aside>
+      </div>
+
       </div>
 
       {editOnce && ds.positions.some((p) => p.id === editOnce) && (
