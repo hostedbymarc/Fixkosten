@@ -41,8 +41,8 @@ function AmountField({
         {label}
       </label>
       <div
-        className={`flex h-14 items-center rounded-2xl border bg-surface px-4 focus-within:ring-2 ${
-          invalid ? 'border-over focus-within:ring-over/30' : 'border-line focus-within:border-accent-ink focus-within:ring-accent-ink/20'
+        className={`flex h-14 items-center rounded-2xl border bg-field px-4 focus-within:ring-2 ${
+          invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
         }`}
       >
         <span className="mr-2 text-[20px] text-ink-mute">€</span>
@@ -169,14 +169,14 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="z. B. Bonus, Urlaub …"
-            className="w-full resize-none rounded-2xl border border-line px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-accent-ink focus:ring-2 focus:ring-accent-ink/20"
+            className="w-full resize-none rounded-2xl border border-edge bg-field px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-accent-ink focus:ring-2 focus:ring-accent-ink/20"
           />
         </div>
 
         <button
           type="submit"
           disabled={invalid}
-          className="focus-ring mt-1 h-12 rounded-2xl bg-accent btn-gloss text-[16px] font-semibold text-white hover:bg-accent-hover disabled:opacity-40"
+          className="focus-ring mt-1 h-12 rounded-2xl bg-accent text-[16px] font-semibold text-white hover:bg-accent-hover disabled:opacity-40"
         >
           Speichern
         </button>

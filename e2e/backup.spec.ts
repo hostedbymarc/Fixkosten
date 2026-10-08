@@ -89,7 +89,7 @@ test.describe('Sicherung', () => {
       app.waitForEvent('download'),
       app.getByRole('button', { name: 'Sicherung exportieren' }).click(),
     ]);
-    expect(download.suggestedFilename()).toBe('fixkosten-2026-10-05.json');
+    expect(download.suggestedFilename()).toBe('erbse-backup-2026-10-05.json');
     await expect(app.getByTestId('last-backup')).toHaveText('Letzte Sicherung: 05.10.2026');
     const json = await readDownload(download);
 

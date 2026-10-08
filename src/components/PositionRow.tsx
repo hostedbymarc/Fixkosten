@@ -15,7 +15,7 @@ function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; sma
   const size = small ? 'h-[22px] w-[22px]' : 'h-[28px] w-[28px]';
   if (state === 'paid') {
     return (
-      <span className={`anim-check check-gloss flex ${size} items-center justify-center rounded-full bg-paid text-paid-on`}>
+      <span className={`anim-check flex ${size} items-center justify-center rounded-full bg-paid text-paid-on`}>
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -33,7 +33,7 @@ function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; sma
   }
   return (
     <span
-      className={`${size} rounded-full border-2 border-dashed border-zinc-300 transition-colors group-hover:border-solid group-hover:border-accent-ink`}
+      className={`${size} rounded-full border-2 border-dashed border-check-open transition-colors group-hover:border-solid group-hover:border-accent-ink`}
     />
   );
 }
@@ -73,7 +73,7 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
             type="button"
             onClick={onOpen}
             aria-label={`${position.name} – Details`}
-            className="focus-ring flex min-h-[56px] min-w-0 flex-1 items-center gap-3 rounded-xl py-2.5 pr-4 text-left hover:bg-zinc-50"
+            className="focus-ring flex min-h-[56px] min-w-0 flex-1 items-center gap-3 rounded-xl py-2.5 pr-4 text-left hover:bg-zinc-50/60"
           >
             <span className="min-w-0 flex-1">
               <span className={`block truncate text-[16px] font-medium transition-colors ${done ? 'text-ink-mute' : 'text-ink'}`}>
@@ -128,13 +128,13 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
             type="button"
             onClick={() => onOpenOneOff(o)}
             aria-label={`${o.label} – bearbeiten`}
-            className="focus-ring flex min-h-[44px] min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-4 text-left hover:bg-zinc-50"
+            className="focus-ring flex min-h-[44px] min-w-0 flex-1 items-center gap-3 rounded-xl py-1.5 pr-4 text-left hover:bg-zinc-50/60"
           >
             <span className="min-w-0 flex-1">
               <span className={`block truncate text-[14px] font-medium ${o.paidAt ? 'text-ink-mute' : 'text-ink-soft'}`}>{o.label}</span>
               <span className="text-[12px] text-ink-mute">{o.amount < 0 ? 'Gutschrift' : 'Nachzahlung'} · einmalig</span>
             </span>
-            <span className={`num shrink-0 text-[14px] font-semibold ${o.amount < 0 ? 'text-paid' : 'text-ink-soft'}`}>
+            <span className={`num shrink-0 text-[14px] font-semibold ${o.amount < 0 ? 'text-paid-ink' : 'text-ink-soft'}`}>
               {formatDelta(o.amount)}
             </span>
           </button>

@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
+import { IMMOS_COLOR_KEY } from '../lib/categoryColors';
 import { toPeriod } from '../lib/period';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, type PositionV2 } from './migrations';
 import type {
@@ -44,7 +45,7 @@ export const IMMOS_CATEGORY: Category = {
   id: 'cat-immos',
   name: 'Meine Immos',
   kind: 'expense',
-  color: '#2E2E8A',
+  color: IMMOS_COLOR_KEY,
   sortOrder: 0,
 };
 

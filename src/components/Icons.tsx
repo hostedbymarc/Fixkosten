@@ -37,13 +37,6 @@ export const CalendarIcon = (p: IconProps) => (
     <path d="M3.5 10h17M8 3v4M16 3v4" />
   </Icon>
 );
-/** The brand ring with its check, small: the month tab. */
-export const MonthIcon = (p: IconProps) => (
-  <Icon {...p} strokeWidth={2}>
-    <circle cx="12" cy="12" r="8" strokeDasharray="42 60" transform="rotate(-75 12 12)" />
-    <path d="M8.6 12.2l2.4 2.4 4.3-4.6" />
-  </Icon>
-);
 export const ListIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M9 6h11M9 12h11M9 18h11" />
@@ -90,5 +83,11 @@ export const PencilIcon = (p: IconProps) => (
 export const TrashIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />
+  </Icon>
+);
+export const AlertIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5v5.5M12 16.5v.01" />
   </Icon>
 );

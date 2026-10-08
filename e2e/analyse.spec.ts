@@ -30,7 +30,7 @@ async function expectChartLabelsClean(page: Page) {
     const intersects = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
     for (const wrapper of Array.from(root.querySelectorAll('.recharts-wrapper'))) {
       const box = wrapper.getBoundingClientRect();
-      const card = wrapper.closest('.card')!.getBoundingClientRect();
+      const card = wrapper.closest('.glass')!.getBoundingClientRect();
       if (box.width > card.width) out.push(`chart wider than card ${box.width} > ${card.width}`);
       const groups = [
         ...Array.from(wrapper.querySelectorAll('.recharts-xAxis-tick-labels, .recharts-yAxis-tick-labels')),
@@ -257,7 +257,7 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     }
     // charts use the full card width on every viewport
     for (const id of ['forecast', 'monthclose', 'trend', 'planactual']) {
-      const card = (await page.getByTestId(id).locator('.card').boundingBox())!;
+      const card = (await page.getByTestId(id).locator('.glass').boundingBox())!;
       const chart = (await page.getByTestId(id).locator('.recharts-wrapper').first().boundingBox())!;
       expect(chart.width).toBeGreaterThan(card.width - 40);
       expect(chart.width).toBeLessThanOrEqual(card.width);

@@ -53,7 +53,7 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
                 aria-label={r.aria}
                 onClick={() => setRange(r.value)}
                 className={`focus-ring h-11 min-w-[56px] rounded-lg px-3 text-[14px] font-semibold ${
-                  range === r.value ? 'bg-surface text-ink shadow-card' : 'text-ink-mute hover:text-ink'
+                  range === r.value ? 'bg-raised text-ink shadow-card' : 'text-ink-mute hover:text-ink'
                 }`}
               >
                 {r.label}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { categoryColor } from '../../lib/categoryColors';
 import {
   Area,
   AreaChart,
@@ -149,7 +150,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             )}
             <ReferenceLine
               y={f.average}
-              stroke={COLORS.inkSoft}
+              stroke={COLORS.avg}
               strokeDasharray="4 4"
               ifOverflow="extendDomain"
               label={{
@@ -169,7 +170,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
       <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-mute">
         <span className="h-2.5 w-2.5 rounded-[3px] bg-accent" aria-hidden="true" />
         über dem Schnitt
-        <span className="ml-2 h-0 w-4 border-t-2 border-dashed border-ink-soft" aria-hidden="true" />
+        <span className="ml-2 h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
         Ø pro Monat (umgelegt)
         {hasOnce && (
           <>
@@ -227,7 +228,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
                 <span className="ml-[22px] block h-2 rounded-full bg-zinc-100" aria-hidden="true">
                   <span
                     className="block h-2 rounded-full"
-                    style={{ width: `${(r.monthly / max) * 100}%`, background: r.category.color }}
+                    style={{ width: `${(r.monthly / max) * 100}%`, background: categoryColor(r.category.color) }}
                   />
                 </span>
               </button>
@@ -243,7 +244,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
                       <span className="block h-1.5 rounded-full bg-zinc-100" aria-hidden="true">
                         <span
                           className="block h-1.5 rounded-full opacity-70"
-                          style={{ width: `${(p.monthly / max) * 100}%`, background: r.category.color }}
+                          style={{ width: `${(p.monthly / max) * 100}%`, background: categoryColor(r.category.color) }}
                         />
                       </span>
                     </li>
@@ -334,7 +335,7 @@ export function MonthCloseSection({ ds, periods }: { ds: Dataset; periods: Perio
                   x: r.label,
                   y: Math.max(r.calculated ?? 0, r.actual ?? 0),
                   text: deltaCompact(r.gap!),
-                  color: r.gap! < 0 ? COLORS.over : r.gap! > 0 ? COLORS.paid : COLORS.inkSoft,
+                  color: r.gap! < 0 ? COLORS.over : r.gap! > 0 ? COLORS.paidText : COLORS.inkSoft,
                 }))}
             />
           </BarChart>
@@ -452,7 +453,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
                 return (
                   <TooltipBox title={`${periodLabel(r.period)}: ${formatEUR(point.total)}`}>
                     {[...t.categories].reverse().map((c) => (
-                      <TooltipRow key={c.id} label={c.name} value={formatEUR(point.byCategory[c.id] ?? 0)} swatch={c.color} />
+                      <TooltipRow key={c.id} label={c.name} value={formatEUR(point.byCategory[c.id] ?? 0)} swatch={categoryColor(c.color)} />
                     ))}
                     {(t.changes[r.period] ?? []).map((c) => (
                       <p key={c.positionName} className="mt-1 border-t border-line pt-1 text-ink" data-testid="trend-change">
@@ -472,7 +473,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
                 type="linear"
                 stroke={COLORS.surface}
                 strokeWidth={1}
-                fill={c.color}
+                fill={categoryColor(c.color)}
                 fillOpacity={1}
                 isAnimationActive={false}
               />
@@ -484,7 +485,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-soft" aria-label="Kategorien">
         {[...t.categories].reverse().map((c) => (
           <li key={c.id} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: c.color }} aria-hidden="true" />
+            <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: categoryColor(c.color) }} aria-hidden="true" />
             {c.name}
             <span className="num text-ink">{formatEUR(last.byCategory[c.id] ?? 0)}</span>
           </li>
@@ -566,7 +567,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
                 y: Math.max(r.planned, r.actual),
                 text: r.running ? 'läuft' : deltaCompact(r.delta!),
                 keepText: r.running,
-                color: r.running ? COLORS.axis : r.delta! > 0 ? COLORS.over : r.delta! < 0 ? COLORS.paid : COLORS.inkSoft,
+                color: r.running ? COLORS.axis : r.delta! > 0 ? COLORS.over : r.delta! < 0 ? COLORS.paidText : COLORS.inkSoft,
               }))}
             />
           </BarChart>
@@ -582,7 +583,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
           Ist
         </span>
         <span>
-          <span className="text-over">teurer</span> / <span className="text-paid">günstiger</span>
+          <span className="text-over">teurer</span> / <span className="text-paid-ink">günstiger</span>
         </span>
       </p>
       {p.topDeviations.length > 0 && (
@@ -598,7 +599,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
                     {d.label ? ` · ${d.label}` : ''}
                   </span>
                 </span>
-                <span className={`num shrink-0 font-semibold ${d.delta > 0 ? 'text-over' : 'text-paid'}`}>{formatDelta(d.delta)}</span>
+                <span className={`num shrink-0 font-semibold ${d.delta > 0 ? 'text-over' : 'text-paid-ink'}`}>{formatDelta(d.delta)}</span>
               </li>
             ))}
           </ol>
@@ -630,7 +631,7 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
       <h2 id="optimizations-title" className="section-title mb-2 px-1">
         Optimierungen
       </h2>
-      <div className="card p-4">
+      <div className="glass p-4">
         <p className="text-[15px] font-medium text-ink" data-testid="optimizations-headline">
           {implemented.length > 0 && (
             <span className="whitespace-nowrap">
@@ -653,7 +654,7 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
 
 function DeltaPerYear({ value }: { value: number }) {
   const c = Math.round(value * 100);
-  return <span className={`num font-semibold ${c < 0 ? 'text-paid' : c > 0 ? 'text-over' : 'text-ink'}`}>{formatDelta(value)} / Jahr</span>;
+  return <span className={`num font-semibold ${c < 0 ? 'text-paid-ink' : c > 0 ? 'text-over' : 'text-ink'}`}>{formatDelta(value)} / Jahr</span>;
 }
 
 function OptimizationList({ title, entries, testId }: { title: string; entries: OptimizationEntry[]; testId: string }) {
@@ -690,7 +691,7 @@ function OptimizationList({ title, entries, testId }: { title: string; entries: 
                   {!sameSchedule && ` · ${planDescription(e.from)} → ${planDescription(e.to)}`}
                 </span>
               </span>
-              <span className={`num shrink-0 text-[14px] font-semibold ${saves ? 'text-paid' : e.annualDelta > 0 ? 'text-over' : 'text-ink-mute'}`}>
+              <span className={`num shrink-0 text-[14px] font-semibold ${saves ? 'text-paid-ink' : e.annualDelta > 0 ? 'text-over' : 'text-ink-mute'}`}>
                 {saves ? `spart ${formatEUR(-e.annualDelta)}/Jahr` : `${formatDelta(e.annualDelta)}/Jahr`}
               </span>
             </li>

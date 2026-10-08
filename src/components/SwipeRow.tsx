@@ -40,12 +40,13 @@ export function SwipeRow({
           onAction();
         }}
         className="absolute inset-y-0 right-0 flex items-center justify-center bg-danger px-4 text-[15px] font-semibold text-white"
-        style={{ width: ACTION_WIDTH }}
+        // rows are transparent on glass: the action only exists visually while the row is moved
+        style={{ width: ACTION_WIDTH, visibility: offset === 0 && !dragging ? 'hidden' : 'visible' }}
       >
         {actionLabel}
       </button>
       <div
-        className={`relative bg-surface ${dragging ? '' : 'transition-transform duration-200 ease-out'}`}
+        className={`relative ${dragging ? '' : 'transition-transform duration-200 ease-out'}`}
         style={{ transform: `translateX(${offset}px)`, touchAction: 'pan-y' }}
         onPointerDown={(e) => {
           if (e.pointerType === 'mouse') return;

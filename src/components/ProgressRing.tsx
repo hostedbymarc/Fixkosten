@@ -6,7 +6,7 @@ interface Props {
   label: string;
 }
 
-/** White month ring for the indigo hero card; closes into a check, like the logo. */
+/** Month ring: brand on brand-100; a check replaces the percentage once everything is paid. */
 export function ProgressRing({ ratio, size = 104, stroke = 10, label }: Props) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
@@ -15,25 +15,23 @@ export function ProgressRing({ ratio, size = 104, stroke = 10, label }: Props) {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
-        <circle cx={size / 2} cy={size / 2} r={r} stroke="rgb(255 255 255 / 0.22)" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} className="stroke-accent-soft" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="#ffffff"
+          className="stroke-accent transition-[stroke-dashoffset] duration-500 ease-out"
           strokeWidth={stroke}
           strokeLinecap="round"
           fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - clamped)}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          className="transition-[stroke-dashoffset] duration-500 ease-out"
-          style={{ filter: 'drop-shadow(0 1px 2px rgb(20 10 80 / 0.25))' }}
         />
       </svg>
-      <div className="num absolute inset-0 flex items-center justify-center text-[20px] font-semibold tracking-tight text-white">
+      <div className="num absolute inset-0 flex items-center justify-center text-[20px] font-semibold tracking-tight text-ink">
         {done ? (
-          <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+          <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true" className="text-accent">
             <path d="M6 12.5l4.5 4.5 8-9" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ) : (

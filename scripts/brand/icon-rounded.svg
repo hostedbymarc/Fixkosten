@@ -1,0 +1,2 @@
+<!-- Erbse logo with its own rounding (favicon, manifest 192/512). Same geometry as src/components/Logo.tsx. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#5A7A2E"/><circle cx="9" cy="14" r="3.4" fill="#fff"/><circle cx="14" cy="14" r="3.4" fill="#fff" opacity=".85"/><circle cx="19" cy="14" r="3.4" fill="#fff" opacity=".7"/></svg>
