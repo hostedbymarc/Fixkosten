@@ -16,7 +16,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
     if (!this.state.error) return this.props.children;
     return (
       <div className="flex min-h-dvh items-center justify-center px-4">
-        <div role="alert" className="card w-full max-w-md p-6">
+        <div role="alert" className="glass w-full max-w-md p-6">
           <h1 className="text-[19px] font-semibold text-ink">Daten konnten nicht geladen werden</h1>
           <p className="mt-2 text-[14px] text-ink-soft">
             Deine Daten wurden nicht verändert. Bitte die App neu laden.
@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="focus-ring mt-4 h-11 w-full rounded-2xl bg-accent btn-gloss text-[15px] font-semibold text-white"
+            className="focus-ring mt-4 h-11 w-full rounded-2xl bg-accent text-[15px] font-semibold text-white"
           >
             Neu laden
           </button>

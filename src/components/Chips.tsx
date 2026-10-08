@@ -1,4 +1,5 @@
 import { dueDayInPeriod } from '../lib/calc';
+import { ClockIcon } from './Icons';
 import { formatDayMonth, formatDelta } from '../lib/format';
 import { shortMonthName } from '../lib/period';
 import type { Frequency, Period, PlanEntry } from '../lib/types';
@@ -63,8 +64,10 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex h-[22px] items-center whitespace-nowrap rounded-md px-1.5 text-[12px] font-medium ${tones[tone]}`}
+      className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[12px] font-medium ${tones[tone]}`}
     >
+      {/* "kommt bald" is never colour alone: amber plus the clock */}
+      {tone === 'warn' && <ClockIcon size={12} className="text-warn-icon" strokeWidth={2.2} />}
       {children}
     </span>
   );
@@ -77,7 +80,7 @@ export function DeltaChip({ delta }: { delta: number }) {
   return (
     <span
       className={`num inline-flex h-[20px] items-center rounded-md px-1.5 text-[12px] font-semibold ${
-        more ? 'bg-over-soft text-over' : 'bg-paid-soft text-paid'
+        more ? 'bg-over-soft text-over' : 'bg-paid-soft text-paid-ink'
       }`}
       aria-label={`${more ? 'Mehr' : 'Weniger'} als geplant: ${formatDelta(delta)}`}
     >

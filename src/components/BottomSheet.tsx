@@ -21,7 +21,12 @@ function useScrollLock() {
     body.style.top = `-${scrollY}px`;
     body.style.width = '100%';
     documentElement.style.overflow = 'hidden';
+    // glass behind the scrim needs no live blur (see index.css); counted for nested sheets
+    body.dataset.sheets = String(Number(body.dataset.sheets ?? 0) + 1);
     return () => {
+      const open = Number(body.dataset.sheets ?? 1) - 1;
+      if (open > 0) body.dataset.sheets = String(open);
+      else delete body.dataset.sheets;
       body.style.position = prev.position;
       body.style.top = prev.top;
       body.style.width = prev.width;
@@ -66,11 +71,17 @@ interface Props {
   returnFocusTo?: HTMLElement | null;
 }
 
+/** False when the entry animation is switched off (reduced motion): then no animationend comes. */
+export function entersAnimated(): boolean {
+  return !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+}
+
 export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo }: Props) {
   useScrollLock();
   const keyboard = useKeyboardInset();
   const panel = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const [moving, setMoving] = useState(entersAnimated);
 
   const returnFocus = useRef(returnFocusTo);
   useEffect(() => {
@@ -116,7 +127,7 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
 
   return createPortal(
     <div className="fixed inset-0 z-40">
-      <div className="anim-fade absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div className="anim-fade absolute inset-0 bg-scrim" onClick={onClose} aria-hidden="true" />
       <div
         className="absolute inset-x-0 flex justify-center lg:inset-0 lg:items-center lg:p-6"
         style={{ bottom: keyboard }}
@@ -127,14 +138,19 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="anim-sheet flex w-full max-w-lg flex-col overflow-hidden rounded-t-[22px] bg-surface shadow-sheet outline-none lg:rounded-[22px]"
+          className="glass-strong anim-sheet relative flex w-full max-w-lg flex-col overflow-hidden !rounded-b-none !rounded-t-[22px] !shadow-sheet outline-none lg:!rounded-[22px]"
+          // the sheet slides in via transform: no blur while it moves (see .glass[data-animating])
+          data-animating={moving ? '' : undefined}
+          onAnimationEnd={(e) => e.target === e.currentTarget && setMoving(false)}
           style={{ maxHeight: `calc(100dvh - ${keyboard}px - var(--safe-top) - 24px)` }}
           data-testid="bottom-sheet"
         >
-          <div className="flex justify-center pt-2 lg:hidden" aria-hidden="true">
+          {/* blur is weakest at the very edge: a short veil keeps content behind the top edge from showing through */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-[linear-gradient(var(--glass-fallback),transparent)]" aria-hidden="true" />
+          <div className="relative flex justify-center pt-2 lg:hidden" aria-hidden="true">
             <div className="h-1 w-9 rounded-full bg-zinc-200" />
           </div>
-          <div className="flex items-start gap-3 px-5 pb-2 pt-3">
+          <div className="relative flex items-start gap-3 px-5 pb-2 pt-3">
             <div className="min-w-0 flex-1">
               <h2 id={titleId} className="truncate text-[19px] font-semibold text-ink">
                 {title}

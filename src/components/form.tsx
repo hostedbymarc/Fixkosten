@@ -11,8 +11,8 @@ export function parseOptionalAmount(text: string): number | undefined | null {
 const labelClass = 'mb-1.5 block text-[14px] font-medium text-ink-soft';
 const hintClass = 'mt-1.5 min-h-[20px] text-[13px] text-ink-mute';
 const boxClass = (invalid: boolean) =>
-  `rounded-2xl border bg-surface focus-within:ring-2 ${
-    invalid ? 'border-over focus-within:ring-over/30' : 'border-line focus-within:border-accent-ink focus-within:ring-accent-ink/20'
+  `rounded-2xl border bg-field focus-within:ring-2 ${
+    invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
   }`;
 
 export function AmountField({
@@ -244,7 +244,7 @@ export function MonthChips({
               aria-pressed={active}
               onClick={() => onChange(active ? value.filter((x) => x !== m) : [...value, m].sort((a, b) => a - b))}
               className={`focus-ring h-11 rounded-xl border text-[14px] font-medium ${
-                active ? 'border-accent bg-accent btn-gloss text-white' : 'border-line bg-surface text-ink-soft hover:border-zinc-300'
+                active ? 'border-accent bg-accent text-white' : 'border-edge bg-field text-ink-soft hover:border-zinc-300'
               }`}
             >
               {shortMonthName(m)}
@@ -272,7 +272,7 @@ export function PrimaryButton({ children, disabled, type = 'submit', onClick, da
       disabled={disabled}
       onClick={onClick}
       className={`focus-ring h-12 w-full rounded-2xl text-[16px] font-semibold text-white disabled:opacity-40 ${
-        danger ? 'bg-danger hover:bg-danger-hover' : 'bg-accent btn-gloss hover:bg-accent-hover'
+        danger ? 'bg-danger hover:bg-danger-hover' : 'bg-accent hover:bg-accent-hover'
       }`}
     >
       {children}
