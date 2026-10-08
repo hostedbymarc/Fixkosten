@@ -475,6 +475,41 @@ export async function deletePositionPermanently(db: FixkostenDB, id: string): Pr
   });
 }
 
+export interface DeletedPosition {
+  position: Position;
+  payments: Payment[];
+  oneOffs: OneOff[];
+  changeLog: ChangeLog[];
+}
+
+/** Deletes a position with everything attached and returns it, so the caller can offer undo. */
+export async function deletePositionForUndo(db: FixkostenDB, id: string): Promise<DeletedPosition> {
+  return db.transaction('rw', [db.positions, db.payments, db.oneOffs, db.changeLog], async () => {
+    const position = await db.positions.get(id);
+    if (!position) throw new RepoError('Position nicht gefunden.');
+    const deleted: DeletedPosition = {
+      position,
+      payments: await db.payments.where('positionId').equals(id).toArray(),
+      oneOffs: await db.oneOffs.where('positionId').equals(id).toArray(),
+      changeLog: await db.changeLog.where('positionId').equals(id).toArray(),
+    };
+    await db.payments.where('positionId').equals(id).delete();
+    await db.oneOffs.where('positionId').equals(id).delete();
+    await db.changeLog.where('positionId').equals(id).delete();
+    await db.positions.delete(id);
+    return deleted;
+  });
+}
+
+export async function restoreDeletedPosition(db: FixkostenDB, deleted: DeletedPosition): Promise<void> {
+  await db.transaction('rw', [db.positions, db.payments, db.oneOffs, db.changeLog], async () => {
+    await db.positions.put(deleted.position);
+    await db.payments.bulkPut(deleted.payments);
+    await db.oneOffs.bulkPut(deleted.oneOffs);
+    await db.changeLog.bulkPut(deleted.changeLog);
+  });
+}
+
 /**
  * New order of the positions of one category. Reuses their existing sortOrder
  * slots so positions of other categories are untouched.

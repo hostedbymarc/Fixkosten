@@ -167,3 +167,28 @@ describe('Betrag ändern', () => {
     ]);
   });
 });
+
+describe('Einmalige Zahlung löschen (Monat) mit Rückgängig', () => {
+  it('removes position, tick and log; undo restores everything', async () => {
+    const { deletePositionForUndo, restoreDeletedPosition } = await import('./repo');
+    const db = await seededDb();
+    const id = await createPosition(
+      db,
+      { name: 'Hotel', categoryId: 'cat-abos', plan: { amount: 620, frequency: 'once', dueMonths: [], dueDate: '2026-11-01' } },
+      OCT,
+    );
+    await markPaid(db, id, '2026-11', 620);
+    const before = await loadDataset(db);
+    const removed = await deletePositionForUndo(db, id);
+    let ds = await loadDataset(db);
+    expect(ds.positions.some((p) => p.id === id)).toBe(false);
+    expect(ds.payments.some((p) => p.positionId === id)).toBe(false);
+    expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
+    await restoreDeletedPosition(db, removed);
+    ds = await loadDataset(db);
+    expect(ds.positions.find((p) => p.id === id)).toEqual(before.positions.find((p) => p.id === id));
+    expect(ds.payments.filter((p) => p.positionId === id)).toEqual(before.payments.filter((p) => p.positionId === id));
+    expect(ds.changeLog.filter((c) => c.positionId === id)).toEqual(before.changeLog.filter((c) => c.positionId === id));
+    expect(plannedForPeriod(ds, '2026-11')).toBe(3284);
+  });
+});

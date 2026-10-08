@@ -10,10 +10,13 @@ interface Props {
   onSave: (actualAmount: number, note: string) => void;
   onUnpay: () => void;
   onAddOneOff?: () => void;
+  /** one-time payments (frequency 'once') are edited and deleted right in their month */
+  onEditOnce?: () => void;
+  onDeleteOnce?: () => void;
 }
 
 /** Tap on a row: set actual amount, note, or remove the tick. */
-export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Props) {
+export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff, onEditOnce, onDeleteOnce }: Props) {
   const { payment, planned, position } = item;
   const paid = item.status === 'paid';
   const [amountText, setAmountText] = useState(amountToInput(paid ? payment!.actualAmount : planned));
@@ -109,6 +112,24 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff }: Pr
               className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-ink-soft hover:bg-zinc-100"
             >
               {paid ? 'Haken entfernen' : 'Entfallen zurücksetzen'}
+            </button>
+          )}
+          {onEditOnce && (
+            <button
+              type="button"
+              onClick={onEditOnce}
+              className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-accent-ink hover:bg-accent-soft"
+            >
+              Zahlung bearbeiten
+            </button>
+          )}
+          {onDeleteOnce && (
+            <button
+              type="button"
+              onClick={onDeleteOnce}
+              className="focus-ring h-12 rounded-2xl text-[16px] font-medium text-over hover:bg-over-soft"
+            >
+              Zahlung löschen
             </button>
           )}
           {onAddOneOff && (

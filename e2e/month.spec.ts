@@ -12,10 +12,13 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
   });
 
   test('KPI tiles', async ({ app }) => {
-    await expect(app.getByText('Fällig diesen Monat').locator('..')).toContainText(eur('€ 3.403'));
+    await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
+    await expect(app.getByText('Fällig diesen Monat')).toHaveCount(0); // replaced by Netto-Gehalt; the hero shows „von € 3.403“
     await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
-    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('Jahreskosten verteilt · inkl. € 288,17 Rücklage'));
-    await expect(app.getByTestId('free-tile')).toContainText('Gehalt eintragen');
+    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(
+      eur('Jahreskosten verteilt · davon € 288,17 für Quartals- & Jahreszahlungen'),
+    );
+    await expect(app.getByTestId('free-tile')).not.toContainText('Gehalt eintragen');
   });
 
   test('one tap on circle marks paid, tap again removes with undo', async ({ app }) => {
