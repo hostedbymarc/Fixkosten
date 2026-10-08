@@ -2,8 +2,8 @@ import { eur, expect, test } from './fixtures';
 
 test.describe('Monatsabschluss', () => {
   test('enter salary and free money → reload → values and difference', async ({ app }) => {
+    await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
     const tile = app.getByTestId('free-tile');
-    await expect(tile).toContainText('Gehalt eintragen');
     await tile.click();
     const sheet = app.getByRole('dialog', { name: 'Monatsabschluss Oktober 2026' });
     await expect(sheet).toBeVisible();
@@ -21,6 +21,7 @@ test.describe('Monatsabschluss', () => {
       await expect(app.getByTestId('free-sub')).toHaveText(eur('rechnerisch € 797 · Differenz −€ 147'));
       await expect(app.getByTestId('free-sub').locator('.text-over')).toHaveText(eur('−€ 147'));
       await expect(app.getByTestId('savings-rate')).toHaveText(eur('Sparquote 16,0 %'));
+      await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 5.000'));
     };
     await check();
     await app.reload();
@@ -49,7 +50,7 @@ test.describe('Monatsabschluss', () => {
     await app.getByRole('button', { name: 'Speichern' }).click();
 
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
-    await expect(app.getByTestId('free-tile')).toContainText('Gehalt eintragen');
+    await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
     await app.getByTestId('free-tile').click();
     await expect(app.getByLabel('Netto-Gehalt')).toHaveValue('');
     await expect(app.getByLabel('Netto-Gehalt')).toHaveAttribute('placeholder', '5000');
@@ -58,10 +59,10 @@ test.describe('Monatsabschluss', () => {
     await expect(app.getByLabel('Frei verfügbar (tatsächlich)')).toHaveValue('650');
     await app.keyboard.press('Escape');
 
-    await expect(app.getByTestId('free-tile')).toContainText('Gehalt eintragen');
+    await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
     await app.reload();
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
-    await expect(app.getByTestId('free-tile')).toContainText('Gehalt eintragen');
+    await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
   });
 
   test('keyboard: Enter opens, Esc closes, focus returns to the tile', async ({ app }) => {

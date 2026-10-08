@@ -37,9 +37,48 @@ test.describe('Einmalige Zahlung im Monat', () => {
     await app.getByRole('button', { name: 'Vorheriger Monat' }).click();
     await expect(app.getByTestId('position-row').filter({ hasText: 'Hotel Copenhagen' })).toHaveCount(0);
 
+    // not in the Positionen tab: that tab is for fixed costs only
     await goTo(app, 'positionen');
-    await app.getByTestId('once-section').getByRole('button', { name: /Einmalige Zahlungen/ }).click();
-    await expect(app.getByTestId('once-upcoming')).toContainText('Hotel Copenhagen');
+    await expect(app.getByText('Hotel Copenhagen')).toHaveCount(0);
+    await app.getByRole('button', { name: 'Position hinzufügen' }).click();
+    await expect(app.getByTestId('position-form').getByRole('radio', { name: 'Einmalig' })).toHaveCount(0);
+  });
+
+  test('im Monat bearbeiten und löschen (mit Rückgängig)', async ({ app }) => {
+    await app.getByRole('button', { name: 'Nächster Monat' }).click();
+    await addOnce(app, 'Hotel Copenhagen', '620', 'Abos & Freizeit');
+    const row = () => app.getByTestId('position-row').filter({ hasText: 'Hotel' });
+
+    // edit: name, amount, category, date
+    await row().getByRole('button', { name: /Details/ }).click();
+    await expect(app.getByTestId('bottom-sheet')).toBeVisible();
+    await app.getByRole('button', { name: 'Zahlung bearbeiten' }).click();
+    await animationsDone(app, 'bottom-sheet');
+    await expect(app.getByTestId('bottom-sheet')).toContainText('Einmalige Zahlung bearbeiten');
+    const form = app.getByTestId('position-form');
+    await expect(form.getByLabel('Betrag')).toHaveValue('620');
+    await form.getByLabel('Name').fill('Hotel MUC');
+    await form.getByLabel('Betrag').fill('200');
+    await form.getByLabel('Kategorie').selectOption({ label: 'Wohnen & Leben' });
+    await form.getByLabel('Fällig am').fill('2026-11-20');
+    await expectClean(app, '[data-testid="bottom-sheet"]');
+    await form.getByRole('button', { name: 'Speichern' }).click();
+    await expect(app.getByTestId('bottom-sheet')).toHaveCount(0);
+    const wohnen = app.getByRole('region', { name: 'Wohnen & Leben' });
+    await expect(wohnen.getByTestId('position-row').filter({ hasText: 'Hotel MUC' })).toContainText('Einmalig · 20.11.');
+    await expect(wohnen.getByTestId('position-row').filter({ hasText: 'Hotel MUC' })).toContainText(eur('€ 200'));
+    await expect(app.getByRole('region', { name: 'Abos & Freizeit' }).getByText('Hotel')).toHaveCount(0);
+    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.864'));
+
+    // delete with undo
+    await row().getByRole('button', { name: /Details/ }).click();
+    await expect(app.getByTestId('bottom-sheet')).toBeVisible();
+    await app.getByRole('button', { name: 'Zahlung löschen' }).click();
+    await expect(row()).toHaveCount(0);
+    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.664'));
+    await app.getByRole('button', { name: 'Rückgängig' }).click();
+    await expect(row()).toContainText('Hotel MUC');
+    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.864'));
   });
 
   test('im laufenden Monat: Datum = heute', async ({ app }) => {
@@ -50,8 +89,9 @@ test.describe('Einmalige Zahlung im Monat', () => {
 });
 
 test.describe('Frei verfügbar: dieser Monat und Ø-Monat', () => {
-  test('Einmalige senken nur „diesen Monat“, der Ø-Monat und die Sparquote bleiben', async ({ app }) => {
-    await app.getByTestId('free-tile').click();
+  test('Netto-Gehalt eigene Kachel; Einmalige senken nur „diesen Monat“, Ø-Monat und Sparquote bleiben', async ({ app }) => {
+    await expect(app.getByTestId('salary-value')).toHaveText('–');
+    await app.getByTestId('salary-tile').click();
     await app.getByLabel('Netto-Gehalt').fill('5000');
     await expect(app.getByTestId('close-average')).toHaveText(
       eur('Rechnerisch frei diesen Monat € 797 · im Ø-Monat (alle Kosten umgelegt) € 1.247,83'),
@@ -59,6 +99,8 @@ test.describe('Frei verfügbar: dieser Monat und Ø-Monat', () => {
     await app.getByRole('button', { name: 'Speichern' }).click();
 
     const tile = app.getByTestId('free-tile');
+    await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 5.000'));
+    await expect(tile).not.toContainText('5.000');
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 797'));
     await expect(app.getByTestId('free-average')).toHaveText(eur('Ø-Monat € 1.247,83 · alle Kosten umgelegt'));
     await expect(app.getByTestId('savings-rate')).toHaveText(eur('Sparquote 16,0 %'));

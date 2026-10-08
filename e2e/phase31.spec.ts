@@ -18,15 +18,16 @@ async function forecastDue(page: Page, month: string): Promise<string> {
   return ((await cells.first().textContent()) ?? '').replace(/ /g, ' ');
 }
 
+/** One-time payments are created in their month (Monat → „Einmalige Zahlung hinzufügen“). */
 async function createRepair(page: Page) {
-  await goTo(page, 'positionen');
-  await tap(page, page.getByRole('button', { name: 'Position hinzufügen' }));
+  await goTo(page, 'monat');
+  await page.getByRole('button', { name: 'Nächster Monat' }).click();
+  await tap(page, page.getByTestId('add-once'));
   await sheetReady(page);
   const form = page.getByTestId('position-form');
   await form.getByLabel('Name').fill('Reparatur');
   await form.getByLabel('Kategorie').selectOption({ label: 'Wohnen & Leben' });
   await form.getByLabel('Betrag').fill('500');
-  await form.getByRole('radio', { name: 'Einmalig' }).click();
   await expect(page.getByTestId('once-hint')).toContainText('Strom-Nachzahlung');
   await expect(form.getByLabel('Startmonat')).toHaveCount(0);
   const date = form.getByLabel('Fällig am');
@@ -34,8 +35,9 @@ async function createRepair(page: Page) {
   await date.fill('2026-11-15');
   await expect(page.getByTestId('due-date-hint')).toContainText('Sonntag, 15.11.2026');
   await expectClean(page, '[data-testid="bottom-sheet"]');
-  await form.getByRole('button', { name: 'Position anlegen' }).click();
+  await form.getByRole('button', { name: 'Zahlung anlegen' }).click();
   await expect(page.getByTestId('bottom-sheet')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Vorheriger Monat' }).click();
 }
 
 async function openMiete(page: Page) {
@@ -55,13 +57,12 @@ async function changeMiete(page: Page, amount: string, date: string, reason?: st
 }
 
 test.describe('Einmalig', () => {
-  test('anlegen 15.11.2026 → nur im November → abhaken → „Einmalige Zahlungen / erledigt“', async ({ app }) => {
+  test('im Monat anlegen 15.11.2026 → nur im November → abhaken; nie im Positionen-Tab', async ({ app }) => {
     await createRepair(app);
-    // upcoming: still in the active list of its category, and in the collapsed section
-    const wohnen = app.getByRole('region', { name: 'Wohnen & Leben' });
-    await expect(wohnen.getByTestId('position-list-row').filter({ hasText: 'Reparatur' })).toContainText('Einmalig · fällig 15.11.2026');
-    await app.getByTestId('once-section').getByRole('button', { name: /Einmalige Zahlungen/ }).click();
-    await expect(app.getByTestId('once-upcoming')).toContainText('Reparatur');
+    // the Positionen tab is for fixed costs only
+    await goTo(app, 'positionen');
+    await expect(app.getByText('Reparatur')).toHaveCount(0);
+    await expect(app.getByTestId('once-section')).toHaveCount(0);
 
     // month screen: not in October, only in November
     await goTo(app, 'monat');
@@ -81,13 +82,7 @@ test.describe('Einmalig', () => {
     await expect(app.getByTestId('position-row').filter({ hasText: 'Reparatur' })).toHaveAttribute('data-paid', 'true');
 
     await goTo(app, 'positionen');
-    await expect(wohnen.getByTestId('position-list-row').filter({ hasText: 'Reparatur' })).toHaveCount(0);
-    await app.getByTestId('once-section').getByRole('button', { name: /Einmalige Zahlungen/ }).click();
-    const done = app.getByTestId('once-done');
-    await expect(done).toContainText('Reparatur');
-    await expect(done).toContainText('15.11.2026');
-    await expect(done).toContainText('bezahlt');
-    await expect(app.getByTestId('once-upcoming')).toHaveCount(0);
+    await expect(app.getByText('Reparatur')).toHaveCount(0);
     await expectClean(app, 'main');
 
     // analysis: own part in the forecast, never part of Ø pro Monat
@@ -101,7 +96,6 @@ test.describe('Einmalig', () => {
 
   test('unbezahlt im vergangenen Monat → „Offen aus …“', async ({ app }) => {
     await createRepair(app);
-    await goTo(app, 'monat');
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     // October (Depotentgelt) and November are open → „Offen aus Vormonaten“
