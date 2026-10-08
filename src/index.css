@@ -195,13 +195,42 @@ body[data-sheets] #root .glass-strong {
 .anim-toast {
   animation: toast-in 180ms ease-out;
 }
+@keyframes month-from-right {
+  from {
+    transform: translateX(28px);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes month-from-left {
+  from {
+    transform: translateX(-28px);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+/* month changed by swiping: the new month comes in from the side the finger moved away from */
+.anim-month-next {
+  animation: month-from-right 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.anim-month-prev {
+  animation: month-from-left 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .anim-check,
   .anim-check path,
   .anim-sheet,
   .anim-fade,
-  .anim-toast {
+  .anim-toast,
+  .anim-month-next,
+  .anim-month-prev {
     animation: none;
   }
   * {
