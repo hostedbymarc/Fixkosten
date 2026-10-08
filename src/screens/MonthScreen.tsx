@@ -3,6 +3,7 @@ import { BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Ic
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { OneOffSheet } from '../components/OneOffSheet';
 import { PaymentSheet } from '../components/PaymentSheet';
+import { PositionFormSheet } from '../components/PositionFormSheet';
 import { PositionRow } from '../components/PositionRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
@@ -21,6 +22,7 @@ import {
 } from '../db/repo';
 import {
   dueItems,
+  freeAverage,
   freeCalculated,
   freeGap,
   groupByCategory,
@@ -54,6 +56,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const [openKey, setOpenKey] = useState<{ positionId: string; period: Period } | null>(null);
   const [oneOffSheet, setOneOffSheet] = useState<{ positionId: string; oneOff?: OneOff } | null>(null);
   const [closeOpen, setCloseOpen] = useState(false);
+  const [onceOpen, setOnceOpen] = useState(false);
+  const onceButton = useRef<HTMLButtonElement>(null);
   const closeTile = useRef<HTMLButtonElement>(null);
 
   const items = useMemo(() => dueItems(ds, period), [ds, period]);
@@ -142,6 +146,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             period={period}
             freeActual={monthCloseFor(ds, period)?.freeActual ?? null}
             calculated={freeCalculated(ds, period)}
+            average={freeAverage(ds, period)}
             difference={freeGap(ds, period)}
             rate={savingsRate(ds, period)}
             onOpen={() => setCloseOpen(true)}
@@ -168,6 +173,16 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               />
             ))
           )}
+          <button
+            ref={onceButton}
+            type="button"
+            onClick={() => setOnceOpen(true)}
+            className="focus-ring flex min-h-[52px] items-center justify-center gap-2 rounded-card border border-dashed border-zinc-300 px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
+            data-testid="add-once"
+          >
+            <span aria-hidden="true" className="text-[20px] leading-none">+</span>
+            Einmalige Zahlung hinzufügen
+          </button>
         </section>
 
         <aside className="flex flex-col gap-6">
@@ -217,6 +232,17 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         </aside>
       </div>
 
+      {onceOpen && (
+        <PositionFormSheet
+          ds={ds}
+          today={period}
+          once={{ dueDate: defaultDueDate(period), period }}
+          onClose={() => setOnceOpen(false)}
+          onSaved={() => setOnceOpen(false)}
+          returnFocusTo={onceButton.current}
+        />
+      )}
+
       {closeOpen && (
         <MonthCloseSheet
           ds={ds}
@@ -262,6 +288,13 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       )}
     </div>
   );
+}
+
+/** Today when the month shown is the current one, otherwise the 1st of that month. */
+function defaultDueDate(period: Period): string {
+  const now = new Date();
+  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return period === current ? `${current}-${String(now.getDate()).padStart(2, '0')}` : `${period}-01`;
 }
 
 function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Period) => void }) {
@@ -334,6 +367,8 @@ interface FreeTileProps {
   period: Period;
   freeActual: number | null;
   calculated: number | null;
+  /** salary − Ø pro Monat (all costs spread) − savings: not distorted by one-time payments */
+  average: number | null;
   difference: number | null;
   rate: number | null;
   onOpen: () => void;
@@ -341,7 +376,7 @@ interface FreeTileProps {
 
 /** "Frei verfügbar": entered value large, calculated value and gap below. Opens the month close. */
 const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
-  { period, freeActual, calculated, difference, rate, onOpen },
+  { period, freeActual, calculated, average, difference, rate, onOpen },
   ref,
 ) {
   const value = freeActual ?? calculated;
@@ -376,6 +411,11 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
             </>
           )}
         </span>
+        {average !== null && (
+          <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="free-average">
+            Ø-Monat <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(average)}</span> · alle Kosten umgelegt
+          </span>
+        )}
         {rate !== null && (
           <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="savings-rate">
             Sparquote <span className="num font-medium text-ink-soft">{formatPercent(rate)}</span>
