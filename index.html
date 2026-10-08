@@ -3,27 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#F6F6F9" />
+    <!-- brand colour, same value as --brand-500 in src/styles/tokens.css -->
+    <meta name="theme-color" content="#5A7A2E" />
     <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Fixkosten" />
+    <meta name="apple-mobile-web-app-title" content="Erbse" />
+    <meta name="application-name" content="Erbse" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <!-- opaque, full-bleed PNGs: iOS rounds the corners itself (transparent icons get a white plate) -->
+    <!-- opaque, full-bleed PNG: iOS rounds the corners itself -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <title>Fixkosten</title>
+    <title>Erbse</title>
     <script>
       // Appearance before first paint (see src/lib/theme.ts): no flash of the wrong theme.
       (function () {
         try {
           var t = localStorage.getItem('fixkosten-theme');
-          var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
           if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#0B0B10' : '#F6F6F9');
         } catch (e) {}
       })();
     </script>

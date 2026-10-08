@@ -1,0 +1,255 @@
+/*
+ * Erbse design tokens – the ONLY place with colour values (besides icon files).
+ * Colours that Tailwind needs with opacity are RGB channels ("90 122 46"), everything else
+ * is a complete CSS value. src/lib/contrast.test.ts reads this file and checks every
+ * text/background pair against the darkest and lightest point of the background.
+ *
+ * Light is the default; dark applies for data-theme="dark" or, with "System", when the
+ * device prefers dark. Keep both dark blocks identical (the contrast test checks that).
+ */
+:root {
+  color-scheme: light;
+
+  /* Erbsengrün */
+  --brand-50: 241 245 234;
+  --brand-100: 234 240 221;
+  --brand-200: 200 216 169;
+  --brand-300: 167 192 124;
+  --brand-400: 127 156 79;
+  --brand-500: 90 122 46;
+  --brand-600: 75 102 38;
+  --brand-700: 60 82 31;
+  --brand-900: 34 47 18;
+
+  --c-canvas: 244 245 241;
+  --c-surface: 255 255 255;
+  --c-raised: 255 255 255;
+  --c-ink: 31 39 36;
+  --c-ink-soft: 58 68 64;
+  --c-ink-mute: 72 83 78;
+  --c-ink-faint: 94 107 102;
+
+  /* accent = filled surfaces with white text; accent-ink = text, links, borders */
+  --c-accent: var(--brand-500);
+  --c-accent-hover: var(--brand-600);
+  --c-accent-ink: var(--brand-600);
+  --c-accent-soft: var(--brand-100);
+  --c-accent-soft-hover: var(--brand-200);
+  --c-accent-strong: var(--brand-700);
+  --c-focus: var(--brand-600);
+
+  --c-paid: var(--brand-500);
+  --c-paid-soft: var(--brand-100);
+  --c-paid-ink: var(--brand-700);
+  --c-on-paid: 255 255 255;
+  --c-check-open: var(--c-ink-faint);
+
+  /* "kommt bald": orange-amber, clearly apart from the olive-ish brand (ΔE2000 38.6) */
+  --c-warn: 154 74 5;
+  --c-warn-icon: 194 98 10;
+  --c-warn-soft: 253 240 220;
+  /* "teurer / überfällig" */
+  --c-over: 185 28 28;
+  --c-over-soft: 253 236 236;
+  --c-danger: 185 28 28;
+  --c-danger-hover: 153 27 27;
+
+  /* neutral fills (hover, segment track, neutral badge) */
+  --c-zinc-50: 236 239 234;
+  --c-zinc-100: 230 234 228;
+  --c-zinc-200: 220 225 218;
+  --c-zinc-300: 176 186 181;
+  --c-zinc-900: 31 39 36;
+
+  --line: rgba(31, 39, 36, 0.06);
+  --edge: rgba(31, 39, 36, 0.16);
+  --field: rgba(255, 255, 255, 0.85);
+  --scrim: rgba(31, 39, 36, 0.32);
+
+  /* Glas */
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-strong-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 30px rgba(31, 39, 36, 0.06);
+  --glass-fallback: rgba(255, 255, 255, 0.92);
+  --glass-opaque: #ffffff;
+  --shadow-sheet: 0 -8px 40px rgba(31, 39, 36, 0.14);
+
+  /* Nebel + Papierkorn (sizes in vmin with a floor and a cap: never stretched on wide screens) */
+  --nebel-base: #f4f5f1;
+  --nebel-1: rgba(90, 122, 46, 0.3);
+  --nebel-2: rgba(222, 206, 176, 0.45);
+  --nebel-3: rgba(90, 122, 46, 0.18);
+  --grain-opacity: 0.06;
+
+  /* charts (SVG attributes take complete colours) */
+  --chart-accent: #5a7a2e;
+  --chart-accent-light: #c8d8a9;
+  --chart-neutral: #cbd1cc;
+  --chart-avg: #7c8580;
+  --chart-grid: #dde2dc;
+  --chart-axis: #48534e;
+  --chart-ink: #1f2724;
+  --chart-ink-soft: #3a4440;
+  --chart-over: #b91c1c;
+  --chart-paid: #5a7a2e;
+  --chart-paid-text: #3c521f;
+  --chart-cursor: rgba(31, 39, 36, 0.05);
+  --chart-surface: #ffffff;
+
+  /* category tones (stored DB values are mapped to these in src/lib/categoryColors.ts) */
+  --cat-1: #34508a;
+  --cat-2: #4a7fbf;
+  --cat-3: #8a72c0;
+  --cat-4: #1e7f7c;
+  --cat-5: #a9486e;
+  --cat-6: #5e6b75;
+  --cat-7: #85706a;
+  --cat-8: #343a37;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --c-canvas: 14 18 15;
+    --c-surface: 26 32 28;
+    --c-raised: 46 55 50;
+    --c-ink: 238 241 236;
+    --c-ink-soft: 205 212 207;
+    --c-ink-mute: 169 179 174;
+    --c-ink-faint: 143 153 148;
+    --c-accent: var(--brand-500);
+    --c-accent-hover: var(--brand-400);
+    --c-accent-ink: var(--brand-300);
+    --c-accent-soft: 38 50 26;
+    --c-accent-soft-hover: 50 66 34;
+    --c-accent-strong: var(--brand-200);
+    --c-focus: var(--brand-300);
+    --c-paid: var(--brand-500);
+    --c-paid-soft: 38 50 26;
+    --c-paid-ink: var(--brand-200);
+    --c-on-paid: 255 255 255;
+    --c-check-open: var(--c-ink-faint);
+    --c-warn: 245 180 81;
+    --c-warn-icon: 232 146 40;
+    --c-warn-soft: 58 42 16;
+    --c-over: 248 113 113;
+    --c-over-soft: 58 21 23;
+    --c-danger: 185 28 28;
+    --c-danger-hover: 153 27 27;
+    --c-zinc-50: 34 42 37;
+    --c-zinc-100: 40 48 43;
+    --c-zinc-200: 52 61 56;
+    --c-zinc-300: 82 93 88;
+    --c-zinc-900: 238 241 236;
+    --line: rgba(255, 255, 255, 0.07);
+    --edge: rgba(255, 255, 255, 0.16);
+    --field: rgba(20, 26, 22, 0.85);
+    --scrim: rgba(0, 0, 0, 0.5);
+    --glass-bg: rgba(28, 35, 31, 0.58);
+    --glass-strong-bg: rgba(28, 35, 31, 0.78);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 30px rgba(0, 0, 0, 0.35);
+    --glass-fallback: rgba(28, 35, 31, 0.94);
+    --glass-opaque: #1c231f;
+    --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
+    --nebel-base: #0e120f;
+    --nebel-1: rgba(90, 122, 46, 0.28);
+    --nebel-2: rgba(222, 206, 176, 0.06);
+    --nebel-3: rgba(90, 122, 46, 0.14);
+    --grain-opacity: 0.06;
+    --chart-accent: #7f9c4f;
+    --chart-accent-light: #c8d8a9;
+    --chart-neutral: #3a433e;
+    --chart-avg: #8f9994;
+    --chart-grid: #2a322d;
+    --chart-axis: #a9b3ae;
+    --chart-ink: #eef1ec;
+    --chart-ink-soft: #cdd4cf;
+    --chart-over: #f87171;
+    --chart-paid: #7f9c4f;
+    --chart-paid-text: #c8d8a9;
+    --chart-cursor: rgba(255, 255, 255, 0.06);
+    --chart-surface: #1a201c;
+    --cat-1: #5f78c8;
+    --cat-2: #7dc0ee;
+    --cat-3: #b99af0;
+    --cat-4: #4fb3ad;
+    --cat-5: #c25aa6;
+    --cat-6: #95a39d;
+    --cat-7: #b9a092;
+    --cat-8: #d8dedb;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-canvas: 14 18 15;
+  --c-surface: 26 32 28;
+  --c-raised: 46 55 50;
+  --c-ink: 238 241 236;
+  --c-ink-soft: 205 212 207;
+  --c-ink-mute: 169 179 174;
+  --c-ink-faint: 143 153 148;
+  --c-accent: var(--brand-500);
+  --c-accent-hover: var(--brand-400);
+  --c-accent-ink: var(--brand-300);
+  --c-accent-soft: 38 50 26;
+  --c-accent-soft-hover: 50 66 34;
+  --c-accent-strong: var(--brand-200);
+  --c-focus: var(--brand-300);
+  --c-paid: var(--brand-500);
+  --c-paid-soft: 38 50 26;
+  --c-paid-ink: var(--brand-200);
+  --c-on-paid: 255 255 255;
+  --c-check-open: var(--c-ink-faint);
+  --c-warn: 245 180 81;
+  --c-warn-icon: 232 146 40;
+  --c-warn-soft: 58 42 16;
+  --c-over: 248 113 113;
+  --c-over-soft: 58 21 23;
+  --c-danger: 185 28 28;
+  --c-danger-hover: 153 27 27;
+  --c-zinc-50: 34 42 37;
+  --c-zinc-100: 40 48 43;
+  --c-zinc-200: 52 61 56;
+  --c-zinc-300: 82 93 88;
+  --c-zinc-900: 238 241 236;
+  --line: rgba(255, 255, 255, 0.07);
+  --edge: rgba(255, 255, 255, 0.16);
+  --field: rgba(20, 26, 22, 0.85);
+  --scrim: rgba(0, 0, 0, 0.5);
+  --glass-bg: rgba(28, 35, 31, 0.58);
+  --glass-strong-bg: rgba(28, 35, 31, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 30px rgba(0, 0, 0, 0.35);
+  --glass-fallback: rgba(28, 35, 31, 0.94);
+  --glass-opaque: #1c231f;
+  --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
+  --nebel-base: #0e120f;
+  --nebel-1: rgba(90, 122, 46, 0.28);
+  --nebel-2: rgba(222, 206, 176, 0.06);
+  --nebel-3: rgba(90, 122, 46, 0.14);
+  --grain-opacity: 0.06;
+  --chart-accent: #7f9c4f;
+  --chart-accent-light: #c8d8a9;
+  --chart-neutral: #3a433e;
+  --chart-avg: #8f9994;
+  --chart-grid: #2a322d;
+  --chart-axis: #a9b3ae;
+  --chart-ink: #eef1ec;
+  --chart-ink-soft: #cdd4cf;
+  --chart-over: #f87171;
+  --chart-paid: #7f9c4f;
+  --chart-paid-text: #c8d8a9;
+  --chart-cursor: rgba(255, 255, 255, 0.06);
+  --chart-surface: #1a201c;
+  --cat-1: #5f78c8;
+  --cat-2: #7dc0ee;
+  --cat-3: #b99af0;
+  --cat-4: #4fb3ad;
+  --cat-5: #c25aa6;
+  --cat-6: #95a39d;
+  --cat-7: #b9a092;
+  --cat-8: #d8dedb;
+}

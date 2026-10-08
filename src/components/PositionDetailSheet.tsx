@@ -142,7 +142,7 @@ export function PositionDetailSheet({
                         {prev && planDescription(prev) !== planDescription(entry) && ` · ${planDescription(entry)}`}
                       </div>
                       {prev && (
-                        <div className={`num text-[13px] ${yearly > 0 ? 'text-over' : yearly < 0 ? 'text-paid' : 'text-ink-mute'}`}>
+                        <div className={`num text-[13px] ${yearly > 0 ? 'text-over' : yearly < 0 ? 'text-paid-ink' : 'text-ink-mute'}`}>
                           {formatDelta(monthly)} / Monat · {formatDelta(yearly)} / Jahr
                         </div>
                       )}
@@ -182,7 +182,7 @@ export function PositionDetailSheet({
           {payments.length === 0 ? (
             <p className="text-[14px] text-ink-mute">Noch nichts abgehakt.</p>
           ) : (
-            <ul className="divide-y divide-line rounded-2xl border border-line" data-testid="detail-payments">
+            <ul className="divide-y divide-line rounded-2xl border border-edge" data-testid="detail-payments">
               {payments.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 px-3 py-2.5">
                   <span className="flex-1 text-[14px] text-ink">{periodLabel(p.period)}</span>

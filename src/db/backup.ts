@@ -41,7 +41,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 /** Validates the outer structure of a backup file. Throws BackupError with a German message. */
 export function parseBackup(raw: unknown): BackupFile {
   if (!isObject(raw) || raw.format !== BACKUP_FORMAT || !isObject(raw.data)) {
-    throw new BackupError('Das ist keine Fixkosten-Sicherung.');
+    throw new BackupError('Das ist keine Erbse-Sicherung.');
   }
   const version = raw.schemaVersion;
   if (typeof version !== 'number' || version < MIN_IMPORT_VERSION || version > SCHEMA_VERSION) {
@@ -154,7 +154,12 @@ export async function exportBackup(db: FixkostenDB): Promise<BackupFile> {
   };
 }
 
-export function backupFileName(prefix = 'fixkosten'): string {
+/**
+ * 'erbse-backup-2026-10-05.json'. Only the file name changed with the rename: the content
+ * keeps format 'fixkosten-backup', and import never looks at the name, so old
+ * fixkosten-*.json files keep working.
+ */
+export function backupFileName(prefix = 'erbse-backup'): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${prefix}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;

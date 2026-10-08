@@ -1,5 +1,6 @@
 import { forwardRef, useId, useMemo, useRef, useState } from 'react';
-import { BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
+import { categoryColor } from '../lib/categoryColors';
+import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { OneOffSheet } from '../components/OneOffSheet';
 import { PaymentSheet } from '../components/PaymentSheet';
@@ -204,7 +205,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             ref={onceButton}
             type="button"
             onClick={() => setOnceOpen(true)}
-            className="focus-ring flex min-h-[52px] items-center justify-center gap-2 rounded-card border border-dashed border-zinc-300 px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
+            className="focus-ring flex min-h-[52px] items-center justify-center gap-2 rounded-card border border-dashed border-edge bg-field px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
             data-testid="add-once"
           >
             <span aria-hidden="true" className="text-[20px] leading-none">+</span>
@@ -220,7 +221,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             {reminders.length === 0 ? (
               <EmptyCard>Keine Erinnerungen für {monthName(period)}.</EmptyCard>
             ) : (
-              <ul className="card divide-y divide-line">
+              <ul className="glass divide-y divide-line">
                 {reminders.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-4 py-3.5 text-[15px] text-ink">
                     <span className="h-2 w-2 shrink-0 rounded-full bg-warn" aria-hidden="true" />
@@ -238,7 +239,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             {upcoming.length === 0 ? (
               <EmptyCard>In den nächsten 2 Monaten keine Sonderzahlungen.</EmptyCard>
             ) : (
-              <ul className="card divide-y divide-line">
+              <ul className="glass divide-y divide-line">
                 {upcoming.map((item) => (
                   <li key={`${item.period}-${item.position.id}`} className="flex items-center gap-3 px-4 py-3">
                     <span className="min-w-0 flex-1">
@@ -364,28 +365,28 @@ function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Perio
 function HeroCard({ progress }: { progress: ReturnType<typeof periodProgress> }) {
   const allPaid = progress.totalCount > 0 && progress.openCount === 0;
   return (
-    <div className="hero flex items-center gap-5 p-5 lg:gap-6 lg:p-6" data-testid="hero">
+    <div className="glass flex items-center gap-5 p-5 lg:gap-6 lg:p-6" data-testid="hero">
       <ProgressRing
         ratio={progress.ratio}
         label={`${Math.floor(progress.ratio * 100)} Prozent abgebucht`}
       />
       <div className="min-w-0">
-        <div className="num text-[32px] font-semibold leading-tight tracking-[-0.035em] lg:text-[38px]" data-testid="hero-paid">
+        <div className="num text-[32px] font-semibold leading-tight tracking-[-0.03em] text-ink lg:text-[38px]" data-testid="hero-paid">
           {formatEUR(progress.paidActual)}
         </div>
-        <div className="text-[15px] text-white/80">
-          von <span className="num font-medium text-white" data-testid="hero-planned">{formatEUR(progress.planned)}</span> abgebucht
+        <div className="text-[15px] text-ink-mute">
+          von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(progress.planned)}</span> abgebucht
         </div>
         <div className="mt-2.5">
           {allPaid ? (
-            <span className="inline-flex h-7 items-center rounded-full bg-white/20 px-3 text-[13px] font-semibold">
+            <span className="inline-flex h-7 items-center rounded-full bg-paid-soft px-3 text-[13px] font-semibold text-paid-ink">
               Alles abgebucht
             </span>
           ) : progress.totalCount === 0 ? (
-            <span className="text-[14px] text-white/75">Nichts fällig</span>
+            <span className="text-[14px] text-ink-mute">Nichts fällig</span>
           ) : (
             <span
-              className="num inline-flex h-7 items-center rounded-full bg-white/[0.16] px-3 text-[13px] font-semibold shadow-[inset_0_1px_0_rgb(255_255_255/0.2)]"
+              className="num inline-flex h-7 items-center rounded-full bg-accent-soft px-3 text-[13px] font-semibold text-accent-strong"
               data-testid="hero-open"
             >
               {progress.openCount} offen · {formatEUR(progress.openPlanned)}
@@ -405,7 +406,7 @@ const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: numbe
         ref={ref}
         type="button"
         onClick={onOpen}
-        className="card focus-ring flex min-w-0 flex-col justify-between gap-2 p-3 text-left hover:border-zinc-300 lg:p-4"
+        className="glass focus-ring flex min-w-0 flex-col justify-between gap-2 rounded-tile p-3 text-left hover:bg-zinc-50/40 lg:p-4"
         data-testid="salary-tile"
       >
         <span className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Netto-Gehalt</span>
@@ -427,7 +428,7 @@ const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: numbe
 
 function KpiTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="card flex min-w-0 flex-col justify-between gap-2 p-3 lg:p-4">
+    <div className="glass flex min-w-0 flex-col justify-between gap-2 rounded-tile p-3 lg:p-4">
       <div className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">{label}</div>
       <div>
         <div className="num truncate text-[15px] font-semibold text-ink sm:text-[17px] lg:text-[20px]" data-testid="kpi-value">{value}</div>
@@ -460,7 +461,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
       type="button"
       onClick={onOpen}
       aria-label={`Frei verfügbar – Monatsabschluss ${periodLabel(period)} öffnen`}
-      className="card focus-ring col-span-2 flex min-w-0 flex-col justify-between gap-2 p-3 text-left hover:border-zinc-300 sm:col-span-1 lg:p-4"
+      className="glass focus-ring col-span-2 flex min-w-0 flex-col justify-between gap-2 rounded-tile p-3 text-left hover:bg-zinc-50/40 sm:col-span-1 lg:p-4"
       data-testid="free-tile"
     >
       <span className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Frei verfügbar</span>
@@ -519,9 +520,9 @@ function GroupCard({
   const savings = group.category.kind === 'savings';
   const showSpread = Math.round(spread * 100) !== Math.round(group.planned * 100);
   return (
-    <section className="card overflow-hidden" aria-label={group.category.name} data-testid="category-group">
+    <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full ring-1 ring-inset ring-white/10" style={{ background: group.category.color }} aria-hidden="true" />
+        <span className="h-2.5 w-2.5 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
         <h2 className="flex-1 text-[15px] font-semibold text-ink">{group.category.name}</h2>
         {savings && <Badge>Sparen · keine Fixkosten</Badge>}
         <span
@@ -567,7 +568,7 @@ function OpenFromPrevious({
   const title = groups.length === 1 ? `Offen aus ${monthName(groups[0]!.period)}` : 'Offen aus Vormonaten';
   const contentId = useId();
   return (
-    <section className="card mb-3 overflow-hidden border-warn/30" aria-label={title} data-testid="open-previous">
+    <section className="glass mb-3 overflow-hidden" aria-label={title} data-testid="open-previous">
       <button
         type="button"
         aria-expanded={expanded}
@@ -575,7 +576,7 @@ function OpenFromPrevious({
         onClick={() => setExpanded((e) => !e)}
         className="focus-ring flex min-h-[56px] w-full items-center gap-3 px-4 text-left"
       >
-        <span className="h-2 w-2 shrink-0 rounded-full bg-warn" aria-hidden="true" />
+        <AlertIcon size={18} className="shrink-0 text-over" />
         <span className="flex-1 text-[15px] font-semibold text-ink">{title}</span>
         <span className="num text-[14px] text-ink-mute">
           {count} · {formatEUR(sumOpen(groups))}
@@ -629,5 +630,5 @@ function OpenFromPrevious({
 }
 
 function EmptyCard({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-card border border-dashed border-zinc-300 px-4 py-5 text-[14px] text-ink-mute">{children}</div>;
+  return <div className="glass px-4 py-5 text-[14px] text-ink-mute">{children}</div>;
 }
