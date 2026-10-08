@@ -1,4 +1,6 @@
-import { expect, isTouchProject, row, test, touchSwipe } from './fixtures';
+import { readFileSync } from 'node:fs';
+import { expect, FIXTURE, isTouchProject, row, test, touchSwipe } from './fixtures';
+import { expectClean } from './measure';
 
 test.describe('Monat wechseln per Wischen', () => {
   test('links wischen → nächster Monat, rechts wischen → voriger Monat', async ({ app }) => {
@@ -46,4 +48,25 @@ test.describe('Monat wechseln per Wischen', () => {
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(app.getByRole('heading', { level: 1 })).toHaveText('November 2026');
   });
+});
+
+test('Spar-Kategorie mit Ø-Zeile: Kopf bricht um, nichts ragt aus der Karte', async ({ fresh }) => {
+  // like the live data: „Immo“ marked as savings, with a semiannual position (Ø line shown)
+  const file = JSON.parse(readFileSync(FIXTURE, 'utf8'));
+  const immos = file.data.categories.find((c: { id: string }) => c.id === 'cat-immos');
+  immos.kind = 'savings';
+  immos.name = 'Immo'; // one short word: cannot wrap, so it used to push the amounts out
+  await fresh.getByTestId('import-file').setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
+  await expect(fresh.getByTestId('hero')).toBeVisible();
+  const card = fresh.getByRole('region', { name: 'Immo' });
+  await expect(card).toContainText('Sparen · keine Fixkosten');
+  await expect(card.getByTestId('group-spread')).toBeVisible();
+  const overflow = await card.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    return Array.from(el.querySelectorAll('header *'))
+      .filter((n) => n.getBoundingClientRect().right > box.right + 0.5)
+      .map((n) => n.textContent);
+  });
+  expect(overflow).toEqual([]);
+  await expectClean(fresh, 'main');
 });

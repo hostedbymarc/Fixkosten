@@ -535,11 +535,14 @@ function GroupCard({
   return (
     <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
-        <h2 className="flex-1 text-[15px] font-semibold text-ink">{group.category.name}</h2>
-        {savings && <Badge>Sparen · keine Fixkosten</Badge>}
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
+        {/* name and badge wrap onto two lines instead of pushing the amounts out of the card */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+          <h2 className="min-w-0 truncate text-[15px] font-semibold text-ink">{group.category.name}</h2>
+          {savings && <Badge>Sparen · keine Fixkosten</Badge>}
+        </div>
         <span
-          className="flex flex-col items-end"
+          className="flex shrink-0 flex-col items-end"
           aria-label={`fällig ${formatEUR(group.planned)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}`}
         >
           <span className="num text-[14px] font-medium text-ink-mute">{formatEUR(group.planned)}</span>
