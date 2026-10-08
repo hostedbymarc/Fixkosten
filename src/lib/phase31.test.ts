@@ -183,3 +183,17 @@ describe('Betrag ändern ab 01.10.2026, Oktober-Miete schon mit € 1.008 abgeha
     expect(dueItems(later, OCT).find((i) => i.position.id === 'pos-miete')!.planned).toBe(1050);
   });
 });
+
+describe('Frei verfügbar: dieser Monat vs. Ø (alle Kosten umgelegt)', () => {
+  it('Okt 2026, Gehalt 5.000: diesen Monat € 797, Ø € 1.247,83; Einmalige verfälschen den Schnitt nicht', async () => {
+    const { freeAverage, freeCalculated } = await import('./calc');
+    const ds = withRepair();
+    ds.monthClose.push({ period: OCT, netSalary: 5000, updatedAt: '' }, { period: '2026-11', netSalary: 5000, updatedAt: '' });
+    expect(freeCalculated(ds, OCT)).toBe(797);
+    expect(freeAverage(ds, OCT)).toBe(1247.83);
+    // November carries the € 500 repair: this month drops, the average stays
+    expect(freeCalculated(ds, '2026-11')).toBe(5000 - 3164 - 800);
+    expect(freeAverage(ds, '2026-11')).toBe(1247.83);
+    expect(freeAverage(fixtureDataset(), OCT)).toBeNull();
+  });
+});
