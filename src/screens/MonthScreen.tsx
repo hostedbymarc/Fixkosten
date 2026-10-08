@@ -12,8 +12,10 @@ import { db } from '../db/db';
 import {
   deleteOneOff,
   markPaid,
+  deletePositionForUndo,
   markSkipped,
   removePayment,
+  restoreDeletedPosition,
   restoreOneOff,
   restorePayment,
   saveMonthClose,
@@ -24,13 +26,13 @@ import {
   dueItems,
   freeAverage,
   freeCalculated,
+  netSalaryForPeriod,
   freeGap,
   groupByCategory,
   monthCloseFor,
   openFromPrevious,
   sumOpen,
   periodProgress,
-  plannedForPeriod,
   remindersForPeriod,
   reserveNeeded,
   savingsRate,
@@ -56,6 +58,9 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const [openKey, setOpenKey] = useState<{ positionId: string; period: Period } | null>(null);
   const [oneOffSheet, setOneOffSheet] = useState<{ positionId: string; oneOff?: OneOff } | null>(null);
   const [closeOpen, setCloseOpen] = useState(false);
+  const salaryTile = useRef<HTMLButtonElement>(null);
+  const closeTrigger = useRef<HTMLElement | null>(null);
+  const [editOnce, setEditOnce] = useState<string | null>(null);
   const [onceOpen, setOnceOpen] = useState(false);
   const onceButton = useRef<HTMLButtonElement>(null);
   const closeTile = useRef<HTMLButtonElement>(null);
@@ -73,6 +78,23 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           (i) => i.position.id === openKey.positionId && i.period === openKey.period,
         ) ?? null);
   const oneOffPosition = oneOffSheet ? ds.positions.find((p) => p.id === oneOffSheet.positionId) : undefined;
+
+  function openClose(trigger: HTMLElement | null) {
+    closeTrigger.current = trigger;
+    setCloseOpen(true);
+  }
+
+  /** One-time payments belong to their month: deleting them is done right here, with undo. */
+  async function deleteOnce(item: DueItem) {
+    setOpenKey(null);
+    const removed = await deletePositionForUndo(db, item.position.id);
+    toast({
+      message: `„${item.position.name}“ gelöscht`,
+      actionLabel: 'Rückgängig',
+      onAction: () => void restoreDeletedPosition(db, removed),
+      durationMs: 6000,
+    });
+  }
 
   async function unpay(item: DueItem) {
     if (!item.payment) return;
@@ -135,11 +157,16 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       <div className="grid gap-3 lg:gap-4">
         <HeroCard progress={progress} />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:gap-3">
-          <KpiTile label="Fällig diesen Monat" value={formatEUR(plannedForPeriod(ds, period))} />
+          <SalaryTile
+            ref={salaryTile}
+            period={period}
+            salary={netSalaryForPeriod(ds, period)}
+            onOpen={() => openClose(salaryTile.current)}
+          />
           <KpiTile
             label="Ø pro Monat"
             value={formatEUR(trueMonthlyBurden(ds, period))}
-            hint={`Jahreskosten verteilt · inkl. ${formatEUR(reserveNeeded(ds, period))} Rücklage`}
+            hint={`Jahreskosten verteilt · davon ${formatEUR(reserveNeeded(ds, period))} für Quartals- & Jahreszahlungen`}
           />
           <FreeTile
             ref={closeTile}
@@ -149,7 +176,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             average={freeAverage(ds, period)}
             difference={freeGap(ds, period)}
             rate={savingsRate(ds, period)}
-            onOpen={() => setCloseOpen(true)}
+            onOpen={() => openClose(closeTile.current)}
           />
         </div>
       </div>
@@ -232,6 +259,16 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         </aside>
       </div>
 
+      {editOnce && ds.positions.some((p) => p.id === editOnce) && (
+        <PositionFormSheet
+          ds={ds}
+          today={period}
+          position={ds.positions.find((p) => p.id === editOnce)}
+          onClose={() => setEditOnce(null)}
+          onSaved={() => setEditOnce(null)}
+        />
+      )}
+
       {onceOpen && (
         <PositionFormSheet
           ds={ds}
@@ -247,7 +284,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         <MonthCloseSheet
           ds={ds}
           period={period}
-          returnFocusTo={closeTile.current}
+          returnFocusTo={closeTrigger.current}
           onClose={() => setCloseOpen(false)}
           onSave={(input) => {
             void saveMonthClose(db, period, input).then(() => setCloseOpen(false));
@@ -265,8 +302,17 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             setOpenKey(null);
             void unpay(openItem);
           }}
+          onEditOnce={
+            openItem.plan?.frequency === 'once'
+              ? () => {
+                  setOpenKey(null);
+                  setEditOnce(openItem.position.id);
+                }
+              : undefined
+          }
+          onDeleteOnce={openItem.plan?.frequency === 'once' ? () => void deleteOnce(openItem) : undefined}
           onAddOneOff={
-            openItem.period === period
+            openItem.plan?.frequency !== 'once' && openItem.period === period
               ? () => {
                   setOpenKey(null);
                   setOneOffSheet({ positionId: openItem.position.id });
@@ -351,6 +397,34 @@ function HeroCard({ progress }: { progress: ReturnType<typeof periodProgress> })
   );
 }
 
+/** Netto-Gehalt of the month; opens the month close. */
+const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: number | null; onOpen: () => void }>(
+  function SalaryTile({ period, salary, onOpen }, ref) {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        onClick={onOpen}
+        className="card focus-ring flex min-w-0 flex-col justify-between gap-2 p-3 text-left hover:border-zinc-300 lg:p-4"
+        data-testid="salary-tile"
+      >
+        <span className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Netto-Gehalt</span>
+        <span className="block">
+          <span
+            className={`num block truncate text-[15px] font-semibold sm:text-[17px] lg:text-[20px] ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
+            data-testid="salary-value"
+          >
+            {salary === null ? '–' : formatEUR(salary)}
+          </span>
+          <span className="mt-0.5 block text-[11px] leading-tight text-ink-mute lg:text-[12px]">
+            {salary === null ? <span className="font-semibold text-accent-ink">Gehalt eintragen</span> : periodLabel(period)}
+          </span>
+        </span>
+      </button>
+    );
+  },
+);
+
 function KpiTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="card flex min-w-0 flex-col justify-between gap-2 p-3 lg:p-4">
@@ -399,7 +473,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         </span>
         <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="free-sub">
           {calculated === null ? (
-            <span className="font-semibold text-accent-ink">Gehalt eintragen</span>
+            <>rechnet mit dem Netto-Gehalt</>
           ) : freeActual === null ? (
             <>rechnerisch · <span className="font-medium text-accent-ink">tatsächlich eintragen</span></>
           ) : (
