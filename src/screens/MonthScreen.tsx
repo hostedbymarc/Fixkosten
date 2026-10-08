@@ -1,5 +1,6 @@
 import { forwardRef, useId, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
+import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { OneOffSheet } from '../components/OneOffSheet';
@@ -59,6 +60,10 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const [openKey, setOpenKey] = useState<{ positionId: string; period: Period } | null>(null);
   const [oneOffSheet, setOneOffSheet] = useState<{ positionId: string; oneOff?: OneOff } | null>(null);
   const [closeOpen, setCloseOpen] = useState(false);
+  const swipe = useMonthSwipe(
+    () => onPeriodChange(addPeriods(period, 1)),
+    () => onPeriodChange(addPeriods(period, -1)),
+  );
   const salaryTile = useRef<HTMLButtonElement>(null);
   const closeTrigger = useRef<HTMLElement | null>(null);
   const [editOnce, setEditOnce] = useState<string | null>(null);
@@ -144,8 +149,14 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8">
+    <div
+      className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8"
+      style={{ touchAction: 'pan-y' }}
+      data-testid="month-screen"
+      {...swipe.handlers}
+    >
       <MonthHeader period={period} onChange={onPeriodChange} />
+      <div key={swipe.enterKey} className={swipe.enterClass} style={swipe.style}>
 
       {openGroups.length > 0 && (
         <OpenFromPrevious
@@ -258,6 +269,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             )}
           </section>
         </aside>
+      </div>
+
       </div>
 
       {editOnce && ds.positions.some((p) => p.id === editOnce) && (
@@ -522,11 +535,14 @@ function GroupCard({
   return (
     <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group">
       <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
-        <h2 className="flex-1 text-[15px] font-semibold text-ink">{group.category.name}</h2>
-        {savings && <Badge>Sparen · keine Fixkosten</Badge>}
+        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
+        {/* name and badge wrap onto two lines instead of pushing the amounts out of the card */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+          <h2 className="min-w-0 truncate text-[15px] font-semibold text-ink">{group.category.name}</h2>
+          {savings && <Badge>Sparen · keine Fixkosten</Badge>}
+        </div>
         <span
-          className="flex flex-col items-end"
+          className="flex shrink-0 flex-col items-end"
           aria-label={`fällig ${formatEUR(group.planned)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}`}
         >
           <span className="num text-[14px] font-medium text-ink-mute">{formatEUR(group.planned)}</span>

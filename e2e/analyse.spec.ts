@@ -272,35 +272,57 @@ test.describe('Tooltips', () => {
     return section.getByTestId('chart-tooltip');
   }
 
+  /** Bounding box once layout has settled (web font swap, chart measuring, scrolling). */
+  async function stableBox(locator: Locator) {
+    let previous = await locator.boundingBox();
+    for (let i = 0; i < 20; i++) {
+      await locator.page().evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+      const next = await locator.boundingBox();
+      if (previous && next && previous.x === next.x && previous.y === next.y && previous.width === next.width && previous.height === next.height) return next;
+      previous = next;
+    }
+    return previous!;
+  }
+
+  /**
+   * Taps and checks the tooltip in one go: visible, expected text, above the finger.
+   * A retry (a few pixels further) only covers a tap lost under full-suite load;
+   * the test still requires a tap to open the right tooltip.
+   */
+  async function tapAndCheck(page: Page, point: { x: number; y: number }, tip: Locator, texts: (string | RegExp)[]) {
+    let attempt = 0;
+    await expect(async () => {
+      // each retry a few pixels further: Chromium sends no mouse move for a tap on the same spot
+      const dx = attempt++ * 3;
+      await page.touchscreen.tap(point.x + dx, point.y);
+      await expect(tip).toBeVisible({ timeout: 1500 });
+      for (const t of texts) await expect(tip).toContainText(t, { timeout: 500 });
+      const box = (await tip.boundingBox())!;
+      expect(box.y + box.height, 'tooltip ends above the finger').toBeLessThan(point.y);
+    }).toPass({ intervals: [300, 600], timeout: 10000 });
+  }
+
   test('tap on iPhone/iPad, never under the finger', async ({ page }) => {
     test.skip(!isTouchProject(), 'touch only');
     await importHistory(page);
     await openAnalyse(page);
-
+    await page.evaluate(() => document.fonts.ready);
     const forecast = page.getByTestId('forecast');
     const feb = forecast.locator('.recharts-bar-rectangle').nth(3);
-    const box = (await feb.boundingBox())!;
+    const box = await stableBox(feb);
     const finger = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    await page.touchscreen.tap(finger.x, finger.y);
-    const tip = await tooltipOf(forecast);
-    await expect(tip).toBeVisible();
-    await expect(tip).toContainText(eur('Februar 2027: € 4.635')); // fixture: Kredit +€ 25 from Jan 2027
-    await expect(tip).toContainText(eur('Steuerberater€ 1.260'));
-    const tipBox = (await tip.boundingBox())!;
-    expect(tipBox.y + tipBox.height, 'tooltip ends above the finger').toBeLessThan(finger.y);
+    // fixture: Kredit +€ 25 from Jan 2027
+    await tapAndCheck(page, finger, await tooltipOf(forecast), [eur('Februar 2027: € 4.635'), eur('Steuerberater€ 1.260')]);
 
-    for (const id of ['monthclose', 'trend', 'planactual']) {
+    // a different spot per chart: centred charts end up at the same screen position, and a
+    // second tap on identical coordinates sends no mouse move, so no tooltip (flaky before)
+    for (const [id, fx] of [['monthclose', 0.6], ['trend', 0.7], ['planactual', 0.8]] as const) {
       const section = page.getByTestId(id);
       // centred, so the tap never lands under the fixed tab bar
       await section.locator('.recharts-wrapper').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));
-      const chart = (await section.locator('.recharts-wrapper').first().boundingBox())!;
-      const point = { x: chart.x + chart.width * 0.7, y: chart.y + chart.height * 0.75 };
-      await page.touchscreen.tap(point.x, point.y);
-      const t = await tooltipOf(section);
-      await expect(t.first(), id).toBeVisible();
-      await expect(t.first()).toContainText(/20(25|26)/);
-      const tb = (await t.first().boundingBox())!;
-      expect(tb.y + tb.height, `${id}: tooltip above the finger`).toBeLessThan(point.y);
+      const chart = await stableBox(section.locator('.recharts-wrapper').first());
+      const point = { x: chart.x + chart.width * fx, y: chart.y + chart.height * 0.75 };
+      await tapAndCheck(page, point, (await tooltipOf(section)).first(), [/20(25|26)/]);
     }
   });
 
