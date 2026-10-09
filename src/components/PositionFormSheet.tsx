@@ -167,7 +167,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           label="Kategorie"
           value={categoryId}
           onChange={setCategoryId}
-          options={categories.map((c) => ({ value: c.id, label: c.kind === 'savings' ? `${c.name} (Sparen)` : c.name }))}
+          options={categories.map((c) => ({ value: c.id, label: c.kind === 'savings' ? `${c.name} (Vermögensaufbau)` : c.name }))}
         />
         <AmountField
           label="Betrag"

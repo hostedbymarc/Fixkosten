@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixtureBackup } from '../../tests/fixtures/dataset';
 import { optimizationTimeline, yearForecast } from '../lib/analytics';
-import { dueItems, entryKey, isOnceDone, plannedForPeriod, planHistory, trueMonthlyBurden } from '../lib/calc';
+import { dueItems, entryKey, isOnceDone, plannedForPeriod, planHistory, fixedCostsAvg } from '../lib/calc';
 import { importIntoEmpty } from './backup';
 import { FixkostenDB } from './db';
 import {
@@ -50,7 +50,7 @@ describe('Einmalig', () => {
     const p = ds.positions.find((x) => x.id === id)!;
     expect(p.history).toEqual([{ validFrom: '2026-11', amount: 500, frequency: 'once', dueMonths: [11], dueDay: 15, dueDate: '2026-11-15' }]);
     expect(plannedForPeriod(ds, '2026-11')).toBe(3164);
-    expect(cents(trueMonthlyBurden(ds, '2026-11'))).toBe(295217);
+    expect(cents(fixedCostsAvg(ds, '2026-11'))).toBe(295217);
     expect(yearForecast(ds, OCT).total).toBe(35926.04);
   });
 

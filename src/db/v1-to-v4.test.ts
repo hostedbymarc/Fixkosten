@@ -6,7 +6,7 @@ import {
   periodProgress,
   plannedForPeriod,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
 } from '../lib/calc';
 import type { MetaEntry, Payment } from '../lib/types';
 import { needsSetup } from './backup';
@@ -93,7 +93,7 @@ describe('live data: schema v1 (2776e95) → v4 in one step', () => {
 
     // control values exact
     expect(sumMonthlyEquivalent(ds, OCT, { kind: 'expense', frequency: 'monthly' })).toBe(2664);
-    expect(Math.round(trueMonthlyBurden(ds, OCT) * 100)).toBe(295217);
+    expect(Math.round(fixedCostsAvg(ds, OCT) * 100)).toBe(295217);
     expect(plannedForPeriod(ds, OCT)).toBe(3403);
     expect(plannedForPeriod(ds, '2027-02')).toBe(4610);
     expect(sumMonthlyEquivalent(ds, OCT, { categoryId: 'cat-immos', frequency: 'monthly' })).toBe(991);

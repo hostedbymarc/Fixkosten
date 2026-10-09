@@ -26,8 +26,10 @@ import {
 } from '../db/repo';
 import {
   dueItems,
-  freeAverage,
-  freeCalculated,
+  freeAfterFixedAvg,
+  freeAfterFixed,
+  remainder,
+  wealthBuilding,
   netSalaryForPeriod,
   freeGap,
   groupByCategory,
@@ -39,7 +41,7 @@ import {
   reserveNeeded,
   savingsRate,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
   upcomingDue,
   type CategoryGroup,
   type DueItem,
@@ -168,25 +170,27 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
       <div className="grid gap-3 lg:gap-4">
         <HeroCard progress={progress} />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-3">
           <SalaryTile
             ref={salaryTile}
             period={period}
             salary={netSalaryForPeriod(ds, period)}
             onOpen={() => openClose(salaryTile.current)}
           />
-          <KpiTile
-            label="Ø pro Monat"
-            value={formatEUR(trueMonthlyBurden(ds, period))}
-            hint={`Jahreskosten verteilt · davon ${formatEUR(reserveNeeded(ds, period))} für Quartals- & Jahreszahlungen`}
-          />
+          <KpiTile label="Ø pro Monat" value={formatEUR(fixedCostsAvg(ds, period))}>
+            <span data-testid="kpi-hint">
+              inkl. <Amount>{formatEUR(reserveNeeded(ds, period))}</Amount> Jahreskosten
+            </span>
+          </KpiTile>
           <FreeTile
             ref={closeTile}
             period={period}
             freeActual={monthCloseFor(ds, period)?.freeActual ?? null}
-            calculated={freeCalculated(ds, period)}
-            average={freeAverage(ds, period)}
+            calculated={freeAfterFixed(ds, period)}
+            average={freeAfterFixedAvg(ds, period)}
             difference={freeGap(ds, period)}
+            wealth={wealthBuilding(ds, period)}
+            left={remainder(ds, period)}
             rate={savingsRate(ds, period)}
             onOpen={() => openClose(closeTile.current)}
           />
@@ -411,6 +415,21 @@ function HeroCard({ progress }: { progress: ReturnType<typeof periodProgress> })
   );
 }
 
+/**
+ * The three tiles under the hero share one structure: label on top, the large
+ * number directly below, short sublines below that. Content is top-aligned; the
+ * grid stretches tiles of a row to the same height, so the numbers share a baseline.
+ */
+const tileClass = 'glass flex min-w-0 flex-col items-stretch justify-start rounded-tile p-3 text-left lg:p-4';
+const tileLabel = 'block text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
+const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 lg:text-[20px] lg:leading-7';
+const tileSub = 'mt-1 block text-[11px] leading-4 text-ink-mute lg:text-[12px]';
+
+/** An amount inside a subline: never wraps in the middle. */
+function Amount({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
+  return <span className={`num whitespace-nowrap ${strong ? 'font-semibold' : 'font-medium'}`}>{children}</span>;
+}
+
 /** Netto-Gehalt of the month; opens the month close. */
 const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: number | null; onOpen: () => void }>(
   function SalaryTile({ period, salary, onOpen }, ref) {
@@ -419,34 +438,27 @@ const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: numbe
         ref={ref}
         type="button"
         onClick={onOpen}
-        className="glass focus-ring flex min-w-0 flex-col justify-between gap-2 rounded-tile p-3 text-left hover:bg-zinc-50/40 lg:p-4"
+        className={`${tileClass} focus-ring hover:bg-zinc-50/40`}
         data-testid="salary-tile"
       >
-        <span className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Netto-Gehalt</span>
-        <span className="block">
-          <span
-            className={`num block truncate text-[15px] font-semibold sm:text-[17px] lg:text-[20px] ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
-            data-testid="salary-value"
-          >
-            {salary === null ? '–' : formatEUR(salary)}
-          </span>
-          <span className="mt-0.5 block text-[11px] leading-tight text-ink-mute lg:text-[12px]">
-            {salary === null ? <span className="font-semibold text-accent-ink">Gehalt eintragen</span> : periodLabel(period)}
-          </span>
+        <span className={tileLabel}>Netto-Gehalt</span>
+        <span className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="salary-value">
+          {salary === null ? '–' : formatEUR(salary)}
+        </span>
+        <span className={tileSub}>
+          {salary === null ? <span className="font-semibold text-accent-ink">Gehalt eintragen</span> : periodLabel(period)}
         </span>
       </button>
     );
   },
 );
 
-function KpiTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function KpiTile({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
   return (
-    <div className="glass flex min-w-0 flex-col justify-between gap-2 rounded-tile p-3 lg:p-4">
-      <div className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">{label}</div>
-      <div>
-        <div className="num truncate text-[15px] font-semibold text-ink sm:text-[17px] lg:text-[20px]" data-testid="kpi-value">{value}</div>
-        {hint && <div className="mt-0.5 text-[11px] leading-tight text-ink-mute lg:text-[12px]">{hint}</div>}
-      </div>
+    <div className={tileClass}>
+      <span className={tileLabel}>{label}</span>
+      <span className={`${tileValue} text-ink`} data-testid="kpi-value">{value}</span>
+      {children && <span className={tileSub}>{children}</span>}
     </div>
   );
 }
@@ -454,17 +466,22 @@ function KpiTile({ label, value, hint }: { label: string; value: string; hint?: 
 interface FreeTileProps {
   period: Period;
   freeActual: number | null;
+  /** net salary − fixed costs of the month */
   calculated: number | null;
-  /** salary − Ø pro Monat (all costs spread) − savings: not distorted by one-time payments */
+  /** net salary − fixed costs spread over the year */
   average: number | null;
   difference: number | null;
+  /** Vermögensaufbau due this month */
+  wealth: number;
+  /** calculated − Vermögensaufbau */
+  left: number | null;
   rate: number | null;
   onOpen: () => void;
 }
 
-/** "Frei verfügbar": entered value large, calculated value and gap below. Opens the month close. */
+/** "Frei verfügbar": net salary − fixed costs, at most three short lines below. Opens the month close. */
 const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
-  { period, freeActual, calculated, average, difference, rate, onOpen },
+  { period, freeActual, calculated, average, difference, wealth, left, rate, onOpen },
   ref,
 ) {
   const value = freeActual ?? calculated;
@@ -474,42 +491,36 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
       type="button"
       onClick={onOpen}
       aria-label={`Frei verfügbar – Monatsabschluss ${periodLabel(period)} öffnen`}
-      className="glass focus-ring col-span-2 flex min-w-0 flex-col justify-between gap-2 rounded-tile p-3 text-left hover:bg-zinc-50/40 sm:col-span-1 lg:p-4"
+      className={`${tileClass} focus-ring col-span-2 hover:bg-zinc-50/40 sm:col-span-1`}
       data-testid="free-tile"
     >
-      <span className="text-[12px] font-medium leading-tight text-ink-mute lg:text-[13px]">Frei verfügbar</span>
-      <span className="block">
-        <span
-          className={`num block text-[15px] font-semibold sm:text-[17px] lg:text-[20px] ${value === null ? 'text-ink-faint' : 'text-ink'}`}
-          data-testid="free-value"
-        >
-          {value === null ? '–' : formatEUR(value)}
-        </span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="free-sub">
-          {calculated === null ? (
-            <>rechnet mit dem Netto-Gehalt</>
-          ) : freeActual === null ? (
-            <>rechnerisch · <span className="font-medium text-accent-ink">tatsächlich eintragen</span></>
-          ) : (
-            <>
-              rechnerisch <span className="num whitespace-nowrap">{formatEUR(calculated)}</span> · Differenz{' '}
-              <span className={`num whitespace-nowrap font-semibold ${difference !== null && difference < 0 ? 'text-over' : ''}`}>
-                {formatDelta(difference ?? 0)}
-              </span>
-            </>
-          )}
-        </span>
-        {average !== null && (
-          <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="free-average">
-            Ø-Monat <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(average)}</span> · alle Kosten umgelegt
-          </span>
-        )}
-        {rate !== null && (
-          <span className="mt-0.5 block text-[11px] leading-snug text-ink-mute lg:text-[12px]" data-testid="savings-rate">
-            Sparquote <span className="num font-medium text-ink-soft">{formatPercent(rate)}</span>
-          </span>
+      <span className={tileLabel}>Frei verfügbar</span>
+      <span className={`${tileValue} ${value === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="free-value">
+        {value === null ? '–' : formatEUR(value)}
+      </span>
+      <span className={tileSub} data-testid="free-sub">
+        {calculated === null ? (
+          <>rechnet mit dem Netto-Gehalt</>
+        ) : freeActual === null ? (
+          <>rechnerisch · <span className="font-semibold text-accent-ink">tatsächlich eintragen</span></>
+        ) : (
+          <>
+            tatsächlich · rechnerisch <Amount>{formatEUR(calculated)}</Amount> · Diff{' '}
+            <Amount strong>{formatDelta(difference ?? 0)}</Amount>
+          </>
         )}
       </span>
+      {average !== null && (
+        <span className={tileSub} data-testid="free-average">
+          Ø mit Jahreskosten <Amount>{formatEUR(average)}</Amount>
+        </span>
+      )}
+      {left !== null && rate !== null && (
+        <span className={tileSub} data-testid="free-wealth">
+          Vermögensaufbau <Amount>{formatEUR(wealth)}</Amount> · bleibt <Amount>{formatEUR(left)}</Amount> · Quote{' '}
+          <Amount>{formatPercent(rate)}</Amount>
+        </span>
+      )}
     </button>
   );
 });
@@ -539,7 +550,7 @@ function GroupCard({
         {/* name and badge wrap onto two lines instead of pushing the amounts out of the card */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <h2 className="min-w-0 truncate text-[15px] font-semibold text-ink">{group.category.name}</h2>
-          {savings && <Badge>Sparen · keine Fixkosten</Badge>}
+          {savings && <Badge>Vermögensaufbau</Badge>}
         </div>
         <span
           className="flex shrink-0 flex-col items-end"

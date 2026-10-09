@@ -12,6 +12,13 @@ describe('format (de-AT)', () => {
     expect(formatEUR(3368, { fixed: true })).toBe(nb('€ 3.368,00'));
     expect(formatEUR(288.1666)).toBe(nb('€ 288,17'));
     expect(formatEUR(-0)).toBe(nb('€ 0'));
+    expect(formatEUR(-0.004)).toBe(nb('€ 0'));
+  });
+
+  it('negative amounts: typographic minus (U+2212) and no-break space', () => {
+    expect(formatEUR(-490)).toBe('\u2212€\u00a0490');
+    expect(formatEUR(-1234.5)).toBe('\u2212€\u00a01.234,50');
+    expect(formatEUR(-490)).not.toContain('-');
   });
 
   it('formats deltas', () => {
