@@ -24,7 +24,7 @@ import {
   planForPeriod,
   sortedCategories,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
 } from '../lib/calc';
 import { formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
@@ -83,7 +83,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]">Positionen</h1>
           <p className="text-[13px] text-ink-mute">
-            {active.length} aktiv · Ø <span className="num">{formatEUR(trueMonthlyBurden(ds, today))}</span> pro Monat
+            {active.length} aktiv · Ø <span className="num">{formatEUR(fixedCostsAvg(ds, today))}</span> pro Monat
           </p>
         </div>
         <button
@@ -104,7 +104,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: categoryColor(category.color) }} aria-hidden="true" />
                 <h2 className="flex-1 text-[15px] font-semibold text-ink">
                   {category.name}
-                  {category.kind === 'savings' && <span className="ml-2 text-[12px] font-medium text-ink-mute">Sparen</span>}
+                  {category.kind === 'savings' && <span className="ml-2 text-[12px] font-medium text-ink-mute">Vermögensaufbau</span>}
                 </h2>
                 <span className="num text-[13px] text-ink-mute">
                   Ø {formatEUR(sumMonthlyEquivalent(ds, today, { categoryId: category.id }))}

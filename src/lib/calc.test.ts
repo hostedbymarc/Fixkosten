@@ -11,9 +11,10 @@ import {
   dueInPeriod,
   dueItems,
   equivalentByCategory,
-  expectedSavings,
+  wealthBuilding,
   expectedSpend,
-  freeCalculated,
+  freeAfterFixed,
+  remainder,
   freeGap,
   groupByCategory,
   monthlyEquivalent,
@@ -22,10 +23,10 @@ import {
   plannedForPeriod,
   remindersForPeriod,
   reserveNeeded,
-  savingsForPeriod,
+  wealthBuildingAvg,
   savingsRate,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
   upcomingDue,
 } from './calc';
 import type { Dataset, Position } from './types';
@@ -75,7 +76,7 @@ describe('control values (seed, October 2026)', () => {
   });
 
   it('true monthly burden (expenses, spread): € 2.952,17', () => {
-    expect(Math.round(trueMonthlyBurden(ds, OCT) * 100)).toBe(295217);
+    expect(Math.round(fixedCostsAvg(ds, OCT) * 100)).toBe(295217);
   });
 
   it('yearly sum of annual positions: € 2.738', () => {
@@ -106,7 +107,7 @@ describe('control values (seed, October 2026)', () => {
   it('true monthly burden = sum of all categories spread, rounded after summing', () => {
     const sum = equivalentByCategory(ds, OCT).reduce((acc, c) => acc + c.monthly, 0);
     expect(Math.round(sum * 100)).toBe(295217);
-    expect(Math.round(trueMonthlyBurden(ds, OCT) * 100)).toBe(295217);
+    expect(Math.round(fixedCostsAvg(ds, OCT) * 100)).toBe(295217);
   });
 
   it('hero: € 3.368 of € 3.403 paid, 1 open (Depotentgelt)', () => {
@@ -121,7 +122,7 @@ describe('control values (seed, October 2026)', () => {
 
   it('investing never counts into fixed costs', () => {
     expect(plannedForPeriod(ds, OCT, 'savings')).toBe(800);
-    expect(savingsForPeriod(ds, OCT)).toBe(800);
+    expect(wealthBuildingAvg(ds, OCT)).toBe(800);
     expect(actualForPeriod(ds, OCT)).toBe(3368);
     expect(actualForPeriod(ds, OCT, 'savings')).toBe(800);
   });
@@ -147,7 +148,7 @@ describe('sum invariance: positions = categories = total', () => {
       .filter((p) => ds.categories.find((c) => c.id === p.categoryId)?.kind === 'expense')
       .reduce((acc, p) => acc + monthlyEquivalent(p, period), 0);
     const byCategory = equivalentByCategory(ds, period).reduce((acc, c) => acc + c.monthly, 0);
-    const total = trueMonthlyBurden(ds, period);
+    const total = fixedCostsAvg(ds, period);
     expect(byCategory).toBeCloseTo(total, 9);
     expect(byPosition).toBeCloseTo(total, 9);
   });
@@ -156,7 +157,7 @@ describe('sum invariance: positions = categories = total', () => {
     const months = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02', '2027-03',
       '2027-04', '2027-05', '2027-06', '2027-07', '2027-08', '2027-09'];
     const yearCents = months.reduce((acc, p) => acc + Math.round(plannedForPeriod(ds, p) * 100), 0);
-    expect(yearCents).toBe(Math.round(trueMonthlyBurden(ds, OCT) * 12 * 100));
+    expect(yearCents).toBe(Math.round(fixedCostsAvg(ds, OCT) * 12 * 100));
   });
 });
 
@@ -302,20 +303,20 @@ describe('actuals, deltas, one-offs', () => {
     ds.oneOffs.push({ id: 'o1', positionId: 'pos-strom', period: '2026-11', amount: 120, label: 'Jahresabrechnung' });
     expect(expectedSpend(ds, '2026-11')).toBe(before + 120);
     expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
-    expect(Math.round(trueMonthlyBurden(ds, '2026-11') * 100)).toBe(295217);
+    expect(Math.round(fixedCostsAvg(ds, '2026-11') * 100)).toBe(295217);
     expect(annualizedSavingsFromChanges(ds, { from: '2026-01', to: '2027-12' }).total).toBe(0);
     const strom = dueItems(ds, '2026-11').find((i) => i.position.id === 'pos-strom')!;
     expect(strom.oneOffs.map((o) => o.amount)).toEqual([120]);
   });
 
-  it('Gutschrift € 45: expectedSpend −45 and freeCalculated +45', () => {
+  it('Gutschrift € 45: expectedSpend −45 and freeAfterFixed +45', () => {
     const ds = seed();
     ds.monthClose.push({ period: '2026-11', netSalary: 5000, updatedAt: '' });
     const spend = expectedSpend(ds, '2026-11');
-    const free = freeCalculated(ds, '2026-11')!;
+    const free = freeAfterFixed(ds, '2026-11')!;
     ds.oneOffs.push({ id: 'o2', positionId: 'pos-strom', period: '2026-11', amount: -45, label: 'Gutschrift' });
     expect(expectedSpend(ds, '2026-11')).toBe(spend - 45);
-    expect(freeCalculated(ds, '2026-11')).toBe(free + 45);
+    expect(freeAfterFixed(ds, '2026-11')).toBe(free + 45);
   });
 
   it('a one-off on a position not due that month shows as a carrier, never counted as plan', () => {
@@ -359,7 +360,7 @@ describe('open from previous months', () => {
     expect(expectedSpend(ds, OCT)).toBe(3368);
     expect(actualForPeriod(ds, OCT)).toBe(3368);
     expect(periodProgress(ds, OCT)).toMatchObject({ openCount: 0, planned: 3368, paidActual: 3368, ratio: 1 });
-    expect(freeCalculated(ds, OCT)).toBe(5000 - 3368 - 800);
+    expect(freeAfterFixed(ds, OCT)).toBe(5000 - 3368); // Vermögensaufbau is no fixed cost
   });
 
   it('nothing before the first month with data is ever reported open', () => {
@@ -379,24 +380,25 @@ describe('month close: salary, free money, savings rate', () => {
 
   it('without salary everything is null, never 0', () => {
     const ds = seed();
-    expect(freeCalculated(ds, OCT)).toBeNull();
+    expect(freeAfterFixed(ds, OCT)).toBeNull();
     expect(freeGap(ds, OCT)).toBeNull();
     expect(savingsRate(ds, OCT)).toBeNull();
     expect(freeGap(withClose(undefined, 650), OCT)).toBeNull();
   });
 
-  it('Oct 2026, salary 5.000: spend 3.403, savings 800, free 797, actual 650 → gap −147, rate 16,0 %', () => {
+  it('Oct 2026, salary 5.000: fixed costs 3.403, Vermögensaufbau 800, free 1.597, remainder 797, actual 650 → gap −947, rate 16,0 %', () => {
     const ds = withClose(5000, 650);
     expect(expectedSpend(ds, OCT)).toBe(3403);
-    expect(expectedSavings(ds, OCT)).toBe(800);
-    expect(freeCalculated(ds, OCT)).toBe(797);
-    expect(freeGap(ds, OCT)).toBe(-147);
+    expect(wealthBuilding(ds, OCT)).toBe(800);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597);
+    expect(remainder(ds, OCT)).toBe(797);
+    expect(freeGap(ds, OCT)).toBe(-947);
     expect(savingsRate(ds, OCT)).toBeCloseTo(0.16, 9);
   });
 
   it('without freeActual there is a calculated value but no gap', () => {
     const ds = withClose(5000);
-    expect(freeCalculated(ds, OCT)).toBe(797);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597);
     expect(freeGap(ds, OCT)).toBeNull();
   });
 
@@ -405,11 +407,11 @@ describe('month close: salary, free money, savings rate', () => {
     ds.payments.find((p) => p.positionId === 'pos-strom')!.actualAmount = 76; // +12
     ds.oneOffs.push({ id: 'o1', period: OCT, amount: -40.5, label: 'Gutschrift' });
     expect(expectedSpend(ds, OCT)).toBe(3403 + 12 - 40.5);
-    expect(freeCalculated(ds, OCT)).toBe(797 - 12 + 40.5);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597 - 12 + 40.5);
   });
 
   it('salary is per month: other months stay null', () => {
     const ds = withClose(5000, 650);
-    expect(freeCalculated(ds, '2026-11')).toBeNull();
+    expect(freeAfterFixed(ds, '2026-11')).toBeNull();
   });
 });

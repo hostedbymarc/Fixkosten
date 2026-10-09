@@ -9,7 +9,7 @@ import {
   periodProgress,
   plannedForPeriod,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
 } from '../lib/calc';
 import type { Dataset, Payment, Position } from '../lib/types';
 import { importIntoEmpty, parseBackup } from './backup';
@@ -106,7 +106,7 @@ describe('migration v2 → v3 (realistic data)', () => {
     // all control values unchanged after the migration
     const ds = await loadDataset(db);
     expect(monthly(ds, OCT)).toBe(2664);
-    expect(cents(trueMonthlyBurden(ds, OCT))).toBe(295217);
+    expect(cents(fixedCostsAvg(ds, OCT))).toBe(295217);
     expect(plannedForPeriod(ds, OCT)).toBe(3403);
     expect(plannedForPeriod(ds, '2027-02')).toBe(4610);
     expect(sumMonthlyEquivalent(ds, OCT, { categoryId: 'cat-immos', frequency: 'monthly' })).toBe(991);
@@ -138,8 +138,8 @@ describe('plan changes (control values)', () => {
     const ds = await loadDataset(db);
     expect(monthly(ds, OCT)).toBe(2664);
     expect(monthly(ds, NOV)).toBe(2662);
-    expect(cents(trueMonthlyBurden(ds, OCT))).toBe(295217);
-    expect(cents(trueMonthlyBurden(ds, NOV))).toBe(295017);
+    expect(cents(fixedCostsAvg(ds, OCT))).toBe(295217);
+    expect(cents(fixedCostsAvg(ds, NOV))).toBe(295017);
     const { changes, total } = annualizedSavingsFromChanges(ds, { from: '2026-01', to: '2027-12' });
     expect(changes.map((c) => [c.position.name, c.annualDelta])).toEqual([['Handy', -24]]);
     expect(total).toBe(24);
