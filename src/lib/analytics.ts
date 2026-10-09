@@ -4,7 +4,7 @@
 import {
   actualForPeriod,
   dueItems,
-  freeCalculated,
+  freeAfterFixed,
   freeGap,
   isActiveInPeriod,
   kindOf,
@@ -16,7 +16,7 @@ import {
   sortedCategories,
   sumMoney,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
 } from './calc';
 import { formatDelta, formatEUR, formatPercent } from './format';
 import { addPeriods, periodLabel, periodRange, shortMonthName, monthOf, yearOf } from './period';
@@ -85,7 +85,7 @@ export interface YearForecast {
 /** The `count` months after `today` (Oct 2026 → Nov 2026 … Okt 2027). Expenses only. */
 export function yearForecast(ds: Dataset, today: Period, count = 12): YearForecast {
   const periods = periodRange(addPeriods(today, 1), addPeriods(today, count));
-  const average = periods.reduce((acc, p) => acc + trueMonthlyBurden(ds, p), 0) / periods.length;
+  const average = periods.reduce((acc, p) => acc + fixedCostsAvg(ds, p), 0) / periods.length;
   const months = periods.map((period): ForecastMonth => {
     const oneOffs = expenseOneOffs(ds, period);
     const due = sumMoney([plannedForPeriod(ds, period), ...oneOffs.map((o) => o.amount)]);
@@ -144,7 +144,7 @@ export interface Distribution {
 
 /** Expense categories by spread monthly amount, largest first; each with its positions, largest first. */
 export function categoryDistribution(ds: Dataset, period: Period): Distribution {
-  const total = trueMonthlyBurden(ds, period);
+  const total = fixedCostsAvg(ds, period);
   const share = (v: number) => (total > 0 ? v / total : 0);
   const rows = sortedCategories(ds)
     .filter((c) => c.kind === 'expense')
@@ -218,7 +218,7 @@ export function monthCloseSeries(ds: Dataset, periods: Period[]): MonthCloseRow[
     if (!close) return { period, calculated: null, actual: null, gap: null, savingsRate: null };
     return {
       period,
-      calculated: freeCalculated(ds, period),
+      calculated: freeAfterFixed(ds, period),
       actual: close.freeActual ?? null,
       gap: freeGap(ds, period),
       savingsRate: savingsRate(ds, period),
@@ -276,7 +276,7 @@ export function burdenTrend(ds: Dataset, periods: Period[]): BurdenTrend {
   const expense = sortedCategories(ds).filter((c) => c.kind === 'expense');
   const points = periods.map((period) => ({
     period,
-    total: trueMonthlyBurden(ds, period),
+    total: fixedCostsAvg(ds, period),
     byCategory: Object.fromEntries(
       expense.map((c) => [c.id, sumMonthlyEquivalent(ds, period, { categoryId: c.id })]),
     ),
@@ -305,7 +305,7 @@ export function trendHeadline(t: BurdenTrend): string {
 /** Empty state below 3 months of data. */
 export function trendTooShortText(ds: Dataset, today: Period): string {
   const start = dataStart(ds, today);
-  return `Ab 3 Monaten siehst du hier die Entwicklung. Bisher: ${formatEUR(trueMonthlyBurden(ds, today))} Ø pro Monat seit ${shortPeriodLabel(start)}.`;
+  return `Ab 3 Monaten siehst du hier die Entwicklung. Bisher: ${formatEUR(fixedCostsAvg(ds, today))} Ø pro Monat seit ${shortPeriodLabel(start)}.`;
 }
 
 // ---------------------------------------------------------------------------

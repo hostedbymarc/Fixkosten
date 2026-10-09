@@ -17,7 +17,7 @@ import {
   trendTooShortText,
   yearForecast,
 } from './analytics';
-import { trueMonthlyBurden } from './calc';
+import { fixedCostsAvg } from './calc';
 import { formatCompactEUR, formatPercent } from './format';
 import type { Dataset, PlanEntry } from './types';
 
@@ -119,12 +119,12 @@ describe('2 · distribution (spread, seed)', () => {
 });
 
 describe('3 · month close', () => {
-  it('Okt 2026: salary 5.000, actual 650 → calculated 797, gap −147, rate 16,0 %', () => {
+  it('Okt 2026: salary 5.000, actual 650 → calculated 1.597 (after fixed costs), gap −947, rate 16,0 %', () => {
     const ds = fixtureDataset();
     ds.monthClose.push({ period: OCT, netSalary: 5000, freeActual: 650, updatedAt: '' });
     const [row] = monthCloseSeries(ds, [OCT]);
-    expect(row).toEqual({ period: OCT, calculated: 797, actual: 650, gap: -147, savingsRate: 0.16 });
-    expect(monthCloseHeadline([row!])!.replace(/ /g, ' ')).toBe('Oktober 2026: € 147 weniger frei als rechnerisch · Sparquote 16,0 %');
+    expect(row).toEqual({ period: OCT, calculated: 1597, actual: 650, gap: -947, savingsRate: 0.16 });
+    expect(monthCloseHeadline([row!])!.replace(/ /g, ' ')).toBe('Oktober 2026: € 947 weniger frei als rechnerisch · Sparquote 16,0 %');
   });
 
   it('months without month close are gaps (null), never 0', () => {
@@ -208,7 +208,7 @@ describe('history fixture (24 months, Nov 2024 – Okt 2026)', () => {
     for (const p of t.points) {
       const sum = Object.values(p.byCategory).reduce((a, b) => a + b, 0);
       expect(sum).toBeCloseTo(p.total, 9);
-      expect(p.total).toBe(trueMonthlyBurden(ds, p.period));
+      expect(p.total).toBe(fixedCostsAvg(ds, p.period));
     }
     expect(cents(t.points[t.points.length - 1]!.total)).toBe(295217);
     expect(t.points[0]!.total).toBeLessThan(t.points[t.points.length - 1]!.total);

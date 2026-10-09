@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { freeAverageWith, freeCalculatedWith, gap, monthCloseFor } from '../lib/calc';
+import { freeAfterFixedAvgWith, freeAfterFixedWith, gap, monthCloseFor } from '../lib/calc';
 import { amountToInput, formatDelta, formatEUR, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel } from '../lib/period';
 import type { Dataset, Period } from '../lib/types';
@@ -79,9 +79,9 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
   const salary = parseOptional(salaryText);
   const freeActual = parseOptional(freeText);
   const invalid = salary === null || freeActual === null;
-  const calculated = typeof salary === 'number' ? freeCalculatedWith(ds, period, salary) : null;
+  const calculated = typeof salary === 'number' ? freeAfterFixedWith(ds, period, salary) : null;
   const difference = gap(freeActual, calculated);
-  const average = typeof salary === 'number' ? freeAverageWith(ds, period, salary) : null;
+  const average = typeof salary === 'number' ? freeAfterFixedAvgWith(ds, period, salary) : null;
 
   const prevSalary = previous?.netSalary;
   const prevFree = previous?.freeActual;
@@ -153,9 +153,9 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
         {average !== null && calculated !== null && (
           <p className="-mt-1 rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="close-average">
             Rechnerisch frei <span className="font-medium">diesen Monat</span>{' '}
-            <span className="num font-semibold text-ink">{formatEUR(calculated)}</span> · im{' '}
-            <span className="font-medium">Ø-Monat</span> (alle Kosten umgelegt){' '}
-            <span className="num font-semibold text-ink">{formatEUR(average)}</span>
+            <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(calculated)}</span> ·{' '}
+            <span className="font-medium">Ø mit Jahreskosten</span>{' '}
+            <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(average)}</span>
           </p>
         )}
 

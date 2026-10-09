@@ -59,7 +59,7 @@ test('Spar-Kategorie mit Ø-Zeile: Kopf bricht um, nichts ragt aus der Karte', a
   await fresh.getByTestId('import-file').setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await expect(fresh.getByTestId('hero')).toBeVisible();
   const card = fresh.getByRole('region', { name: 'Immo' });
-  await expect(card).toContainText('Sparen · keine Fixkosten');
+  await expect(card).toContainText('Vermögensaufbau');
   await expect(card.getByTestId('group-spread')).toBeVisible();
   const overflow = await card.evaluate((el) => {
     const box = el.getBoundingClientRect();

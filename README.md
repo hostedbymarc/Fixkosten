@@ -15,6 +15,9 @@ pnpm test:e2e     # Playwright: iPhone 15, iPad hoch/quer, Desktop 1440 (erzeugt
 ## Architektur
 
 - `src/lib/calc.ts` – **einzige** Stelle für Berechnungen (Summen, Umlage, Fälligkeit, Sparquote). Reine Funktionen `(dataset, period)`; die UI rechnet nie selbst.
+  - **Fixkosten** = Kategorien mit `kind: 'expense'`, **Vermögensaufbau** = jede Kategorie mit `kind: 'savings'`. Jede Position zählt in genau einem Topf.
+  - `fixedCosts` / `wealthBuilding` (fällig im Monat: Ist wenn abgehakt, sonst Plan, + Einmalbeträge), `fixedCostsAvg` / `wealthBuildingAvg` (umgelegt).
+  - „Frei verfügbar“ = `freeAfterFixed` (Netto − Fixkosten), Ø = `freeAfterFixedAvg`, „bleibt“ = `remainder` (frei − Vermögensaufbau), Quote = `savingsRate` (Vermögensaufbau ÷ Netto).
 - `src/db/db.ts` – Dexie-Schema (versioniert, v1 nie ändern; Migrationen per `db.version(n).upgrade`), `src/db/repo.ts` – Schreiboperationen, `src/db/backup.ts` – Import beim Erststart.
 - `src/screens/`, `src/components/` – UI (React + Tailwind), Umschalter System/Hell/Dunkel in den Einstellungen (`src/lib/theme.ts`).
 - Farben: **nur** in `src/styles/tokens.css` (hell + dunkel); `pnpm check:colors` findet Hex-Werte anderswo, `src/lib/contrast.test.ts` prüft alle Text/Hintergrund-Paare gegen Nebel und Glas.

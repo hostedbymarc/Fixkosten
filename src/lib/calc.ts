@@ -468,18 +468,21 @@ export function sumMonthlyEquivalent(ds: Dataset, period: Period, filter: Equiva
   return fromEquivalentNumerator(numerator);
 }
 
-/** All expenses spread over the year = real monthly burden. */
-export function trueMonthlyBurden(ds: Dataset, period: Period): number {
+/**
+ * Fixed costs spread over the year = real monthly burden („Ø pro Monat“).
+ * Only expense categories: Vermögensaufbau (kind 'savings') is never a fixed cost.
+ */
+export function fixedCostsAvg(ds: Dataset, period: Period): number {
   return sumMonthlyEquivalent(ds, period, { kind: 'expense' });
 }
 
-/** Monthly reserve needed for non-monthly expenses. */
+/** Monthly reserve needed for non-monthly fixed costs („inkl. € X Jahreskosten“). */
 export function reserveNeeded(ds: Dataset, period: Period): number {
   return sumMonthlyEquivalent(ds, period, { kind: 'expense', nonMonthlyOnly: true });
 }
 
-/** Planned savings per month (monthly equivalent of savings positions). */
-export function savingsForPeriod(ds: Dataset, period: Period): number {
+/** Vermögensaufbau spread over the year (every category with kind 'savings'). */
+export function wealthBuildingAvg(ds: Dataset, period: Period): number {
   return sumMonthlyEquivalent(ds, period, { kind: 'savings' });
 }
 
@@ -521,9 +524,9 @@ export function netSalaryForPeriod(ds: Dataset, period: Period): number | null {
 }
 
 /**
- * What leaves the account this month: actual amount for ticked positions,
- * plan for open ones, nothing for skipped ones, plus all one-offs of the month
- * (credits negative). Expenses by default.
+ * What leaves the account this month for one kind: actual amount for ticked
+ * positions, plan for open ones, nothing for skipped ones, plus all one-offs of
+ * the month (credits negative). Every position belongs to exactly one kind.
  */
 export function expectedSpend(ds: Dataset, period: Period, kind: Kind = 'expense'): number {
   const items = counted(dueItems(ds, period))
@@ -535,39 +538,50 @@ export function expectedSpend(ds: Dataset, period: Period, kind: Kind = 'expense
   return sumMoney([...items, ...oneOffs]);
 }
 
-/** Savings of the month, same rule as expectedSpend (actual if ticked, else plan). */
-export function expectedSavings(ds: Dataset, period: Period): number {
+/** Fixed costs due this month (expense categories only), incl. one-offs and one-time payments. */
+export function fixedCosts(ds: Dataset, period: Period): number {
+  return expectedSpend(ds, period, 'expense');
+}
+
+/** Vermögensaufbau due this month (every savings category), same rule as fixedCosts. */
+export function wealthBuilding(ds: Dataset, period: Period): number {
   return expectedSpend(ds, period, 'savings');
 }
 
-/** salary − expectedSpend − savings for a given salary (used for live previews). */
-export function freeCalculatedWith(ds: Dataset, period: Period, netSalary: number): number {
-  return fromCents(
-    toCents(netSalary) - toCents(expectedSpend(ds, period)) - toCents(expectedSavings(ds, period)),
-  );
+/** netSalary − fixedCosts for a given salary (live preview in the month close). */
+export function freeAfterFixedWith(ds: Dataset, period: Period, netSalary: number): number {
+  return fromCents(toCents(netSalary) - toCents(fixedCosts(ds, period)));
 }
 
-/** Calculated free money of the month. Null without salary. */
-export function freeCalculated(ds: Dataset, period: Period): number | null {
+/** „Frei verfügbar“: net salary − fixed costs of this month. Null without salary. */
+export function freeAfterFixed(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
-  return salary === null ? null : freeCalculatedWith(ds, period, salary);
+  return salary === null ? null : freeAfterFixedWith(ds, period, salary);
+}
+
+/** netSalary − fixedCostsAvg for a given salary. */
+export function freeAfterFixedAvgWith(ds: Dataset, period: Period, netSalary: number): number {
+  return fromCents(toCents(netSalary) - Math.round(fixedCostsAvg(ds, period) * 100));
 }
 
 /**
- * Free money of an average month: salary − Ø pro Monat (all fixed costs spread
- * over the year) − planned savings. One-time payments and one-offs do not
- * distort it. Null without salary.
+ * Free money of an average month: net salary − fixed costs spread over the year
+ * („Ø mit Jahreskosten“). One-time payments and one-offs do not distort it. Null without salary.
  */
-export function freeAverage(ds: Dataset, period: Period): number | null {
+export function freeAfterFixedAvg(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
-  return salary === null ? null : freeAverageWith(ds, period, salary);
+  return salary === null ? null : freeAfterFixedAvgWith(ds, period, salary);
 }
 
-/** freeAverage for a given salary (live preview in the month close). */
-export function freeAverageWith(ds: Dataset, period: Period, netSalary: number): number {
-  return fromCents(
-    toCents(netSalary) - Math.round(trueMonthlyBurden(ds, period) * 100) - Math.round(savingsForPeriod(ds, period) * 100),
-  );
+/** What is left after fixed costs and Vermögensaufbau („bleibt“), for a given salary. */
+export function remainderWith(ds: Dataset, period: Period, netSalary: number): number {
+  return fromCents(toCents(freeAfterFixedWith(ds, period, netSalary)) - toCents(wealthBuilding(ds, period)));
+}
+
+/** freeAfterFixed − wealthBuilding. Null without salary. */
+export function remainder(ds: Dataset, period: Period): number | null {
+  const salary = netSalaryForPeriod(ds, period);
+  return salary === null ? null : remainderWith(ds, period, salary);
 }
 
 /** actual − calculated; negative = less left than calculated. */
@@ -576,16 +590,16 @@ export function gap(actual: number | null | undefined, calculated: number | null
   return fromCents(toCents(actual) - toCents(calculated));
 }
 
-/** freeActual − freeCalculated. Null unless both are known. */
+/** freeActual − freeAfterFixed. Null unless both are known. */
 export function freeGap(ds: Dataset, period: Period): number | null {
-  return gap(monthCloseFor(ds, period)?.freeActual, freeCalculated(ds, period));
+  return gap(monthCloseFor(ds, period)?.freeActual, freeAfterFixed(ds, period));
 }
 
-/** Savings ÷ net salary, 0–1. Null without salary. */
+/** Vermögensaufbau ÷ net salary, 0–1. Null without salary. */
 export function savingsRate(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
   if (salary === null || salary <= 0) return null;
-  return expectedSavings(ds, period) / salary;
+  return wealthBuilding(ds, period) / salary;
 }
 
 // ---------------------------------------------------------------------------

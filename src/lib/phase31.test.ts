@@ -11,14 +11,14 @@ import {
 import {
   dueItems,
   expectedSpend,
-  freeCalculatedWith,
+  freeAfterFixedWith,
   isOnceDone,
   nextPlannedChange,
   openFromPrevious,
   plannedForPeriod,
   reserveNeeded,
   sumMonthlyEquivalent,
-  trueMonthlyBurden,
+  fixedCostsAvg,
   upcomingDue,
 } from './calc';
 import type { Dataset, Position } from './types';
@@ -62,7 +62,7 @@ describe('control values without one-time payments or changes stay exact', () =>
   const ds = fixtureDataset();
   it('fällig Okt € 3.403, Ø € 2.952,17, monatlich € 2.664, Rücklage € 288,17', () => {
     expect(plannedForPeriod(ds, OCT)).toBe(3403);
-    expect(cents(trueMonthlyBurden(ds, OCT))).toBe(295217);
+    expect(cents(fixedCostsAvg(ds, OCT))).toBe(295217);
     expect(sumMonthlyEquivalent(ds, OCT, { kind: 'expense', frequency: 'monthly' })).toBe(2664);
     expect(cents(reserveNeeded(ds, OCT))).toBe(28817);
     expect(yearForecast(ds, OCT).onceTotal).toBe(0);
@@ -82,7 +82,7 @@ describe('Einmalig: Reparatur € 500, fällig 15.11.2026', () => {
   });
 
   it('never spread: Ø pro Monat € 2.952,17, distribution and trend unchanged, no optimisation', () => {
-    for (const p of [OCT, '2026-11', '2026-12']) expect(cents(trueMonthlyBurden(ds, p))).toBe(295217);
+    for (const p of [OCT, '2026-11', '2026-12']) expect(cents(fixedCostsAvg(ds, p))).toBe(295217);
     expect(cents(reserveNeeded(ds, '2026-11'))).toBe(28817);
     expect(categoryDistribution(ds, '2026-11')).toEqual(categoryDistribution(fixtureDataset(), '2026-11'));
     expect(burdenTrend(ds, [OCT, '2026-11']).points).toEqual(burdenTrend(fixtureDataset(), [OCT, '2026-11']).points);
@@ -102,7 +102,7 @@ describe('Einmalig: Reparatur € 500, fällig 15.11.2026', () => {
 
   it('counts into expected spend, free money and „Demnächst“', () => {
     expect(expectedSpend(ds, '2026-11')).toBe(3164);
-    expect(freeCalculatedWith(ds, '2026-11', 5000)).toBe(5000 - 3164 - 800);
+    expect(freeAfterFixedWith(ds, '2026-11', 5000)).toBe(5000 - 3164);
     expect(upcomingDue(ds, OCT).map((i) => i.position.name)).toContain('Reparatur');
   });
 
@@ -129,7 +129,7 @@ describe('Betrag ändern: Miete € 1.008 → € 1.050 ab 01.04.2027 (entered t
     const f = yearForecast(ds, OCT);
     expect(f.months.find((m) => m.period === '2027-04')!.due).toBe(2755);
     expect(f.months.find((m) => m.period === '2027-03')!.due).toBe(2664);
-    expect(cents(trueMonthlyBurden(ds, '2027-04'))).toBe(299417);
+    expect(cents(fixedCostsAvg(ds, '2027-04'))).toBe(299417);
   });
 
   it('badge: next change from the current month', () => {
@@ -185,15 +185,15 @@ describe('Betrag ändern ab 01.10.2026, Oktober-Miete schon mit € 1.008 abgeha
 });
 
 describe('Frei verfügbar: dieser Monat vs. Ø (alle Kosten umgelegt)', () => {
-  it('Okt 2026, Gehalt 5.000: diesen Monat € 797, Ø € 1.247,83; Einmalige verfälschen den Schnitt nicht', async () => {
-    const { freeAverage, freeCalculated } = await import('./calc');
+  it('Okt 2026, Gehalt 5.000: diesen Monat € 1.597, Ø € 2.047,83; Einmalige verfälschen den Schnitt nicht', async () => {
+    const { freeAfterFixedAvg, freeAfterFixed } = await import('./calc');
     const ds = withRepair();
     ds.monthClose.push({ period: OCT, netSalary: 5000, updatedAt: '' }, { period: '2026-11', netSalary: 5000, updatedAt: '' });
-    expect(freeCalculated(ds, OCT)).toBe(797);
-    expect(freeAverage(ds, OCT)).toBe(1247.83);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597);
+    expect(freeAfterFixedAvg(ds, OCT)).toBe(2047.83);
     // November carries the € 500 repair: this month drops, the average stays
-    expect(freeCalculated(ds, '2026-11')).toBe(5000 - 3164 - 800);
-    expect(freeAverage(ds, '2026-11')).toBe(1247.83);
-    expect(freeAverage(fixtureDataset(), OCT)).toBeNull();
+    expect(freeAfterFixed(ds, '2026-11')).toBe(5000 - 3164);
+    expect(freeAfterFixedAvg(ds, '2026-11')).toBe(2047.83);
+    expect(freeAfterFixedAvg(fixtureDataset(), OCT)).toBeNull();
   });
 });

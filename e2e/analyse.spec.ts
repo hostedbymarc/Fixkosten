@@ -132,10 +132,10 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await openAnalyse(app);
     const section = app.getByTestId('monthclose');
     await expect(app.getByTestId('monthclose-headline')).toHaveText(
-      eur('Oktober 2026: € 147 weniger frei als rechnerisch · Sparquote 16,0 %'),
+      eur('Oktober 2026: € 947 weniger frei als rechnerisch · Sparquote 16,0 %'),
     );
-    expect(await tableRows(section)).toEqual([['Oktober 2026', '€ 797', '€ 650', '−€ 147', '16,0 %']]);
-    await expect(section.locator('[data-testid="group-labels"] text')).toHaveText(['−€ 147']);
+    expect(await tableRows(section)).toEqual([['Oktober 2026', '€ 1.597', '€ 650', '−€ 947', '16,0 %']]);
+    await expect(section.locator('[data-testid="group-labels"] text')).toHaveText(['−€ 947']);
     await expectChartLabelsClean(app);
   });
 
