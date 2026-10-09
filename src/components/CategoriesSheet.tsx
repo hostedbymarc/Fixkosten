@@ -57,7 +57,7 @@ export function CategoriesSheet({ ds, onClose, returnFocusTo }: { ds: Dataset; o
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-medium text-ink">{c.name}</span>
                       <span className="block text-[13px] text-ink-mute">
-                        {c.kind === 'savings' ? 'Sparen' : 'Ausgabe'} · {positionsLabel(categoryUsage(ds, c.id))}
+                        {c.kind === 'savings' ? 'Vermögensaufbau' : 'Ausgabe'} · {positionsLabel(categoryUsage(ds, c.id))}
                       </span>
                     </span>
                   </button>
@@ -174,7 +174,7 @@ function CategoryForm({
         onChange={(k) => !(isLastExpense && k === 'savings') && setKind(k)}
         options={[
           { value: 'expense', label: 'Ausgabe' },
-          { value: 'savings', label: 'Sparen' },
+          { value: 'savings', label: 'Vermögensaufbau' },
         ]}
       />
       {isLastExpense && <p className="text-[13px] text-ink-mute">Mindestens eine Ausgaben-Kategorie muss bleiben.</p>}

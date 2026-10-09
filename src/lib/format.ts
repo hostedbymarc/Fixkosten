@@ -19,6 +19,8 @@ const eur0 = new Intl.NumberFormat('de-AT', {
  */
 export function formatEUR(value: number, opts: { fixed?: boolean } = {}): string {
   const cents = Math.round(value * 100);
+  // negative: typographic minus, no space before '€' ('−€ 490', never '-€ 490')
+  if (cents < 0) return `\u2212${formatEUR(-cents / 100, opts)}`;
   const normalized = cents / 100 || 0; // avoid '-0'
   if (!opts.fixed && cents % 100 === 0) return eur0.format(normalized);
   return eur2.format(normalized);

@@ -9,18 +9,17 @@ test.describe('Monatsabschluss', () => {
     await expect(sheet).toBeVisible();
 
     await sheet.getByLabel('Netto-Gehalt').fill('5.000');
-    await expect(sheet.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 797'));
+    await expect(sheet.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 1.597'));
     await sheet.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
-    await expect(sheet.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 797 · Differenz −€ 147'));
+    await expect(sheet.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 1.597 · Differenz −€ 947'));
     await sheet.getByLabel('Notiz').fill('Urlaub');
     await sheet.getByRole('button', { name: 'Speichern' }).click();
     await expect(sheet).toBeHidden();
 
     const check = async () => {
       await expect(app.getByTestId('free-value')).toHaveText(eur('€ 650'));
-      await expect(app.getByTestId('free-sub')).toHaveText(eur('rechnerisch € 797 · Differenz −€ 147'));
-      await expect(app.getByTestId('free-sub').locator('.text-over')).toHaveText(eur('−€ 147'));
-      await expect(app.getByTestId('savings-rate')).toHaveText(eur('Sparquote 16,0 %'));
+      await expect(app.getByTestId('free-sub')).toHaveText(eur('tatsächlich · rechnerisch € 1.597 · Diff −€ 947'));
+      await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · bleibt € 797 · Quote 16,0 %'));
       await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 5.000'));
     };
     await check();
@@ -38,7 +37,7 @@ test.describe('Monatsabschluss', () => {
     const salary = app.getByLabel('Netto-Gehalt');
     await expect(salary).toHaveAttribute('inputmode', 'decimal');
     await salary.fill('4.850,50');
-    await expect(app.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 647,50'));
+    await expect(app.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 1.447,50'));
     await salary.fill('viel');
     await expect(app.getByRole('button', { name: 'Speichern' })).toBeDisabled();
   });
@@ -82,7 +81,7 @@ test.describe('Monatsabschluss', () => {
     await app.getByLabel('Netto-Gehalt').fill('12.345,67');
     await app.getByLabel('Frei verfügbar (tatsächlich)').fill('7.654,32');
     await app.getByRole('button', { name: 'Speichern' }).click();
-    await expect(app.getByTestId('savings-rate')).toBeVisible();
+    await expect(app.getByTestId('free-wealth')).toBeVisible();
 
     const tile = app.getByTestId('free-tile');
     const clipped = await tile.evaluate((el) => {
