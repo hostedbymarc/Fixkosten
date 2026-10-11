@@ -18,6 +18,7 @@ const NAME_OK = [
   /\b(der|die|den|deiner|[Dd]eine|keine|zu den)\s+Fixkosten\b/, // the German word as a term
   /Fixkosten oder Sparplan/,
   /Monatliche Fixkosten/,
+  /Ø Fixkosten/, // tooltip „im Ø-Monat“
 ];
 
 function files(dir) {
