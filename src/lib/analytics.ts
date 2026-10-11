@@ -4,6 +4,7 @@
 import {
   actualForPeriod,
   dueItems,
+  fixedCosts,
   freeAfterFixed,
   freeGap,
   isActiveInPeriod,
@@ -61,34 +62,36 @@ export interface ForecastItem {
 
 export interface ForecastMonth {
   period: Period;
-  /** what is actually debited: due expenses of the month plus its one-offs */
+  /** fixed costs of the month (expense categories only) incl. one-time payments and one-offs */
   due: number;
   /** part of `due` from one-time payments (frequency 'once') */
   once: number;
   aboveAverage: boolean;
-  /** non-monthly positions and one-offs of the month (the reason it is above average) */
+  /** non-monthly positions and one-offs of the month, largest first */
   items: ForecastItem[];
 }
 
 export interface YearForecast {
   months: ForecastMonth[];
-  /** spread monthly burden, averaged over the window */
+  /** Ø pro Monat: the same value as the tile on the month screen (fixedCostsAvg of today) */
   average: number;
   total: number;
-  /** one-time payments in the window; total = count × average + onceTotal */
+  /** one-time payments in the window */
   onceTotal: number;
   peak: ForecastMonth | null;
   /** peak.due − average */
   peakAboveAverage: number;
 }
 
-/** The `count` months after `today` (Oct 2026 → Nov 2026 … Okt 2027). Expenses only. */
+/**
+ * The `count` months after `today` (Oct 2026 → Nov 2026 … Okt 2027). Fixed costs only:
+ * Vermögensaufbau (kind 'savings') never shows up, one-time payments do.
+ */
 export function yearForecast(ds: Dataset, today: Period, count = 12): YearForecast {
   const periods = periodRange(addPeriods(today, 1), addPeriods(today, count));
-  const average = periods.reduce((acc, p) => acc + fixedCostsAvg(ds, p), 0) / periods.length;
+  const average = fixedCostsAvg(ds, today);
   const months = periods.map((period): ForecastMonth => {
     const oneOffs = expenseOneOffs(ds, period);
-    const due = sumMoney([plannedForPeriod(ds, period), ...oneOffs.map((o) => o.amount)]);
     const nonMonthly = dueItems(ds, period).filter(
       (i) => i.due && i.status !== 'skipped' && i.kind === 'expense' && i.plan?.frequency !== 'monthly',
     );
@@ -97,7 +100,8 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
         i.plan?.frequency === 'once' ? { name: i.position.name, amount: i.planned, once: true } : { name: i.position.name, amount: i.planned },
       ),
       ...oneOffs.map((o) => ({ name: positionName(ds, o.positionId) ? `${positionName(ds, o.positionId)}: ${o.label}` : o.label, amount: o.amount })),
-    ];
+    ].sort((x, y) => y.amount - x.amount);
+    const due = fixedCosts(ds, period);
     const once = sumMoney(nonMonthly.filter((i) => i.plan?.frequency === 'once').map((i) => i.planned));
     return { period, due, once, aboveAverage: cents(due) > cents(average), items };
   });
@@ -112,11 +116,22 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
   };
 }
 
-export function forecastHeadline(f: YearForecast): string {
+export interface ForecastSummary {
+  label: string;
+  value: string;
+  sub: string;
+}
+
+/** Heading of the forecast in two levels: „Teuerster Monat“ / „Nov 2026 · € 6.110“ / „€ 2.774 über Ø“. */
+export function forecastSummary(f: YearForecast): ForecastSummary {
   if (!f.peak || f.peakAboveAverage < 0.5) {
-    return `Gleichmäßig: jeden Monat rund ${formatEUR(Math.round(f.average))} fällig.`;
+    return { label: 'Gleichmäßig', value: `rund ${formatEUR(Math.round(f.average))}`, sub: 'jeden Monat fällig' };
   }
-  return `Teuerster Monat: ${periodLabel(f.peak.period)} · ${formatEUR(f.peak.due)} · ${formatEUR(Math.round(f.peakAboveAverage))} über Schnitt`;
+  return {
+    label: 'Teuerster Monat',
+    value: `${shortPeriodLabel(f.peak.period)} · ${formatEUR(f.peak.due)}`,
+    sub: `${formatEUR(Math.round(f.peakAboveAverage))} über Ø`,
+  };
 }
 
 // ---------------------------------------------------------------------------

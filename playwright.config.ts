@@ -26,6 +26,16 @@ export default defineConfig({
       },
     },
     {
+      // reference device: iPhone Pro Max
+      name: 'iphone-pro-max',
+      use: {
+        viewport: { width: 440, height: 956 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
       name: 'ipad-portrait',
       use: { viewport: { width: 820, height: 1180 }, deviceScaleFactor: 2, hasTouch: true },
     },
