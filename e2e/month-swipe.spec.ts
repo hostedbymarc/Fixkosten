@@ -39,10 +39,12 @@ test.describe('Monat wechseln per Wischen', () => {
 
   test('Desktop: Maus ziehen wechselt nicht, die Pfeile bleiben', async ({ app }) => {
     test.skip(isTouchProject(), 'desktop only');
-    const box = (await app.getByTestId('month-screen').boundingBox())!;
-    await app.mouse.move(box.x + box.width * 0.7, box.y + 400);
+    // drag across the hero: a surface without a click target (the note card below would open on click)
+    const box = (await app.getByTestId('hero').boundingBox())!;
+    const y = box.y + box.height / 2;
+    await app.mouse.move(box.x + box.width * 0.9, y);
     await app.mouse.down();
-    await app.mouse.move(box.x + box.width * 0.2, box.y + 400, { steps: 10 });
+    await app.mouse.move(box.x + box.width * 0.4, y, { steps: 10 });
     await app.mouse.up();
     await expect(app.getByRole('heading', { level: 1 })).toHaveText('Oktober 2026');
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
