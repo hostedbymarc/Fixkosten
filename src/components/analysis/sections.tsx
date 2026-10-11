@@ -20,7 +20,6 @@ import {
   burdenTrend,
   categoryDistribution,
   distributionHeadline,
-  forecastHeadline,
   monthCloseHeadline,
   monthCloseSeries,
   optimizationTimeline,
@@ -31,10 +30,9 @@ import {
   trendHeadline,
   trendTooShortText,
   type TrendChange,
-  yearForecast,
 } from '../../lib/analytics';
 import { formatCompactEUR, formatDelta, formatEUR, formatPercent, formatPercentShort } from '../../lib/format';
-import { periodLabel, shortMonthName, monthOf } from '../../lib/period';
+import { periodLabel } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { ChevronRight } from '../Icons';
 import { formatIsoDate, planDescription } from '../Chips';
@@ -67,121 +65,7 @@ const deltaCompact = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${format
 // 1 · Year forecast
 // ---------------------------------------------------------------------------
 
-export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
-  const f = yearForecast(ds, today);
-  const rows = f.months.map((m) => ({
-    ...m,
-    label: shortMonthName(monthOf(m.period)),
-    // stacked: recurring part below, one-time payments as a lighter part on top
-    recurring: Math.round((m.due - m.once) * 100) / 100,
-  }));
-  const hasOnce = f.onceTotal !== 0;
-  return (
-    <ChartCard
-      id="forecast"
-      title="Jahresvorschau"
-      headline={forecastHeadline(f)}
-      table={{
-        caption: 'Fällige Ausgaben der nächsten 12 Monate',
-        head: ['Monat', 'Fällig', 'davon einmalig', 'nicht monatlich'],
-        rows: f.months.map((m) => [
-          periodLabel(m.period),
-          formatEUR(m.due),
-          m.once ? formatEUR(m.once) : '–',
-          m.items.map((i) => `${i.name}${i.once ? ' (einmalig)' : ''} ${formatEUR(i.amount)}`).join(', ') || '–',
-        ]),
-      }}
-    >
-      <div className="h-[230px] w-full" role="img" aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø ${formatEUR(f.average)} pro Monat`}>
-        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
-          <BarChart data={rows} margin={CHART_MARGIN} accessibilityLayer barCategoryGap="22%">
-            <CartesianGrid vertical={false} stroke={COLORS.grid} />
-            <XAxis dataKey="label" {...xAxisProps} />
-            <YAxis {...yAxisProps} />
-            <Tooltip
-              {...tooltipProps}
-              content={(props: TipProps<(typeof rows)[number]>) => {
-                const m = tipRow(props);
-                if (!m) return null;
-                return (
-                  <TooltipBox title={`${periodLabel(m.period)}: ${formatEUR(m.due)}`}>
-                    {m.items.length === 0 ? (
-                      <p>Nur monatliche Posten</p>
-                    ) : (
-                      m.items.map((i) => (
-                        <TooltipRow
-                          key={i.name}
-                          label={i.once ? `${i.name} (einmalig)` : i.name}
-                          value={formatEUR(i.amount)}
-                          swatch={i.once ? COLORS.accentLight : undefined}
-                        />
-                      ))
-                    )}
-                  </TooltipBox>
-                );
-              }}
-            />
-            <Bar
-              dataKey="recurring"
-              stackId="due"
-              radius={hasOnce ? 0 : [4, 4, 0, 0]}
-              maxBarSize={36}
-              isAnimationActive={false}
-              name="Fällig"
-              className="bar-recurring"
-            >
-              {rows.map((m) => (
-                <Cell key={m.period} fill={m.aboveAverage ? COLORS.accent : COLORS.neutral} />
-              ))}
-            </Bar>
-            {hasOnce && (
-              <Bar
-                dataKey="once"
-                stackId="due"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={36}
-                isAnimationActive={false}
-                name="Einmalig"
-                fill={COLORS.accentLight}
-                stroke={COLORS.surface}
-                strokeWidth={1}
-                className="bar-once"
-              />
-            )}
-            <ReferenceLine
-              y={f.average}
-              stroke={COLORS.avg}
-              strokeDasharray="4 4"
-              ifOverflow="extendDomain"
-              label={{
-                value: `Ø ${formatEUR(Math.round(f.average))}`,
-                position: 'insideBottomLeft',
-                fill: COLORS.inkSoft,
-                fontSize: 11,
-                fontWeight: 600,
-                stroke: COLORS.surface,
-                strokeWidth: 3,
-                paintOrder: 'stroke',
-              }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-ink-mute">
-        <span className="h-2.5 w-2.5 rounded-[3px] bg-accent" aria-hidden="true" />
-        über dem Schnitt
-        <span className="ml-2 h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-        Ø pro Monat (umgelegt)
-        {hasOnce && (
-          <>
-            <span className="ml-2 h-2.5 w-2.5 rounded-[3px]" style={{ background: COLORS.accentLight }} aria-hidden="true" />
-            einmalig
-          </>
-        )}
-      </p>
-    </ChartCard>
-  );
-}
+export { ForecastSection } from './Forecast';
 
 // ---------------------------------------------------------------------------
 // 2 · Distribution (horizontal bars, tap to expand)

@@ -107,11 +107,11 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
       expect(new Set(row.map((t) => t.valueBottom)).size, 'same baseline in a row').toBe(1);
     }
     // phone: Netto + Ø side by side, Frei verfügbar full width below; tablet/desktop: one row of three
-    expect(rows.size).toBe(info.project.name === 'iphone-15' ? 2 : 1);
+    expect(rows.size).toBe(info.project.name.startsWith('iphone') ? 2 : 1);
     // Frei verfügbar has at most three lines below the number
     expect(tiles[2]!.subLines.length).toBeLessThanOrEqual(3);
     // sublines fit on one line; on the phone the half-width Ø tile may use two
-    const maxLines = info.project.name === 'iphone-15' ? 2 : 1;
+    const maxLines = info.project.name.startsWith('iphone') ? 2 : 1;
     for (const t of tiles) expect(t.subLines.every((n) => n <= maxLines), 'sublines fit').toBe(true);
     expect(tiles[2]!.subLines.every((n) => n === 1), 'Frei verfügbar: one line each').toBe(true);
     await expectClean(app, 'main');
