@@ -14,6 +14,10 @@ import {
   sumMoney,
   sumMonthlyEquivalent,
   fixedCostsAvg,
+  groupByCategory,
+  netSalaryForPeriod,
+  savingsRate,
+  wealthBuilding,
 } from './calc';
 import { formatDelta, formatEUR, formatPercent } from './format';
 import { addPeriods, periodRange, shortMonthName, monthOf, yearOf } from './period';
@@ -166,7 +170,7 @@ export interface ForecastSummary {
   sub: string;
 }
 
-/** Heading of the forecast in two levels: „Teuerster Monat“ / „Nov 2026 · € 6.110“ / „€ 2.774 über Ø“. */
+/** Heading of the forecast in two levels: „Teuerster Monat“ / „Nov 2026 · € 6.110“ / „€ 3.158 über dem 12-Monats-Ø“. */
 export function forecastSummary(f: YearForecast): ForecastSummary {
   if (!f.peak || f.peakAboveAverage < 0.5) {
     return { label: 'Gleichmäßig', value: `rund ${formatEUR(Math.round(f.average))}`, sub: 'jeden Monat fällig' };
@@ -174,7 +178,7 @@ export function forecastSummary(f: YearForecast): ForecastSummary {
   return {
     label: 'Teuerster Monat',
     value: `${shortPeriodLabel(f.peak.period)} · ${formatEUR(f.peak.due)}`,
-    sub: `${formatEUR(Math.round(f.peakAboveAverage))} über Ø`,
+    sub: `${formatEUR(Math.round(f.peakAboveAverage))} über dem 12-Monats-Ø`,
   };
 }
 
@@ -447,6 +451,117 @@ export function optimizationHeadline(t: OptimizationTimeline): string {
   if (t.entries.some((e) => !e.planned)) parts.push(`Umgesetzt: ${formatDelta(t.implementedAnnual)} / Jahr`);
   if (t.entries.some((e) => e.planned)) parts.push(`Geplant: ${formatDelta(t.plannedAnnual)} / Jahr`);
   return parts.join(' · ');
+}
+
+// ---------------------------------------------------------------------------
+// 6 · Sparquote: share of the net salary that goes into Vermögensaufbau
+// ---------------------------------------------------------------------------
+
+export interface SavingsPart {
+  id: string;
+  name: string;
+  /** stored category colour (key) */
+  color: string;
+  amount: number;
+  /** share of the month's Vermögensaufbau, 0–1 */
+  share: number;
+}
+
+export interface SavingsCard {
+  period: Period;
+  netSalary: number;
+  /** wealthBuilding() of the month */
+  wealth: number;
+  /** savingsRate() of the month (may exceed 1) */
+  rate: number;
+  /** split of `wealth`: savings categories, or the positions when there is only one category */
+  parts: SavingsPart[];
+  partsBy: 'category' | 'position';
+}
+
+/** Month the card shows: `today` when it has a net salary, else the latest month before it with one. */
+export function savingsPeriod(ds: Dataset, today: Period): Period | null {
+  if (savingsRate(ds, today) !== null) return today;
+  const earlier = ds.monthClose
+    .map((m) => m.period)
+    .filter((p) => p < today && savingsRate(ds, p) !== null)
+    .sort();
+  return earlier[earlier.length - 1] ?? null;
+}
+
+/**
+ * Split of wealthBuilding() by the same rule (counted items: actual when ticked, plan
+ * when open, nothing when skipped, plus their one-offs). The parts add up to it exactly.
+ */
+function savingsParts(ds: Dataset, period: Period, wealth: number): Pick<SavingsCard, 'parts' | 'partsBy'> {
+  const groups = groupByCategory(dueItems(ds, period).filter((i) => i.kind === 'savings'));
+  const amountOf = (items: typeof groups[number]['items']) =>
+    sumMoney(
+      items.flatMap((i) => [
+        ...(i.due && i.status !== 'skipped' ? [i.status === 'paid' ? i.payment!.actualAmount : i.planned] : []),
+        ...i.oneOffs.map((o) => o.amount),
+      ]),
+    );
+  const share = (v: number) => (wealth > 0 ? v / wealth : 0);
+  const byAmount = (a: SavingsPart, b: SavingsPart) => b.amount - a.amount;
+  const categories = groups
+    .map((g): SavingsPart => {
+      const amount = amountOf(g.items);
+      return { id: g.category.id, name: g.category.name, color: g.category.color, amount, share: share(amount) };
+    })
+    .filter((p) => cents(p.amount) !== 0);
+  if (categories.length !== 1) return { parts: categories.sort(byAmount), partsBy: 'category' };
+  const group = groups.find((g) => g.category.id === categories[0]!.id)!;
+  const positions = group.items
+    .map((i): SavingsPart => {
+      const amount = amountOf([i]);
+      return { id: i.position.id, name: i.position.name, color: group.category.color, amount, share: share(amount) };
+    })
+    .filter((p) => cents(p.amount) !== 0)
+    .sort(byAmount);
+  return { parts: positions, partsBy: 'position' };
+}
+
+/** Everything the Sparquote card shows; null without any net salary. Values come from calc.ts. */
+export function savingsCard(ds: Dataset, today: Period): SavingsCard | null {
+  const period = savingsPeriod(ds, today);
+  if (!period) return null;
+  const netSalary = netSalaryForPeriod(ds, period)!;
+  const wealth = wealthBuilding(ds, period);
+  return { period, netSalary, wealth, rate: savingsRate(ds, period)!, ...savingsParts(ds, period, wealth) };
+}
+
+export interface SavingsPoint {
+  period: Period;
+  /** null: no net salary that month (a gap in the chart, never 0 %) */
+  rate: number | null;
+  wealth: number | null;
+  netSalary: number | null;
+}
+
+/**
+ * The last `count` months up to `today` for the Sparquote chart, starting with the
+ * first month that has a net salary. Empty without any.
+ */
+export function savingsHistory(ds: Dataset, today: Period, count = 12): SavingsPoint[] {
+  const first = ds.monthClose
+    .map((m) => m.period)
+    .filter((p) => p <= today && savingsRate(ds, p) !== null)
+    .sort()[0];
+  if (!first) return [];
+  const from = addPeriods(today, -(count - 1));
+  return periodRange(first > from ? first : from, today).map((period) => {
+    const rate = savingsRate(ds, period);
+    return rate === null
+      ? { period, rate: null, wealth: null, netSalary: null }
+      : { period, rate, wealth: wealthBuilding(ds, period), netSalary: netSalaryForPeriod(ds, period) };
+  });
+}
+
+/** Mean Sparquote of the months with a net salary; null when there is none. */
+export function savingsAverage(points: SavingsPoint[]): { average: number; months: number } | null {
+  const rates = points.flatMap((p) => (p.rate === null ? [] : [p.rate]));
+  return rates.length ? { average: rates.reduce((a, b) => a + b, 0) / rates.length, months: rates.length } : null;
 }
 
 // ---------------------------------------------------------------------------

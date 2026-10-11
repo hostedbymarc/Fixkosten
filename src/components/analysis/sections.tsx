@@ -155,7 +155,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
         })}
       </ul>
       <p className="mt-2 text-[13px] text-ink-mute" data-testid="distribution-total">
-        Summe <span className="num font-medium text-ink">{formatEUR(d.total)}</span> Ø pro Monat (umgelegt)
+        Summe <span className="num font-medium text-ink">{formatEUR(d.total)}</span> Ø pro Monat (heute)
       </p>
     </ChartCard>
   );
