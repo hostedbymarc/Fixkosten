@@ -12,14 +12,14 @@ export interface CategorySlot {
 }
 
 export const CATEGORY_SLOTS: readonly CategorySlot[] = [
-  { key: '#2E2E8A', name: 'Nachtblau', color: 'var(--cat-1)' },
-  { key: '#5B5BD6', name: 'Blau', color: 'var(--cat-2)' },
-  { key: '#9494E8', name: 'Lavendel', color: 'var(--cat-3)' },
+  { key: '#2E2E8A', name: 'Tinte', color: 'var(--cat-1)' },
+  { key: '#5B5BD6', name: 'Schiefer', color: 'var(--cat-2)' },
+  { key: '#9494E8', name: 'Mauve', color: 'var(--cat-3)' },
   { key: '#0F766E', name: 'Petrol', color: 'var(--cat-4)' },
-  { key: '#B08968', name: 'Beere', color: 'var(--cat-5)' },
-  { key: '#52525B', name: 'Schiefer', color: 'var(--cat-6)' },
-  { key: '#A1A1AA', name: 'Taupe', color: 'var(--cat-7)' },
-  { key: '#27272A', name: 'Graphit', color: 'var(--cat-8)' },
+  { key: '#B08968', name: 'Pflaume', color: 'var(--cat-5)' },
+  { key: '#52525B', name: 'Salbei', color: 'var(--cat-6)' },
+  { key: '#A1A1AA', name: 'Kiesel', color: 'var(--cat-7)' },
+  { key: '#27272A', name: 'Mokka', color: 'var(--cat-8)' },
 ];
 
 /** Key of the "Meine Immos" category the v2 migration creates. */

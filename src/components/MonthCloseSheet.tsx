@@ -66,15 +66,13 @@ function AmountField({
   );
 }
 
-/** Month close: net salary, actually free money and a note. Nothing is saved automatically. */
+/** Month close: net salary and actually free money. Nothing is saved automatically; the month note has its own card. */
 export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: Props) {
   const current = monthCloseFor(ds, period);
   const previous = monthCloseFor(ds, addPeriods(period, -1));
 
   const [salaryText, setSalaryText] = useState(current?.netSalary !== undefined ? amountToInput(current.netSalary) : '');
   const [freeText, setFreeText] = useState(current?.freeActual !== undefined ? amountToInput(current.freeActual) : '');
-  const [note, setNote] = useState(current?.note ?? '');
-  const noteId = useId();
 
   const salary = parseOptional(salaryText);
   const freeActual = parseOptional(freeText);
@@ -100,7 +98,7 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
         onSubmit={(e) => {
           e.preventDefault();
           if (invalid) return;
-          onSave({ netSalary: salary ?? undefined, freeActual: freeActual ?? undefined, note });
+          onSave({ netSalary: salary ?? undefined, freeActual: freeActual ?? undefined });
         }}
       >
         {canCopyPrevious && (
@@ -158,20 +156,6 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
             <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(average)}</span>
           </p>
         )}
-
-        <div>
-          <label htmlFor={noteId} className="mb-1.5 block text-[14px] font-medium text-ink-soft">
-            Notiz <span className="font-normal text-ink-faint">(optional)</span>
-          </label>
-          <textarea
-            id={noteId}
-            rows={2}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="z. B. Bonus, Urlaub …"
-            className="w-full resize-none rounded-2xl border border-edge bg-field px-4 py-3 text-[16px] text-ink outline-none placeholder:text-ink-faint focus:border-accent-ink focus:ring-2 focus:ring-accent-ink/20"
-          />
-        </div>
 
         <button
           type="submit"

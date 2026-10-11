@@ -12,7 +12,7 @@ test.describe('Monatsabschluss', () => {
     await expect(sheet.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 1.597'));
     await sheet.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
     await expect(sheet.getByTestId('close-preview')).toHaveText(eur('Rechnerisch € 1.597 · Differenz −€ 947'));
-    await sheet.getByLabel('Notiz').fill('Urlaub');
+    await expect(sheet.getByLabel('Notiz')).toHaveCount(0); // the month note has its own card
     await sheet.getByRole('button', { name: 'Speichern' }).click();
     await expect(sheet).toBeHidden();
 
@@ -29,7 +29,6 @@ test.describe('Monatsabschluss', () => {
     await app.getByTestId('free-tile').click();
     await expect(app.getByLabel('Netto-Gehalt')).toHaveValue('5000');
     await expect(app.getByLabel('Frei verfügbar (tatsächlich)')).toHaveValue('650');
-    await expect(app.getByLabel('Notiz')).toHaveValue('Urlaub');
   });
 
   test('comma decimals, decimal keyboard, invalid input blocks saving', async ({ app }) => {

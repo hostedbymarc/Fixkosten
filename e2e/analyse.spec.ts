@@ -62,7 +62,9 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(app.getByTestId('forecast-headline-label')).toHaveText('Teuerster Monat');
     await expect(app.getByTestId('forecast-headline-value')).toHaveText(eur('Feb 2027 · € 4.610'));
     await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
-    await expect(app.getByTestId('distribution-headline')).toHaveText(/^Wohnen & Leben ist der größte Block: 54,3\s% deiner Fixkosten\.$/);
+    await expect(app.getByTestId('distribution-headline-label')).toHaveText('Größter Block');
+    await expect(app.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
+    await expect(app.getByTestId('distribution-headline-sub')).toHaveText(eur('€ 1.602 von € 2.952,17 pro Monat'));
     await expect(app.getByTestId('monthclose-empty')).toContainText('Noch kein Monatsabschluss im Zeitraum.');
     await expect(app.getByTestId('trend-empty')).toHaveText(
       eur('Ab 3 Monaten siehst du hier die Entwicklung. Bisher: € 2.952,17 Ø pro Monat seit Okt 2026.'),
@@ -127,18 +129,20 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expectClean(app, 'main');
   });
 
-  test('month close entered for October → control values in the chart', async ({ app }) => {
+  test('month close entered for October → number card with control values (1 month: no chart)', async ({ app }) => {
     await app.getByTestId('free-tile').click();
     await app.getByLabel('Netto-Gehalt').fill('5000');
     await app.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await openAnalyse(app);
     const section = app.getByTestId('monthclose');
-    await expect(app.getByTestId('monthclose-headline')).toHaveText(
-      eur('Oktober 2026: € 947 weniger frei als rechnerisch · Sparquote 16,0 %'),
-    );
+    await expect(app.getByTestId('monthclose-headline-label')).toHaveText('Oktober 2026');
+    const numbers = app.getByTestId('monthclose-numbers');
+    await expect(numbers).toContainText(eur('Rechnerisch frei€ 1.597'));
+    await expect(numbers).toContainText(eur('Tatsächlich€ 650'));
+    await expect(numbers).toContainText(/Sparquote\s?16,0\s%/);
+    await expect(section.locator('.recharts-wrapper')).toHaveCount(0);
     expect(await tableRows(section)).toEqual([['Oktober 2026', '€ 1.597', '€ 650', '−€ 947', '16,0 %']]);
-    await expect(section.locator('[data-testid="group-labels"] text')).toHaveText(['−€ 947']);
     await expectChartLabelsClean(app);
   });
 
@@ -152,13 +156,13 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await app.keyboard.press('Escape');
     await openAnalyse(app);
     // November lies after "today" (October): a planned change
-    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: −€ 24 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · −€ 24 / Jahr'));
     const planned = app.getByTestId('optimizations-planned');
     await expect(planned.locator('> li')).toHaveCount(1);
     await expect(planned).toContainText(eur('Handy € 10 → € 8'));
-    await expect(planned).toContainText('geplant');
+    await expect(planned).not.toContainText('geplant'); // no chip: the section head says it once
     await expect(planned).toContainText(eur('ab 01.11.2026'));
-    await expect(planned).toContainText(eur('spart € 24/Jahr'));
+    await expect(planned).toContainText(eur('−€ 24/Jahr'));
     await expect(app.getByTestId('optimizations-list')).toHaveCount(0);
     // the forecast follows the change: November € 2.662
     expect((await tableRows(app.getByTestId('forecast')))[0]!.slice(0, 2)).toEqual(['Nov 2026', '€ 2.662']);
@@ -234,9 +238,8 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     await openAnalyse(page);
     const t = optimizationTimeline(historyDataset(), OCT);
     const plain = (v: number) => formatDelta(v).replace(/ /g, ' ');
-    await expect(page.getByTestId('optimizations-headline')).toHaveText(
-      eur(`Umgesetzt: ${plain(t.implementedAnnual)} / Jahr · Geplant: ${plain(t.plannedAnnual)} / Jahr`),
-    );
+    await expect(page.getByTestId('optimizations-planned-head')).toHaveText(eur(`Geplant · ${plain(t.plannedAnnual)} / Jahr`));
+    await expect(page.getByTestId('optimizations-list-head')).toHaveText(eur(`Umgesetzt · ${plain(t.implementedAnnual)} / Jahr`));
     await expect(page.getByTestId('optimizations-planned').locator('> li')).toHaveCount(t.entries.filter((e) => e.planned).length);
     await expect(page.getByTestId('optimizations-planned')).toContainText(eur('Kredit 1220 € 735 → € 760'));
     await expect(page.getByTestId('optimizations-planned')).toContainText('Zinsanpassung');
@@ -244,7 +247,7 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     await expect(list.locator('> li')).toHaveCount(t.entries.filter((e) => !e.planned).length);
     await expect(list).toContainText('Tarifwechsel');
     await expect(list).toContainText(eur('Handy € 15 → € 10'));
-    await expect(list).toContainText(eur('spart € 60/Jahr'));
+    await expect(list).toContainText(eur('−€ 60/Jahr'));
     await expect(list).toContainText(eur('Gym € 32 → € 35'));
     await expect(list).toContainText(eur('+€ 36/Jahr'));
     await expect(list).not.toContainText(eur('€ 85')); // the typo entry
