@@ -9,15 +9,17 @@ export interface TableData {
 interface Props {
   id: string;
   title: string;
-  /** one computed sentence above the chart */
-  headline?: string;
+  /** one computed sentence above the chart, or a custom heading block */
+  headline?: ReactNode;
   /** table alternative for screen readers and „Als Tabelle anzeigen“ */
   table?: TableData;
+  /** custom details below the chart („Details anzeigen“), collapsed by default */
+  details?: ReactNode;
   children: ReactNode;
 }
 
 /** Section frame of every analysis chart: title, key sentence, chart, table toggle. */
-export function ChartCard({ id, title, headline, table, children }: Props) {
+export function ChartCard({ id, title, headline, table, details, children }: Props) {
   const [showTable, setShowTable] = useState(false);
   const tableId = useId();
   return (
@@ -26,12 +28,31 @@ export function ChartCard({ id, title, headline, table, children }: Props) {
         {title}
       </h2>
       <div className="glass min-w-0 p-4">
-        {headline && (
+        {typeof headline === 'string' ? (
           <p className="mb-3 text-[15px] font-medium text-ink" data-testid={`${id}-headline`}>
             {headline}
           </p>
+        ) : (
+          headline
         )}
         {children}
+        {details && (
+          <div className="mt-2 border-t border-line pt-1">
+            <button
+              type="button"
+              aria-expanded={showTable}
+              aria-controls={tableId}
+              onClick={() => setShowTable((v) => !v)}
+              className="focus-ring -mx-2 h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+            >
+              {showTable ? 'Details ausblenden' : 'Details anzeigen'}
+            </button>
+            {/* collapsed: not rendered for anyone (the toggle is the way in); the chart keeps its summary label */}
+            <div id={tableId} className="mt-1" hidden={!showTable} data-testid={`${id}-details`}>
+              {details}
+            </div>
+          </div>
+        )}
         {table && (
           <div className="mt-2 border-t border-line pt-1">
             <button

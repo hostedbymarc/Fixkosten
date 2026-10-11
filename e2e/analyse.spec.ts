@@ -59,7 +59,9 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     const logs = watchConsole(app);
     await openAnalyse(app);
 
-    await expect(app.getByTestId('forecast-headline')).toHaveText(eur('Teuerster Monat: Februar 2027 · € 4.610 · € 1.658 über Schnitt'));
+    await expect(app.getByTestId('forecast-headline-label')).toHaveText('Teuerster Monat');
+    await expect(app.getByTestId('forecast-headline-value')).toHaveText(eur('Feb 2027 · € 4.610'));
+    await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
     await expect(app.getByTestId('distribution-headline')).toHaveText(/^Wohnen & Leben ist der größte Block: 54,3\s% deiner Fixkosten\.$/);
     await expect(app.getByTestId('monthclose-empty')).toContainText('Noch kein Monatsabschluss im Zeitraum.');
     await expect(app.getByTestId('trend-empty')).toHaveText(
@@ -81,25 +83,26 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await openAnalyse(app);
     const rows = await tableRows(app.getByTestId('forecast'));
     expect(rows.map((r) => r.slice(0, 2))).toEqual([
-      ['November 2026', '€ 2.664'],
-      ['Dezember 2026', '€ 3.013,02'],
-      ['Jänner 2027', '€ 2.713'],
-      ['Februar 2027', '€ 4.610'],
-      ['März 2027', '€ 2.664'],
-      ['April 2027', '€ 2.713'],
+      ['Nov 2026', '€ 2.664'],
+      ['Dez 2026', '€ 3.013,02'],
+      ['Jän 2027', '€ 2.713'],
+      ['Feb 2027', '€ 4.610'],
+      ['Mär 2027', '€ 2.664'],
+      ['Apr 2027', '€ 2.713'],
       ['Mai 2027', '€ 2.664'],
-      ['Juni 2027', '€ 2.926,02'],
-      ['Juli 2027', '€ 2.713'],
-      ['August 2027', '€ 2.664'],
-      ['September 2027', '€ 2.679'],
-      ['Oktober 2027', '€ 3.403'],
+      ['Jun 2027', '€ 2.926,02'],
+      ['Jul 2027', '€ 2.713'],
+      ['Aug 2027', '€ 2.664'],
+      ['Sep 2027', '€ 2.679'],
+      ['Okt 2027', '€ 3.403'],
     ]);
-    expect(rows[3]!.slice(2)).toEqual(['–', 'Steuerberater € 1.260, Offi (Jahreskarte) € 686']);
-    // „Als Tabelle anzeigen“ makes it visible
-    const toggle = app.getByTestId('forecast').getByRole('button', { name: 'Als Tabelle anzeigen' });
+    expect(rows[3]![2]).toBe('Steuerberater€ 1.260Offi (Jahreskarte)€ 686');
+    // „Details anzeigen“ makes them visible
+    const toggle = app.getByTestId('forecast').getByRole('button', { name: 'Details anzeigen' });
     await toggle.click();
-    await expect(app.getByTestId('forecast-table')).toBeVisible();
-    await expect(app.getByTestId('forecast').getByRole('button', { name: 'Tabelle ausblenden' })).toHaveAttribute('aria-expanded', 'true');
+    await expect(app.getByTestId('forecast-details')).toBeVisible();
+    await expect(app.getByTestId('forecast').getByRole('button', { name: 'Details ausblenden' })).toHaveAttribute('aria-expanded', 'true');
+    await expect(app.getByTestId('forecast-footer')).toHaveText(eur('12 Monate € 35.426,04'));
   });
 
   test('distribution: sorted bars, tap expands the positions', async ({ app }) => {
@@ -158,7 +161,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(planned).toContainText(eur('spart € 24/Jahr'));
     await expect(app.getByTestId('optimizations-list')).toHaveCount(0);
     // the forecast follows the change: November € 2.662
-    expect((await tableRows(app.getByTestId('forecast')))[0]!.slice(0, 2)).toEqual(['November 2026', '€ 2.662']);
+    expect((await tableRows(app.getByTestId('forecast')))[0]!.slice(0, 2)).toEqual(['Nov 2026', '€ 2.662']);
   });
 });
 
