@@ -271,8 +271,8 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
           {gaps.length > 0 && (
             <div className="mt-2 text-[13px] text-ink-mute" data-testid="forecast-gap">
               <p>
-                Ø dieser 12 Monate <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.average)}</span> · „Ø pro
-                Monat“ heute <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.todayAverage)}</span>. Unterschied durch:
+                Ø nächste 12 Monate <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.average)}</span> · heute
+                umgelegt <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.todayAverage)}</span>. Unterschied durch:
               </p>
               <ul className="mt-1 flex flex-col gap-0.5">
                 {gaps.map((g) => (
@@ -294,7 +294,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         // narrow phones: the chart uses half of the card padding, the month labels need it
         className="h-[230px] max-[419px]:-mx-2"
         role="img"
-        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø ${formatEUR(f.average)} pro Monat`}
+        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø nächste 12 Monate ${formatEUR(f.average)}`}
       >
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={{ ...CHART_MARGIN, right: CHIP_ROOM }} accessibilityLayer barCategoryGap="22%">
@@ -378,7 +378,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         )}
         <span className="flex items-center gap-1.5">
           <span className="h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-          Ø pro Monat
+          Ø nächste 12 Monate
         </span>
       </p>
     </ChartCard>

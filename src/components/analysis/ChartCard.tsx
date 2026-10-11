@@ -22,7 +22,7 @@ export interface SummaryData {
   /** small, muted: what the number is */
   label: string;
   /** large: the number */
-  value: string;
+  value: ReactNode;
   /** muted context below */
   sub?: string;
 }
@@ -38,7 +38,7 @@ export function Summary({ id, label, value, sub }: SummaryData & { id: string })
         {value}
       </p>
       {sub && (
-        <p className="num truncate text-[13px] text-ink-mute" data-testid={`${id}-headline-sub`}>
+        <p className="truncate text-[13px] text-ink-mute" data-testid={`${id}-headline-sub`}>
           {sub}
         </p>
       )}

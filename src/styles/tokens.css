@@ -96,6 +96,8 @@
   --chart-paid-text: #3c521f;
   --chart-cursor: rgba(31, 39, 36, 0.05);
   --chart-surface: #ffffff;
+  /* Sparquote: other months (the shown month is --chart-accent) */
+  --chart-accent-muted: #c8d8a9;
 
   /* category tones (stored DB values are mapped to these in src/lib/categoryColors.ts):
      muted, matching the pea green – Tinte, Schiefer, Mauve, Petrol, Pflaume, Salbei, Kiesel, Mokka.
@@ -173,8 +175,9 @@
     --chart-paid-text: #c8d8a9;
     --chart-cursor: rgba(255, 255, 255, 0.06);
     --chart-surface: #1a201c;
-    --cat-1: #4b6a94;
-    --cat-2: #98c7e6;
+    --chart-accent-muted: #3f5426;
+    --cat-1: #285c90;
+    --cat-2: #7c88ac;
     --cat-3: #eec9f3;
     --cat-4: #2c8d90;
     --cat-5: #8d5076;
@@ -246,8 +249,9 @@
   --chart-paid-text: #c8d8a9;
   --chart-cursor: rgba(255, 255, 255, 0.06);
   --chart-surface: #1a201c;
-  --cat-1: #4b6a94;
-  --cat-2: #98c7e6;
+  --chart-accent-muted: #3f5426;
+  --cat-1: #285c90;
+  --cat-2: #7c88ac;
   --cat-3: #eec9f3;
   --cat-4: #2c8d90;
   --cat-5: #8d5076;
