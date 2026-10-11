@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { forecastAverageGap, forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
-import { formatCompactEUR, formatDelta, formatEUR } from '../../lib/format';
+import { forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
+import { formatCompactEUR, formatEUR } from '../../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { NoteIcon } from '../Icons';
@@ -249,7 +249,6 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
     extra: Math.round((m.due - m.regular) * 100) / 100,
   }));
   const hasOnce = f.months.some((m) => Math.round((m.due - m.regular) * 100) !== 0);
-  const gaps = forecastAverageGap(ds, today);
   const avgText = `Ø ${formatEUR(Math.round(f.average)).replace(/^€\s/, '')}`;
   return (
     <ChartCard
@@ -268,25 +267,6 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
               </>
             )}
           </p>
-          {gaps.length > 0 && (
-            <div className="mt-2 text-[13px] text-ink-mute" data-testid="forecast-gap">
-              <p>
-                Ø nächste 12 Monate <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.average)}</span> · heute
-                umgelegt <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.todayAverage)}</span>. Unterschied durch:
-              </p>
-              <ul className="mt-1 flex flex-col gap-0.5">
-                {gaps.map((g) => (
-                  <li key={g.position.id} className="flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 truncate">
-                      {g.position.name}
-                      {g.startsIn ? ` · ab ${shortPeriodLabel(g.startsIn)}` : ' · Betrag ändert sich'}
-                    </span>
-                    <span className="num shrink-0 whitespace-nowrap">{formatDelta(g.diff)} / Monat</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </>
       }
     >
@@ -294,7 +274,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         // narrow phones: the chart uses half of the card padding, the month labels need it
         className="h-[230px] max-[419px]:-mx-2"
         role="img"
-        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø nächste 12 Monate ${formatEUR(f.average)}`}
+        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø ${formatEUR(f.average)} pro Monat`}
       >
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={{ ...CHART_MARGIN, right: CHIP_ROOM }} accessibilityLayer barCategoryGap="22%">
@@ -378,7 +358,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         )}
         <span className="flex items-center gap-1.5">
           <span className="h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-          Ø nächste 12 Monate
+          Ø pro Monat
         </span>
       </p>
     </ChartCard>
