@@ -237,3 +237,13 @@ body[data-sheets] #root .glass-strong {
     transition-duration: 0ms !important;
   }
 }
+
+/* Touch: hover styles do not exist there (tailwind hoverOnlyWhenSupported); a short press
+   feedback instead, gone as soon as the finger lifts – nothing stays grey after a tap */
+@media (hover: none), (pointer: coarse) {
+  button:not(:disabled):active,
+  a[href]:active,
+  [role='button']:active {
+    background-image: linear-gradient(rgb(var(--c-ink) / 0.06), rgb(var(--c-ink) / 0.06));
+  }
+}

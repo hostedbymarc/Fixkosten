@@ -104,7 +104,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await page.keyboard.press('Escape');
   await openAnalyse(page);
   await expect(page.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · −€ 24 / Jahr'));
-  await expect(page.getByTestId('monthclose-numbers')).toContainText(eur('Tatsächlich€ 650'));
-  await expect(page.getByTestId('monthclose-numbers')).toContainText(/Sparquote\s?16,0\s%/);
-  expect((await page.getByTestId('monthclose-table').locator('tbody tr').first().textContent())!.replace(/\s/g, ' ')).toContain('−€ 939,60');
+  // „Frei verfügbar (tatsächlich)“ is no longer shown; the value stays in the database (monthClose compared above)
+  await expect(page.getByTestId('monthclose')).toHaveCount(0);
+  expect((await rawTable(page, 'monthClose')) as { freeActual?: number }[]).toEqual([expect.objectContaining({ freeActual: 650 })]);
 });

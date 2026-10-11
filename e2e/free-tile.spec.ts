@@ -53,7 +53,7 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     await liveSetup(app);
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.412'));
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 2.376'));
-    await expect(app.getByTestId('free-sub')).toHaveText('rechnerisch · tatsächlich eintragen');
+    await expect(app.getByTestId('free-sub')).toHaveCount(0); // no „tatsächlich“ any more
     await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 2.870,50'));
     await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 1.791 · Sparquote 37,4 %'));
     await expect(app.getByTestId('kpi-value')).toHaveText(eur('€ 1.917,50'));
@@ -66,21 +66,12 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
       .screenshot({ path: `docs/screenshots/frei-verfuegbar/${info.project.name}-nachher.png` });
   });
 
-  test('tatsächlich eingetragen: Zeile 1 „tatsächlich · rechnerisch · Diff“, negatives mit echtem Minus', async ({ app }) => {
+  test('negative Beträge mit echtem Minus', async ({ app }) => {
     await liveSetup(app);
-    await app.getByTestId('free-tile').click();
-    await animationsDone(app, 'bottom-sheet');
-    await app.getByLabel('Frei verfügbar (tatsächlich)').fill('2000');
-    await app.getByRole('button', { name: 'Speichern' }).click();
-    await expect(app.getByTestId('free-value')).toHaveText(eur('€ 2.000'));
-    await expect(app.getByTestId('free-sub')).toHaveText(eur('tatsächlich · rechnerisch € 2.376 · Diff −€ 376'));
-    await expect(app.getByTestId('free-sub')).toContainText('−€ 376');
-
     // salary below the fixed costs: real minus sign, never '-€'
     await app.getByTestId('salary-tile').click();
     await animationsDone(app, 'bottom-sheet');
     await app.getByLabel('Netto-Gehalt').fill('1922');
-    await app.getByLabel('Frei verfügbar (tatsächlich)').fill('');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByTestId('free-value')).toHaveText('−€ 490');
     await expect(app.getByTestId('free-tile')).not.toContainText('-€');

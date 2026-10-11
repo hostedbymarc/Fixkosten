@@ -195,16 +195,8 @@ test.describe('Analyse', () => {
     }
     await expect(page.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
 
-    // 1 month of data: number card instead of single-point charts
-    const close = page.getByTestId('monthclose');
-    await expect(close.locator('.recharts-wrapper')).toHaveCount(0);
-    await expect(page.getByTestId('monthclose-headline-label')).toHaveText('Oktober 2026');
-    await expect(page.getByTestId('monthclose-numbers')).toContainText(eur('Rechnerisch frei€ 1.385'));
-    await expect(page.getByTestId('monthclose-numbers')).toContainText('Tatsächlich–');
-    await expect(page.getByTestId('monthclose-numbers')).toContainText(/Sparquote\s?16,7\s%/);
-    await expect(page.getByTestId('monthclose-headline-sub')).toHaveText('Verlauf ab 3 Monaten');
-    await expect(close.getByRole('button', { name: 'Details anzeigen' })).toBeVisible();
-    await expect(page.getByTestId('monthclose-table')).toBeAttached(); // table alternative stays
+    // „Frei verfügbar & Sparquote“ is gone (no actual values any more)
+    await expect(page.getByTestId('monthclose')).toHaveCount(0);
 
     // optimisations: „Geplant“ once, no chip, signed amount
     await expect(page.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 27,80 / Jahr'));
@@ -227,7 +219,7 @@ test.describe('Analyse', () => {
     );
     expect(new Set(empties).size).toBe(1);
 
-    await expectNoWrap(page, '[data-testid$="-headline-label"], [data-testid$="-headline-value"], [data-testid="monthclose-numbers"] dd, [data-testid$="-head"]');
+    await expectNoWrap(page, '[data-testid$="-headline-label"], [data-testid$="-headline-value"], [data-testid$="-head"]');
     await expectClean(page, 'main');
     await page.waitForTimeout(300);
     await page.locator('main').screenshot({ path: `${DIR}/${info.project.name}-analyse-nachher.png` });
@@ -235,19 +227,16 @@ test.describe('Analyse', () => {
 });
 
 test.describe('Analyse ab 3 Monaten (24-Monats-Fixture)', () => {
-  test('Sparquote zweistufig, runde Y-Achsen-Schritte, Differenz-Legende nur mit tatsächlichen Werten', async ({ page }, info) => {
+  test('zweistufige Köpfe, Zeitraum-Umschalter da, runde Y-Achsen-Schritte in Plan vs. Ist', async ({ page }, info) => {
     const { importHistory, openAnalyse } = await import('./analyse-helpers');
     await importHistory(page);
     await openAnalyse(page);
     await page.evaluate(() => document.fonts.ready);
-    const close = page.getByTestId('monthclose');
-    await expect(close.locator('.recharts-wrapper').first()).toBeVisible();
-    await expect(page.getByTestId('monthclose-headline-label')).toHaveText('Sparquote');
-    await expect(page.getByTestId('monthclose-headline-value')).toHaveText(/^\d+,\d\s%$/);
-    await expect(page.getByTestId('monthclose-headline-sub')).toHaveText(/^Ø der letzten \d+ Monate$/);
-    await expect(page.getByTestId('monthclose-gap-legend')).toHaveText('darüber: Differenz');
+    await expect(page.getByTestId('range')).toBeVisible();
+    await expect(page.getByTestId('monthclose')).toHaveCount(0);
+    const plan = page.getByTestId('planactual');
     // y axis: 0 and round steps (multiples of 1 / 2 / 2,5 / 5 × 10ⁿ)
-    const ticks = await close.locator('.recharts-yAxis-tick-labels').first().locator('text').allTextContents();
+    const ticks = await plan.locator('.recharts-yAxis-tick-labels').first().locator('text').allTextContents();
     const values = ticks.map((t) => {
       const m = t.replace(/\s/g, '').match(/^(−|-)?€?([\d.,]+)(k?)$/)!;
       return (m[1] ? -1 : 1) * parseFloat(m[2]!.replace(/\./g, '').replace(',', '.')) * (m[3] ? 1000 : 1);

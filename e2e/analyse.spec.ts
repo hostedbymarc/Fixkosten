@@ -2,7 +2,6 @@ import type { Locator, Page } from '@playwright/test';
 import {
   burdenTrend,
   historyPeriods,
-  monthCloseSeries,
   optimizationTimeline,
   planVsActual,
   type Range,
@@ -65,7 +64,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(app.getByTestId('distribution-headline-label')).toHaveText('Größter Block');
     await expect(app.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
     await expect(app.getByTestId('distribution-headline-sub')).toHaveText(eur('€ 1.602 von € 2.952,17 pro Monat'));
-    await expect(app.getByTestId('monthclose-empty')).toContainText('Noch kein Monatsabschluss im Zeitraum.');
+    await expect(app.getByTestId('monthclose')).toHaveCount(0); // „Frei verfügbar & Sparquote“ removed
     await expect(app.getByTestId('trend-empty')).toHaveText(
       eur('Ab 3 Monaten siehst du hier die Entwicklung. Bisher: € 2.952,17 Ø pro Monat seit Okt 2026.'),
     );
@@ -127,23 +126,6 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     ]);
     await expect(positions).toContainText(eur('€ 105'));
     await expectClean(app, 'main');
-  });
-
-  test('month close entered for October → number card with control values (1 month: no chart)', async ({ app }) => {
-    await app.getByTestId('free-tile').click();
-    await app.getByLabel('Netto-Gehalt').fill('5000');
-    await app.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
-    await app.getByRole('button', { name: 'Speichern' }).click();
-    await openAnalyse(app);
-    const section = app.getByTestId('monthclose');
-    await expect(app.getByTestId('monthclose-headline-label')).toHaveText('Oktober 2026');
-    const numbers = app.getByTestId('monthclose-numbers');
-    await expect(numbers).toContainText(eur('Rechnerisch frei€ 1.597'));
-    await expect(numbers).toContainText(eur('Tatsächlich€ 650'));
-    await expect(numbers).toContainText(/Sparquote\s?16,0\s%/);
-    await expect(section.locator('.recharts-wrapper')).toHaveCount(0);
-    expect(await tableRows(section)).toEqual([['Oktober 2026', '€ 1.597', '€ 650', '−€ 947', '16,0 %']]);
-    await expectChartLabelsClean(app);
   });
 
   test('optimisation Handy € 10 → € 8 from November', async ({ app }) => {
@@ -208,12 +190,7 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
         eur(formatDelta(pva.topDeviations[0]!.delta).replace(/ /g, ' ')),
       );
 
-      const mc = monthCloseSeries(ds, periods);
-      const mcRows = await tableRows(page.getByTestId('monthclose'));
-      expect(mcRows).toHaveLength(periods.length);
-      expect(mcRows.filter((x) => x[1] === '–').map((x) => x[0])).toEqual(
-        mc.filter((x) => x.calculated === null).map((x) => periodLabel(x.period)),
-      );
+      await expect(page.getByTestId('monthclose')).toHaveCount(0); // „Frei verfügbar & Sparquote“ removed
       // chart data points = months in range
       await expect(page.getByTestId('planactual').locator('.recharts-bar-rectangle')).toHaveCount(periods.length * 2);
     }
@@ -262,7 +239,7 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
       await expectClean(page, 'main');
     }
     // charts use the full card width on every viewport
-    for (const id of ['forecast', 'monthclose', 'trend', 'planactual']) {
+    for (const id of ['forecast', 'trend', 'planactual']) {
       const card = (await page.getByTestId(id).locator('.glass').boundingBox())!;
       const chart = (await page.getByTestId(id).locator('.recharts-wrapper').first().boundingBox())!;
       expect(chart.width).toBeGreaterThan(card.width - 40);
@@ -322,7 +299,7 @@ test.describe('Tooltips', () => {
 
     // a different spot per chart: centred charts end up at the same screen position, and a
     // second tap on identical coordinates sends no mouse move, so no tooltip (flaky before)
-    for (const [id, fx] of [['monthclose', 0.6], ['trend', 0.7], ['planactual', 0.8]] as const) {
+    for (const [id, fx] of [['trend', 0.7], ['planactual', 0.8]] as const) {
       const section = page.getByTestId(id);
       // centred, so the tap never lands under the fixed tab bar
       await section.locator('.recharts-wrapper').first().evaluate((el) => el.scrollIntoView({ block: 'center' }));

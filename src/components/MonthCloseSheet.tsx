@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
-import { freeAfterFixedAvgWith, freeAfterFixedWith, gap, monthCloseFor } from '../lib/calc';
-import { amountToInput, formatDelta, formatEUR, parseAmount } from '../lib/format';
+import { freeAfterFixedAvgWith, freeAfterFixedWith, monthCloseFor } from '../lib/calc';
+import { amountToInput, formatEUR, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel } from '../lib/period';
 import type { Dataset, Period } from '../lib/types';
 import type { MonthCloseInput } from '../db/repo';
@@ -66,30 +66,25 @@ function AmountField({
   );
 }
 
-/** Month close: net salary and actually free money. Nothing is saved automatically; the month note has its own card. */
+/** Month close: net salary of the month. Nothing is saved automatically; the month note has its own card. */
 export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: Props) {
   const current = monthCloseFor(ds, period);
   const previous = monthCloseFor(ds, addPeriods(period, -1));
 
   const [salaryText, setSalaryText] = useState(current?.netSalary !== undefined ? amountToInput(current.netSalary) : '');
-  const [freeText, setFreeText] = useState(current?.freeActual !== undefined ? amountToInput(current.freeActual) : '');
 
   const salary = parseOptional(salaryText);
-  const freeActual = parseOptional(freeText);
-  const invalid = salary === null || freeActual === null;
+  const invalid = salary === null;
   const calculated = typeof salary === 'number' ? freeAfterFixedWith(ds, period, salary) : null;
-  const difference = gap(freeActual, calculated);
   const average = typeof salary === 'number' ? freeAfterFixedAvgWith(ds, period, salary) : null;
 
   const prevSalary = previous?.netSalary;
-  const prevFree = previous?.freeActual;
-  const canCopyPrevious =
-    (prevSalary !== undefined && salaryText.trim() === '') || (prevFree !== undefined && freeText.trim() === '');
+  const canCopyPrevious = prevSalary !== undefined && salaryText.trim() === '';
 
   return (
     <BottomSheet
       title={`Monatsabschluss ${periodLabel(period)}`}
-      subtitle="Netto-Gehalt und was tatsächlich übrig bleibt"
+      subtitle="Netto-Gehalt des Monats"
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >
@@ -98,15 +93,14 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
         onSubmit={(e) => {
           e.preventDefault();
           if (invalid) return;
-          onSave({ netSalary: salary ?? undefined, freeActual: freeActual ?? undefined });
+          onSave({ netSalary: salary ?? undefined });
         }}
       >
         {canCopyPrevious && (
           <button
             type="button"
             onClick={() => {
-              if (prevSalary !== undefined && salaryText.trim() === '') setSalaryText(amountToInput(prevSalary));
-              if (prevFree !== undefined && freeText.trim() === '') setFreeText(amountToInput(prevFree));
+              if (prevSalary !== undefined) setSalaryText(amountToInput(prevSalary));
             }}
             className="focus-ring self-start rounded-xl bg-accent-soft px-3 py-2.5 text-[14px] font-semibold text-accent-strong hover:bg-accent-soft-hover"
           >
@@ -123,33 +117,8 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
           hint={prevSalary !== undefined ? <>Vormonat: <span className="num">{formatEUR(prevSalary)}</span></> : undefined}
         />
 
-        <AmountField
-          label="Frei verfügbar (tatsächlich)"
-          value={freeText}
-          onChange={setFreeText}
-          placeholder={prevFree !== undefined ? amountToInput(prevFree) : undefined}
-          invalid={freeActual === null}
-          hint={
-            calculated !== null ? (
-              <span data-testid="close-preview">
-                Rechnerisch <span className="num font-medium text-ink-soft">{formatEUR(calculated)}</span>
-                {difference !== null && (
-                  <>
-                    {' · '}Differenz{' '}
-                    <span className={`num font-medium ${difference < 0 ? 'text-over' : 'text-ink-soft'}`}>
-                      {formatDelta(difference)}
-                    </span>
-                  </>
-                )}
-              </span>
-            ) : prevFree !== undefined ? (
-              <>Vormonat: <span className="num">{formatEUR(prevFree)}</span></>
-            ) : undefined
-          }
-        />
-
         {average !== null && calculated !== null && (
-          <p className="-mt-1 rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="close-average">
+          <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="close-average">
             Rechnerisch frei <span className="font-medium">diesen Monat</span>{' '}
             <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(calculated)}</span> ·{' '}
             im <span className="font-medium">Ø-Monat</span>{' '}

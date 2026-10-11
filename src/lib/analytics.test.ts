@@ -8,8 +8,6 @@ import {
   distributionHeadline,
   forecastSummary,
   historyPeriods,
-  monthCloseHeadline,
-  monthCloseSeries,
   optimizationTimeline,
   planVsActual,
   planVsActualHeadline,
@@ -119,24 +117,6 @@ describe('2 · distribution (spread, seed)', () => {
   });
 });
 
-describe('3 · month close', () => {
-  it('Okt 2026: salary 5.000, actual 650 → calculated 1.597 (after fixed costs), gap −947, rate 16,0 %', () => {
-    const ds = fixtureDataset();
-    ds.monthClose.push({ period: OCT, netSalary: 5000, freeActual: 650, updatedAt: '' });
-    const [row] = monthCloseSeries(ds, [OCT]);
-    expect(row).toEqual({ period: OCT, calculated: 1597, actual: 650, gap: -947, savingsRate: 0.16 });
-    expect(monthCloseHeadline([row!])!.replace(/ /g, ' ')).toBe('Oktober 2026: € 947 weniger frei als rechnerisch · Sparquote 16,0 %');
-  });
-
-  it('months without month close are gaps (null), never 0', () => {
-    const ds = fixtureDataset();
-    expect(monthCloseSeries(ds, ['2026-09', OCT])).toEqual([
-      { period: '2026-09', calculated: null, actual: null, gap: null, savingsRate: null },
-      { period: OCT, calculated: null, actual: null, gap: null, savingsRate: null },
-    ]);
-    expect(monthCloseHeadline(monthCloseSeries(ds, [OCT]))).toBeNull();
-  });
-});
 
 describe('6 · optimisations', () => {
   function withChanges() {
@@ -228,13 +208,6 @@ describe('history fixture (24 months, Nov 2024 – Okt 2026)', () => {
     const abs = p.topDeviations.map((d) => Math.abs(d.delta));
     expect(abs).toEqual([...abs].sort((a, b) => b - a));
     expect(p.totalDelta).toBe(Math.round(p.rows.reduce((a, r) => a + (r.delta ?? 0), 0) * 100) / 100);
-  });
-
-  it('month close has gaps where no close was entered', () => {
-    const rows = monthCloseSeries(ds, historyPeriods(ds, OCT, 'all'));
-    const missing = rows.filter((r) => r.calculated === null).map((r) => r.period);
-    expect(missing).toEqual(['2025-05', '2026-02', '2026-10']);
-    expect(rows.filter((r) => r.calculated !== null).every((r) => r.savingsRate !== null)).toBe(true);
   });
 
   it('optimisations from 24 months of changes, typo excluded', () => {

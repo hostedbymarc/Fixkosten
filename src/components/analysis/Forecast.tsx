@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
-import { formatCompactEUR, formatEUR } from '../../lib/format';
+import { forecastAverageGap, forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
+import { formatCompactEUR, formatDelta, formatEUR } from '../../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { NoteIcon } from '../Icons';
@@ -244,10 +244,12 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
   const rows = f.months.map((m) => ({
     ...m,
     label: shortMonthName(monthOf(m.period)),
-    // stacked: recurring part below, one-time payments as a lighter part on top
-    recurring: Math.round((m.due - m.once) * 100) / 100,
+    // stacked: regular fixed costs below (their mean is the Ø line), one-time payments and one-offs on top
+    recurring: m.regular,
+    extra: Math.round((m.due - m.regular) * 100) / 100,
   }));
-  const hasOnce = f.onceTotal !== 0;
+  const hasOnce = f.months.some((m) => Math.round((m.due - m.regular) * 100) !== 0);
+  const gaps = forecastAverageGap(ds, today);
   const avgText = `Ø ${formatEUR(Math.round(f.average)).replace(/^€\s/, '')}`;
   return (
     <ChartCard
@@ -266,6 +268,25 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
               </>
             )}
           </p>
+          {gaps.length > 0 && (
+            <div className="mt-2 text-[13px] text-ink-mute" data-testid="forecast-gap">
+              <p>
+                Ø dieser 12 Monate <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.average)}</span> · „Ø pro
+                Monat“ heute <span className="num whitespace-nowrap font-medium text-ink-soft">{formatEUR(f.todayAverage)}</span>. Unterschied durch:
+              </p>
+              <ul className="mt-1 flex flex-col gap-0.5">
+                {gaps.map((g) => (
+                  <li key={g.position.id} className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate">
+                      {g.position.name}
+                      {g.startsIn ? ` · ab ${shortPeriodLabel(g.startsIn)}` : ' · Betrag ändert sich'}
+                    </span>
+                    <span className="num shrink-0 whitespace-nowrap">{formatDelta(g.diff)} / Monat</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       }
     >
@@ -319,7 +340,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             </Bar>
             {hasOnce && (
               <Bar
-                dataKey="once"
+                dataKey="extra"
                 stackId="due"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={36}

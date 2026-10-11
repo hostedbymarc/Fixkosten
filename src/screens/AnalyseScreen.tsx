@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   DistributionSection,
   ForecastSection,
-  MonthCloseSection,
   OptimizationSection,
   PlanActualSection,
   TrendSection,
@@ -43,27 +42,29 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
               {months === 1 ? 'Bisher 1 Monat Daten' : `Bisher ${months} Monate Daten`}
             </p>
           </div>
-          <div role="radiogroup" aria-label="Zeitraum" className="flex rounded-xl bg-zinc-100 p-1" data-testid="range">
-            {RANGES.map((r) => (
-              <button
-                key={r.value}
-                type="button"
-                role="radio"
-                aria-checked={range === r.value}
-                aria-label={r.aria}
-                onClick={() => setRange(r.value)}
-                className={`focus-ring h-11 min-w-[56px] rounded-lg px-3 text-[14px] font-semibold ${
-                  range === r.value ? 'bg-raised text-ink shadow-card' : 'text-ink-mute hover:text-ink'
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+          {/* below 3 months every range shows the same months */}
+          {months >= 3 && (
+            <div role="radiogroup" aria-label="Zeitraum" className="flex rounded-xl bg-zinc-100 p-1" data-testid="range">
+              {RANGES.map((r) => (
+                <button
+                  key={r.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={range === r.value}
+                  aria-label={r.aria}
+                  onClick={() => setRange(r.value)}
+                  className={`focus-ring h-11 min-w-[56px] rounded-lg px-3 text-[14px] font-semibold ${
+                    range === r.value ? 'bg-raised text-ink shadow-card' : 'text-ink-mute hover:text-ink'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid min-w-0 grid-cols-1 gap-6">
-          <MonthCloseSection ds={ds} periods={periods} months={months} />
           <TrendSection ds={ds} periods={periods} today={today} months={months} />
           <PlanActualSection ds={ds} periods={periods} today={today} />
           <OptimizationSection ds={ds} today={today} />

@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { fixtureBackup } from '../../tests/fixtures/dataset';
-import { fixedCosts, freeAfterFixed, freeGap, netSalaryForPeriod, savingsRate } from '../lib/calc';
+import { fixedCosts, freeAfterFixed, netSalaryForPeriod, savingsRate } from '../lib/calc';
 import { exportBackup, importIntoEmpty, parseBackup } from './backup';
 import { FixkostenDB } from './db';
 import { loadDataset, NOTE_MAX, RepoError, saveMonthClose, saveMonthNote } from './repo';
@@ -36,7 +36,6 @@ describe('Monatsnotiz (MonthClose.note)', () => {
     expect(netSalaryForPeriod(ds, '2026-10')).toBeNull();
     expect(freeAfterFixed(ds, '2026-10')).toBeNull();
     expect(savingsRate(ds, '2026-10')).toBeNull();
-    expect(freeGap(ds, '2026-10')).toBeNull();
     expect(fixedCosts(ds, '2026-10')).toBe(fixedCosts(before, '2026-10'));
   });
 
@@ -44,12 +43,14 @@ describe('Monatsnotiz (MonthClose.note)', () => {
     const db = await seeded();
     await saveMonthClose(db, '2026-10', { netSalary: 4788 });
     await saveMonthNote(db, '2026-10', 'Notiz');
-    await saveMonthClose(db, '2026-10', { netSalary: 4800, freeActual: 900 }); // month close keeps the note
+    await db.monthClose.update('2026-10', { freeActual: 900 }); // legacy value
+    await saveMonthClose(db, '2026-10', { netSalary: 4800 }); // month close keeps note and freeActual
     expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 4800, freeActual: 900, note: 'Notiz' });
     await saveMonthNote(db, '2026-10', '   ');
     expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 4800, freeActual: 900, note: undefined });
     await saveMonthClose(db, '2026-10', {});
-    expect(await db.monthClose.get('2026-10')).toBeUndefined();
+    // the legacy freeActual is kept (data stays, export unchanged), only the salary is gone
+    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: undefined, freeActual: 900 });
     await saveMonthNote(db, '2026-11', 'x');
     await saveMonthNote(db, '2026-11', '');
     expect(await db.monthClose.get('2026-11')).toBeUndefined(); // nothing left: no empty record
@@ -64,11 +65,12 @@ describe('Monatsnotiz (MonthClose.note)', () => {
 });
 
 describe('Export → Import', () => {
-  it('notes and reminder data come back unchanged', async () => {
+  it('notes, freeActual and reminder data come back unchanged', async () => {
     const db = await seeded();
     await saveMonthNote(db, '2026-10', 'Bonus\nim November');
     await saveMonthClose(db, '2026-11', { netSalary: 5000 });
     await saveMonthNote(db, '2026-11', 'Urlaub');
+    await db.monthClose.update('2026-11', { freeActual: 777.5 }); // legacy value: no UI any more, data stays
     const exported = await exportBackup(db);
     const reminders = await db.reminders.toArray();
     expect(reminders.length).toBeGreaterThan(0);
@@ -79,6 +81,7 @@ describe('Export → Import', () => {
     const sort = <T extends { period?: string; id?: string }>(xs: T[]) => [...xs].sort((a, b) => String(a.period ?? a.id).localeCompare(String(b.period ?? b.id)));
     expect(sort(await target.monthClose.toArray())).toEqual(sort(await db.monthClose.toArray()));
     expect((await target.monthClose.get('2026-10'))!.note).toBe('Bonus\nim November');
+    expect((await target.monthClose.get('2026-11'))!.freeActual).toBe(777.5);
     expect(sort(await target.reminders.toArray())).toEqual(sort(reminders));
   });
 });

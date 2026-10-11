@@ -128,7 +128,6 @@ export async function restorePayment(db: FixkostenDB, payment: Payment): Promise
 
 export interface MonthCloseInput {
   netSalary?: number;
-  freeActual?: number;
 }
 
 /** Longest month note (characters). */
@@ -142,11 +141,14 @@ async function putMonthClose(db: FixkostenDB, period: Period, close: Omit<MonthC
   await db.monthClose.put({ period, ...close, updatedAt: new Date().toISOString() });
 }
 
-/** Saves salary and free money of the month; the month note stays. An entirely empty close is removed. */
+/**
+ * Saves the net salary of the month. Note and a legacy `freeActual` (no longer asked for,
+ * still kept and exported) stay untouched. An entirely empty close is removed.
+ */
 export async function saveMonthClose(db: FixkostenDB, period: Period, input: MonthCloseInput): Promise<void> {
   await db.transaction('rw', db.monthClose, async () => {
-    const note = (await db.monthClose.get(period))?.note;
-    await putMonthClose(db, period, { netSalary: input.netSalary, freeActual: input.freeActual, note });
+    const current = await db.monthClose.get(period);
+    await putMonthClose(db, period, { netSalary: input.netSalary, freeActual: current?.freeActual, note: current?.note });
   });
 }
 
