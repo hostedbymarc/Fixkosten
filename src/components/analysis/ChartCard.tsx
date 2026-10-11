@@ -9,8 +9,8 @@ export interface TableData {
 interface Props {
   id: string;
   title: string;
-  /** one computed sentence above the chart, or a custom heading block */
-  headline?: ReactNode;
+  /** two-level heading (label · value · sub) */
+  headline?: SummaryData;
   /** table alternative for screen readers and „Als Tabelle anzeigen“ */
   table?: TableData;
   /** custom details below the chart („Details anzeigen“), collapsed by default */
@@ -18,7 +18,35 @@ interface Props {
   children: ReactNode;
 }
 
-/** Section frame of every analysis chart: title, key sentence, chart, table toggle. */
+export interface SummaryData {
+  /** small, muted: what the number is */
+  label: string;
+  /** large: the number */
+  value: string;
+  /** muted context below */
+  sub?: string;
+}
+
+/** Two-level heading of every analysis card: label · large value · sub. Never a wrapping sentence. */
+export function Summary({ id, label, value, sub }: SummaryData & { id: string }) {
+  return (
+    <div className="mb-3 min-w-0" data-testid={`${id}-headline`}>
+      <p className="text-[13px] font-medium text-ink-mute" data-testid={`${id}-headline-label`}>
+        {label}
+      </p>
+      <p className="num truncate text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink" data-testid={`${id}-headline-value`}>
+        {value}
+      </p>
+      {sub && (
+        <p className="num truncate text-[13px] text-ink-mute" data-testid={`${id}-headline-sub`}>
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Section frame of every analysis chart: title, two-level heading, chart, „Details anzeigen“. */
 export function ChartCard({ id, title, headline, table, details, children }: Props) {
   const [showTable, setShowTable] = useState(false);
   const tableId = useId();
@@ -28,13 +56,7 @@ export function ChartCard({ id, title, headline, table, details, children }: Pro
         {title}
       </h2>
       <div className="glass min-w-0 p-4">
-        {typeof headline === 'string' ? (
-          <p className="mb-3 text-[15px] font-medium text-ink" data-testid={`${id}-headline`}>
-            {headline}
-          </p>
-        ) : (
-          headline
-        )}
+        {headline && <Summary id={id} {...headline} />}
         {children}
         {details && (
           <div className="mt-2 border-t border-line pt-1">
@@ -62,7 +84,7 @@ export function ChartCard({ id, title, headline, table, details, children }: Pro
               onClick={() => setShowTable((v) => !v)}
               className="focus-ring -mx-2 h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
             >
-              {showTable ? 'Tabelle ausblenden' : 'Als Tabelle anzeigen'}
+              {showTable ? 'Details ausblenden' : 'Details anzeigen'}
             </button>
             <div id={tableId} className={showTable ? 'mt-1 overflow-x-auto' : 'sr-only'} data-testid={`${id}-table`}>
               <table className="w-full text-left text-[13px]">

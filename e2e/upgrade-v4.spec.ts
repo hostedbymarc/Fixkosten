@@ -103,6 +103,8 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await expect(page.getByTestId('history-entry').first()).toContainText(eur('−€ 2 / Monat · −€ 24 / Jahr'));
   await page.keyboard.press('Escape');
   await openAnalyse(page);
-  await expect(page.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: −€ 24 / Jahr'));
-  await expect(page.getByTestId('monthclose-headline')).toHaveText(eur('Oktober 2026: € 939,60 weniger frei als rechnerisch · Sparquote 16,0 %'));
+  await expect(page.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · −€ 24 / Jahr'));
+  await expect(page.getByTestId('monthclose-numbers')).toContainText(eur('Tatsächlich€ 650'));
+  await expect(page.getByTestId('monthclose-numbers')).toContainText(/Sparquote\s?16,0\s%/);
+  expect((await page.getByTestId('monthclose-table').locator('tbody tr').first().textContent())!.replace(/\s/g, ' ')).toContain('−€ 939,60');
 });

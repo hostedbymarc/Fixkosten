@@ -97,15 +97,17 @@
   --chart-cursor: rgba(31, 39, 36, 0.05);
   --chart-surface: #ffffff;
 
-  /* category tones (stored DB values are mapped to these in src/lib/categoryColors.ts) */
-  --cat-1: #34508a;
-  --cat-2: #4a7fbf;
-  --cat-3: #8a72c0;
-  --cat-4: #1e7f7c;
-  --cat-5: #a9486e;
-  --cat-6: #5e6b75;
-  --cat-7: #85706a;
-  --cat-8: #343a37;
+  /* category tones (stored DB values are mapped to these in src/lib/categoryColors.ts):
+     muted, matching the pea green – Tinte, Schiefer, Mauve, Petrol, Pflaume, Salbei, Kiesel, Mokka.
+     CIEDE2000 ≥ 20 between each other, ≥ 25 to brand and amber (src/lib/contrast.test.ts) */
+  --cat-1: #0f365a;
+  --cat-2: #6686b8;
+  --cat-3: #c8a3cf;
+  --cat-4: #196d74;
+  --cat-5: #915c70;
+  --cat-6: #6caba7;
+  --cat-7: #b9aea2;
+  --cat-8: #392026;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -171,14 +173,14 @@
     --chart-paid-text: #c8d8a9;
     --chart-cursor: rgba(255, 255, 255, 0.06);
     --chart-surface: #1a201c;
-    --cat-1: #5f78c8;
-    --cat-2: #7dc0ee;
-    --cat-3: #b99af0;
-    --cat-4: #4fb3ad;
-    --cat-5: #c25aa6;
-    --cat-6: #95a39d;
-    --cat-7: #b9a092;
-    --cat-8: #d8dedb;
+    --cat-1: #4b6a94;
+    --cat-2: #98c7e6;
+    --cat-3: #eec9f3;
+    --cat-4: #2c8d90;
+    --cat-5: #8d5076;
+    --cat-6: #90e3cf;
+    --cat-7: #f2f0e9;
+    --cat-8: #8a776f;
   }
 }
 
@@ -244,12 +246,12 @@
   --chart-paid-text: #c8d8a9;
   --chart-cursor: rgba(255, 255, 255, 0.06);
   --chart-surface: #1a201c;
-  --cat-1: #5f78c8;
-  --cat-2: #7dc0ee;
-  --cat-3: #b99af0;
-  --cat-4: #4fb3ad;
-  --cat-5: #c25aa6;
-  --cat-6: #95a39d;
-  --cat-7: #b9a092;
-  --cat-8: #d8dedb;
+  --cat-1: #4b6a94;
+  --cat-2: #98c7e6;
+  --cat-3: #eec9f3;
+  --cat-4: #2c8d90;
+  --cat-5: #8d5076;
+  --cat-6: #90e3cf;
+  --cat-7: #f2f0e9;
+  --cat-8: #8a776f;
 }

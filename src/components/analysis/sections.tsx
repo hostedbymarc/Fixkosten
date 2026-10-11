@@ -19,15 +19,17 @@ import {
   axisPeriodLabel,
   burdenTrend,
   categoryDistribution,
-  distributionHeadline,
+  distributionSummary,
+  latestMonthClose,
   monthCloseHeadline,
   monthCloseSeries,
+  monthCloseSummary,
   optimizationTimeline,
   type OptimizationEntry,
   planVsActual,
-  planVsActualHeadline,
+  planActualSummary,
   shortPeriodLabel,
-  trendHeadline,
+  trendSummary,
   trendTooShortText,
   type TrendChange,
 } from '../../lib/analytics';
@@ -42,6 +44,7 @@ import {
   CHART_MARGIN,
   COLORS,
   ChangeMarkers,
+  niceTicks,
   GroupLabels,
   tooltipProps,
   xAxisProps,
@@ -82,7 +85,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
     <ChartCard
       id="distribution"
       title="Verteilung nach Kategorie"
-      headline={distributionHeadline(d)}
+      headline={distributionSummary(d)}
       table={{
         caption: 'Umgelegte Ausgaben pro Monat nach Kategorie',
         head: ['Kategorie', 'Ø pro Monat', 'Anteil'],
@@ -150,7 +153,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
 // 3 · Month close
 // ---------------------------------------------------------------------------
 
-export function MonthCloseSection({ ds, periods }: { ds: Dataset; periods: Period[] }) {
+export function MonthCloseSection({ ds, periods, months }: { ds: Dataset; periods: Period[]; months: number }) {
   const series = monthCloseSeries(ds, periods);
   const headline = monthCloseHeadline(series);
   if (headline === null) {
@@ -162,31 +165,58 @@ export function MonthCloseSection({ ds, periods }: { ds: Dataset; periods: Perio
       />
     );
   }
+  const table = {
+    caption: 'Frei verfügbar rechnerisch und tatsächlich, Sparquote',
+    head: ['Monat', 'Rechnerisch', 'Tatsächlich', 'Differenz', 'Sparquote'],
+    rows: series.map((r) => [
+      periodLabel(r.period),
+      money(r.calculated),
+      money(r.actual),
+      r.gap === null ? '–' : formatDelta(r.gap),
+      r.savingsRate === null ? '–' : formatPercent(r.savingsRate),
+    ]),
+  };
+  // like „Entwicklung“: a single point is no chart – below 3 months a compact number card
+  if (months < 3) {
+    const last = latestMonthClose(series)!;
+    return (
+      <ChartCard id="monthclose" title="Frei verfügbar & Sparquote" table={table}>
+        <div data-testid="monthclose-numbers">
+          <p className="text-[13px] font-medium text-ink-mute" data-testid="monthclose-headline-label">
+            {periodLabel(last.period)}
+          </p>
+          <dl className="mt-1 grid grid-cols-3 gap-3">
+            {[
+              ['Rechnerisch frei', money(last.calculated)],
+              ['Tatsächlich', money(last.actual)],
+              ['Sparquote', last.savingsRate === null ? '–' : formatPercent(last.savingsRate)],
+            ].map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="truncate text-[12px] text-ink-mute">{label}</dt>
+                <dd className="num whitespace-nowrap text-[18px] font-semibold leading-tight text-ink sm:text-[20px]">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-[13px] text-ink-mute" data-testid="monthclose-headline-sub">
+            Verlauf ab 3 Monaten
+          </p>
+        </div>
+      </ChartCard>
+    );
+  }
   const rows = series.map((r) => ({ ...r, label: axisPeriodLabel(r.period) }));
   const hasRate = rows.some((r) => r.savingsRate !== null);
+  const hasActual = rows.some((r) => r.actual !== null);
+  const values = rows.flatMap((r) => [r.calculated, r.actual]).filter((v): v is number => v !== null);
+  const ticks = niceTicks(Math.min(0, ...values), Math.max(0, ...values));
   return (
-    <ChartCard
-      id="monthclose"
-      title="Frei verfügbar & Sparquote"
-      headline={headline}
-      table={{
-        caption: 'Frei verfügbar rechnerisch und tatsächlich, Sparquote',
-        head: ['Monat', 'Rechnerisch', 'Tatsächlich', 'Differenz', 'Sparquote'],
-        rows: series.map((r) => [
-          periodLabel(r.period),
-          money(r.calculated),
-          money(r.actual),
-          r.gap === null ? '–' : formatDelta(r.gap),
-          r.savingsRate === null ? '–' : formatPercent(r.savingsRate),
-        ]),
-      }}
-    >
+    <ChartCard id="monthclose" title="Frei verfügbar & Sparquote" headline={monthCloseSummary(series)} table={table}>
       <div className="h-[230px] w-full" role="img" aria-label="Balkendiagramm: frei verfügbar, rechnerisch und tatsächlich pro Monat">
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={CHART_MARGIN} accessibilityLayer barGap={2} barCategoryGap="24%">
             <CartesianGrid vertical={false} stroke={COLORS.grid} />
             <XAxis dataKey="label" {...xAxisProps} />
-            <YAxis {...yAxisProps} />
+            <YAxis {...yAxisProps} ticks={ticks} domain={[ticks[0]!, ticks[ticks.length - 1]!]} interval={0} />
             <ReferenceLine y={0} stroke={COLORS.grid} />
             <Tooltip
               {...tooltipProps}
@@ -234,7 +264,7 @@ export function MonthCloseSection({ ds, periods }: { ds: Dataset; periods: Perio
           <span className="h-2.5 w-2.5 rounded-[3px] bg-accent" aria-hidden="true" />
           tatsächlich
         </span>
-        <span>darüber: Differenz</span>
+        {hasActual && <span data-testid="monthclose-gap-legend">darüber: Differenz</span>}
       </p>
       {hasRate && (
         <div className="mt-4 border-t border-line pt-3" data-testid="savings-rate">
@@ -310,7 +340,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
     <ChartCard
       id="trend"
       title="Entwicklung der Fixkosten"
-      headline={trendHeadline(t)}
+      headline={trendSummary(t)}
       table={{
         caption: 'Ø pro Monat (umgelegt) nach Kategorie',
         head: ['Monat', ...t.categories.map((c) => c.name), 'Gesamt'],
@@ -401,11 +431,12 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
     );
   }
   const rows = p.rows.map((r) => ({ ...r, label: axisPeriodLabel(r.period) }));
+  const ticks = niceTicks(0, Math.max(...rows.flatMap((r) => [r.planned, r.actual])));
   return (
     <ChartCard
       id="planactual"
       title="Plan vs. Ist"
-      headline={planVsActualHeadline(p)}
+      headline={planActualSummary(p)}
       table={{
         caption: 'Geplante und tatsächlich abgebuchte Ausgaben pro Monat',
         head: ['Monat', 'Plan', 'Ist', 'Differenz'],
@@ -422,7 +453,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
           <BarChart data={rows} margin={CHART_MARGIN} accessibilityLayer barGap={2} barCategoryGap="24%">
             <CartesianGrid vertical={false} stroke={COLORS.grid} />
             <XAxis dataKey="label" {...xAxisProps} />
-            <YAxis {...yAxisProps} />
+            <YAxis {...yAxisProps} ticks={ticks} domain={[0, ticks[ticks.length - 1]!]} interval={0} />
             <Tooltip
               {...tooltipProps}
               content={(props: TipProps<(typeof rows)[number]>) => {
@@ -515,59 +546,39 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
       <h2 id="optimizations-title" className="section-title mb-2 px-1">
         Optimierungen
       </h2>
-      <div className="glass p-4">
-        <p className="text-[15px] font-medium text-ink" data-testid="optimizations-headline">
-          {implemented.length > 0 && (
-            <span className="whitespace-nowrap">
-              Umgesetzt: <DeltaPerYear value={t.implementedAnnual} />
-            </span>
-          )}
-          {implemented.length > 0 && planned.length > 0 && ' · '}
-          {planned.length > 0 && (
-            <span className="whitespace-nowrap">
-              Geplant: <DeltaPerYear value={t.plannedAnnual} />
-            </span>
-          )}
-        </p>
-        {planned.length > 0 && <OptimizationList title="Geplant" entries={planned} testId="optimizations-planned" />}
-        {implemented.length > 0 && <OptimizationList title="Umgesetzt" entries={implemented} testId="optimizations-list" />}
+      <div className="glass flex flex-col gap-5 p-4">
+        {planned.length > 0 && <OptimizationList title="Geplant" total={t.plannedAnnual} entries={planned} testId="optimizations-planned" />}
+        {implemented.length > 0 && (
+          <OptimizationList title="Umgesetzt" total={t.implementedAnnual} entries={implemented} testId="optimizations-list" />
+        )}
       </div>
     </section>
   );
 }
 
-function DeltaPerYear({ value }: { value: number }) {
+/** '+€ 27,80/Jahr' red for a rise, brand for a saving, always signed. */
+function deltaClass(value: number): string {
   const c = Math.round(value * 100);
-  return <span className={`num font-semibold ${c < 0 ? 'text-paid-ink' : c > 0 ? 'text-over' : 'text-ink'}`}>{formatDelta(value)} / Jahr</span>;
+  return c > 0 ? 'text-over' : c < 0 ? 'text-accent-ink' : 'text-ink-mute';
 }
 
-function OptimizationList({ title, entries, testId }: { title: string; entries: OptimizationEntry[]; testId: string }) {
+function OptimizationList({ title, total, entries, testId }: { title: string; total: number; entries: OptimizationEntry[]; testId: string }) {
   return (
-    <div className="mt-4">
-      <h3 className="mb-2 text-[13px] font-medium text-ink-soft">{title}</h3>
-      <ol className="flex flex-col" data-testid={testId}>
+    <div>
+      <h3 className="mb-1 text-[13px] font-medium text-ink-mute" data-testid={`${testId}-head`}>
+        {title} · <span className={`num whitespace-nowrap font-semibold ${deltaClass(total)}`}>{formatDelta(total)} / Jahr</span>
+      </h3>
+      <ol className="flex flex-col divide-y divide-line" data-testid={testId}>
         {entries.map((e) => {
-          const saves = e.annualDelta < 0;
           const sameSchedule = planDescription(e.from) === planDescription(e.to);
           return (
-            <li key={e.id} className="relative flex gap-3 pb-4 pl-5 last:pb-0">
-              <span
-                className={`absolute left-0 top-[7px] h-2.5 w-2.5 rounded-full ${
-                  e.planned ? 'border-2 bg-surface ' + (saves ? 'border-paid' : 'border-over') : saves ? 'bg-paid' : e.annualDelta > 0 ? 'bg-over' : 'bg-zinc-300'
-                }`}
-                aria-hidden="true"
-              />
+            <li key={e.id} className="flex items-start gap-3 py-2.5">
               <span className="min-w-0 flex-1">
                 <span className="block text-[15px] text-ink">
                   <span className="font-medium">{e.position.name}</span>{' '}
-                  <span className="num">
+                  <span className="num whitespace-nowrap">
                     {formatEUR(e.from.amount)} → {formatEUR(e.to.amount)}
                   </span>
-                  {e.planned && (
-                    <span className="ml-2 inline-flex h-[20px] items-center rounded-md bg-accent-soft px-1.5 align-middle text-[12px] font-medium text-accent-strong">
-                      geplant
-                    </span>
-                  )}
                 </span>
                 <span className="block text-[13px] text-ink-mute">
                   ab {formatIsoDate(e.changedOn)}
@@ -575,8 +586,8 @@ function OptimizationList({ title, entries, testId }: { title: string; entries: 
                   {!sameSchedule && ` · ${planDescription(e.from)} → ${planDescription(e.to)}`}
                 </span>
               </span>
-              <span className={`num shrink-0 text-[14px] font-semibold ${saves ? 'text-paid-ink' : e.annualDelta > 0 ? 'text-over' : 'text-ink-mute'}`}>
-                {saves ? `spart ${formatEUR(-e.annualDelta)}/Jahr` : `${formatDelta(e.annualDelta)}/Jahr`}
+              <span className={`num shrink-0 whitespace-nowrap text-[14px] font-semibold ${deltaClass(e.annualDelta)}`}>
+                {formatDelta(e.annualDelta)}/Jahr
               </span>
             </li>
           );

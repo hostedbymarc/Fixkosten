@@ -74,6 +74,13 @@ export const CloseIcon = (p: IconProps) => (
     <path d="M6 6l12 12M18 6L6 18" />
   </Icon>
 );
+/** Month note: a sheet with lines. */
+export const NoteIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 3h9l4 4v14H6z" />
+    <path d="M9.5 11h6M9.5 15h6" />
+  </Icon>
+);
 export const PencilIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M4 20h4L19 9l-4-4L4 16v4z" />

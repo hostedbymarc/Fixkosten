@@ -39,6 +39,21 @@ export const xAxisProps = {
 export const CHART_MARGIN = { top: 22, right: 4, bottom: 0, left: 0 };
 
 /**
+ * Round axis steps (1 / 2 / 2,5 / 5 × 10ⁿ) covering [min, max] and always 0:
+ * 0 / 500 / 1.000 / 1.500 instead of 0 / 350 / 700 / 1.050.
+ */
+export function niceTicks(min: number, max: number, target = 4): number[] {
+  const lo = Math.min(0, min);
+  const hi = Math.max(0, max);
+  const raw = (hi - lo || 1) / target;
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((s) => s >= raw - 1e-9)!;
+  const ticks: number[] = [];
+  for (let v = Math.floor(lo / step) * step; v <= Math.ceil(hi / step) * step + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+  return ticks;
+}
+
+/**
  * Touch devices open the tooltip with a tap and keep it until the next tap; with the
  * hover trigger the browser's emulated mouse leaves the chart right after a tap and
  * the tooltip closed again. Mouse devices keep hover.
