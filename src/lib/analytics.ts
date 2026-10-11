@@ -26,7 +26,6 @@ import type { Category, Dataset, Period, PlanEntry, Position } from './types';
 export type Range = '6m' | '12m' | 'all';
 
 const cents = (euros: number): number => Math.round(euros * 100);
-const fromCents = (c: number): number => c / 100;
 
 /** 'Okt 2026' */
 export function shortPeriodLabel(period: Period): string {
@@ -76,10 +75,8 @@ export interface ForecastMonth {
 
 export interface YearForecast {
   months: ForecastMonth[];
-  /** Ø line: mean of the 12 regular bar parts (without one-time payments and one-offs) */
+  /** Ø line: today's „Ø pro Monat“ (fixedCostsAvg) – the same value as the sum of the distribution */
   average: number;
-  /** „Ø pro Monat“ tile of today (fixedCostsAvg); equals `average` unless plans change inside the window */
-  todayAverage: number;
   total: number;
   /** one-time payments in the window */
   onceTotal: number;
@@ -110,58 +107,17 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
     const regular = sumMoney([due, -once, ...oneOffs.map((o) => -o.amount)]);
     return { period, due, once, regular, items };
   });
-  // same basis as the dark bar parts: same positions, same categories, same 12 months
-  const average = fromCents(Math.round(raw.reduce((acc, m) => acc + cents(m.regular), 0) / raw.length));
+  const average = fixedCostsAvg(ds, today);
   const months = raw.map((m): ForecastMonth => ({ ...m, aboveAverage: cents(m.due) > cents(average) }));
   const peak = months.reduce<ForecastMonth | null>((best, m) => (!best || m.due > best.due ? m : best), null);
   return {
     months,
     average,
-    todayAverage: fixedCostsAvg(ds, today),
     total: sumMoney(months.map((m) => m.due)),
     onceTotal: sumMoney(months.map((m) => m.once)),
     peak,
     peakAboveAverage: peak ? peak.due - average : 0,
   };
-}
-
-export interface ForecastGapRow {
-  position: Position;
-  category: Category;
-  /** monthly equivalent in today's „Ø pro Monat“ */
-  today: number;
-  /** mean of its regular amounts over the 12 forecast months */
-  window: number;
-  diff: number;
-  /** first month it is due in the window when it does not run today */
-  startsIn?: Period;
-}
-
-/**
- * Why the Ø line of the forecast differs from today's „Ø pro Monat“: positions that start
- * later, end, or change their amount inside the window. Empty when both are equal.
- */
-export function forecastAverageGap(ds: Dataset, today: Period, count = 12): ForecastGapRow[] {
-  const periods = periodRange(addPeriods(today, 1), addPeriods(today, count));
-  const items = periods.flatMap((p) => dueItems(ds, p));
-  const rows: ForecastGapRow[] = [];
-  for (const position of ds.positions) {
-    if (kindOf(ds, position) !== 'expense') continue;
-    const mine = items.filter((i) => i.position.id === position.id && i.due && i.status !== 'skipped' && i.plan?.frequency !== 'once');
-    const window = fromCents(Math.round(mine.reduce((acc, i) => acc + cents(i.planned), 0) / periods.length));
-    const now = isActiveInPeriod(position, today) ? monthlyEquivalent(position, today) : 0;
-    const diff = fromCents(cents(window) - cents(now));
-    if (diff === 0) continue;
-    rows.push({
-      position,
-      category: ds.categories.find((c) => c.id === position.categoryId)!,
-      today: now,
-      window,
-      diff,
-      startsIn: now === 0 && mine.length > 0 ? mine[0]!.period : undefined,
-    });
-  }
-  return rows.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
 }
 
 export interface ForecastSummary {
@@ -170,7 +126,7 @@ export interface ForecastSummary {
   sub: string;
 }
 
-/** Heading of the forecast in two levels: „Teuerster Monat“ / „Nov 2026 · € 6.110“ / „€ 3.158 über dem 12-Monats-Ø“. */
+/** Heading of the forecast in two levels: „Teuerster Monat“ / „Nov 2026 · € 6.110“ / „€ 3.158 über Ø“. */
 export function forecastSummary(f: YearForecast): ForecastSummary {
   if (!f.peak || f.peakAboveAverage < 0.5) {
     return { label: 'Gleichmäßig', value: `rund ${formatEUR(Math.round(f.average))}`, sub: 'jeden Monat fällig' };
@@ -178,7 +134,7 @@ export function forecastSummary(f: YearForecast): ForecastSummary {
   return {
     label: 'Teuerster Monat',
     value: `${shortPeriodLabel(f.peak.period)} · ${formatEUR(f.peak.due)}`,
-    sub: `${formatEUR(Math.round(f.peakAboveAverage))} über dem 12-Monats-Ø`,
+    sub: `${formatEUR(Math.round(f.peakAboveAverage))} über Ø`,
   };
 }
 

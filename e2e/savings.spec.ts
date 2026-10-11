@@ -220,18 +220,25 @@ test.describe('Sparquote-Karte', () => {
   });
 });
 
-test.describe('Ø-Beschriftung Jahresvorschau', () => {
-  test('kein „Ø pro Monat“ in der Jahresvorschau; Legende „Ø nächste 12 Monate“, Kopf „über dem 12-Monats-Ø“', async ({ page }) => {
+test.describe('Ø der Jahresvorschau = Ø pro Monat von heute', () => {
+  test('Linie „Ø 2.952“ = Summe der Verteilung, Legende „Ø pro Monat“, kein „nächste 12 Monate“ / „12-Monats-Ø“', async ({ page }) => {
     await importSavings(page);
     await openAnalyse(page);
     const forecast = page.getByTestId('forecast');
     await forecast.getByRole('button', { name: 'Details anzeigen' }).click();
     await expect(forecast.getByTestId('forecast-details')).toBeVisible();
-    await expect(forecast).not.toContainText('Ø pro Monat');
-    await expect(page.getByTestId('forecast-legend')).toContainText('Ø nächste 12 Monate');
-    await expect(page.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über dem 12-Monats-Ø'));
-    await expect(forecast.getByRole('img')).toHaveAttribute('aria-label', /Ø nächste 12 Monate €[\s\u00a0]2\.952,17/);
+    await expect(forecast.getByTestId('avg-chip')).toHaveText('Ø 2.952');
+    await expect(page.getByTestId('forecast-legend')).toContainText('Ø pro Monat');
+    await expect(page.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
+    await expect(forecast.getByRole('img')).toHaveAttribute('aria-label', /Ø €[\s\u00a0]2\.952,17 pro Monat/);
     await expect(page.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat (heute)'));
+    await expect(forecast.getByTestId('forecast-gap')).toHaveCount(0);
+    for (const route of ['analyse', 'monat', 'positionen', 'einstellungen'] as const) {
+      await goTo(page, route);
+      await page.waitForTimeout(300);
+      await expect(page.locator('body')).not.toContainText('nächste 12 Monate');
+      await expect(page.locator('body')).not.toContainText('12-Monats-Ø');
+    }
   });
 });
 

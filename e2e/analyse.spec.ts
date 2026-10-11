@@ -60,7 +60,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
 
     await expect(app.getByTestId('forecast-headline-label')).toHaveText('Teuerster Monat');
     await expect(app.getByTestId('forecast-headline-value')).toHaveText(eur('Feb 2027 · € 4.610'));
-    await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über dem 12-Monats-Ø'));
+    await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
     await expect(app.getByTestId('distribution-headline-label')).toHaveText('Größter Block');
     await expect(app.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
     await expect(app.getByTestId('distribution-headline-sub')).toHaveText(eur('€ 1.602 von € 2.952,17 pro Monat'));
