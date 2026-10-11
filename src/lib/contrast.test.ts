@@ -192,13 +192,14 @@ describe('Farbabstände (CIEDE2000)', () => {
   it.each([
     ['Hell', light],
     ['Dunkel', dark],
-  ] as const)('Kategorien %s: untereinander ≥ 15, zu Brand/Amber/Rot ≥ 20', (_, v) => {
+  ] as const)('Kategorien %s: untereinander ≥ 20, zu Brand/Amber ≥ 25, zu Rot ≥ 20', (_, v) => {
     const cats = CATS.map((c) => rgb(v, c));
     for (let i = 0; i < cats.length; i++) {
-      for (let j = i + 1; j < cats.length; j++) expect(deltaE(cats[i]!, cats[j]!), `${CATS[i]} / ${CATS[j]}`).toBeGreaterThanOrEqual(15);
-      for (const ref of ['--brand-500', '--c-warn-icon', '--c-over']) {
-        expect(deltaE(cats[i]!, rgb(v, ref)), `${CATS[i]} / ${ref}`).toBeGreaterThanOrEqual(20);
+      for (let j = i + 1; j < cats.length; j++) expect(deltaE(cats[i]!, cats[j]!), `${CATS[i]} / ${CATS[j]}`).toBeGreaterThanOrEqual(20);
+      for (const ref of ['--brand-500', '--chart-accent', '--c-warn-icon', '--c-warn']) {
+        expect(deltaE(cats[i]!, rgb(v, ref)), `${CATS[i]} / ${ref}`).toBeGreaterThanOrEqual(25);
       }
+      expect(deltaE(cats[i]!, rgb(v, '--c-over')), `${CATS[i]} / --c-over`).toBeGreaterThanOrEqual(20);
     }
   });
 });
@@ -214,5 +215,16 @@ if (process.env.CONTRAST_REPORT) {
     '',
     `ΔE2000 Brand #5A7A2E ↔ Amber-Icon: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn-icon')).toFixed(1)}**, ↔ Amber-Text: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn')).toFixed(1)}**, ↔ Rot: ${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-over')).toFixed(1)}`,
   ];
+  for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
+    const refs = ['--brand-500', '--chart-accent', '--c-warn-icon', '--c-warn', '--c-over'];
+    lines.push('', `**Kategorien ${theme}** (ΔE2000; Ziel untereinander ≥ 20, zu Brand/Amber ≥ 25, zu Rot ≥ 20)`, '');
+    lines.push(`| | ${CATS.map((c) => `\`${c}\``).join(' | ')} | ${refs.map((r) => `\`${r}\``).join(' | ')} |`);
+    lines.push(`|---|${CATS.map(() => '---').join('|')}|${refs.map(() => '---').join('|')}|`);
+    for (const a of CATS) {
+      const cells = CATS.map((b) => (a === b ? '–' : deltaE(rgb(v, a), rgb(v, b)).toFixed(1)));
+      const toRefs = refs.map((r) => deltaE(rgb(v, a), rgb(v, r)).toFixed(1));
+      lines.push(`| \`${a}\` ${resolve(v, a)} | ${cells.join(' | ')} | ${toRefs.join(' | ')} |`);
+    }
+  }
   writeFileSync(process.env.CONTRAST_REPORT, lines.join('\n') + '\n');
 }

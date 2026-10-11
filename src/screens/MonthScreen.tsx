@@ -3,6 +3,7 @@ import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
+import { MonthNoteCard, MonthNoteSheet } from '../components/MonthNote';
 import { OneOffSheet } from '../components/OneOffSheet';
 import { PaymentSheet } from '../components/PaymentSheet';
 import { PositionFormSheet } from '../components/PositionFormSheet';
@@ -11,6 +12,7 @@ import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
+import { FEATURE_REMINDERS } from '../lib/features';
 import {
   deleteOneOff,
   markPaid,
@@ -21,6 +23,7 @@ import {
   restoreOneOff,
   restorePayment,
   saveMonthClose,
+  saveMonthNote,
   toggleOneOffPaid,
   updatePayment,
 } from '../db/repo';
@@ -71,12 +74,14 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const [onceOpen, setOnceOpen] = useState(false);
   const onceButton = useRef<HTMLButtonElement>(null);
   const closeTile = useRef<HTMLButtonElement>(null);
+  const noteCard = useRef<HTMLButtonElement>(null);
+  const [noteOpen, setNoteOpen] = useState(false);
 
   const items = useMemo(() => dueItems(ds, period), [ds, period]);
   const groups = useMemo(() => groupByCategory(items), [items]);
   const progress = useMemo(() => periodProgress(ds, period), [ds, period]);
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
-  const reminders = remindersForPeriod(ds, period);
+  const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
   const openGroups = useMemo(() => openFromPrevious(ds, period), [ds, period]);
   const openItem =
     openKey === null
@@ -193,6 +198,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             onOpen={() => openClose(closeTile.current)}
           />
         </div>
+        <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
@@ -227,6 +233,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         </section>
 
         <aside className="flex flex-col gap-6">
+          {FEATURE_REMINDERS && (
           <section aria-labelledby="reminders-title">
             <h2 id="reminders-title" className="section-title mb-2 flex items-center gap-1.5 px-1">
               <BellIcon size={15} /> Erinnerungen diesen Monat
@@ -244,6 +251,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               </ul>
             )}
           </section>
+          )}
 
           <section aria-labelledby="upcoming-title">
             <h2 id="upcoming-title" className="section-title mb-2 flex items-center gap-1.5 px-1">
@@ -293,6 +301,25 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           onClose={() => setOnceOpen(false)}
           onSaved={() => setOnceOpen(false)}
           returnFocusTo={onceButton.current}
+        />
+      )}
+
+      {noteOpen && (
+        <MonthNoteSheet
+          key={period}
+          period={period}
+          note={monthCloseFor(ds, period)?.note}
+          returnFocusTo={noteCard.current}
+          onClose={() => setNoteOpen(false)}
+          onDeleted={(removed) => {
+            setNoteOpen(false);
+            toast({
+              message: 'Notiz gelöscht',
+              actionLabel: 'Rückgängig',
+              onAction: () => void saveMonthNote(db, period, removed),
+              durationMs: 6000,
+            });
+          }}
         />
       )}
 

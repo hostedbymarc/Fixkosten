@@ -91,10 +91,10 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 3.403'));
   });
 
-  test('month navigation: November reminder, new month starts empty, Feb 2027 = € 4.610', async ({ app }) => {
+  test('month navigation: reminders hidden (flag), new month starts empty, Feb 2027 = € 4.610', async ({ app }) => {
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(app.getByRole('heading', { level: 1, name: 'November 2026' })).toBeVisible();
-    await expect(app.getByText('Jahresabrechnung Strom/Gas/Wiener Netze')).toBeVisible();
+    await expect(app.getByText('Jahresabrechnung Strom/Gas/Wiener Netze')).toHaveCount(0); // FEATURE_REMINDERS = false
     await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 0'));
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.664'));
 
