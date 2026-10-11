@@ -54,10 +54,10 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.412'));
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 2.376'));
     await expect(app.getByTestId('free-sub')).toHaveText('rechnerisch · tatsächlich eintragen');
-    await expect(app.getByTestId('free-average')).toHaveText(eur('Ø mit Jahreskosten € 2.870,50'));
-    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 1.791 · bleibt € 585 · Quote 37,4 %'));
+    await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 2.870,50'));
+    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 1.791 · Sparquote 37,4 %'));
     await expect(app.getByTestId('kpi-value')).toHaveText(eur('€ 1.917,50'));
-    await expect(app.getByTestId('kpi-hint')).toHaveText(eur('inkl. € 244,50 Jahreskosten'));
+    await expect(app.getByTestId('kpi-hint')).toHaveText(eur('davon € 244,50 nicht monatlich'));
     await expect(app.getByRole('region', { name: 'Meine Immos' })).toContainText('Vermögensaufbau');
     await app.waitForTimeout(300); // glass blur settles
     await app
@@ -84,7 +84,7 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByTestId('free-value')).toHaveText('−€ 490');
     await expect(app.getByTestId('free-tile')).not.toContainText('-€');
-    await expect(app.getByTestId('free-wealth')).toContainText('bleibt −€ 2.281');
+    await expect(app.getByTestId('free-wealth')).not.toContainText('bleibt');
   });
 
   test('Kacheln: gleicher Aufbau, gleiche Höhe pro Reihe, gleiche Baseline, nichts abgeschnitten oder umgebrochen', async ({ app }, info) => {
@@ -110,8 +110,10 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     expect(rows.size).toBe(info.project.name === 'iphone-15' ? 2 : 1);
     // Frei verfügbar has at most three lines below the number
     expect(tiles[2]!.subLines.length).toBeLessThanOrEqual(3);
-    // every subline fits on one line, in every viewport
-    for (const t of tiles) expect(t.subLines.every((n) => n === 1), 'sublines on one line').toBe(true);
+    // sublines fit on one line; on the phone the half-width Ø tile may use two
+    const maxLines = info.project.name === 'iphone-15' ? 2 : 1;
+    for (const t of tiles) expect(t.subLines.every((n) => n <= maxLines), 'sublines fit').toBe(true);
+    expect(tiles[2]!.subLines.every((n) => n === 1), 'Frei verfügbar: one line each').toBe(true);
     await expectClean(app, 'main');
   });
 });

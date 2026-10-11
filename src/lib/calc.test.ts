@@ -14,7 +14,6 @@ import {
   wealthBuilding,
   expectedSpend,
   freeAfterFixed,
-  remainder,
   freeGap,
   groupByCategory,
   monthlyEquivalent,
@@ -386,12 +385,11 @@ describe('month close: salary, free money, savings rate', () => {
     expect(freeGap(withClose(undefined, 650), OCT)).toBeNull();
   });
 
-  it('Oct 2026, salary 5.000: fixed costs 3.403, Vermögensaufbau 800, free 1.597, remainder 797, actual 650 → gap −947, rate 16,0 %', () => {
+  it('Oct 2026, salary 5.000: fixed costs 3.403, Vermögensaufbau 800, free 1.597, actual 650 → gap −947, rate 16,0 %', () => {
     const ds = withClose(5000, 650);
     expect(expectedSpend(ds, OCT)).toBe(3403);
     expect(wealthBuilding(ds, OCT)).toBe(800);
     expect(freeAfterFixed(ds, OCT)).toBe(1597);
-    expect(remainder(ds, OCT)).toBe(797);
     expect(freeGap(ds, OCT)).toBe(-947);
     expect(savingsRate(ds, OCT)).toBeCloseTo(0.16, 9);
   });
