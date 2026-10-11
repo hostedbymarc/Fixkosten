@@ -451,3 +451,67 @@ export function optimizationHeadline(t: OptimizationTimeline): string {
   if (t.entries.some((e) => e.planned)) parts.push(`Geplant: ${formatDelta(t.plannedAnnual)} / Jahr`);
   return parts.join(' · ');
 }
+
+// ---------------------------------------------------------------------------
+// Two-level headings of the analysis cards: label · value · sub
+// ---------------------------------------------------------------------------
+
+export interface CardSummary {
+  label: string;
+  value: string;
+  sub?: string;
+}
+
+/** „Größter Block“ / „Wohnen & Leben · 54,3 %“ / „€ 1.602 von € 2.952,17 pro Monat“ */
+export function distributionSummary(d: Distribution): CardSummary {
+  const top = d.rows[0];
+  if (!top) return { label: 'Größter Block', value: '–' };
+  return {
+    label: 'Größter Block',
+    value: `${top.category.name} · ${formatPercent(top.share)}`,
+    sub: `${formatEUR(top.monthly)} von ${formatEUR(d.total)} pro Monat`,
+  };
+}
+
+/** Month close (from 3 months): Sparquote averaged over the months that have one. */
+export function monthCloseSummary(rows: MonthCloseRow[]): CardSummary {
+  const rates = rows.filter((r) => r.savingsRate !== null).map((r) => r.savingsRate!);
+  if (rates.length === 0) return { label: 'Sparquote', value: '–', sub: 'noch kein Netto-Gehalt eingetragen' };
+  const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+  return {
+    label: 'Sparquote',
+    value: formatPercent(avg),
+    sub: rates.length === 1 ? 'aus 1 Monat' : `Ø der letzten ${rates.length} Monate`,
+  };
+}
+
+/** The latest month of the window with a month close (for the number card below 3 months). */
+export function latestMonthClose(rows: MonthCloseRow[]): MonthCloseRow | null {
+  return [...rows].reverse().find((r) => r.calculated !== null || r.actual !== null || r.savingsRate !== null) ?? null;
+}
+
+/** „Ø pro Monat“ / „€ 3.050“ / „+3,2 % seit Okt 2025 (€ 2.952)“ */
+export function trendSummary(t: BurdenTrend): CardSummary {
+  const first = t.points[0];
+  const last = t.points[t.points.length - 1];
+  if (!first || !last) return { label: 'Ø pro Monat', value: '–' };
+  const since = `seit ${shortPeriodLabel(first.period)}`;
+  if (cents(last.total) === cents(first.total)) return { label: 'Ø pro Monat', value: formatEUR(last.total), sub: `unverändert ${since}` };
+  const change = first.total > 0 ? last.total / first.total - 1 : 0;
+  return {
+    label: 'Ø pro Monat',
+    value: formatEUR(last.total),
+    sub: `${change > 0 ? '+' : '−'}${formatPercent(Math.abs(change))} ${since} (${formatEUR(first.total)})`,
+  };
+}
+
+/** „Plan vs. Ist“ / „€ 120 teurer“ / „3 abgeschlossene Monate“ */
+export function planActualSummary(p: PlanVsActual): CardSummary {
+  const months = p.closedMonths === 1 ? '1 abgeschlossener Monat' : `${p.closedMonths} abgeschlossene Monate`;
+  if (cents(p.totalDelta) === 0) return { label: 'Plan vs. Ist', value: 'genau im Plan', sub: months };
+  return {
+    label: 'Plan vs. Ist',
+    value: `${formatEUR(Math.abs(p.totalDelta))} ${p.totalDelta > 0 ? 'teurer' : 'günstiger'}`,
+    sub: months,
+  };
+}

@@ -129,24 +129,39 @@ export async function restorePayment(db: FixkostenDB, payment: Payment): Promise
 export interface MonthCloseInput {
   netSalary?: number;
   freeActual?: number;
-  note?: string;
 }
 
-/** Saves the month close; an entirely empty close is removed. */
-export async function saveMonthClose(db: FixkostenDB, period: Period, input: MonthCloseInput): Promise<void> {
-  const note = trimmed(input.note);
-  if (input.netSalary === undefined && input.freeActual === undefined && note === undefined) {
+/** Longest month note (characters). */
+export const NOTE_MAX = 2000;
+
+async function putMonthClose(db: FixkostenDB, period: Period, close: Omit<MonthClose, 'period' | 'updatedAt'>) {
+  if (close.netSalary === undefined && close.freeActual === undefined && close.note === undefined) {
     await db.monthClose.delete(period);
     return;
   }
-  const close: MonthClose = {
-    period,
-    netSalary: input.netSalary,
-    freeActual: input.freeActual,
-    note,
-    updatedAt: new Date().toISOString(),
-  };
-  await db.monthClose.put(close);
+  await db.monthClose.put({ period, ...close, updatedAt: new Date().toISOString() });
+}
+
+/** Saves salary and free money of the month; the month note stays. An entirely empty close is removed. */
+export async function saveMonthClose(db: FixkostenDB, period: Period, input: MonthCloseInput): Promise<void> {
+  await db.transaction('rw', db.monthClose, async () => {
+    const note = (await db.monthClose.get(period))?.note;
+    await putMonthClose(db, period, { netSalary: input.netSalary, freeActual: input.freeActual, note });
+  });
+}
+
+/**
+ * Saves the note of a month (one per month, inside MonthClose). Salary and free money stay
+ * untouched – a note alone never creates a salary. Empty text removes the note.
+ */
+export async function saveMonthNote(db: FixkostenDB, period: Period, text: string): Promise<void> {
+  if (text.length > NOTE_MAX) throw new RepoError(`Die Notiz darf höchstens ${NOTE_MAX} Zeichen haben.`);
+  await db.transaction('rw', db.monthClose, async () => {
+    const current = await db.monthClose.get(period);
+    const note = text.trim() === '' ? undefined : text.replace(/\s+$/, '');
+    if ((current?.note ?? undefined) === note) return;
+    await putMonthClose(db, period, { netSalary: current?.netSalary, freeActual: current?.freeActual, note });
+  });
 }
 
 // ---------------------------------------------------------------------------

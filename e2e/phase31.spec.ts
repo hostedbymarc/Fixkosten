@@ -139,8 +139,8 @@ test.describe('Betrag ändern', () => {
     await openAnalyse(app);
     expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');
     expect(await forecastDue(app, 'Apr 2027')).toBe('€ 2.755');
-    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: +€ 504 / Jahr'));
-    await expect(app.getByTestId('optimizations-planned')).toContainText('geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 504 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 504/Jahr'));
   });
 
   test('Verlaufseintrag bearbeiten und löschen → Werte rechnen zurück, Undo funktioniert', async ({ app }) => {
@@ -160,7 +160,7 @@ test.describe('Betrag ändern', () => {
 
     await openAnalyse(app);
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
-    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: +€ 1.104 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 1.104 / Jahr'));
 
     await openMiete(app);
     await app.getByRole('button', { name: 'Änderung ab 15.01.2027 auf € 1.100 löschen' }).click();
@@ -173,7 +173,7 @@ test.describe('Betrag ändern', () => {
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
 
     await undo.click();
-    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: +€ 1.104 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 1.104 / Jahr'));
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
   });
 
@@ -191,7 +191,7 @@ test.describe('Betrag ändern', () => {
     await expect(miete).toContainText(eur('−€ 42'));
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.445'));
     await openAnalyse(app);
-    await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Umgesetzt: +€ 504 / Jahr'));
+    await expect(app.getByTestId('optimizations-list-head')).toHaveText(eur('Umgesetzt · +€ 504 / Jahr'));
   });
 
   test('Tippfehler korrigieren bleibt eigene Option ohne Verlaufseintrag', async ({ app }) => {

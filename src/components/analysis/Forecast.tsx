@@ -4,6 +4,7 @@ import { forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, typ
 import { formatCompactEUR, formatEUR } from '../../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
+import { NoteIcon } from '../Icons';
 import { ChartCard, TooltipBox, TooltipRow } from './ChartCard';
 import { AXIS_TICK, CHART_MARGIN, COLORS, tooltipProps, xAxisProps, yAxisProps } from './chartTheme';
 
@@ -74,12 +75,13 @@ function ItemLines({ items }: { items: ForecastItem[] }) {
 const VISIBLE_ITEMS = 2;
 
 /** iPhone / iPad portrait: one row per month, tap shows all non-monthly items. */
-function MonthRow({ m, open, onToggle }: { m: ForecastMonth; open: boolean; onToggle: () => void }) {
+function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string; open: boolean; onToggle: () => void }) {
   const shown = m.items.slice(0, VISIBLE_ITEMS);
   const more = m.items.length - shown.length;
   const label = `${periodLabel(m.period)}: ${formatEUR(m.due)} fällig${m.aboveAverage ? ', über dem Schnitt' : ''}${
     m.items.length ? `, nicht monatlich: ${m.items.map(itemLabel).join(', ')}` : ''
-  }`;
+  }${note ? ', mit Notiz' : ''}`;
+  const expandable = m.items.length > 0 || !!note;
   const head = (
     <>
       <span className="flex items-center gap-3">
@@ -92,6 +94,11 @@ function MonthRow({ m, open, onToggle }: { m: ForecastMonth; open: boolean; onTo
         <span className="whitespace-nowrap text-[15px] text-ink" data-testid="forecast-month">
           {shortPeriodLabel(m.period)}
         </span>
+        {note && (
+          <span className="text-ink-mute" aria-hidden="true" data-testid="forecast-note-icon">
+            <NoteIcon size={14} />
+          </span>
+        )}
         <span className="num ml-auto whitespace-nowrap text-[15px] font-semibold text-ink" data-testid="forecast-due">
           {formatEUR(m.due)}
         </span>
@@ -111,7 +118,7 @@ function MonthRow({ m, open, onToggle }: { m: ForecastMonth; open: boolean; onTo
   );
   return (
     <li className="border-t border-line first:border-t-0" data-testid="forecast-row" data-period={m.period}>
-      {m.items.length > 0 ? (
+      {expandable ? (
         <button
           type="button"
           aria-expanded={open}
@@ -128,7 +135,18 @@ function MonthRow({ m, open, onToggle }: { m: ForecastMonth; open: boolean; onTo
       )}
       {open && (
         <div className="pb-2.5 pl-5 text-[13px] text-ink-mute" data-testid="forecast-expanded">
-          <ItemLines items={m.items} />
+          {m.items.length > 0 && <ItemLines items={m.items} />}
+          {note && (
+            <p
+              className={`flex gap-1.5 whitespace-pre-line break-words text-ink-soft ${m.items.length > 0 ? 'mt-1.5 border-t border-line pt-1.5' : ''}`}
+              data-testid="forecast-note"
+            >
+              <span className="mt-0.5 shrink-0" aria-hidden="true">
+                <NoteIcon size={13} />
+              </span>
+              <span className="min-w-0">{note}</span>
+            </p>
+          )}
           {m.once > 0 && (
             <p className="mt-1 flex justify-between gap-3 border-t border-line pt-1 font-medium text-ink-soft" data-testid="forecast-once-sum">
               <span>davon einmalig</span>
@@ -141,19 +159,19 @@ function MonthRow({ m, open, onToggle }: { m: ForecastMonth; open: boolean; onTo
   );
 }
 
-function MonthList({ f }: { f: YearForecast }) {
+function MonthList({ f, notes }: { f: YearForecast; notes: Map<Period, string> }) {
   const [open, setOpen] = useState<Period | null>(null);
   return (
     <ul role="list" aria-label="Fällige Ausgaben der nächsten 12 Monate" className="lg:hidden" data-testid="forecast-list">
       {f.months.map((m) => (
-        <MonthRow key={m.period} m={m} open={open === m.period} onToggle={() => setOpen((p) => (p === m.period ? null : m.period))} />
+        <MonthRow key={m.period} m={m} note={notes.get(m.period)} open={open === m.period} onToggle={() => setOpen((p) => (p === m.period ? null : m.period))} />
       ))}
     </ul>
   );
 }
 
 /** From iPad landscape: a real table, items as a list in the third column. */
-function MonthTable({ f }: { f: YearForecast }) {
+function MonthTable({ f, notes }: { f: YearForecast; notes: Map<Period, string> }) {
   return (
     <table className="hidden w-full table-fixed text-left text-[13px] lg:table" data-testid="forecast-table">
       <caption className="sr-only">Fällige Ausgaben der nächsten 12 Monate</caption>
@@ -180,11 +198,21 @@ function MonthTable({ f }: { f: YearForecast }) {
                   aria-hidden="true"
                 />
                 {shortPeriodLabel(m.period)}
+                {notes.has(m.period) && (
+                  <span className="text-ink-mute" aria-label="mit Notiz">
+                    <NoteIcon size={13} />
+                  </span>
+                )}
               </span>
             </th>
             <td className="num whitespace-nowrap py-2 pr-4 text-right font-semibold text-ink">{formatEUR(m.due)}</td>
             <td className="py-2 text-ink-soft">
-              {m.items.length === 0 ? <span className="text-ink-faint">–</span> : <ItemLines items={m.items} />}
+              {m.items.length === 0 && !notes.has(m.period) ? <span className="text-ink-faint">–</span> : <ItemLines items={m.items} />}
+              {notes.has(m.period) && (
+                <p className={`whitespace-pre-line break-words text-ink-mute ${m.items.length > 0 ? 'mt-1' : ''}`} data-testid="forecast-note">
+                  {notes.get(m.period)}
+                </p>
+              )}
             </td>
           </tr>
         ))}
@@ -212,6 +240,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
   const f = yearForecast(ds, today);
   const summary = forecastSummary(f);
   const narrow = useNarrow();
+  const notes = new Map(ds.monthClose.filter((c) => c.note).map((c) => [c.period, c.note!] as const));
   const rows = f.months.map((m) => ({
     ...m,
     label: shortMonthName(monthOf(m.period)),
@@ -224,19 +253,11 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
     <ChartCard
       id="forecast"
       title="Jahresvorschau"
-      headline={
-        <div className="mb-3" data-testid="forecast-headline">
-          <p className="text-[13px] font-medium text-ink-mute" data-testid="forecast-headline-label">{summary.label}</p>
-          <p className="num text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink" data-testid="forecast-headline-value">
-            {summary.value}
-          </p>
-          <p className="num text-[13px] text-ink-mute" data-testid="forecast-headline-sub">{summary.sub}</p>
-        </div>
-      }
+      headline={summary}
       details={
         <>
-          <MonthList f={f} />
-          <MonthTable f={f} />
+          <MonthList f={f} notes={notes} />
+          <MonthTable f={f} notes={notes} />
           <p className="mt-2 border-t border-line pt-2 text-[13px] text-ink-mute" data-testid="forecast-footer">
             12 Monate <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(f.total)}</span>
             {f.onceTotal > 0 && (

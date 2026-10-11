@@ -234,8 +234,8 @@ describe('ticking', () => {
 describe('month close', () => {
   it('saves, updates and removes an empty close', async () => {
     const db = openDb();
-    await saveMonthClose(db, '2026-10', { netSalary: 5000, freeActual: 650, note: ' ok ' });
-    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5000, freeActual: 650, note: 'ok' });
+    await saveMonthClose(db, '2026-10', { netSalary: 5000, freeActual: 650 });
+    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5000, freeActual: 650 });
     await saveMonthClose(db, '2026-10', { netSalary: 5100 });
     expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5100, freeActual: undefined });
     await saveMonthClose(db, '2026-10', {});

@@ -72,3 +72,12 @@ describe('Jahresvorschau: consistent with the month screen', () => {
     expect(f.months[0]!.due).toBe(6110);
   });
 });
+
+describe('Jahresvorschau: bar colour follows the Ø line', () => {
+  it('aboveAverage only for months above fixedCostsAvg(today)', () => {
+    const ds = data();
+    const f = yearForecast(ds, OCT);
+    for (const m of f.months) expect(m.aboveAverage).toBe(Math.round(m.due * 100) > Math.round(f.average * 100));
+    expect(f.months.filter((m) => m.aboveAverage).map((m) => m.period)).toEqual(['2026-11', '2026-12', '2027-02', '2027-10']);
+  });
+});

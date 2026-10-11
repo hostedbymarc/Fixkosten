@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { FEATURE_REMINDERS } from '../lib/features';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { Segmented } from '../components/form';
@@ -103,14 +104,16 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
 
         <BackupSection ds={ds} />
 
-        <section aria-labelledby="later-title">
-          <h2 id="later-title" className="section-title mb-2 px-1">
-            Erinnerungen
-          </h2>
-          <div className="glass px-4 py-5 text-[14px] text-ink-mute">
-            Kommt in Phase 4: Erinnerungen verwalten, CSV-Export, Backup-Erinnerung.
-          </div>
-        </section>
+        {FEATURE_REMINDERS && (
+          <section aria-labelledby="later-title">
+            <h2 id="later-title" className="section-title mb-2 px-1">
+              Erinnerungen
+            </h2>
+            <div className="glass px-4 py-5 text-[14px] text-ink-mute">
+              Kommt in Phase 4: Erinnerungen verwalten, CSV-Export, Backup-Erinnerung.
+            </div>
+          </section>
+        )}
       </div>
 
       <p className="mt-10 text-center text-[12px] text-ink-mute" data-testid="app-version">
