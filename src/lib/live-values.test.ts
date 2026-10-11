@@ -6,7 +6,6 @@ import {
   fixedCostsAvg,
   freeAfterFixed,
   freeAfterFixedAvg,
-  remainder,
   savingsRate,
   sumMoney,
   wealthBuilding,
@@ -34,11 +33,10 @@ function liveLike(investingExtra: number): Dataset {
 describe('Live values: „Meine Immos“ (savings) is only Vermögensaufbau', () => {
   const ds = liveLike(69);
 
-  it('fixedCosts € 2.427 (not € 3.418), wealthBuilding € 1.860, free € 2.361, remainder +€ 501', () => {
+  it('fixedCosts € 2.427 (not € 3.418), wealthBuilding € 1.860, free € 2.361, Sparquote 38,8 %', () => {
     expect(fixedCosts(ds, OCT)).toBe(2427);
     expect(wealthBuilding(ds, OCT)).toBe(1860);
     expect(freeAfterFixed(ds, OCT)).toBe(2361);
-    expect(remainder(ds, OCT)).toBe(501);
     expect(Math.round(savingsRate(ds, OCT)! * 1000)).toBe(388);
   });
 
@@ -55,12 +53,20 @@ describe('Live values: „Meine Immos“ (savings) is only Vermögensaufbau', ()
     }
   });
 
-  it('arithmetic: remainder = net − fixed − Vermögensaufbau – if Investing itself is € 1.860, Immos adds € 991 and bleibt is −€ 490', () => {
-    const big = liveLike(1060); // Investing € 1.860 + Immos € 991
-    expect(wealthBuilding(big, OCT)).toBe(2851);
-    expect(fixedCosts(big, OCT)).toBe(2427);
-    expect(remainder(big, OCT)).toBe(4788 - 2427 - 2851);
-    expect(remainder(big, OCT)).toBe(-490);
+  it('Sparquote counts one-time payments in Vermögensaufbau (live: ETF 400 + Cash 400 + Miete 1220 einmalig 1.060)', () => {
+    const live = fixtureDataset();
+    live.monthClose.push({ period: OCT, netSalary: 4788, updatedAt: '' });
+    live.positions.push({
+      id: 'pos-miete-1220',
+      name: 'Miete 1220',
+      categoryId: 'cat-investing',
+      history: [{ validFrom: OCT, amount: 1060, frequency: 'once', dueMonths: [10], dueDay: 2, dueDate: '2026-10-02' }],
+      createdAt: '2026-10-02T08:00:00.000Z',
+      sortOrder: 99,
+    });
+    expect(wealthBuilding(live, OCT)).toBe(1860);
+    expect(Math.round(savingsRate(live, OCT)! * 1000)).toBe(388);
+    expect(wealthBuilding(live, '2026-11')).toBe(800); // only in its month
   });
 });
 

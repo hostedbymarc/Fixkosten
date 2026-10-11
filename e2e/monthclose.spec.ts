@@ -19,7 +19,7 @@ test.describe('Monatsabschluss', () => {
     const check = async () => {
       await expect(app.getByTestId('free-value')).toHaveText(eur('€ 650'));
       await expect(app.getByTestId('free-sub')).toHaveText(eur('tatsächlich · rechnerisch € 1.597 · Diff −€ 947'));
-      await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · bleibt € 797 · Quote 16,0 %'));
+      await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
       await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 5.000'));
     };
     await check();

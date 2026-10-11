@@ -476,7 +476,7 @@ export function fixedCostsAvg(ds: Dataset, period: Period): number {
   return sumMonthlyEquivalent(ds, period, { kind: 'expense' });
 }
 
-/** Monthly reserve needed for non-monthly fixed costs („inkl. € X Jahreskosten“). */
+/** Quarterly, semiannual and annual fixed costs spread per month („davon € X nicht monatlich“). */
 export function reserveNeeded(ds: Dataset, period: Period): number {
   return sumMonthlyEquivalent(ds, period, { kind: 'expense', nonMonthlyOnly: true });
 }
@@ -566,22 +566,11 @@ export function freeAfterFixedAvgWith(ds: Dataset, period: Period, netSalary: nu
 
 /**
  * Free money of an average month: net salary − fixed costs spread over the year
- * („Ø mit Jahreskosten“). One-time payments and one-offs do not distort it. Null without salary.
+ * („im Ø-Monat“). One-time payments and one-offs do not distort it. Null without salary.
  */
 export function freeAfterFixedAvg(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
   return salary === null ? null : freeAfterFixedAvgWith(ds, period, salary);
-}
-
-/** What is left after fixed costs and Vermögensaufbau („bleibt“), for a given salary. */
-export function remainderWith(ds: Dataset, period: Period, netSalary: number): number {
-  return fromCents(toCents(freeAfterFixedWith(ds, period, netSalary)) - toCents(wealthBuilding(ds, period)));
-}
-
-/** freeAfterFixed − wealthBuilding. Null without salary. */
-export function remainder(ds: Dataset, period: Period): number | null {
-  const salary = netSalaryForPeriod(ds, period);
-  return salary === null ? null : remainderWith(ds, period, salary);
 }
 
 /** actual − calculated; negative = less left than calculated. */
@@ -595,7 +584,10 @@ export function freeGap(ds: Dataset, period: Period): number | null {
   return gap(monthCloseFor(ds, period)?.freeActual, freeAfterFixed(ds, period));
 }
 
-/** Vermögensaufbau ÷ net salary, 0–1. Null without salary. */
+/**
+ * Sparquote: Vermögensaufbau of the month (every savings position, one-time payments
+ * and one-offs included) ÷ net salary, 0–1. Null without salary.
+ */
 export function savingsRate(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
   if (salary === null || salary <= 0) return null;
