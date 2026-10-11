@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureDataset } from '../../tests/fixtures/dataset';
-import { forecastAverageGap, yearForecast } from './analytics';
-import { fixedCosts, sumMoney } from './calc';
+import { categoryDistribution, forecastSummary, yearForecast } from './analytics';
+import { fixedCosts, fixedCostsAvg, sumMoney } from './calc';
 import type { Dataset, Position } from './types';
 
 const OCT = '2026-10';
@@ -30,13 +30,12 @@ function data(): Dataset {
 }
 
 describe('Jahresvorschau: consistent with the month screen', () => {
-  it('seed: Ø line = mean of the 12 bars without one-time payments = tile „Ø pro Monat“ (± 1 cent)', () => {
-    const f = yearForecast(fixtureDataset(), OCT);
-    const mean = f.months.reduce((acc, m) => acc + m.regular, 0) / f.months.length;
-    expect(Math.abs(f.average - mean)).toBeLessThanOrEqual(0.01);
+  it('seed: Ø line = sum of „Verteilung nach Kategorie“ (± 1 cent) = tile „Ø pro Monat“', () => {
+    const ds = fixtureDataset();
+    const f = yearForecast(ds, OCT);
+    expect(Math.abs(f.average - categoryDistribution(ds, OCT).total)).toBeLessThanOrEqual(0.01);
+    expect(f.average).toBe(fixedCostsAvg(ds, OCT));
     expect(f.average).toBe(2952.17);
-    expect(f.todayAverage).toBe(2952.17);
-    expect(f.months.map((m) => m.regular)).toEqual(f.months.map((m) => m.due)); // seed has no one-time parts
   });
 
   it('one-time payments and one-offs never move the Ø line', () => {
@@ -47,7 +46,7 @@ describe('Jahresvorschau: consistent with the month screen', () => {
     expect(f.months.find((m) => m.period === '2027-01')!.regular).toBe(2713);
   });
 
-  it('documented exception: a position starting later / a dated change – line follows the bars, tile shows today', () => {
+  it('a position starting later / a dated change: the Ø line stays today’s value, like the distribution', () => {
     const ds = data();
     const miete = ds.positions.find((p) => p.id === 'pos-miete')!;
     miete.history.push({ ...miete.history[0]!, validFrom: '2027-04', amount: 1100, changedOn: '2027-04-01' });
@@ -60,17 +59,8 @@ describe('Jahresvorschau: consistent with the month screen', () => {
       sortOrder: 99,
     });
     const f = yearForecast(ds, OCT);
-    const mean = f.months.reduce((acc, m) => acc + m.regular, 0) / f.months.length;
-    expect(Math.abs(f.average - mean)).toBeLessThanOrEqual(0.01);
-    expect(f.todayAverage).toBe(2952.17);
-    // Miete +92 × 7 months / 12 = 53,67; new subscription 30 × 11 / 12 = 27,50
-    const gap = forecastAverageGap(ds, OCT);
-    expect(gap.map((g) => [g.position.name, g.diff, g.startsIn ?? null])).toEqual([
-      ['Miete', 53.67, null],
-      ['Neues Abo', 27.5, '2026-12'],
-    ]);
-    expect(Math.round((f.average - f.todayAverage) * 100)).toBe(Math.round((53.67 + 27.5) * 100));
-    expect(forecastAverageGap(fixtureDataset(), OCT)).toEqual([]);
+    expect(f.average).toBe(2952.17);
+    expect(Math.abs(f.average - categoryDistribution(ds, OCT).total)).toBeLessThanOrEqual(0.01);
   });
 
   it('every month = fixedCosts of that month (expense categories only, incl. one-time payments)', () => {
@@ -111,7 +101,13 @@ describe('Jahresvorschau: bar colour follows the Ø line', () => {
   it('aboveAverage only for months above fixedCostsAvg(today)', () => {
     const ds = data();
     const f = yearForecast(ds, OCT);
-    for (const m of f.months) expect(m.aboveAverage).toBe(Math.round(m.due * 100) > Math.round(f.average * 100));
+    const today = fixedCostsAvg(ds, OCT);
+    for (const m of f.months) expect(m.aboveAverage).toBe(Math.round(m.due * 100) > Math.round(today * 100));
     expect(f.months.filter((m) => m.aboveAverage).map((m) => m.period)).toEqual(['2026-11', '2026-12', '2027-02', '2027-10']);
+  });
+
+  it('heading: „€ 3.158 über Ø“ = 6.110 − 2.952,17, rounded', () => {
+    const s = forecastSummary(yearForecast(data(), OCT));
+    expect([s.value, s.sub].map((t) => t.replace(/\u00a0/g, ' '))).toEqual(['Nov 2026 · € 6.110', '€ 3.158 über Ø']);
   });
 });
