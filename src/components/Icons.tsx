@@ -21,6 +21,14 @@ function Icon({ size = 20, children, ...rest }: IconProps) {
   );
 }
 
+/** ⓘ – explanation available */
+export const InfoIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5" />
+    <path d="M12 7.5h.01" />
+  </Icon>
+);
 export const ChevronLeft = (p: IconProps) => (
   <Icon {...p}>
     <path d="M15 18l-6-6 6-6" />
