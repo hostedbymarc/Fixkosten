@@ -88,7 +88,7 @@ test('Screenshots Sicherung', async ({ app }) => {
 });
 
 test.describe('Screenshots Phase 3 – Analyse', () => {
-  const SECTIONS = ['forecast', 'distribution', 'monthclose', 'trend', 'planactual', 'optimizations'];
+  const SECTIONS = ['forecast', 'distribution', 'trend', 'planactual', 'optimizations'];
 
   async function shoot(page: Page, state: string) {
     await page.evaluate(() => document.fonts.ready);
@@ -107,7 +107,6 @@ test.describe('Screenshots Phase 3 – Analyse', () => {
   test('1 Monat Daten (Seed + Monatsabschluss Oktober)', async ({ app }) => {
     await app.getByTestId('free-tile').click();
     await app.getByLabel('Netto-Gehalt').fill('5000');
-    await app.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await openAnalyse(app);
     await shoot(app, '1m');

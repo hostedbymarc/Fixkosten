@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureDataset } from '../../tests/fixtures/dataset';
-import { burdenTrend, categoryDistribution, monthCloseSeries, optimizationTimeline } from './analytics';
+import { burdenTrend, categoryDistribution, optimizationTimeline } from './analytics';
 import {
   dueItems,
   fixedCosts,
@@ -107,9 +107,4 @@ describe('Vermögensaufbau never counts as a fixed cost in the analysis', () => 
     expect(optimizationTimeline(ds, OCT).entries).toEqual([]);
   });
 
-  it('month close series: calculated = free after fixed costs, rate from Vermögensaufbau', () => {
-    const [row] = monthCloseSeries(ds, [OCT]);
-    expect(row!.calculated).toBe(2376);
-    expect(Math.round(row!.savingsRate! * 1000)).toBe(374);
-  });
 });

@@ -1,6 +1,8 @@
 import { forwardRef, useId, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
+import { useCollapsed } from '../lib/useCollapsed';
+import { Disclosure } from '../components/Disclosure';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { MonthNoteCard, MonthNoteSheet } from '../components/MonthNote';
@@ -33,7 +35,6 @@ import {
   freeAfterFixed,
   wealthBuilding,
   netSalaryForPeriod,
-  freeGap,
   groupByCategory,
   monthCloseFor,
   openFromPrevious,
@@ -49,7 +50,7 @@ import {
   type DueItem,
   type OpenGroup,
 } from '../lib/calc';
-import { formatDelta, formatEUR, formatPercent } from '../lib/format';
+import { formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
@@ -79,6 +80,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
   const items = useMemo(() => dueItems(ds, period), [ds, period]);
   const groups = useMemo(() => groupByCategory(items), [items]);
+  const collapse = useCollapsed();
+  const allCollapsed = groups.length > 0 && groups.every((g) => collapse.isCollapsed(g.category.id));
   const progress = useMemo(() => periodProgress(ds, period), [ds, period]);
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
@@ -189,10 +192,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           <FreeTile
             ref={closeTile}
             period={period}
-            freeActual={monthCloseFor(ds, period)?.freeActual ?? null}
             calculated={freeAfterFixed(ds, period)}
             average={freeAfterFixedAvg(ds, period)}
-            difference={freeGap(ds, period)}
             wealth={wealthBuilding(ds, period)}
             rate={savingsRate(ds, period)}
             onOpen={() => openClose(closeTile.current)}
@@ -203,6 +204,18 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
         <section aria-label="Fällige Positionen" className="flex flex-col gap-4">
+          {groups.length > 0 && (
+            <div className="-mb-2 -mt-1 flex justify-end">
+              <button
+                type="button"
+                onClick={() => collapse.setAll(groups.map((g) => g.category.id), !allCollapsed)}
+                className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+                data-testid="collapse-all"
+              >
+                {allCollapsed ? 'Alle ausklappen' : 'Alle einklappen'}
+              </button>
+            </div>
+          )}
           {groups.length === 0 ? (
             <EmptyCard>
               Für {periodLabel(period)} ist nichts fällig. Neue Positionen legst du unter „Positionen“ an.
@@ -212,6 +225,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               <GroupCard
                 key={group.category.id}
                 group={group}
+                collapsed={collapse.isCollapsed(group.category.id)}
+                onToggleCollapsed={() => collapse.toggle(group.category.id)}
                 spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
                 onToggle={toggle}
                 onOpen={(item) => setOpenKey({ positionId: item.position.id, period: item.period })}
@@ -490,24 +505,22 @@ function KpiTile({ label, value, children }: { label: string; value: string; chi
 
 interface FreeTileProps {
   period: Period;
-  freeActual: number | null;
   /** net salary − fixed costs of the month */
   calculated: number | null;
   /** net salary − fixed costs spread over the year */
   average: number | null;
-  difference: number | null;
   /** Vermögensaufbau due this month */
   wealth: number;
   rate: number | null;
   onOpen: () => void;
 }
 
-/** "Frei verfügbar": net salary − fixed costs, at most three short lines below. Opens the month close. */
+/** "Frei verfügbar": net salary − fixed costs, at most two short lines below. Opens the month close. */
 const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
-  { period, freeActual, calculated, average, difference, wealth, rate, onOpen },
+  { period, calculated, average, wealth, rate, onOpen },
   ref,
 ) {
-  const value = freeActual ?? calculated;
+  const value = calculated;
   return (
     <button
       ref={ref}
@@ -521,18 +534,11 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
       <span className={`${tileValue} ${value === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="free-value">
         {value === null ? '–' : formatEUR(value)}
       </span>
-      <span className={tileSub} data-testid="free-sub">
-        {calculated === null ? (
-          <>rechnet mit dem Netto-Gehalt</>
-        ) : freeActual === null ? (
-          <>rechnerisch · <span className="font-semibold text-accent-ink">tatsächlich eintragen</span></>
-        ) : (
-          <>
-            tatsächlich · rechnerisch <Amount>{formatEUR(calculated)}</Amount> · Diff{' '}
-            <Amount strong>{formatDelta(difference ?? 0)}</Amount>
-          </>
-        )}
-      </span>
+      {calculated === null && (
+        <span className={tileSub} data-testid="free-sub">
+          rechnet mit dem <span className="font-semibold text-accent-ink">Netto-Gehalt</span>
+        </span>
+      )}
       {average !== null && (
         <span className={tileSub} data-testid="free-average">
           im Ø-Monat <Amount>{formatEUR(average)}</Amount>
@@ -550,6 +556,8 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
 
 function GroupCard({
   group,
+  collapsed,
+  onToggleCollapsed,
   spread,
   onToggle,
   onOpen,
@@ -557,6 +565,9 @@ function GroupCard({
   onOpenOneOff,
 }: {
   group: CategoryGroup;
+  /** positions and one-offs hidden; name, sum and progress stay in the header */
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   /** monthly equivalent of the whole category, incl. positions not due this month */
   spread: number;
   onToggle: (item: DueItem) => void;
@@ -566,39 +577,64 @@ function GroupCard({
 }) {
   const savings = group.category.kind === 'savings';
   const showSpread = Math.round(spread * 100) !== Math.round(group.planned * 100);
+  const counted = group.items.filter((i) => i.due && i.status !== 'skipped');
+  const paid = counted.filter((i) => i.status === 'paid').length;
+  const allPaid = counted.length > 0 && paid === counted.length;
+  const progress = allPaid ? 'alle bezahlt' : `${paid}/${counted.length} bezahlt`;
   return (
-    <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group">
-      <header className="flex items-center gap-2 border-b border-line px-4 py-3">
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
-        {/* name and badge wrap onto two lines instead of pushing the amounts out of the card */}
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-          <h2 className="min-w-0 truncate text-[15px] font-semibold text-ink">{group.category.name}</h2>
-          {savings && <Badge>Vermögensaufbau</Badge>}
-        </div>
-        <span
-          className="flex shrink-0 flex-col items-end"
-          aria-label={`fällig ${formatEUR(group.planned)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}`}
-        >
-          <span className="num text-[14px] font-medium text-ink-mute">{formatEUR(group.planned)}</span>
-          {showSpread && (
-            <span className="num whitespace-nowrap text-[12px] text-ink-faint" data-testid="group-spread">
-              Ø {formatEUR(spread)} / Monat
+    <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
+      <Disclosure
+        expanded={!collapsed}
+        onToggle={onToggleCollapsed}
+        headingLevel={2}
+        buttonLabel={`${group.category.name}, fällig ${formatEUR(group.planned)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}, ${progress}`}
+        buttonClassName={`px-4 py-3 hover:bg-zinc-50/40 ${collapsed ? '' : 'border-b border-line'}`}
+        buttonTestId="group-toggle"
+        header={
+          <>
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
+            {/* name and badge wrap onto two lines instead of pushing the amounts out of the card */}
+            <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="min-w-0 truncate text-[15px] font-semibold text-ink" data-testid="group-name">
+                {group.category.name}
+              </span>
+              {savings && <Badge>Vermögensaufbau</Badge>}
             </span>
-          )}
-        </span>
-      </header>
-      <ul className="divide-y divide-line py-1 pl-1">
-        {group.items.map((item) => (
-          <PositionRow
-            key={item.position.id}
-            item={item}
-            onToggle={() => onToggle(item)}
-            onOpen={() => onOpen(item)}
-            onToggleOneOff={onToggleOneOff}
-            onOpenOneOff={onOpenOneOff}
-          />
-        ))}
-      </ul>
+            <span className="flex shrink-0 flex-col items-end">
+              <span className="flex items-center gap-2">
+                <span
+                  className={`whitespace-nowrap text-[12px] ${allPaid ? 'font-semibold text-paid-ink' : 'text-ink-mute'}`}
+                  data-testid="group-progress"
+                >
+                  {allPaid ? '✓ bezahlt' : `${paid}/${counted.length} bezahlt`}
+                </span>
+                <span className="num whitespace-nowrap text-[14px] font-medium text-ink-mute" data-testid="group-sum">
+                  {formatEUR(group.planned)}
+                </span>
+              </span>
+              {showSpread && (
+                <span className="num whitespace-nowrap text-[12px] text-ink-faint" data-testid="group-spread">
+                  Ø {formatEUR(spread)} / Monat
+                </span>
+              )}
+            </span>
+          </>
+        }
+        contentTestId="group-content"
+      >
+        <ul className="divide-y divide-line py-1 pl-1">
+          {group.items.map((item) => (
+            <PositionRow
+              key={item.position.id}
+              item={item}
+              onToggle={() => onToggle(item)}
+              onOpen={() => onOpen(item)}
+              onToggleOneOff={onToggleOneOff}
+              onOpenOneOff={onOpenOneOff}
+            />
+          ))}
+        </ul>
+      </Disclosure>
     </section>
   );
 }
