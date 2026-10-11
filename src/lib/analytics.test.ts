@@ -6,7 +6,7 @@ import {
   categoryDistribution,
   dataMonths,
   distributionHeadline,
-  forecastHeadline,
+  forecastSummary,
   historyPeriods,
   monthCloseHeadline,
   monthCloseSeries,
@@ -69,8 +69,9 @@ describe('1 · year forecast (seed, Nov 2026 – Okt 2027)', () => {
     expect(f.months[0]!.items).toEqual([]);
   });
 
-  it('headline: Teuerster Monat: Februar 2027 · € 4.610 · € 1.658 über Schnitt', () => {
-    expect(forecastHeadline(f).replace(/ /g, ' ')).toBe('Teuerster Monat: Februar 2027 · € 4.610 · € 1.658 über Schnitt');
+  it('heading in two levels: Teuerster Monat / Feb 2027 · € 4.610 / € 1.658 über Ø', () => {
+    const h = forecastSummary(f);
+    expect([h.label, h.value, h.sub].map((t) => t.replace(/\u00a0/g, ' '))).toEqual(['Teuerster Monat', 'Feb 2027 · € 4.610', '€ 1.658 über Ø']);
   });
 
   it('one-offs are due in their month and listed, the spread average stays', () => {

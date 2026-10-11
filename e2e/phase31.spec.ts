@@ -87,8 +87,8 @@ test.describe('Einmalig', () => {
 
     // analysis: own part in the forecast, never part of Ø pro Monat
     await openAnalyse(app);
-    expect(await forecastDue(app, 'November 2026')).toBe('€ 3.164');
-    await expect(app.getByTestId('forecast').locator('tbody tr', { hasText: 'November 2026' })).toContainText(eur('Reparatur (einmalig) € 500'));
+    expect(await forecastDue(app, 'Nov 2026')).toBe('€ 3.164');
+    await expect(app.getByTestId('forecast').locator('tbody tr', { hasText: 'Nov 2026' })).toContainText(eur('Reparatur€ 500'));
     await expect(app.getByTestId('forecast').locator('.bar-once').first()).toBeAttached();
     await expect(app.getByTestId('distribution')).toContainText(eur('Summe € 2.952,17'));
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
@@ -137,8 +137,8 @@ test.describe('Betrag ändern', () => {
     await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
 
     await openAnalyse(app);
-    expect(await forecastDue(app, 'März 2027')).toBe('€ 2.664');
-    expect(await forecastDue(app, 'April 2027')).toBe('€ 2.755');
+    expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');
+    expect(await forecastDue(app, 'Apr 2027')).toBe('€ 2.755');
     await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: +€ 504 / Jahr'));
     await expect(app.getByTestId('optimizations-planned')).toContainText('geplant');
   });
@@ -159,7 +159,7 @@ test.describe('Betrag ändern', () => {
     await app.keyboard.press('Escape');
 
     await openAnalyse(app);
-    expect(await forecastDue(app, 'Jänner 2027')).toBe('€ 2.805');
+    expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
     await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: +€ 1.104 / Jahr'));
 
     await openMiete(app);
@@ -169,12 +169,12 @@ test.describe('Betrag ändern', () => {
     await expect(undo).toBeVisible();
     await app.keyboard.press('Escape');
     await openAnalyse(app);
-    expect(await forecastDue(app, 'Jänner 2027')).toBe('€ 2.713');
+    expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.713');
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
 
     await undo.click();
     await expect(app.getByTestId('optimizations-headline')).toHaveText(eur('Geplant: +€ 1.104 / Jahr'));
-    expect(await forecastDue(app, 'Jänner 2027')).toBe('€ 2.805');
+    expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
   });
 
   test('Vergangenheit: Oktober schon mit € 1.008 abgehakt → Haken bleibt, Plan € 1.050, −€ 42', async ({ app }) => {
