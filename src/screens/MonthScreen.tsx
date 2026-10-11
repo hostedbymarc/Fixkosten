@@ -28,7 +28,6 @@ import {
   dueItems,
   freeAfterFixedAvg,
   freeAfterFixed,
-  remainder,
   wealthBuilding,
   netSalaryForPeriod,
   freeGap,
@@ -179,7 +178,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           />
           <KpiTile label="Ø pro Monat" value={formatEUR(fixedCostsAvg(ds, period))}>
             <span data-testid="kpi-hint">
-              inkl. <Amount>{formatEUR(reserveNeeded(ds, period))}</Amount> Jahreskosten
+              davon <Amount>{formatEUR(reserveNeeded(ds, period))}</Amount> nicht monatlich
             </span>
           </KpiTile>
           <FreeTile
@@ -190,7 +189,6 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             average={freeAfterFixedAvg(ds, period)}
             difference={freeGap(ds, period)}
             wealth={wealthBuilding(ds, period)}
-            left={remainder(ds, period)}
             rate={savingsRate(ds, period)}
             onOpen={() => openClose(closeTile.current)}
           />
@@ -473,15 +471,13 @@ interface FreeTileProps {
   difference: number | null;
   /** Vermögensaufbau due this month */
   wealth: number;
-  /** calculated − Vermögensaufbau */
-  left: number | null;
   rate: number | null;
   onOpen: () => void;
 }
 
 /** "Frei verfügbar": net salary − fixed costs, at most three short lines below. Opens the month close. */
 const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
-  { period, freeActual, calculated, average, difference, wealth, left, rate, onOpen },
+  { period, freeActual, calculated, average, difference, wealth, rate, onOpen },
   ref,
 ) {
   const value = freeActual ?? calculated;
@@ -512,12 +508,12 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
       </span>
       {average !== null && (
         <span className={tileSub} data-testid="free-average">
-          Ø mit Jahreskosten <Amount>{formatEUR(average)}</Amount>
+          im Ø-Monat <Amount>{formatEUR(average)}</Amount>
         </span>
       )}
-      {left !== null && rate !== null && (
+      {rate !== null && (
         <span className={tileSub} data-testid="free-wealth">
-          Vermögensaufbau <Amount>{formatEUR(wealth)}</Amount> · bleibt <Amount>{formatEUR(left)}</Amount> · Quote{' '}
+          Vermögensaufbau <Amount>{formatEUR(wealth)}</Amount> · Sparquote{' '}
           <Amount>{formatPercent(rate)}</Amount>
         </span>
       )}

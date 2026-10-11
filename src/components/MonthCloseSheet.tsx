@@ -154,7 +154,7 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
           <p className="-mt-1 rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="close-average">
             Rechnerisch frei <span className="font-medium">diesen Monat</span>{' '}
             <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(calculated)}</span> ·{' '}
-            <span className="font-medium">Ø mit Jahreskosten</span>{' '}
+            im <span className="font-medium">Ø-Monat</span>{' '}
             <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(average)}</span>
           </p>
         )}

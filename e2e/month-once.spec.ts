@@ -88,13 +88,13 @@ test.describe('Einmalige Zahlung im Monat', () => {
   });
 });
 
-test.describe('Frei verfügbar: dieser Monat und Ø mit Jahreskosten', () => {
+test.describe('Frei verfügbar: dieser Monat und Ø-Monat', () => {
   test('Netto-Gehalt eigene Kachel; Einmalige senken nur „diesen Monat“, Ø und Quote bleiben', async ({ app }) => {
     await expect(app.getByTestId('salary-value')).toHaveText('–');
     await app.getByTestId('salary-tile').click();
     await app.getByLabel('Netto-Gehalt').fill('5000');
     await expect(app.getByTestId('close-average')).toHaveText(
-      eur('Rechnerisch frei diesen Monat € 1.597 · Ø mit Jahreskosten € 2.047,83'),
+      eur('Rechnerisch frei diesen Monat € 1.597 · im Ø-Monat € 2.047,83'),
     );
     await app.getByRole('button', { name: 'Speichern' }).click();
 
@@ -102,13 +102,13 @@ test.describe('Frei verfügbar: dieser Monat und Ø mit Jahreskosten', () => {
     await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 5.000'));
     await expect(tile).not.toContainText('5.000');
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 1.597'));
-    await expect(app.getByTestId('free-average')).toHaveText(eur('Ø mit Jahreskosten € 2.047,83'));
-    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · bleibt € 797 · Quote 16,0 %'));
+    await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 2.047,83'));
+    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
 
     await addOnce(app, 'Hotel Copenhagen', '620', 'Abos & Freizeit', '2026-10-20');
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 977'));
-    await expect(app.getByTestId('free-average')).toHaveText(eur('Ø mit Jahreskosten € 2.047,83'));
-    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · bleibt € 177 · Quote 16,0 %'));
+    await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 2.047,83'));
+    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
     await expect(tile).toBeVisible();
     await expectClean(app, 'main');
   });

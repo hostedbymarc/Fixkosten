@@ -8,7 +8,6 @@ import {
   freeAfterFixed,
   freeAfterFixedAvg,
   planChanges,
-  remainder,
   reserveNeeded,
   savingsRate,
   sumMoney,
@@ -53,15 +52,14 @@ describe('Regression „Frei verfügbar −€ 490“: savings category with mon
 describe('Control values (seed, „Meine Immos“ + „Investing“ as Vermögensaufbau, net € 4.788)', () => {
   const ds = live();
 
-  it('month: fixed € 2.412, Vermögensaufbau € 1.791, free € 2.376, remainder € 585, rate 37,4 %', () => {
+  it('month: fixed € 2.412, Vermögensaufbau € 1.791, free € 2.376, rate 37,4 %', () => {
     expect(fixedCosts(ds, OCT)).toBe(2412);
     expect(wealthBuilding(ds, OCT)).toBe(1791);
     expect(freeAfterFixed(ds, OCT)).toBe(2376);
-    expect(remainder(ds, OCT)).toBe(585);
     expect(Math.round(savingsRate(ds, OCT)! * 1000)).toBe(374);
   });
 
-  it('average: fixed € 1.917,50, free € 2.870,50, Vermögensaufbau € 1.834,67, Jahreskosten € 244,50', () => {
+  it('average: fixed € 1.917,50, free € 2.870,50, Vermögensaufbau € 1.834,67, nicht monatlich € 244,50', () => {
     expect(cents(fixedCostsAvg(ds, OCT))).toBe(191750);
     expect(freeAfterFixedAvg(ds, OCT)).toBe(2870.5);
     expect(cents(wealthBuildingAvg(ds, OCT))).toBe(183467);
