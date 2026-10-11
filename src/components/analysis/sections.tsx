@@ -7,9 +7,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
-  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,10 +17,6 @@ import {
   burdenTrend,
   categoryDistribution,
   distributionSummary,
-  latestMonthClose,
-  monthCloseHeadline,
-  monthCloseSeries,
-  monthCloseSummary,
   optimizationTimeline,
   type OptimizationEntry,
   planVsActual,
@@ -33,14 +26,13 @@ import {
   trendTooShortText,
   type TrendChange,
 } from '../../lib/analytics';
-import { formatCompactEUR, formatDelta, formatEUR, formatPercent, formatPercentShort } from '../../lib/format';
+import { formatCompactEUR, formatDelta, formatEUR, formatPercent } from '../../lib/format';
 import { periodLabel } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
-import { ChevronRight } from '../Icons';
+import { Disclosure } from '../Disclosure';
 import { formatIsoDate, planDescription } from '../Chips';
 import { ChartCard, EmptyCard, TooltipBox, TooltipRow } from './ChartCard';
 import {
-  AXIS_TICK,
   CHART_MARGIN,
   COLORS,
   ChangeMarkers,
@@ -60,7 +52,6 @@ function tipRow<T>(props: TipProps<T>): T | null {
   return props.active && props.payload?.length ? (props.payload[0]!.payload ?? null) : null;
 }
 
-const money = (v: number | null) => (v === null ? '–' : formatEUR(v));
 /** '+€ 7,40' → compact for labels above bars: '+€ 7', '−€ 147', '+€ 1,2k' */
 const deltaCompact = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${formatCompactEUR(Math.abs(v))}`;
 
@@ -80,237 +71,92 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
   if (d.rows.length === 0) {
     return <EmptyCard id="distribution" title="Verteilung nach Kategorie" text="Noch keine Ausgaben erfasst." />;
   }
-  const max = d.rows[0]!.monthly;
   return (
-    <ChartCard
-      id="distribution"
-      title="Verteilung nach Kategorie"
-      headline={distributionSummary(d)}
-      table={{
-        caption: 'Umgelegte Ausgaben pro Monat nach Kategorie',
-        head: ['Kategorie', 'Ø pro Monat', 'Anteil'],
-        rows: d.rows.map((r) => [r.category.name, formatEUR(r.monthly), formatPercent(r.share)]),
-      }}
-    >
-      <ul className="-mx-2 flex flex-col">
+    <ChartCard id="distribution" title="Verteilung nach Kategorie" headline={distributionSummary(d)}>
+      {/* the list says it all; screen readers additionally get the numbers as a table */}
+      <div className="sr-only">
+      <table>
+        <caption>Umgelegte Ausgaben pro Monat nach Kategorie</caption>
+        <thead>
+          <tr>
+            <th scope="col">Kategorie</th>
+            <th scope="col">Ø pro Monat</th>
+            <th scope="col">Anteil</th>
+          </tr>
+        </thead>
+        <tbody>
+          {d.rows.map((r) => (
+            <tr key={r.category.id}>
+              <th scope="row">{r.category.name}</th>
+              <td>{formatEUR(r.monthly)}</td>
+              <td>{formatPercent(r.share)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+      <ul className="flex flex-col" data-testid="distribution-list">
         {d.rows.map((r) => {
           const expanded = open === r.category.id;
           return (
-            <li key={r.category.id} data-category={r.category.id}>
-              <button
-                type="button"
-                aria-expanded={expanded}
-                onClick={() => setOpen(expanded ? null : r.category.id)}
-                className="focus-ring flex min-h-[52px] w-full flex-col justify-center gap-1.5 rounded-xl px-2 py-2 text-left hover:bg-zinc-50"
+            <li key={r.category.id} data-category={r.category.id} className="-mx-2">
+              <Disclosure
+                expanded={expanded}
+                onToggle={() => setOpen(expanded ? null : r.category.id)}
+                buttonClassName="flex-wrap rounded-xl px-2 py-2 hover:bg-zinc-50"
+                header={
+                  <>
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-ink">{r.category.name}</span>
+                    <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold text-ink">{formatEUR(r.monthly)}</span>
+                    <span className="num w-[52px] shrink-0 whitespace-nowrap text-right text-[13px] text-ink-mute" data-testid="share">
+                      {formatPercent(r.share)}
+                    </span>
+                    {/* bar length = the percentage shown: share of the total */}
+                    <span className="block h-2 rounded-full bg-zinc-100" aria-hidden="true" style={{ marginLeft: 24, width: 'calc(100% - 24px)' }}>
+                      <span
+                        className="block h-2 rounded-full"
+                        style={{ width: `${r.share * 100}%`, background: categoryColor(r.category.color) }}
+                        data-testid="share-bar"
+                      />
+                    </span>
+                  </>
+                }
               >
-                <span className="flex w-full items-baseline gap-2">
-                  <ChevronRight
-                    size={14}
-                    className={`shrink-0 self-center text-ink-faint transition-transform ${expanded ? 'rotate-90' : ''}`}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-ink">{r.category.name}</span>
-                  <span className="num shrink-0 text-[15px] font-semibold text-ink">{formatEUR(r.monthly)}</span>
-                  <span className="num w-[52px] shrink-0 text-right text-[13px] text-ink-mute">{formatPercent(r.share)}</span>
-                </span>
-                <span className="ml-[22px] block h-2 rounded-full bg-zinc-100" aria-hidden="true">
-                  <span
-                    className="block h-2 rounded-full"
-                    style={{ width: `${(r.monthly / max) * 100}%`, background: categoryColor(r.category.color) }}
-                  />
-                </span>
-              </button>
-              {expanded && (
-                <ul className="mb-2 ml-[30px] mr-2 flex flex-col gap-2 border-l border-line py-1 pl-3" data-testid="distribution-positions">
-                  {r.positions.map((p) => (
-                    <li key={p.position.id} className="flex flex-col gap-1">
-                      <span className="flex items-baseline gap-2 text-[14px]">
-                        <span className="min-w-0 flex-1 truncate text-ink-soft">{p.position.name}</span>
-                        <span className="num shrink-0 text-ink">{formatEUR(p.monthly)}</span>
-                        <span className="num w-[52px] shrink-0 text-right text-[12px] text-ink-mute">{formatPercent(p.share)}</span>
-                      </span>
-                      <span className="block h-1.5 rounded-full bg-zinc-100" aria-hidden="true">
-                        <span
-                          className="block h-1.5 rounded-full opacity-70"
-                          style={{ width: `${(p.monthly / max) * 100}%`, background: categoryColor(r.category.color) }}
-                        />
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                <div className="mb-2 ml-[30px] mr-2 border-l border-line py-1 pl-3" data-testid="distribution-positions">
+                  <p className="mb-1.5 text-[12px] text-ink-mute">Anteil an {r.category.name}</p>
+                  <ul className="flex flex-col gap-2">
+                    {r.positions.map((p) => {
+                      const within = r.monthly > 0 ? p.monthly / r.monthly : 0;
+                      return (
+                        <li key={p.position.id} className="flex flex-col gap-1">
+                          <span className="flex items-baseline gap-2 text-[14px]">
+                            <span className="min-w-0 flex-1 truncate text-ink-soft">{p.position.name}</span>
+                            <span className="num shrink-0 whitespace-nowrap text-ink">{formatEUR(p.monthly)}</span>
+                            <span className="num w-[52px] shrink-0 whitespace-nowrap text-right text-[12px] text-ink-mute" data-testid="share">
+                              {formatPercent(within)}
+                            </span>
+                          </span>
+                          {/* bar length = share of the category, like the percentage next to it */}
+                          <span className="block h-1.5 rounded-full bg-zinc-100" aria-hidden="true">
+                            <span
+                              className="block h-1.5 rounded-full opacity-70"
+                              style={{ width: `${within * 100}%`, background: categoryColor(r.category.color) }}
+                              data-testid="share-bar"
+                            />
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </Disclosure>
             </li>
           );
         })}
       </ul>
-      <p className="mt-2 px-1 text-[13px] text-ink-mute">
+      <p className="mt-2 text-[13px] text-ink-mute" data-testid="distribution-total">
         Summe <span className="num font-medium text-ink">{formatEUR(d.total)}</span> Ø pro Monat (umgelegt)
       </p>
-    </ChartCard>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// 3 · Month close
-// ---------------------------------------------------------------------------
-
-export function MonthCloseSection({ ds, periods, months }: { ds: Dataset; periods: Period[]; months: number }) {
-  const series = monthCloseSeries(ds, periods);
-  const headline = monthCloseHeadline(series);
-  if (headline === null) {
-    return (
-      <EmptyCard
-        id="monthclose"
-        title="Frei verfügbar & Sparquote"
-        text="Noch kein Monatsabschluss im Zeitraum. Trag im Monat unter „Frei verfügbar“ Netto-Gehalt und den tatsächlichen Betrag ein."
-      />
-    );
-  }
-  const table = {
-    caption: 'Frei verfügbar rechnerisch und tatsächlich, Sparquote',
-    head: ['Monat', 'Rechnerisch', 'Tatsächlich', 'Differenz', 'Sparquote'],
-    rows: series.map((r) => [
-      periodLabel(r.period),
-      money(r.calculated),
-      money(r.actual),
-      r.gap === null ? '–' : formatDelta(r.gap),
-      r.savingsRate === null ? '–' : formatPercent(r.savingsRate),
-    ]),
-  };
-  // like „Entwicklung“: a single point is no chart – below 3 months a compact number card
-  if (months < 3) {
-    const last = latestMonthClose(series)!;
-    return (
-      <ChartCard id="monthclose" title="Frei verfügbar & Sparquote" table={table}>
-        <div data-testid="monthclose-numbers">
-          <p className="text-[13px] font-medium text-ink-mute" data-testid="monthclose-headline-label">
-            {periodLabel(last.period)}
-          </p>
-          <dl className="mt-1 grid grid-cols-3 gap-3">
-            {[
-              ['Rechnerisch frei', money(last.calculated)],
-              ['Tatsächlich', money(last.actual)],
-              ['Sparquote', last.savingsRate === null ? '–' : formatPercent(last.savingsRate)],
-            ].map(([label, value]) => (
-              <div key={label} className="min-w-0">
-                <dt className="truncate text-[12px] text-ink-mute">{label}</dt>
-                <dd className="num whitespace-nowrap text-[18px] font-semibold leading-tight text-ink sm:text-[20px]">{value}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-2 text-[13px] text-ink-mute" data-testid="monthclose-headline-sub">
-            Verlauf ab 3 Monaten
-          </p>
-        </div>
-      </ChartCard>
-    );
-  }
-  const rows = series.map((r) => ({ ...r, label: axisPeriodLabel(r.period) }));
-  const hasRate = rows.some((r) => r.savingsRate !== null);
-  const hasActual = rows.some((r) => r.actual !== null);
-  const values = rows.flatMap((r) => [r.calculated, r.actual]).filter((v): v is number => v !== null);
-  const ticks = niceTicks(Math.min(0, ...values), Math.max(0, ...values));
-  return (
-    <ChartCard id="monthclose" title="Frei verfügbar & Sparquote" headline={monthCloseSummary(series)} table={table}>
-      <div className="h-[230px] w-full" role="img" aria-label="Balkendiagramm: frei verfügbar, rechnerisch und tatsächlich pro Monat">
-        <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
-          <BarChart data={rows} margin={CHART_MARGIN} accessibilityLayer barGap={2} barCategoryGap="24%">
-            <CartesianGrid vertical={false} stroke={COLORS.grid} />
-            <XAxis dataKey="label" {...xAxisProps} />
-            <YAxis {...yAxisProps} ticks={ticks} domain={[ticks[0]!, ticks[ticks.length - 1]!]} interval={0} />
-            <ReferenceLine y={0} stroke={COLORS.grid} />
-            <Tooltip
-              {...tooltipProps}
-              content={(props: TipProps<(typeof rows)[number]>) => {
-                const r = tipRow(props);
-                if (!r) return null;
-                return (
-                  <TooltipBox title={periodLabel(r.period)}>
-                    {r.calculated === null && r.actual === null ? (
-                      <p>Kein Monatsabschluss</p>
-                    ) : (
-                      <>
-                        <TooltipRow label="Rechnerisch" value={money(r.calculated)} swatch={COLORS.neutral} />
-                        <TooltipRow label="Tatsächlich" value={money(r.actual)} swatch={COLORS.accent} />
-                        {r.gap !== null && <TooltipRow label="Differenz" value={formatDelta(r.gap)} />}
-                      </>
-                    )}
-                  </TooltipBox>
-                );
-              }}
-            />
-            <Bar dataKey="calculated" fill={COLORS.neutral} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={false} name="Rechnerisch" />
-            <Bar dataKey="actual" fill={COLORS.accent} radius={[4, 4, 0, 0]} maxBarSize={22} isAnimationActive={false} name="Tatsächlich" />
-            <GroupLabels
-              categories={rows.map((r) => r.label)}
-              labels={rows
-                .filter((r) => r.gap !== null)
-                .map((r) => ({
-                  key: r.period,
-                  x: r.label,
-                  y: Math.max(r.calculated ?? 0, r.actual ?? 0),
-                  text: deltaCompact(r.gap!),
-                  color: r.gap! < 0 ? COLORS.over : r.gap! > 0 ? COLORS.paidText : COLORS.inkSoft,
-                }))}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-      <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-mute">
-        <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-[3px] bg-zinc-300" aria-hidden="true" />
-          rechnerisch
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-[3px] bg-accent" aria-hidden="true" />
-          tatsächlich
-        </span>
-        {hasActual && <span data-testid="monthclose-gap-legend">darüber: Differenz</span>}
-      </p>
-      {hasRate && (
-        <div className="mt-4 border-t border-line pt-3" data-testid="savings-rate">
-          <p className="text-[13px] font-medium text-ink-soft">Sparquote</p>
-          <div className="h-[120px] w-full" role="img" aria-label="Liniendiagramm: Sparquote pro Monat in Prozent">
-            <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 120 }}>
-              <LineChart data={rows} margin={{ ...CHART_MARGIN, top: 10 }} accessibilityLayer>
-                <CartesianGrid vertical={false} stroke={COLORS.grid} />
-                <XAxis dataKey="label" {...xAxisProps} />
-                <YAxis
-                  tickFormatter={formatPercentShort}
-                  tick={AXIS_TICK}
-                  axisLine={false}
-                  tickLine={false}
-                  width={52}
-                  domain={[0, (max: number) => Math.max(0.05, Math.ceil(max * 20) / 20)]}
-                  tickCount={3}
-                />
-                <Tooltip
-                  {...tooltipProps}
-                  cursor={{ stroke: COLORS.grid }}
-                  content={(props: TipProps<(typeof rows)[number]>) => {
-                    const r = tipRow(props);
-                    if (!r) return null;
-                    return (
-                      <TooltipBox title={periodLabel(r.period)}>
-                        <TooltipRow label="Sparquote" value={r.savingsRate === null ? '–' : formatPercent(r.savingsRate)} />
-                      </TooltipBox>
-                    );
-                  }}
-                />
-                <Line
-                  dataKey="savingsRate"
-                  stroke={COLORS.accent}
-                  strokeWidth={2}
-                  dot={{ r: 3, fill: COLORS.accent, strokeWidth: 0 }}
-                  activeDot={{ r: 5 }}
-                  connectNulls={false}
-                  isAnimationActive={false}
-                  name="Sparquote"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
     </ChartCard>
   );
 }

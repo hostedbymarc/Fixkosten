@@ -6,6 +6,8 @@ const c = (name) => v(`c-${name}`);
 
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  // hover: styles only for mouse / trackpad – on touch they used to stick after a tap
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     extend: {
       fontFamily: {

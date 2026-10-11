@@ -100,8 +100,8 @@
   /* category tones (stored DB values are mapped to these in src/lib/categoryColors.ts):
      muted, matching the pea green – Tinte, Schiefer, Mauve, Petrol, Pflaume, Salbei, Kiesel, Mokka.
      CIEDE2000 ≥ 20 between each other, ≥ 25 to brand and amber (src/lib/contrast.test.ts) */
-  --cat-1: #0f365a;
-  --cat-2: #6686b8;
+  --cat-1: #16548f;
+  --cat-2: #76859c;
   --cat-3: #c8a3cf;
   --cat-4: #196d74;
   --cat-5: #915c70;

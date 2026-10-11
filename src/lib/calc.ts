@@ -579,10 +579,6 @@ export function gap(actual: number | null | undefined, calculated: number | null
   return fromCents(toCents(actual) - toCents(calculated));
 }
 
-/** freeActual − freeAfterFixed. Null unless both are known. */
-export function freeGap(ds: Dataset, period: Period): number | null {
-  return gap(monthCloseFor(ds, period)?.freeActual, freeAfterFixed(ds, period));
-}
 
 /**
  * Sparquote: Vermögensaufbau of the month (every savings position, one-time payments
