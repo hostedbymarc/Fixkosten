@@ -5,27 +5,24 @@ import {
   actualForPeriod,
   dueItems,
   fixedCosts,
-  freeAfterFixed,
-  freeGap,
   isActiveInPeriod,
   kindOf,
-  monthCloseFor,
   monthlyEquivalent,
   planChanges,
   plannedForPeriod,
-  savingsRate,
   sortedCategories,
   sumMoney,
   sumMonthlyEquivalent,
   fixedCostsAvg,
 } from './calc';
 import { formatDelta, formatEUR, formatPercent } from './format';
-import { addPeriods, periodLabel, periodRange, shortMonthName, monthOf, yearOf } from './period';
+import { addPeriods, periodRange, shortMonthName, monthOf, yearOf } from './period';
 import type { Category, Dataset, Period, PlanEntry, Position } from './types';
 
 export type Range = '6m' | '12m' | 'all';
 
 const cents = (euros: number): number => Math.round(euros * 100);
+const fromCents = (c: number): number => c / 100;
 
 /** 'Okt 2026' */
 export function shortPeriodLabel(period: Period): string {
@@ -66,6 +63,8 @@ export interface ForecastMonth {
   due: number;
   /** part of `due` from one-time payments (frequency 'once') */
   once: number;
+  /** regular fixed costs of the month: `due` without one-time payments and one-offs (dark bar part) */
+  regular: number;
   aboveAverage: boolean;
   /** non-monthly positions and one-offs of the month, largest first */
   items: ForecastItem[];
@@ -73,8 +72,10 @@ export interface ForecastMonth {
 
 export interface YearForecast {
   months: ForecastMonth[];
-  /** Ø pro Monat: the same value as the tile on the month screen (fixedCostsAvg of today) */
+  /** Ø line: mean of the 12 regular bar parts (without one-time payments and one-offs) */
   average: number;
+  /** „Ø pro Monat“ tile of today (fixedCostsAvg); equals `average` unless plans change inside the window */
+  todayAverage: number;
   total: number;
   /** one-time payments in the window */
   onceTotal: number;
@@ -89,8 +90,7 @@ export interface YearForecast {
  */
 export function yearForecast(ds: Dataset, today: Period, count = 12): YearForecast {
   const periods = periodRange(addPeriods(today, 1), addPeriods(today, count));
-  const average = fixedCostsAvg(ds, today);
-  const months = periods.map((period): ForecastMonth => {
+  const raw = periods.map((period) => {
     const oneOffs = expenseOneOffs(ds, period);
     const nonMonthly = dueItems(ds, period).filter(
       (i) => i.due && i.status !== 'skipped' && i.kind === 'expense' && i.plan?.frequency !== 'monthly',
@@ -103,17 +103,61 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
     ].sort((x, y) => y.amount - x.amount);
     const due = fixedCosts(ds, period);
     const once = sumMoney(nonMonthly.filter((i) => i.plan?.frequency === 'once').map((i) => i.planned));
-    return { period, due, once, aboveAverage: cents(due) > cents(average), items };
+    const regular = sumMoney([due, -once, ...oneOffs.map((o) => -o.amount)]);
+    return { period, due, once, regular, items };
   });
+  // same basis as the dark bar parts: same positions, same categories, same 12 months
+  const average = fromCents(Math.round(raw.reduce((acc, m) => acc + cents(m.regular), 0) / raw.length));
+  const months = raw.map((m): ForecastMonth => ({ ...m, aboveAverage: cents(m.due) > cents(average) }));
   const peak = months.reduce<ForecastMonth | null>((best, m) => (!best || m.due > best.due ? m : best), null);
   return {
     months,
     average,
+    todayAverage: fixedCostsAvg(ds, today),
     total: sumMoney(months.map((m) => m.due)),
     onceTotal: sumMoney(months.map((m) => m.once)),
     peak,
     peakAboveAverage: peak ? peak.due - average : 0,
   };
+}
+
+export interface ForecastGapRow {
+  position: Position;
+  category: Category;
+  /** monthly equivalent in today's „Ø pro Monat“ */
+  today: number;
+  /** mean of its regular amounts over the 12 forecast months */
+  window: number;
+  diff: number;
+  /** first month it is due in the window when it does not run today */
+  startsIn?: Period;
+}
+
+/**
+ * Why the Ø line of the forecast differs from today's „Ø pro Monat“: positions that start
+ * later, end, or change their amount inside the window. Empty when both are equal.
+ */
+export function forecastAverageGap(ds: Dataset, today: Period, count = 12): ForecastGapRow[] {
+  const periods = periodRange(addPeriods(today, 1), addPeriods(today, count));
+  const items = periods.flatMap((p) => dueItems(ds, p));
+  const rows: ForecastGapRow[] = [];
+  for (const position of ds.positions) {
+    if (kindOf(ds, position) !== 'expense') continue;
+    const mine = items.filter((i) => i.position.id === position.id && i.due && i.status !== 'skipped' && i.plan?.frequency !== 'once');
+    const window = fromCents(Math.round(mine.reduce((acc, i) => acc + cents(i.planned), 0) / periods.length));
+    const now = isActiveInPeriod(position, today) ? monthlyEquivalent(position, today) : 0;
+    const diff = fromCents(cents(window) - cents(now));
+    if (diff === 0) continue;
+    rows.push({
+      position,
+      category: ds.categories.find((c) => c.id === position.categoryId)!,
+      today: now,
+      window,
+      diff,
+      startsIn: now === 0 && mine.length > 0 ? mine[0]!.period : undefined,
+    });
+  }
+  return rows.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
 }
 
 export interface ForecastSummary {
@@ -212,53 +256,6 @@ export function historyPeriods(ds: Dataset, today: Period, range: Range): Period
   if (range === 'all') return periodRange(start, today);
   const from = addPeriods(today, -(RANGE_MONTHS[range] - 1));
   return periodRange(from > start ? from : start, today);
-}
-
-// ---------------------------------------------------------------------------
-// 3 · Month close: free money calculated vs. actual, savings rate
-// ---------------------------------------------------------------------------
-
-export interface MonthCloseRow {
-  period: Period;
-  /** null = no month close / no salary → gap in the chart, never 0 */
-  calculated: number | null;
-  actual: number | null;
-  gap: number | null;
-  savingsRate: number | null;
-}
-
-export function monthCloseSeries(ds: Dataset, periods: Period[]): MonthCloseRow[] {
-  return periods.map((period) => {
-    const close = monthCloseFor(ds, period);
-    if (!close) return { period, calculated: null, actual: null, gap: null, savingsRate: null };
-    return {
-      period,
-      calculated: freeAfterFixed(ds, period),
-      actual: close.freeActual ?? null,
-      gap: freeGap(ds, period),
-      savingsRate: savingsRate(ds, period),
-    };
-  });
-}
-
-export function monthCloseHeadline(rows: MonthCloseRow[]): string | null {
-  const closed = rows.filter((r) => r.calculated !== null || r.actual !== null);
-  if (closed.length === 0) return null;
-  const withGap = closed.filter((r) => r.gap !== null);
-  const lastRate = [...closed].reverse().find((r) => r.savingsRate !== null)?.savingsRate ?? null;
-  const rate = lastRate === null ? '' : ` · Sparquote ${withGap.length > 1 ? 'zuletzt ' : ''}${formatPercent(lastRate)}`;
-  if (withGap.length === 0) return `Noch keine tatsächlichen Werte erfasst${rate}`;
-  const describe = (v: number) => `${formatEUR(Math.abs(v))} ${v < 0 ? 'weniger' : 'mehr'} frei als rechnerisch`;
-  if (withGap.length === 1) {
-    const r = withGap[0]!;
-    return cents(r.gap!) === 0
-      ? `${periodLabel(r.period)}: genau wie rechnerisch${rate}`
-      : `${periodLabel(r.period)}: ${describe(r.gap!)}${rate}`;
-  }
-  const avg = Math.round(withGap.reduce((acc, r) => acc + r.gap!, 0) / withGap.length);
-  return avg === 0
-    ? `Im Schnitt genau wie rechnerisch (${withGap.length} Monate)${rate}`
-    : `Im Schnitt ${describe(avg)} (${withGap.length} Monate)${rate}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -471,23 +468,6 @@ export function distributionSummary(d: Distribution): CardSummary {
     value: `${top.category.name} · ${formatPercent(top.share)}`,
     sub: `${formatEUR(top.monthly)} von ${formatEUR(d.total)} pro Monat`,
   };
-}
-
-/** Month close (from 3 months): Sparquote averaged over the months that have one. */
-export function monthCloseSummary(rows: MonthCloseRow[]): CardSummary {
-  const rates = rows.filter((r) => r.savingsRate !== null).map((r) => r.savingsRate!);
-  if (rates.length === 0) return { label: 'Sparquote', value: '–', sub: 'noch kein Netto-Gehalt eingetragen' };
-  const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
-  return {
-    label: 'Sparquote',
-    value: formatPercent(avg),
-    sub: rates.length === 1 ? 'aus 1 Monat' : `Ø der letzten ${rates.length} Monate`,
-  };
-}
-
-/** The latest month of the window with a month close (for the number card below 3 months). */
-export function latestMonthClose(rows: MonthCloseRow[]): MonthCloseRow | null {
-  return [...rows].reverse().find((r) => r.calculated !== null || r.actual !== null || r.savingsRate !== null) ?? null;
 }
 
 /** „Ø pro Monat“ / „€ 3.050“ / „+3,2 % seit Okt 2025 (€ 2.952)“ */

@@ -234,11 +234,18 @@ describe('ticking', () => {
 describe('month close', () => {
   it('saves, updates and removes an empty close', async () => {
     const db = openDb();
-    await saveMonthClose(db, '2026-10', { netSalary: 5000, freeActual: 650 });
-    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5000, freeActual: 650 });
+    await saveMonthClose(db, '2026-10', { netSalary: 5000 });
+    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5000 });
     await saveMonthClose(db, '2026-10', { netSalary: 5100 });
-    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5100, freeActual: undefined });
+    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5100 });
     await saveMonthClose(db, '2026-10', {});
     expect(await db.monthClose.get('2026-10')).toBeUndefined();
+  });
+
+  it('a legacy freeActual is never asked for again, but kept when the salary is saved', async () => {
+    const db = openDb();
+    await db.monthClose.put({ period: '2026-10', netSalary: 5000, freeActual: 650, updatedAt: '' });
+    await saveMonthClose(db, '2026-10', { netSalary: 5100 });
+    expect(await db.monthClose.get('2026-10')).toMatchObject({ netSalary: 5100, freeActual: 650 });
   });
 });

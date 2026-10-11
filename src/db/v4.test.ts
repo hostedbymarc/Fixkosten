@@ -5,7 +5,6 @@ import {
   annualizedSavingsFromChanges,
   expectedSpend,
   freeAfterFixed,
-  freeGap,
   periodProgress,
   plannedForPeriod,
   savingsRate,
@@ -105,7 +104,7 @@ describe('migration v3 → v4 (realistic data)', () => {
     expect(periodProgress(after, OCT)).toMatchObject({ planned: 3403, paidActual: 3375.4, openCount: 1 });
     expect(expectedSpend(after, '2026-11')).toBe(2662 + 120);
     expect(freeAfterFixed(after, OCT)).toBe(1589.6);
-    expect(freeGap(after, OCT)).toBe(-939.6);
+    expect(after.monthClose.find((m) => m.period === OCT)!.freeActual).toBe(650); // kept, no longer shown
     expect(savingsRate(after, OCT)).toBeCloseTo(0.16, 9);
     expect(annualizedSavingsFromChanges(after, { from: '2026-01', to: '2027-12' })).toMatchObject({ total: 24 });
   });

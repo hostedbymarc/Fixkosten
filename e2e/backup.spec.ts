@@ -77,7 +77,7 @@ test.describe('Sicherung', () => {
     await goTo(app, 'monat');
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'true');
     await expect(row(app, 'pos-strom')).toContainText(eur('+€ 7,40'));
-    await expect(app.getByTestId('free-tile')).toContainText(eur('rechnerisch'));
+    await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 4.700')); // live-only month close kept
     await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 3.410,40'));
   });
 

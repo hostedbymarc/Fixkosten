@@ -35,7 +35,8 @@ async function liveWithEntries(): Promise<FixkostenDB> {
   await importIntoEmpty(db, fixtureBackup());
   const depot = await markPaid(db, 'pos-depotentgelt', OCT, 35); // only ticked live
   await updatePayment(db, depot.id, { actualAmount: 35, note: 'live' });
-  await saveMonthClose(db, OCT, { netSalary: 4700, freeActual: 450 });
+  await saveMonthClose(db, OCT, { netSalary: 4700 });
+  await db.monthClose.update(OCT, { freeActual: 450 }); // legacy value, no longer asked for
   await updatePayment(db, 'pay-pos-strom-2026-10', { actualAmount: 66 }); // conflicts with the preview
   return db;
 }
