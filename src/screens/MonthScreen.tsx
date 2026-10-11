@@ -1,8 +1,10 @@
-import { forwardRef, useId, useMemo, useRef, useState } from 'react';
+import { forwardRef, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useCollapsed } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
+import { InfoTip } from '../components/InfoTip';
+import { averageMonthExplanation, type AverageMonthExplanation } from '../lib/explain';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { MonthNoteCard, MonthNoteSheet } from '../components/MonthNote';
@@ -194,6 +196,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             period={period}
             calculated={freeAfterFixed(ds, period)}
             average={freeAfterFixedAvg(ds, period)}
+            explanation={averageMonthExplanation(ds, period)}
             wealth={wealthBuilding(ds, period)}
             rate={savingsRate(ds, period)}
             onOpen={() => openClose(closeTile.current)}
@@ -509,48 +512,95 @@ interface FreeTileProps {
   calculated: number | null;
   /** net salary − fixed costs spread over the year */
   average: number | null;
+  /** tooltip of „im Ø-Monat“ (null without salary) */
+  explanation: AverageMonthExplanation | null;
   /** Vermögensaufbau due this month */
   wealth: number;
   rate: number | null;
   onOpen: () => void;
 }
 
+/** Centre of the ⓘ slot behind the „im Ø-Monat“ amount, relative to the tile (the info button sits on top of it). */
+function useSlotPosition(wrapper: React.RefObject<HTMLDivElement>, slot: React.RefObject<HTMLSpanElement>, active: boolean) {
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!active) return setPos(null);
+    const update = () => {
+      if (!wrapper.current || !slot.current) return;
+      const w = wrapper.current.getBoundingClientRect();
+      const s = slot.current.getBoundingClientRect();
+      // 44 px hit area centred on the icon, kept inside the tile
+      const left = Math.min(Math.max(s.left + s.width / 2 - w.left - 22, 0), Math.max(w.width - 44, 0));
+      setPos({ left, top: s.top + s.height / 2 - w.top - 22 });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    if (wrapper.current) observer.observe(wrapper.current);
+    void document.fonts?.ready.then(update);
+    return () => observer.disconnect();
+  }, [active, wrapper, slot]);
+  return pos;
+}
+
 /** "Frei verfügbar": net salary − fixed costs, at most two short lines below. Opens the month close. */
 const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
-  { period, calculated, average, wealth, rate, onOpen },
+  { period, calculated, average, explanation, wealth, rate, onOpen },
   ref,
 ) {
   const value = calculated;
+  const wrapper = useRef<HTMLDivElement>(null);
+  const slot = useRef<HTMLSpanElement>(null);
+  const showInfo = average !== null && explanation !== null;
+  const info = useSlotPosition(wrapper, slot, showInfo);
   return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={onOpen}
-      aria-label={`Frei verfügbar – Monatsabschluss ${periodLabel(period)} öffnen`}
-      className={`${tileClass} focus-ring col-span-2 hover:bg-zinc-50/40 sm:col-span-1`}
-      data-testid="free-tile"
-    >
-      <span className={tileLabel}>Frei verfügbar</span>
-      <span className={`${tileValue} ${value === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="free-value">
-        {value === null ? '–' : formatEUR(value)}
-      </span>
-      {calculated === null && (
-        <span className={tileSub} data-testid="free-sub">
-          rechnet mit dem <span className="font-semibold text-accent-ink">Netto-Gehalt</span>
+    // the ⓘ is its own button next to (not inside) the tile button
+    <div ref={wrapper} className="relative col-span-2 flex min-w-0 sm:col-span-1">
+      <button
+        ref={ref}
+        type="button"
+        onClick={onOpen}
+        aria-label={`Frei verfügbar – Monatsabschluss ${periodLabel(period)} öffnen`}
+        className={`${tileClass} focus-ring w-full hover:bg-zinc-50/40`}
+        data-testid="free-tile"
+      >
+        <span className={tileLabel}>Frei verfügbar</span>
+        <span className={`${tileValue} ${value === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="free-value">
+          {value === null ? '–' : formatEUR(value)}
         </span>
+        {calculated === null && (
+          <span className={tileSub} data-testid="free-sub">
+            rechnet mit dem <span className="font-semibold text-accent-ink">Netto-Gehalt</span>
+          </span>
+        )}
+        {average !== null && (
+          <span className={tileSub} data-testid="free-average">
+            im Ø-Monat <Amount>{formatEUR(average)}</Amount>
+            {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
+            {showInfo && <span ref={slot} className="ml-0.5 inline-block h-3 w-4 align-middle" aria-hidden="true" />}
+          </span>
+        )}
+        {rate !== null && (
+          <span className={tileSub} data-testid="free-wealth">
+            Vermögensaufbau <Amount>{formatEUR(wealth)}</Amount> · Sparquote{' '}
+            <Amount>{formatPercent(rate)}</Amount>
+          </span>
+        )}
+      </button>
+      {showInfo && (
+        <InfoTip
+          label="Erklärung: im Ø-Monat"
+          title="Im Ø-Monat"
+          className="absolute z-10"
+          style={{ left: info?.left ?? 0, top: info?.top ?? 0, visibility: info ? 'visible' : 'hidden' }}
+          testId="free-average-info"
+        >
+          <p className="num text-ink" data-testid="free-average-formula">
+            {explanation.formula}
+          </p>
+          <p>So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst.</p>
+        </InfoTip>
       )}
-      {average !== null && (
-        <span className={tileSub} data-testid="free-average">
-          im Ø-Monat <Amount>{formatEUR(average)}</Amount>
-        </span>
-      )}
-      {rate !== null && (
-        <span className={tileSub} data-testid="free-wealth">
-          Vermögensaufbau <Amount>{formatEUR(wealth)}</Amount> · Sparquote{' '}
-          <Amount>{formatPercent(rate)}</Amount>
-        </span>
-      )}
-    </button>
+    </div>
   );
 });
 
