@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { eur, expect, goTo, isSidebarLayout, isTouchProject, test } from './fixtures';
+import { animationsDone, eur, expect, goTo, isSidebarLayout, isTouchProject, test } from './fixtures';
 import { expectClean } from './measure';
 import { importSprint } from './sprint-data';
 
@@ -125,6 +125,8 @@ test.describe('Kategorien einklappen (Monat)', () => {
 
     await goTo(page, 'positionen');
     await page.getByRole('button', { name: 'Kategorien' }).click();
+    // dnd-kit measures the rows when the drag starts: the sheet must have finished sliding in
+    await animationsDone(page, 'bottom-sheet');
     await page.getByRole('button', { name: 'Kategorie „Meine Immos“ verschieben' }).focus();
     const live = page.getByText(/„Meine Immos“ (aufgenommen|ist jetzt an Position)/);
     await page.keyboard.press('Space');

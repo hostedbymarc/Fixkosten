@@ -5,6 +5,8 @@ import { formatCompactEUR } from '../../lib/format';
 export const COLORS = {
   accent: 'var(--chart-accent)',
   accentLight: 'var(--chart-accent-light)',
+  /** Sparquote: months other than the shown one */
+  accentMuted: 'var(--chart-accent-muted)',
   neutral: 'var(--chart-neutral)',
   grid: 'var(--chart-grid)',
   axis: 'var(--chart-axis)',
