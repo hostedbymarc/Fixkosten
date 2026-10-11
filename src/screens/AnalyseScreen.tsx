@@ -6,6 +6,7 @@ import {
   PlanActualSection,
   TrendSection,
 } from '../components/analysis/sections';
+import { SavingsSection } from '../components/analysis/Savings';
 import { dataMonths, historyPeriods, type Range } from '../lib/analytics';
 import { useToday } from '../lib/useToday';
 import type { Dataset } from '../lib/types';
@@ -32,7 +33,11 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
       <div className="flex flex-col gap-6">
         <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
           <ForecastSection ds={ds} today={today} />
-          <DistributionSection ds={ds} today={today} />
+          {/* Sparquote directly below the distribution, also in the two-column layout */}
+          <div className="flex min-w-0 flex-col gap-6">
+            <DistributionSection ds={ds} today={today} />
+            <SavingsSection ds={ds} today={today} />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-3 border-t border-line pt-5">

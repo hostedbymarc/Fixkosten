@@ -38,7 +38,7 @@ test.describe('Jahresvorschau', () => {
     const card = await openForecast(page);
     await expect(page.getByTestId('forecast-headline-label')).toHaveText('Teuerster Monat');
     await expect(page.getByTestId('forecast-headline-value')).toHaveText(eur('Nov 2026 · € 6.110'));
-    await expect(page.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 3.158 über Ø'));
+    await expect(page.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 3.158 über dem 12-Monats-Ø'));
     await expect(card.getByTestId('avg-chip')).toHaveText('Ø 2.952');
     await expect(card).not.toContainText('Sondertilgung'); // one-time payment in Vermögensaufbau
     await expect(card).not.toContainText('Cash');
