@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
 import { Brand } from './components/Logo';
+import { Loader } from './components/Loader';
 import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -49,7 +50,7 @@ export function App() {
   const setup = useLiveQuery(() => needsSetup(db), []);
   const [period, setPeriod] = useState<Period>(() => toPeriod(new Date()));
 
-  if (setup === undefined) return null;
+  if (setup === undefined) return <Loader />;
   if (setup) return <SetupDialog />;
 
   return (
@@ -61,9 +62,7 @@ export function App() {
           style={{ paddingBottom: 'calc(var(--tabbar-space) + 16px)' }}
         >
           {!ds ? (
-            <div className="p-8 text-center text-ink-mute" aria-busy="true">
-              Lädt …
-            </div>
+            <Loader />
           ) : route === 'monat' ? (
             <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
           ) : route === 'positionen' ? (
@@ -71,9 +70,7 @@ export function App() {
           ) : route === 'analyse' ? (
             <Suspense
               fallback={
-                <div className="p-8 text-center text-ink-mute" aria-busy="true">
-                  Lädt …
-                </div>
+                <Loader />
               }
             >
               <AnalyseScreen ds={ds} />
