@@ -223,7 +223,38 @@ body[data-sheets] #root .glass-strong {
   animation: month-from-left 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* loading: the three peas of the logo pulse one after another */
+@keyframes pea-pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.45;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes pea-fade {
+  0%,
+  80%,
+  100% {
+    opacity: 0.45;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+.anim-pea {
+  animation: pea-pulse 1.2s ease-in-out infinite both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* no scaling, only a slow change of brightness */
+  .anim-pea {
+    animation: pea-fade 1.8s ease-in-out infinite both;
+  }
   .anim-check,
   .anim-check path,
   .anim-sheet,
