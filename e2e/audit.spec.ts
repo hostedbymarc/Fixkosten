@@ -56,27 +56,66 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
     await page.screenshot({ path: `${DIR}/${info.project.name}-november-nachher.png`, fullPage: true });
   });
 
-  test('Lebensmittel: Ist 450 in der Zeile, Notiz bleibt, Chip „−€ 30“ neutral grau', async ({ page }) => {
+  test('Lebensmittel: Ist 450 in der Zeile, Notiz bleibt, Chip „−€ 30“ brand-grün mit Vorzeichen (U+2212)', async ({ page }) => {
     await importNovember(page);
     const row = page.locator('[data-position="pos-lebensmittel"]');
     await expect(row).toContainText('€30 vom Vormonat abgehoben');
     await expect(row).toContainText(eur('€ 450'));
     const chip = row.getByTestId('delta-chip');
-    await expect(chip).toHaveText(eur('−€ 30'));
-    await expect(chip).toHaveAttribute('aria-label', /Abweichung vom Plan/);
-    const [chipStyle, neutral] = await Promise.all([
-      chip.evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color })),
-      page.evaluate(() => {
-        const probe = document.createElement('span');
-        probe.className = 'bg-zinc-100 text-ink-mute';
-        document.body.append(probe);
-        const s = { bg: getComputedStyle(probe).backgroundColor, fg: getComputedStyle(probe).color };
-        probe.remove();
-        return s;
-      }),
-    ]);
-    expect(chipStyle).toEqual(neutral); // no green, no red
+    await expect(chip).toHaveText('\u2212€\u00a030');
+    await expect(chip).toHaveAttribute('aria-label', /Weniger als geplant: \u2212€/);
+    await expect(chip).toHaveAttribute('data-tone', 'paid');
+    expect(await chipColors(chip)).toEqual(await probeColors(page, 'bg-paid-soft text-paid-ink'));
   });
+
+  test('Chip „+€ …“ rot, wenn mehr abgebucht wurde als geplant', async ({ page }) => {
+    await importNovember(page);
+    // tick Miete with more than planned (UI flow, nothing stored by hand)
+    const miete = page.locator('[data-position="pos-miete"]');
+    await miete.getByRole('button', { name: 'Miete als bezahlt markieren' }).click();
+    await miete.getByRole('button', { name: 'Miete – Details' }).click();
+    await page.getByLabel('Tatsächlich abgebucht').fill('1.020');
+    await page.getByRole('button', { name: 'Speichern' }).click();
+    const chip = miete.getByTestId('delta-chip');
+    await expect(chip).toHaveText('+€\u00a012');
+    await expect(chip).toHaveAttribute('aria-label', /Mehr als geplant: \+€/);
+    await expect(chip).toHaveAttribute('data-tone', 'over');
+    expect(await chipColors(chip)).toEqual(await probeColors(page, 'bg-over-soft text-over'));
+  });
+
+  test('Kommt bald: Quartal mit Fälligkeitsmonaten, umbrechend aber nie abgeschnitten', async ({ page }) => {
+    await importNovember(page);
+    const upcoming = page.getByRole('region', { name: 'Kommt bald' }).or(page.locator('section[aria-labelledby="upcoming-title"]'));
+    for (const name of ['Entgelt Kontoführung', 'Depotentgelt']) {
+      const li = upcoming.locator('li', { hasText: name });
+      await expect(li).toContainText('Quartal · Jän, Apr, Jul, Okt');
+      await expect(li).toContainText('Jänner');
+    }
+    await expect(upcoming.locator('li', { hasText: 'Baurechtszins' })).toContainText('Halbjährlich · Jun, Dez');
+    await expectClean(page, 'section[aria-labelledby="upcoming-title"]');
+    const clipped = await upcoming.locator('li span').evaluateAll((els) =>
+      els.filter((e) => !e.classList.contains('truncate') && e.scrollWidth > e.clientWidth + 1).map((e) => e.textContent),
+    );
+    expect(clipped).toEqual([]);
+  });
+
+  for (const dark of [false, true]) {
+    test(`Screenshot Monat-Screen November ${dark ? 'dunkel' : 'hell'} (Chip, Kategorie-Punkte, Kommt bald)`, async ({ page }, info) => {
+      if (dark) await page.emulateMedia({ colorScheme: 'dark' });
+      await importNovember(page);
+      await expect(page.locator('[data-position="pos-lebensmittel"]').getByTestId('delta-chip')).toBeVisible();
+      // the dots of Investing (Mokka) and Sonstiges (Pflaume) are different colours
+      const dots = await page.getByTestId('category-group').evaluateAll((els) =>
+        Object.fromEntries(els.map((e) => [e.getAttribute('aria-label'), getComputedStyle(e.querySelector('[data-testid="group-toggle"] span[aria-hidden="true"].rounded-full')!).backgroundColor])),
+      );
+      expect(new Set(Object.values(dots)).size, JSON.stringify(dots)).toBe(Object.keys(dots).length);
+      await expectClean(page, 'main');
+      await page.addStyleTag({ content: '[data-testid="tabbar"] { visibility: hidden !important; }' });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `${DIR}/${info.project.name}-monat-${dark ? 'dunkel' : 'hell'}.png`, fullPage: true });
+    });
+  }
 
   test('Monatswechsel überträgt keinen Haken; Oktober behält seine eigenen', async ({ page }) => {
     await importNovember(page);
@@ -169,3 +208,18 @@ test.describe('Frei verfügbar positiv und negativ', () => {
     }
   });
 });
+
+async function chipColors(chip: ReturnType<Page['getByTestId']>) {
+  return chip.evaluate((el) => ({ bg: getComputedStyle(el).backgroundColor, fg: getComputedStyle(el).color }));
+}
+
+async function probeColors(page: Page, className: string) {
+  return page.evaluate((cls) => {
+    const probe = document.createElement('span');
+    probe.className = cls;
+    document.body.append(probe);
+    const s = { bg: getComputedStyle(probe).backgroundColor, fg: getComputedStyle(probe).color };
+    probe.remove();
+    return s;
+  }, className);
+}

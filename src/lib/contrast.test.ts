@@ -183,6 +183,34 @@ describe('Kontrast der Tokens (WCAG)', () => {
   });
 });
 
+describe('Delta-Chip (Ist − Plan): Text ≥ 4,5:1 auf der Chip-Fläche', () => {
+  it.each([
+    ['Hell', 'weniger (grün)', light, '--c-paid-ink', '--c-paid-soft'],
+    ['Hell', 'mehr (rot)', light, '--c-over', '--c-over-soft'],
+    ['Dunkel', 'weniger (grün)', dark, '--c-paid-ink', '--c-paid-soft'],
+    ['Dunkel', 'mehr (rot)', dark, '--c-over', '--c-over-soft'],
+  ] as const)('%s, %s', (_, __, v, fg, bg) => {
+    expect(contrast(rgb(v, fg), rgb(v, bg))).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('Kategorie-Farben: 8 Slots, 8 verschiedene Tokens', () => {
+  it('jeder Slot zeigt auf ein eigenes Token; keine zwei Tokens mit gleichem Wert (Hell und Dunkel)', async () => {
+    const { CATEGORY_SLOTS } = await import('./categoryColors');
+    const tokens = CATEGORY_SLOTS.map((s) => s.color);
+    expect(new Set(tokens).size).toBe(8);
+    for (const v of [light, dark]) expect(new Set(CATS.map((c) => resolve(v, c).toLowerCase())).size).toBe(8);
+  });
+
+  it.each([
+    ['Hell', light],
+    ['Dunkel', dark],
+  ] as const)('%s: paarweise ΔE ≥ 15 (Anforderung), tatsächlich ≥ 20', (_, v) => {
+    for (let i = 0; i < CATS.length; i++)
+      for (let j = i + 1; j < CATS.length; j++) expect(deltaE(rgb(v, CATS[i]!), rgb(v, CATS[j]!))).toBeGreaterThanOrEqual(15);
+  });
+});
+
 describe('Farbabstände (CIEDE2000)', () => {
   it('Brand vs. Amber ≥ 25', () => {
     expect(deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn-icon'))).toBeGreaterThanOrEqual(25);
@@ -215,6 +243,12 @@ if (process.env.CONTRAST_REPORT) {
     '',
     `ΔE2000 Brand #5A7A2E ↔ Amber-Icon: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn-icon')).toFixed(1)}**, ↔ Amber-Text: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn')).toFixed(1)}**, ↔ Rot: ${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-over')).toFixed(1)}`,
   ];
+  lines.push('', '**Delta-Chip** (Text auf Chip-Fläche, Ziel ≥ 4,5)', '', '| Thema | Variante | Text | Fläche | Kontrast |', '|---|---|---|---|---|');
+  for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
+    for (const [name, fg, bg] of [['weniger (grün)', '--c-paid-ink', '--c-paid-soft'], ['mehr (rot)', '--c-over', '--c-over-soft']] as const) {
+      lines.push(`| ${theme} | ${name} | \`${fg}\` | \`${bg}\` | ${contrast(rgb(v, fg), rgb(v, bg)).toFixed(2)} |`);
+    }
+  }
   for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
     const refs = ['--brand-500', '--chart-accent', '--c-warn-icon', '--c-warn', '--c-over'];
     lines.push('', `**Kategorien ${theme}** (ΔE2000; Ziel untereinander ≥ 20, zu Brand/Amber ≥ 25, zu Rot ≥ 20)`, '');
