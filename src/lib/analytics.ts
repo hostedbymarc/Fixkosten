@@ -19,7 +19,7 @@ import {
   savingsRate,
   wealthBuilding,
 } from './calc';
-import { formatDelta, formatEUR, formatPercent } from './format';
+import { formatAvg, formatDelta, formatEUR, formatPercent } from './format';
 import { addPeriods, periodRange, shortMonthName, monthOf, yearOf } from './period';
 import type { Category, Dataset, Period, PlanEntry, Position } from './types';
 
@@ -271,15 +271,15 @@ export function trendHeadline(t: BurdenTrend): string {
   if (!first || !last) return '';
   const change = first.total > 0 ? last.total / first.total - 1 : 0;
   const since = `seit ${shortPeriodLabel(first.period)}`;
-  if (cents(last.total) === cents(first.total)) return `Unverändert ${formatEUR(last.total)} Ø pro Monat ${since}.`;
+  if (cents(last.total) === cents(first.total)) return `Unverändert ${formatAvg(last.total)} Ø pro Monat ${since}.`;
   const sign = change > 0 ? '+' : '−';
-  return `${formatEUR(first.total)} → ${formatEUR(last.total)} Ø pro Monat ${since} (${sign}${formatPercent(Math.abs(change))}).`;
+  return `${formatAvg(first.total)} → ${formatAvg(last.total)} Ø pro Monat ${since} (${sign}${formatPercent(Math.abs(change))}).`;
 }
 
 /** Empty state below 3 months of data. */
 export function trendTooShortText(ds: Dataset, today: Period): string {
   const start = dataStart(ds, today);
-  return `Ab 3 Monaten siehst du hier die Entwicklung. Bisher: ${formatEUR(fixedCostsAvg(ds, today))} Ø pro Monat seit ${shortPeriodLabel(start)}.`;
+  return `Ab 3 Monaten siehst du hier die Entwicklung. Bisher: ${formatAvg(fixedCostsAvg(ds, today))} Ø pro Monat seit ${shortPeriodLabel(start)}.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -539,7 +539,7 @@ export function distributionSummary(d: Distribution): CardSummary {
   return {
     label: 'Größter Block',
     value: `${top.category.name} · ${formatPercent(top.share)}`,
-    sub: `${formatEUR(top.monthly)} von ${formatEUR(d.total)} pro Monat`,
+    sub: `${formatAvg(top.monthly)} von ${formatAvg(d.total)} pro Monat`,
   };
 }
 
@@ -549,12 +549,12 @@ export function trendSummary(t: BurdenTrend): CardSummary {
   const last = t.points[t.points.length - 1];
   if (!first || !last) return { label: 'Ø pro Monat', value: '–' };
   const since = `seit ${shortPeriodLabel(first.period)}`;
-  if (cents(last.total) === cents(first.total)) return { label: 'Ø pro Monat', value: formatEUR(last.total), sub: `unverändert ${since}` };
+  if (cents(last.total) === cents(first.total)) return { label: 'Ø pro Monat', value: formatAvg(last.total), sub: `unverändert ${since}` };
   const change = first.total > 0 ? last.total / first.total - 1 : 0;
   return {
     label: 'Ø pro Monat',
-    value: formatEUR(last.total),
-    sub: `${change > 0 ? '+' : '−'}${formatPercent(Math.abs(change))} ${since} (${formatEUR(first.total)})`,
+    value: formatAvg(last.total),
+    sub: `${change > 0 ? '+' : '−'}${formatPercent(Math.abs(change))} ${since} (${formatAvg(first.total)})`,
   };
 }
 

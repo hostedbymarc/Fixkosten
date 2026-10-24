@@ -9,7 +9,7 @@ import {
   samePlan,
   sortedCategories,
 } from '../lib/calc';
-import { amountToInput, formatEUR, parseAmount } from '../lib/format';
+import { amountToInput, formatAvg, parseAmount } from '../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../lib/period';
 import type { Dataset, Frequency, Period, Position } from '../lib/types';
 import { BottomSheet } from './BottomSheet';
@@ -180,7 +180,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           hint={
             equivalent !== null && frequency !== 'monthly' && !once ? (
               <>
-                Ø <span className="num">{formatEUR(equivalent)}</span> pro Monat
+                Ø <span className="num">{formatAvg(equivalent)}</span> pro Monat
               </>
             ) : undefined
           }
