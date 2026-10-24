@@ -26,7 +26,7 @@ import {
   trendTooShortText,
   type TrendChange,
 } from '../../lib/analytics';
-import { formatCompactEUR, formatDelta, formatAvg, formatEUR, formatPercent } from '../../lib/format';
+import { formatCompactEUR, formatDelta, formatAvg, formatEUR, formatPercent, MINUS } from '../../lib/format';
 import { periodLabel } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { Disclosure } from '../Disclosure';
@@ -53,7 +53,7 @@ function tipRow<T>(props: TipProps<T>): T | null {
 }
 
 /** '+€ 7,40' → compact for labels above bars: '+€ 7', '−€ 147', '+€ 1,2k' */
-const deltaCompact = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${formatCompactEUR(Math.abs(v))}`;
+const deltaCompact = (v: number) => `${v > 0 ? '+' : v < 0 ? MINUS : ''}${formatCompactEUR(Math.abs(v))}`;
 
 // ---------------------------------------------------------------------------
 // 1 · Year forecast

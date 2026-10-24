@@ -20,7 +20,9 @@ import {
   wealthBuilding,
   type MonthFigures,
 } from './calc';
-import { formatPercent } from './format';
+import { formatAvg, formatDelta, formatEUR, formatCompactEUR, formatPercent, MINUS } from './format';
+import { averageMonthExplanation } from './explain';
+import { freeAfterFixedAvg, freeAfterFixedWith } from './calc';
 import { addPeriods, periodRange, toPeriod } from './period';
 import type { Category, Dataset, Frequency, OneOff, Payment, Position } from './types';
 
@@ -44,7 +46,7 @@ describe('Golden Fixture November 2026 (deine Daten)', () => {
     expect(progressPercent(f)).toBe(8);
     expect(f.wealth).toBe(800);
     expect(f.netSalary).toBe(7819);
-    expect(f.free).toBe(2170);
+    expect(f.free).toBe(1370); // 7.819 − 5.649 − 800 (Frei verfügbar = Netto − Fixkosten − Vermögensaufbau)
     expect(formatPercent(f.savingsRate!).replace(/\s/g, ' ')).toBe('10,2 %');
   });
 
@@ -100,7 +102,42 @@ describe('Golden Fixture November 2026 (deine Daten)', () => {
     const f = monthFigures(ds, NOV);
     expect(f.total).toBe(5649 - 991);
     expect(f.wealth).toBe(800 + 991);
-    expect(f.free).toBe(7819 - (5649 - 991));
+    expect(f.free).toBe(7819 - (5649 - 991) - (800 + 991));
+  });
+});
+
+describe('Negatives „Frei verfügbar“ (November mit hohen Einmaligen, Netto 3.000)', () => {
+  function low(): Dataset {
+    const ds = november();
+    ds.monthClose.find((m) => m.period === NOV)!.netSalary = 3000;
+    return ds;
+  }
+
+  it('Frei verfügbar, im Ø-Monat und Rechnerisch frei werden negativ – mit U+2212', () => {
+    const ds = low();
+    const f = monthFigures(ds, NOV);
+    expect(f.free).toBe(3000 - 5649 - 800);
+    expect(freeAfterFixedAvg(ds, NOV)).toBe(-752.17); // 3.000 − 2.952,17 − 800,00
+    expect(freeAfterFixedWith(ds, NOV, 3000)).toBe(f.free);
+    expect(formatEUR(f.free!)).toBe(`${MINUS}€\u00a03.449`);
+    expect(formatAvg(-752.17)).toBe(`${MINUS}€\u00a0752,17`);
+    expect(averageMonthExplanation(ds, NOV)!.formula).toMatch(new RegExp(`= ${MINUS}€\\s752,17$`));
+  });
+
+  it('der Ring bleibt bei negativem „Frei verfügbar“ unverändert und zwischen 0 und 100 %', () => {
+    const pos = monthFigures(november(), NOV);
+    const neg = monthFigures(low(), NOV);
+    expect([neg.ratio, progressPercent(neg)]).toEqual([pos.ratio, progressPercent(pos)]);
+    expect(progressPercent(neg)).toBe(8);
+  });
+
+  it('ein Minuszeichen in der ganzen App: Beträge, Differenzen, Achsen und Prozent', () => {
+    const outputs = [formatEUR(-490), formatEUR(-0.5), formatAvg(-1.5), formatDelta(-30), formatCompactEUR(-1200), formatPercent(-0.052)];
+    for (const o of outputs) {
+      expect(o.startsWith(MINUS), o).toBe(true);
+      expect(o, o).not.toMatch(/[-\u2010-\u2014]/);
+    }
+    expect(MINUS).toBe('\u2212');
   });
 });
 
@@ -302,7 +339,7 @@ function check(ds: Dataset, period: string, f: MonthFigures) {
   const savingsSum = f.categories.filter((c) => c.category.kind === 'savings').reduce((a, c) => a + cents(c.total), 0);
   expect(savingsSum, `Vermögensaufbau ${tag}`).toBe(cents(f.wealth));
   if (f.netSalary !== null) {
-    expect(cents(f.free!), `Frei = Netto − Gesamt ${tag}`).toBe(cents(f.netSalary) - cents(f.total));
+    expect(cents(f.free!), `Frei = Netto − Gesamt − Vermögensaufbau ${tag}`).toBe(cents(f.netSalary) - cents(f.total) - cents(f.wealth));
     if (f.netSalary > 0) expect(f.savingsRate).toBeCloseTo(f.wealth / f.netSalary, 12);
   }
   // the older API returns the same numbers
@@ -313,7 +350,7 @@ function check(ds: Dataset, period: string, f: MonthFigures) {
 }
 
 describe('Invarianten (Property-Tests, 300 zufällige Datensätze × 24 Monate)', () => {
-  it('Abgebucht + Offen = Gesamt · Σ Kategorien = Gesamt · bezahlt + offen = fällig · Frei = Netto − Gesamt', () => {
+  it('Abgebucht + Offen = Gesamt · Σ Kategorien = Gesamt · bezahlt + offen = fällig · Frei = Netto − Gesamt − Vermögensaufbau', () => {
     for (let seed = 1; seed <= 300; seed++) {
       const ds = randomDataset(seed);
       for (const period of MONTHS) check(ds, period, monthFigures(ds, period));

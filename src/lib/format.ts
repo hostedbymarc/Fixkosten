@@ -14,13 +14,22 @@ const eur0 = new Intl.NumberFormat('de-AT', {
 });
 
 /**
+ * The one minus sign of the app (U+2212 MINUS SIGN): every negative amount, delta and
+ * percentage uses it, never the hyphen-minus '-' or a dash.
+ */
+export const MINUS = '\u2212';
+
+/** Replaces a leading hyphen-minus from Intl with MINUS. */
+const withMinus = (s: string) => s.replace(/^-/, MINUS);
+
+/**
  * '€ 1.234,56'. Whole-euro amounts drop the cents ('€ 3.368') unless
  * `fixed` is set, matching how the old notes were written.
  */
 export function formatEUR(value: number, opts: { fixed?: boolean } = {}): string {
   const cents = Math.round(value * 100);
   // negative: typographic minus, no space before '€' ('−€ 490', never '-€ 490')
-  if (cents < 0) return `\u2212${formatEUR(-cents / 100, opts)}`;
+  if (cents < 0) return `${MINUS}${formatEUR(-cents / 100, opts)}`;
   const normalized = cents / 100 || 0; // avoid '-0'
   if (!opts.fixed && cents % 100 === 0) return eur0.format(normalized);
   return eur2.format(normalized);
@@ -38,7 +47,7 @@ export function formatAvg(value: number): string {
 export function formatDelta(value: number): string {
   const cents = Math.round(value * 100);
   if (cents === 0) return formatEUR(0);
-  const sign = cents > 0 ? '+' : '−';
+  const sign = cents > 0 ? '+' : MINUS;
   return `${sign}${formatEUR(Math.abs(cents) / 100)}`;
 }
 
@@ -57,7 +66,7 @@ export function formatDayMonth(day: number, month: number): string {
  * Returns null for anything that is not a finite number.
  */
 export function parseAmount(input: string): number | null {
-  let s = input.replace(/[€\s  ]/g, '').replace('−', '-');
+  let s = input.replace(/[€\s  ]/g, '').replace(/^[\u2212\u2010-\u2014]/, '-'); // any minus or dash counts as minus
   if (s === '' || s === '-') return null;
   if (s.includes(',')) {
     s = s.replace(/\./g, '').replace(',', '.');
@@ -84,7 +93,7 @@ const pct1 = new Intl.NumberFormat('de-AT', {
 
 /** 0.16 → '16,0 %' */
 export function formatPercent(ratio: number): string {
-  return pct1.format(ratio);
+  return withMinus(pct1.format(ratio));
 }
 
 const compact = new Intl.NumberFormat('de-AT', { maximumFractionDigits: 1 });
@@ -92,7 +101,7 @@ const compact = new Intl.NumberFormat('de-AT', { maximumFractionDigits: 1 });
 /** Axis label: '€ 3,4k', '€ 850', '−€ 1,2k' */
 export function formatCompactEUR(value: number): string {
   const abs = Math.abs(value);
-  const sign = value < 0 && Math.round(abs) !== 0 ? '−' : '';
+  const sign = value < 0 && Math.round(abs) !== 0 ? MINUS : '';
   const body = abs >= 1000 ? `${compact.format(abs / 1000)}k` : String(Math.round(abs));
   return `${sign}€ ${body}`;
 }

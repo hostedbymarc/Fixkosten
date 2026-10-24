@@ -120,9 +120,14 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
         {average !== null && calculated !== null && (
           <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="close-average">
             Rechnerisch frei <span className="font-medium">diesen Monat</span>{' '}
-            <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(calculated)}</span> ·{' '}
-            im <span className="font-medium">Ø-Monat</span>{' '}
-            <span className="num whitespace-nowrap font-semibold text-ink">{formatAvg(average)}</span>
+            <span className={`num whitespace-nowrap font-semibold ${calculated < 0 ? 'text-over' : 'text-ink'}`} data-testid="close-calculated">
+              {formatEUR(calculated)}
+            </span>{' '}
+            · im <span className="font-medium">Ø-Monat</span>{' '}
+            <span className={`num whitespace-nowrap font-semibold ${average < 0 ? 'text-over' : 'text-ink'}`} data-testid="close-average-value">
+              {formatAvg(average)}
+            </span>
+            , jeweils nach den Fixkosten und dem Vermögensaufbau
           </p>
         )}
 

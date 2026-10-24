@@ -166,7 +166,7 @@ test.describe('„Frei verfügbar (tatsächlich)“ entfernt', () => {
     const tile = page.getByTestId('free-tile');
     await expect(tile).not.toContainText('tatsächlich');
     await expect(tile).not.toContainText('Diff');
-    await expect(page.getByTestId('free-value')).toHaveText(eur('€ 1.385'));
+    await expect(page.getByTestId('free-value')).toHaveText(eur('€ 585')); // 4.788 − 3.403 − Vermögensaufbau 800
     await tap(page.getByTestId('salary-tile'));
     const sheet = page.getByTestId('bottom-sheet');
     await expect(sheet).toBeVisible();

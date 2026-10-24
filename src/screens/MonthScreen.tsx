@@ -477,8 +477,9 @@ const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 l
 const tileSub = 'mt-1 block text-[11px] leading-4 text-ink-mute lg:text-[12px]';
 
 /** An amount inside a subline: never wraps in the middle. */
-function Amount({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
-  return <span className={`num whitespace-nowrap ${strong ? 'font-semibold' : 'font-medium'}`}>{children}</span>;
+function Amount({ children, strong, negative }: { children: React.ReactNode; strong?: boolean; negative?: boolean }) {
+  // negative: red text token, the minus sign (U+2212) is part of the amount, so never colour only
+  return <span className={`num whitespace-nowrap ${strong ? 'font-semibold' : 'font-medium'} ${negative ? 'text-over' : ''}`}>{children}</span>;
 }
 
 /** Netto-Gehalt of the month; opens the month close. */
@@ -572,7 +573,11 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         data-testid="free-tile"
       >
         <span className={tileLabel}>Frei verfügbar</span>
-        <span className={`${tileValue} ${value === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="free-value">
+        <span
+          className={`${tileValue} ${value === null ? 'text-ink-faint' : value < 0 ? 'text-over' : 'text-ink'}`}
+          data-testid="free-value"
+          data-negative={value !== null && value < 0}
+        >
           {value === null ? '–' : formatEUR(value)}
         </span>
         {calculated === null && (
@@ -582,7 +587,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         )}
         {average !== null && (
           <span className={tileSub} data-testid="free-average">
-            im Ø-Monat <Amount>{formatAvg(average)}</Amount>
+            im Ø-Monat <Amount negative={average < 0}>{formatAvg(average)}</Amount>
             {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
             {showInfo && <span ref={slot} className="ml-0.5 inline-block h-3 w-4 align-middle" aria-hidden="true" />}
           </span>
@@ -605,7 +610,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
           <p className="num text-ink" data-testid="free-average-formula">
             {explanation.formula}
           </p>
-          <p>So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst.</p>
+          <p>So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.</p>
         </InfoTip>
       )}
     </div>

@@ -406,7 +406,7 @@ export interface MonthFigures extends Tally {
   /** Vermögensaufbau: everything due in savings categories (ticked + open) */
   wealth: number;
   netSalary: number | null;
-  /** Netto − total; null without salary */
+  /** Netto − total − Vermögensaufbau; null without salary */
   free: number | null;
   /** wealth / Netto; null without salary */
   savingsRate: number | null;
@@ -419,7 +419,7 @@ export interface MonthFigures extends Tally {
 /**
  * Hero, tiles and category headers of a month. Definitions:
  * Gesamt = everything due outside Vermögensaufbau · Abgebucht = its ticked part ·
- * Offen = Gesamt − Abgebucht · Frei verfügbar = Netto − Gesamt · Sparquote = Vermögensaufbau ÷ Netto.
+ * Offen = Gesamt − Abgebucht · Frei verfügbar = Netto − Gesamt − Vermögensaufbau · Sparquote = Vermögensaufbau ÷ Netto.
  */
 export function monthFigures(ds: Dataset, period: Period): MonthFigures {
   const entries = monthEntries(ds, period);
@@ -435,7 +435,7 @@ export function monthFigures(ds: Dataset, period: Period): MonthFigures {
     ratio: expense.total > 0 ? Math.min(Math.max(expense.paid / expense.total, 0), 1) : expense.count > 0 && expense.openCount === 0 ? 1 : 0,
     wealth: fromCents(wealthCents),
     netSalary,
-    free: netSalary === null ? null : fromCents(toCents(netSalary) - toCents(expense.total)),
+    free: netSalary === null ? null : fromCents(toCents(netSalary) - toCents(expense.total) - wealthCents),
     savingsRate: netSalary === null || netSalary <= 0 ? null : fromCents(wealthCents) / netSalary,
     categories,
     unassigned: fromCents(unassigned),
@@ -659,25 +659,26 @@ export function wealthBuilding(ds: Dataset, period: Period): number {
   return expectedSpend(ds, period, 'savings');
 }
 
-/** netSalary − fixedCosts for a given salary (live preview in the month close). */
+/** netSalary − fixed costs − Vermögensaufbau for a given salary (live preview in the month close). */
 export function freeAfterFixedWith(ds: Dataset, period: Period, netSalary: number): number {
-  return fromCents(toCents(netSalary) - toCents(fixedCosts(ds, period)));
+  return fromCents(toCents(netSalary) - toCents(fixedCosts(ds, period)) - toCents(wealthBuilding(ds, period)));
 }
 
-/** „Frei verfügbar“: net salary − fixed costs of this month. Null without salary. */
+/** „Frei verfügbar“: net salary − fixed costs − Vermögensaufbau of this month. Null without salary. */
 export function freeAfterFixed(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
   return salary === null ? null : freeAfterFixedWith(ds, period, salary);
 }
 
-/** netSalary − fixedCostsAvg for a given salary. */
+/** netSalary − fixedCostsAvg − wealthBuildingAvg for a given salary. */
 export function freeAfterFixedAvgWith(ds: Dataset, period: Period, netSalary: number): number {
-  return fromCents(toCents(netSalary) - Math.round(fixedCostsAvg(ds, period) * 100));
+  return fromCents(toCents(netSalary) - Math.round(fixedCostsAvg(ds, period) * 100) - Math.round(wealthBuildingAvg(ds, period) * 100));
 }
 
 /**
- * Free money of an average month: net salary − fixed costs spread over the year
- * („im Ø-Monat“). One-time payments and one-offs do not distort it. Null without salary.
+ * Free money of an average month („im Ø-Monat“): net salary − fixed costs spread over
+ * the year − Vermögensaufbau spread over the year. One-time payments and one-offs do
+ * not distort it. Null without salary.
  */
 export function freeAfterFixedAvg(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
