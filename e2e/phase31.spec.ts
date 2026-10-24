@@ -140,7 +140,7 @@ test.describe('Betrag ändern', () => {
     expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');
     expect(await forecastDue(app, 'Apr 2027')).toBe('€ 2.755');
     await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 504 / Jahr'));
-    await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 504/Jahr'));
+    await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 504 / Jahr'));
   });
 
   test('Verlaufseintrag bearbeiten und löschen → Werte rechnen zurück, Undo funktioniert', async ({ app }) => {

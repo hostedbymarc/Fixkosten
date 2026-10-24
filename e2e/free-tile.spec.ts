@@ -6,8 +6,11 @@ import { expectClean } from './measure';
 async function liveSetup(app: Page) {
   await goTo(app, 'positionen');
   await app.getByRole('button', { name: 'Kategorien' }).click();
+  // a tap while the sheet still slides in can miss the row
+  await animationsDone(app, 'bottom-sheet');
   await app.getByRole('button', { name: 'Meine Immos bearbeiten' }).click();
   const form = app.getByTestId('category-form');
+  await expect(form).toBeVisible();
   await expect(form.getByRole('radio', { name: 'Sparen' })).toHaveCount(0);
   await form.getByRole('radio', { name: 'Vermögensaufbau' }).click();
   await form.getByRole('button', { name: 'Speichern' }).click();

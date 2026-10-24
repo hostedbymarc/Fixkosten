@@ -50,6 +50,25 @@ describe('Golden Fixture November 2026 (deine Daten)', () => {
     expect(formatPercent(f.savingsRate!).replace(/\s/g, ' ')).toBe('10,2 %');
   });
 
+  it('Abzüge vom Netto = Gesamt + Vermögensaufbau; Netto − Abzüge = Frei verfügbar', () => {
+    const f = monthFigures(november(), NOV);
+    expect(f.deductions).toBe(6449); // 5.649 Fixkosten + 800 Vermögensaufbau
+    expect(f.netSalary! - f.deductions).toBe(f.free);
+    expect(f.free).toBe(1370); // 7.819 − 6.449
+    expect(formatEUR(f.deductions).replace(/\s/g, ' ')).toBe('€ 6.449');
+  });
+
+  it('ohne Netto: Abzüge bleiben € 6.449, Frei verfügbar ist leer', () => {
+    const ds = november();
+    ds.monthClose = ds.monthClose.filter((m) => m.period !== NOV);
+    const f = monthFigures(ds, NOV);
+    expect(f.netSalary).toBeNull();
+    expect(f.deductions).toBe(6449);
+    expect(f.free).toBeNull();
+    // the ring, „abgebucht“ and „offen“ stay Fixkosten only
+    expect([f.paid, f.total, f.openCount, shownOpen(f), progressPercent(f)]).toEqual([450, 5649, 14, 5199, 8]);
+  });
+
   it('Kategorie-Header: x/y bezahlt · Summe, Summe der Ausgaben-Kategorien = Gesamt', () => {
     const f = monthFigures(november(), NOV);
     const row = (id: string) => {
@@ -338,7 +357,9 @@ function check(ds: Dataset, period: string, f: MonthFigures) {
   }
   const savingsSum = f.categories.filter((c) => c.category.kind === 'savings').reduce((a, c) => a + cents(c.total), 0);
   expect(savingsSum, `Vermögensaufbau ${tag}`).toBe(cents(f.wealth));
+  expect(cents(f.deductions), `Abzüge = Gesamt + Vermögensaufbau ${tag}`).toBe(cents(f.total) + cents(f.wealth));
   if (f.netSalary !== null) {
+    expect(cents(f.netSalary) - cents(f.deductions), `Netto − Abzüge = Frei ${tag}`).toBe(cents(f.free!));
     expect(cents(f.free!), `Frei = Netto − Gesamt − Vermögensaufbau ${tag}`).toBe(cents(f.netSalary) - cents(f.total) - cents(f.wealth));
     if (f.netSalary > 0) expect(f.savingsRate).toBeCloseTo(f.wealth / f.netSalary, 12);
   }

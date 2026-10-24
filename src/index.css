@@ -36,7 +36,9 @@ body {
 }
 
 /* Hintergrund „Nebel + Papierkorn“: two fixed layers behind all content, static.
-   Blob sizes in vmin with a floor and a cap, so they stay round and quiet on iPad and desktop. */
+   Blob sizes follow the larger side (vmax) with a floor, so they grow with the screen instead of
+   ending as a small disc on 1920/2560 px. Each blob fades on an eased curve (several stops,
+   down to 0 at its edge): a straight two-stop fade leaves a visible rim, most of all in dark mode. */
 body::before,
 body::after {
   content: '';
@@ -47,9 +49,33 @@ body::after {
 body::before {
   z-index: -2;
   background:
-    radial-gradient(clamp(260px, 70vmin, 760px) clamp(220px, 55vmin, 600px) at 15% 10%, var(--nebel-1), transparent 70%),
-    radial-gradient(clamp(240px, 62vmin, 700px) clamp(200px, 48vmin, 560px) at 90% 35%, var(--nebel-2), transparent 70%),
-    radial-gradient(clamp(300px, 80vmin, 900px) clamp(220px, 55vmin, 620px) at 40% 95%, var(--nebel-3), transparent 70%),
+    radial-gradient(
+      max(300px, 44vmax) max(240px, 34vmax) at 12% 8%,
+      var(--nebel-1),
+      color-mix(in srgb, var(--nebel-1) 62%, transparent) 22%,
+      color-mix(in srgb, var(--nebel-1) 34%, transparent) 42%,
+      color-mix(in srgb, var(--nebel-1) 14%, transparent) 60%,
+      color-mix(in srgb, var(--nebel-1) 4%, transparent) 78%,
+      transparent 100%
+    ),
+    radial-gradient(
+      max(280px, 40vmax) max(220px, 30vmax) at 92% 35%,
+      var(--nebel-2),
+      color-mix(in srgb, var(--nebel-2) 62%, transparent) 22%,
+      color-mix(in srgb, var(--nebel-2) 34%, transparent) 42%,
+      color-mix(in srgb, var(--nebel-2) 14%, transparent) 60%,
+      color-mix(in srgb, var(--nebel-2) 4%, transparent) 78%,
+      transparent 100%
+    ),
+    radial-gradient(
+      max(340px, 50vmax) max(240px, 36vmax) at 40% 98%,
+      var(--nebel-3),
+      color-mix(in srgb, var(--nebel-3) 62%, transparent) 22%,
+      color-mix(in srgb, var(--nebel-3) 34%, transparent) 42%,
+      color-mix(in srgb, var(--nebel-3) 14%, transparent) 60%,
+      color-mix(in srgb, var(--nebel-3) 4%, transparent) 78%,
+      transparent 100%
+    ),
     var(--nebel-base);
 }
 body::after {
