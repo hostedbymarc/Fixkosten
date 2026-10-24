@@ -3,7 +3,7 @@ import { animationsDone, eur, expect, importFixture, isTouchProject, test, TODAY
 import { expectClean } from './measure';
 
 const DIR = 'docs/screenshots/tooltip-oe-monat';
-const FORMULA = 'Netto € 4.788 − Ø Fixkosten € 2.952,17 = € 1.835,83';
+const FORMULA = 'Netto € 4.788 − Ø Fixkosten € 2.952,17 − Ø Vermögensaufbau € 800,00 = € 1.035,83';
 
 async function enterSalary(page: Page, amount = '4.788') {
   await page.getByTestId('free-tile').click();
@@ -11,7 +11,7 @@ async function enterSalary(page: Page, amount = '4.788') {
   await page.getByLabel('Netto-Gehalt').fill(amount);
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.835,83'));
+  await expect(page.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.035,83'));
 }
 
 /** Fully inside the viewport and nothing (tab bar included) on top of it. */
@@ -70,7 +70,7 @@ test.describe('Tooltip „im Ø-Monat“', () => {
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByRole('dialog')).toHaveCount(0);
     await (isTouchProject() ? icon.tap() : icon.hover());
-    await expect(app.getByTestId('free-average-formula')).toHaveText(eur('Netto € 5.000 − Ø Fixkosten € 2.952,17 = € 2.047,83'));
+    await expect(app.getByTestId('free-average-formula')).toHaveText(eur('Netto € 5.000 − Ø Fixkosten € 2.952,17 − Ø Vermögensaufbau € 800,00 = € 1.247,83'));
   });
 
   test('Touch: Tap öffnet, Tap erneut schließt, Tap daneben schließt; die Kachel öffnet sich nicht', async ({ app }) => {

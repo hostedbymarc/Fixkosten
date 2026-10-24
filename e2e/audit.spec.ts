@@ -29,7 +29,7 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
     await expect(page.getByTestId('hero-open')).toHaveText(eur('14 offen · € 5.199'));
     await expect(page.getByRole('img', { name: '8 Prozent abgebucht' })).toBeVisible();
     await expect(page.getByTestId('salary-value')).toHaveText(eur('€ 7.819'));
-    await expect(page.getByTestId('free-value')).toHaveText(eur('€ 2.170'));
+    await expect(page.getByTestId('free-value')).toHaveText(eur('€ 1.370')); // 7.819 − 5.649 − Vermögensaufbau 800
     await expect(page.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 10,2 %'));
     await expect(page.getByTestId('kpi-value')).toHaveText(eur('€ 2.952,17'));
 
@@ -45,7 +45,7 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
 
     // rounding rule: spread (Ø) amounts always with cents, month amounts without „,00“
     await expect(page.getByTestId('kpi-hint')).toHaveText(eur('davon € 288,17 nicht monatlich'));
-    await expect(page.getByTestId('free-average')).toHaveText(/^im Ø-Monat €[\s\u00a0]4\.866,83$/);
+    await expect(page.getByTestId('free-average')).toHaveText(/^im Ø-Monat €[\s\u00a0]4\.066,83$/);
     await expect(group(page, 'Wohnen & Leben').getByTestId('group-spread')).toHaveText(/^Ø €[\s\u00a0]1\.602,00 \/ Monat$/);
     await expect(group(page, 'Meine Immos').getByTestId('group-sum')).toHaveText(/^€[\s\u00a0]991$/);
 
