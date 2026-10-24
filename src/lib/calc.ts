@@ -341,6 +341,123 @@ export function actualForPeriod(ds: Dataset, period: Period, kind: Kind = 'expen
   return sumMoney([...payments, ...oneOffs]);
 }
 
+// ---------------------------------------------------------------------------
+// Month figures: the ONE place every amount of a month is summed
+// ---------------------------------------------------------------------------
+
+/**
+ * One counted amount of a month, in integer cents. A ticked position counts with
+ * what was actually debited, an open one with its plan, a skipped one not at all.
+ * One-offs (Nachzahlung / Gutschrift, credits negative) count like positions.
+ * Notes never count: they are text only.
+ */
+interface MonthEntry {
+  kind: Kind;
+  /** null: one-off without (existing) position or category – counted, but in no category */
+  categoryId: string | null;
+  cents: number;
+  paid: boolean;
+}
+
+function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
+  const entries: MonthEntry[] = counted(dueItems(ds, period)).map((i) => ({
+    kind: i.kind,
+    categoryId: i.category.id,
+    cents: toCents(i.status === 'paid' ? i.payment!.actualAmount : i.planned),
+    paid: i.status === 'paid',
+  }));
+  const cats = categoryMap(ds);
+  for (const o of ds.oneOffs) {
+    if (o.period !== period) continue;
+    const position = o.positionId ? ds.positions.find((p) => p.id === o.positionId) : undefined;
+    const category = position ? cats.get(position.categoryId) : undefined;
+    entries.push({ kind: category?.kind ?? 'expense', categoryId: category?.id ?? null, cents: toCents(o.amount), paid: !!o.paidAt });
+  }
+  return entries;
+}
+
+export interface Tally {
+  /** everything due: ticked with the actual amount, open with the plan, one-offs included */
+  total: number;
+  /** ticked part of `total` */
+  paid: number;
+  /** total − paid */
+  open: number;
+  /** counted positions and one-offs */
+  count: number;
+  paidCount: number;
+  openCount: number;
+}
+
+function tally(entries: MonthEntry[]): Tally {
+  const total = entries.reduce((acc, e) => acc + e.cents, 0);
+  const paid = entries.reduce((acc, e) => acc + (e.paid ? e.cents : 0), 0);
+  const paidCount = entries.filter((e) => e.paid).length;
+  return { total: fromCents(total), paid: fromCents(paid), open: fromCents(total - paid), count: entries.length, paidCount, openCount: entries.length - paidCount };
+}
+
+export interface CategoryTally extends Tally {
+  category: Category;
+}
+
+export interface MonthFigures extends Tally {
+  /** paid / total, 0–1 (0 when nothing is due) */
+  ratio: number;
+  /** Vermögensaufbau: everything due in savings categories (ticked + open) */
+  wealth: number;
+  netSalary: number | null;
+  /** Netto − total; null without salary */
+  free: number | null;
+  /** wealth / Netto; null without salary */
+  savingsRate: number | null;
+  /** every category with something due this month, in category order (savings included) */
+  categories: CategoryTally[];
+  /** one-offs without a position (old data): part of total, in no category */
+  unassigned: number;
+}
+
+/**
+ * Hero, tiles and category headers of a month. Definitions:
+ * Gesamt = everything due outside Vermögensaufbau · Abgebucht = its ticked part ·
+ * Offen = Gesamt − Abgebucht · Frei verfügbar = Netto − Gesamt · Sparquote = Vermögensaufbau ÷ Netto.
+ */
+export function monthFigures(ds: Dataset, period: Period): MonthFigures {
+  const entries = monthEntries(ds, period);
+  const expense = tally(entries.filter((e) => e.kind === 'expense'));
+  const wealthCents = entries.filter((e) => e.kind === 'savings').reduce((acc, e) => acc + e.cents, 0);
+  const netSalary = netSalaryForPeriod(ds, period);
+  const categories = sortedCategories(ds)
+    .map((category) => ({ category, ...tally(entries.filter((e) => e.categoryId === category.id)) }))
+    .filter((c) => c.count > 0);
+  const unassigned = entries.filter((e) => e.categoryId === null).reduce((acc, e) => acc + e.cents, 0);
+  return {
+    ...expense,
+    ratio: expense.total > 0 ? Math.min(Math.max(expense.paid / expense.total, 0), 1) : expense.count > 0 && expense.openCount === 0 ? 1 : 0,
+    wealth: fromCents(wealthCents),
+    netSalary,
+    free: netSalary === null ? null : fromCents(toCents(netSalary) - toCents(expense.total)),
+    savingsRate: netSalary === null || netSalary <= 0 ? null : fromCents(wealthCents) / netSalary,
+    categories,
+    unassigned: fromCents(unassigned),
+  };
+}
+
+/** The figures of one category in a month (empty tally when nothing is due). */
+export function categoryFigures(f: MonthFigures, categoryId: string): Tally {
+  return f.categories.find((c) => c.category.id === categoryId) ?? { total: 0, paid: 0, open: 0, count: 0, paidCount: 0, openCount: 0 };
+}
+
+/** Ring label: rounded, but 100 % only when everything is ticked. */
+export function progressPercent(f: Pick<MonthFigures, 'ratio' | 'openCount'>): number {
+  const pct = Math.round(f.ratio * 100);
+  return f.openCount > 0 ? Math.min(pct, 99) : pct;
+}
+
+/** Same amount to the cent (display decisions, e.g. hide an equal Ø). */
+export function sameMoney(a: number, b: number): boolean {
+  return toCents(a) === toCents(b);
+}
+
 export interface PeriodProgress {
   planned: number;
   paidPlanned: number;
@@ -348,26 +465,13 @@ export interface PeriodProgress {
   openPlanned: number;
   openCount: number;
   totalCount: number;
-  /** 0–1, share of planned amount already ticked */
   ratio: number;
 }
 
-/** Hero card: '€ 3.368 von € 3.403 abgebucht'. Expenses only, skipped items excluded. */
+/** @deprecated older name of the hero figures; same values as monthFigures (Gesamt / Abgebucht / Offen). */
 export function periodProgress(ds: Dataset, period: Period): PeriodProgress {
-  const items = counted(dueItems(ds, period)).filter((i) => i.kind === 'expense');
-  const paid = items.filter((i) => i.status === 'paid');
-  const open = items.filter((i) => i.status === 'open');
-  const planned = sumMoney(items.map((i) => i.planned));
-  const paidPlanned = sumMoney(paid.map((i) => i.planned));
-  return {
-    planned,
-    paidPlanned,
-    paidActual: sumMoney(paid.map((i) => i.payment!.actualAmount)),
-    openPlanned: sumMoney(open.map((i) => i.planned)),
-    openCount: open.length,
-    totalCount: items.length,
-    ratio: planned > 0 ? paidPlanned / planned : items.length === 0 ? 0 : 1,
-  };
+  const f = monthFigures(ds, period);
+  return { planned: f.total, paidPlanned: f.paid, paidActual: f.paid, openPlanned: f.open, openCount: f.openCount, totalCount: f.count, ratio: f.ratio };
 }
 
 /** First month with any tick – "open from previous months" never looks further back. */
@@ -424,6 +528,11 @@ export function paymentDelta(payment: Payment): number {
 
 export function sumOpen(groups: OpenGroup[]): number {
   return sumMoney(groups.map((g) => g.planned));
+}
+
+/** Number of open items in „Offen aus Vormonaten“. */
+export function countOpen(groups: OpenGroup[]): number {
+  return groups.reduce((n, g) => n + g.items.length, 0);
 }
 
 /** Last `limit` payments of a position, newest first. */
@@ -529,13 +638,7 @@ export function netSalaryForPeriod(ds: Dataset, period: Period): number | null {
  * the month (credits negative). Every position belongs to exactly one kind.
  */
 export function expectedSpend(ds: Dataset, period: Period, kind: Kind = 'expense'): number {
-  const items = counted(dueItems(ds, period))
-    .filter((i) => i.kind === kind)
-    .map((i) => (i.status === 'paid' ? i.payment!.actualAmount : i.planned));
-  const oneOffs = ds.oneOffs
-    .filter((o) => o.period === period && kindOfPositionId(ds, o.positionId) === kind)
-    .map((o) => o.amount);
-  return sumMoney([...items, ...oneOffs]);
+  return fromCents(monthEntries(ds, period).filter((e) => e.kind === kind).reduce((acc, e) => acc + e.cents, 0));
 }
 
 /** Fixed costs due this month (expense categories only), incl. one-offs and one-time payments. */

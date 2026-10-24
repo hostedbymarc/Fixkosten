@@ -111,7 +111,10 @@ describe('migration v2 → v3 (realistic data)', () => {
     expect(plannedForPeriod(ds, '2027-02')).toBe(4610);
     expect(sumMonthlyEquivalent(ds, OCT, { categoryId: 'cat-immos', frequency: 'monthly' })).toBe(991);
     expect(cents(sumMonthlyEquivalent(ds, OCT, { categoryId: 'cat-immos' }))).toBe(103467);
-    expect(periodProgress(ds, OCT)).toMatchObject({ planned: 3403, paidActual: 3368 + 7.4 + 36.9, openCount: 0 });
+    // control value of the data: the plan sum is unchanged
+    expect(plannedForPeriod(ds, OCT)).toBe(3403);
+    // Gesamt counts ticked positions with what was debited (audit decision C)
+    expect(periodProgress(ds, OCT)).toMatchObject({ planned: 3368 + 7.4 + 36.9, paidActual: 3368 + 7.4 + 36.9, openCount: 0 });
   });
 
   it('importing the v2 seed file (seed.local.json) yields the same v3 data', async () => {
