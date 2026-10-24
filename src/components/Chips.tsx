@@ -19,7 +19,7 @@ export function formatIsoDate(iso: string): string {
 }
 
 /**
- * 'Jährlich · 3.10.' / 'Quartal' / 'Halbjährlich · Jun, Dez'; null for monthly.
+ * 'Jährlich · 3.10.' / 'Quartal · Jän, Apr, Jul, Okt' / 'Halbjährlich · Jun, Dez'; null for monthly.
  * `period` resolves day 31 to the real last day of that month.
  */
 export function scheduleLabel(plan: PlanEntry, period?: Period): string | null {
@@ -35,7 +35,6 @@ export function scheduleLabel(plan: PlanEntry, period?: Period): string | null {
     const day = dueDayInPeriod(plan.dueDay, `${year}-${String(month).padStart(2, '0')}`)!;
     return `${base} · ${formatDayMonth(day, month)}`;
   }
-  if (plan.frequency === 'quarterly' && months.length === 4) return base;
   return `${base} · ${months.map(shortMonthName).join(', ')}`;
 }
 
@@ -75,16 +74,20 @@ export function Badge({
 
 /** +€ 12 red (more expensive) / −€ 5 green (cheaper) */
 /**
- * Difference between what was debited and the plan, e.g. „−€ 30“. Neutral grey on
- * purpose: it is information about the row, not a figure of its own.
+ * Difference between what was debited and the plan (Ist − Plan): „−€ 30“ brand green when
+ * less was debited, „+€ 12“ red when more. Always signed (U+2212), never colour only.
  */
 export function DeltaChip({ delta }: { delta: number }) {
   if (Math.round(delta * 100) === 0) return null;
+  const more = delta > 0;
   return (
     <span
-      className="num inline-flex h-[20px] items-center rounded-md bg-zinc-100 px-1.5 text-[12px] font-medium text-ink-mute"
-      aria-label={`Abweichung vom Plan: ${formatDelta(delta)}`}
+      className={`num inline-flex h-[20px] items-center rounded-md px-1.5 text-[12px] font-semibold ${
+        more ? 'bg-over-soft text-over' : 'bg-paid-soft text-paid-ink'
+      }`}
+      aria-label={`${more ? 'Mehr' : 'Weniger'} als geplant: ${formatDelta(delta)}`}
       data-testid="delta-chip"
+      data-tone={more ? 'over' : 'paid'}
     >
       {formatDelta(delta)}
     </span>
