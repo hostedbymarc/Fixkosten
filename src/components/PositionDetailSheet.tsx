@@ -11,7 +11,7 @@ import {
   paymentsOf,
   planHistory,
 } from '../lib/calc';
-import { formatDelta, formatEUR } from '../lib/format';
+import { formatDelta, formatAvg, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import type { Dataset, Period, PlanEntry, Position } from '../lib/types';
 import { BottomSheet } from './BottomSheet';
@@ -90,7 +90,7 @@ export function PositionDetailSheet({
           ) : (
             <div className="rounded-2xl bg-zinc-50 p-3">
               <div className="text-[12px] font-medium text-ink-mute">Ø pro Monat</div>
-              <div className="num mt-1 text-[20px] font-semibold text-ink">{formatEUR(equivalent)}</div>
+              <div className="num mt-1 text-[20px] font-semibold text-ink">{formatAvg(equivalent)}</div>
               <div className="mt-0.5 text-[12px] leading-snug text-ink-mute">gilt seit {formatIsoDate(effectiveDate(plan))}</div>
             </div>
           )}

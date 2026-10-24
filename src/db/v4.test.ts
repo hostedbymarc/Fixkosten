@@ -101,7 +101,10 @@ describe('migration v3 → v4 (realistic data)', () => {
     expect(sumMonthlyEquivalent(after, '2026-11', { kind: 'expense', frequency: 'monthly' })).toBe(2662);
     expect(cents(fixedCostsAvg(after, '2026-11'))).toBe(295017);
     expect(sumMonthlyEquivalent(after, OCT, { categoryId: 'cat-immos', frequency: 'monthly' })).toBe(991);
-    expect(periodProgress(after, OCT)).toMatchObject({ planned: 3403, paidActual: 3375.4, openCount: 1 });
+    // control value of the data: the plan sum is unchanged
+    expect(plannedForPeriod(after, OCT)).toBe(3403);
+    // Gesamt = debited for ticked + plan for open (audit decision C)
+    expect(periodProgress(after, OCT)).toMatchObject({ planned: 3375.4 + 35, paidActual: 3375.4, openCount: 1, openPlanned: 35 });
     expect(expectedSpend(after, '2026-11')).toBe(2662 + 120);
     expect(freeAfterFixed(after, OCT)).toBe(1589.6);
     expect(after.monthClose.find((m) => m.period === OCT)!.freeActual).toBe(650); // kept, no longer shown

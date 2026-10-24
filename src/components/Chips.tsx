@@ -74,15 +74,17 @@ export function Badge({
 }
 
 /** +€ 12 red (more expensive) / −€ 5 green (cheaper) */
+/**
+ * Difference between what was debited and the plan, e.g. „−€ 30“. Neutral grey on
+ * purpose: it is information about the row, not a figure of its own.
+ */
 export function DeltaChip({ delta }: { delta: number }) {
   if (Math.round(delta * 100) === 0) return null;
-  const more = delta > 0;
   return (
     <span
-      className={`num inline-flex h-[20px] items-center rounded-md px-1.5 text-[12px] font-semibold ${
-        more ? 'bg-over-soft text-over' : 'bg-paid-soft text-paid-ink'
-      }`}
-      aria-label={`${more ? 'Mehr' : 'Weniger'} als geplant: ${formatDelta(delta)}`}
+      className="num inline-flex h-[20px] items-center rounded-md bg-zinc-100 px-1.5 text-[12px] font-medium text-ink-mute"
+      aria-label={`Abweichung vom Plan: ${formatDelta(delta)}`}
+      data-testid="delta-chip"
     >
       {formatDelta(delta)}
     </span>

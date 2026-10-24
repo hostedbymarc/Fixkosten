@@ -26,6 +26,14 @@ export function formatEUR(value: number, opts: { fixed?: boolean } = {}): string
   return eur2.format(normalized);
 }
 
+/**
+ * Spread amounts („Ø pro Monat“, ÷12 etc.) always with cents: '€ 1.602,00', '€ 2.952,17'.
+ * Amounts of a month keep formatEUR ('€ 991').
+ */
+export function formatAvg(value: number): string {
+  return formatEUR(value, { fixed: true });
+}
+
 /** Signed delta: '+€ 12' / '−€ 5' (typographic minus). */
 export function formatDelta(value: number): string {
   const cents = Math.round(value * 100);

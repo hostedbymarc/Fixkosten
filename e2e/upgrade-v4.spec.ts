@@ -90,7 +90,8 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   expect(positionsAfter.find((p) => p.id === 'pos-handy')!.history.map((e) => e.changedOn)).toEqual([undefined, '2026-11-01']);
 
   // control values
-  await expect(page.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
+  // Gesamt = debited for ticked + plan for open (audit decision C); the data itself is compared record by record
+  await expect(page.getByTestId('hero-planned')).toHaveText(eur('€ 3.410,40'));
   await expect(page.getByTestId('hero-paid')).toHaveText(eur('€ 3.375,40'));
   await expect(row(page, 'pos-strom')).toContainText('Abschlag erhöht');
   await expect(page.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));

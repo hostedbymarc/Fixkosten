@@ -34,17 +34,21 @@ import {
 import {
   dueItems,
   freeAfterFixedAvg,
-  freeAfterFixed,
-  wealthBuilding,
   netSalaryForPeriod,
   groupByCategory,
   monthCloseFor,
   openFromPrevious,
   sumOpen,
-  periodProgress,
+  countOpen,
+  monthFigures,
+  categoryFigures,
+  progressPercent,
+  sameMoney,
+  shownOpen,
+  type MonthFigures,
+  type Tally,
   remindersForPeriod,
   reserveNeeded,
-  savingsRate,
   sumMonthlyEquivalent,
   fixedCostsAvg,
   upcomingDue,
@@ -52,7 +56,7 @@ import {
   type DueItem,
   type OpenGroup,
 } from '../lib/calc';
-import { formatEUR, formatPercent } from '../lib/format';
+import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
@@ -84,7 +88,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const groups = useMemo(() => groupByCategory(items), [items]);
   const collapse = useCollapsed();
   const allCollapsed = groups.length > 0 && groups.every((g) => collapse.isCollapsed(g.category.id));
-  const progress = useMemo(() => periodProgress(ds, period), [ds, period]);
+  // every amount of the month comes from here (hero, tiles, category headers)
+  const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
   const openGroups = useMemo(() => openFromPrevious(ds, period), [ds, period]);
@@ -178,7 +183,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       )}
 
       <div className="grid gap-3 lg:gap-4">
-        <HeroCard progress={progress} />
+        <HeroCard figures={figures} />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-3">
           <SalaryTile
             ref={salaryTile}
@@ -186,19 +191,19 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             salary={netSalaryForPeriod(ds, period)}
             onOpen={() => openClose(salaryTile.current)}
           />
-          <KpiTile label="Ø pro Monat" value={formatEUR(fixedCostsAvg(ds, period))}>
+          <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
             <span data-testid="kpi-hint">
-              davon <Amount>{formatEUR(reserveNeeded(ds, period))}</Amount> nicht monatlich
+              davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
             </span>
           </KpiTile>
           <FreeTile
             ref={closeTile}
             period={period}
-            calculated={freeAfterFixed(ds, period)}
+            calculated={figures.free}
             average={freeAfterFixedAvg(ds, period)}
             explanation={averageMonthExplanation(ds, period)}
-            wealth={wealthBuilding(ds, period)}
-            rate={savingsRate(ds, period)}
+            wealth={figures.wealth}
+            rate={figures.savingsRate}
             onOpen={() => openClose(closeTile.current)}
           />
         </div>
@@ -228,6 +233,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               <GroupCard
                 key={group.category.id}
                 group={group}
+                tally={categoryFigures(figures, group.category.id)}
                 collapsed={collapse.isCollapsed(group.category.id)}
                 onToggleCollapsed={() => collapse.toggle(group.category.id)}
                 spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
@@ -422,34 +428,36 @@ function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Perio
   );
 }
 
-function HeroCard({ progress }: { progress: ReturnType<typeof periodProgress> }) {
-  const allPaid = progress.totalCount > 0 && progress.openCount === 0;
+function HeroCard({ figures }: { figures: MonthFigures }) {
+  const allPaid = figures.count > 0 && figures.openCount === 0;
   return (
     <div className="glass flex items-center gap-5 p-5 lg:gap-6 lg:p-6" data-testid="hero">
       <ProgressRing
-        ratio={progress.ratio}
-        label={`${Math.floor(progress.ratio * 100)} Prozent abgebucht`}
+        ratio={figures.ratio}
+        percent={progressPercent(figures)}
+        done={allPaid}
+        label={`${progressPercent(figures)} Prozent abgebucht`}
       />
       <div className="min-w-0">
         <div className="num text-[32px] font-semibold leading-tight tracking-[-0.03em] text-ink lg:text-[38px]" data-testid="hero-paid">
-          {formatEUR(progress.paidActual)}
+          {formatEUR(figures.paid)}
         </div>
         <div className="text-[15px] text-ink-mute">
-          von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(progress.planned)}</span> abgebucht
+          von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
         </div>
         <div className="mt-2.5">
           {allPaid ? (
             <span className="inline-flex h-7 items-center rounded-full bg-paid-soft px-3 text-[13px] font-semibold text-paid-ink">
               Alles abgebucht
             </span>
-          ) : progress.totalCount === 0 ? (
+          ) : figures.count === 0 ? (
             <span className="text-[14px] text-ink-mute">Nichts fällig</span>
           ) : (
             <span
               className="num inline-flex h-7 items-center rounded-full bg-accent-soft px-3 text-[13px] font-semibold text-accent-strong"
               data-testid="hero-open"
             >
-              {progress.openCount} offen · {formatEUR(progress.openPlanned)}
+              {figures.openCount} offen · {formatEUR(shownOpen(figures))}
             </span>
           )}
         </div>
@@ -574,7 +582,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         )}
         {average !== null && (
           <span className={tileSub} data-testid="free-average">
-            im Ø-Monat <Amount>{formatEUR(average)}</Amount>
+            im Ø-Monat <Amount>{formatAvg(average)}</Amount>
             {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
             {showInfo && <span ref={slot} className="ml-0.5 inline-block h-3 w-4 align-middle" aria-hidden="true" />}
           </span>
@@ -606,6 +614,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
 
 function GroupCard({
   group,
+  tally,
   collapsed,
   onToggleCollapsed,
   spread,
@@ -615,6 +624,8 @@ function GroupCard({
   onOpenOneOff,
 }: {
   group: CategoryGroup;
+  /** Summe and „x/y bezahlt“ of the category (calc.monthFigures) */
+  tally: Tally;
   /** positions and one-offs hidden; name, sum and progress stay in the header */
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -626,18 +637,16 @@ function GroupCard({
   onOpenOneOff: (oneOff: OneOff) => void;
 }) {
   const savings = group.category.kind === 'savings';
-  const showSpread = Math.round(spread * 100) !== Math.round(group.planned * 100);
-  const counted = group.items.filter((i) => i.due && i.status !== 'skipped');
-  const paid = counted.filter((i) => i.status === 'paid').length;
-  const allPaid = counted.length > 0 && paid === counted.length;
-  const progress = allPaid ? 'alle bezahlt' : `${paid}/${counted.length} bezahlt`;
+  const showSpread = !sameMoney(spread, tally.total);
+  const allPaid = tally.count > 0 && tally.openCount === 0;
+  const progress = allPaid ? 'alle bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`;
   return (
     <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
       <Disclosure
         expanded={!collapsed}
         onToggle={onToggleCollapsed}
         headingLevel={2}
-        buttonLabel={`${group.category.name}, fällig ${formatEUR(group.planned)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}, ${progress}`}
+        buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${progress}`}
         buttonClassName={`px-4 py-3 hover:bg-zinc-50/40 ${collapsed ? '' : 'border-b border-line'}`}
         buttonTestId="group-toggle"
         header={
@@ -656,15 +665,15 @@ function GroupCard({
                   className={`whitespace-nowrap text-[12px] ${allPaid ? 'font-semibold text-paid-ink' : 'text-ink-mute'}`}
                   data-testid="group-progress"
                 >
-                  {allPaid ? '✓ bezahlt' : `${paid}/${counted.length} bezahlt`}
+                  {allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}
                 </span>
                 <span className="num whitespace-nowrap text-[14px] font-medium text-ink-mute" data-testid="group-sum">
-                  {formatEUR(group.planned)}
+                  {formatEUR(tally.total)}
                 </span>
               </span>
               {showSpread && (
                 <span className="num whitespace-nowrap text-[12px] text-ink-faint" data-testid="group-spread">
-                  Ø {formatEUR(spread)} / Monat
+                  Ø {formatAvg(spread)} / Monat
                 </span>
               )}
             </span>
@@ -700,7 +709,7 @@ function OpenFromPrevious({
   onSkip: (item: DueItem) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const count = groups.reduce((n, g) => n + g.items.length, 0);
+  const count = countOpen(groups);
   const title = groups.length === 1 ? `Offen aus ${monthName(groups[0]!.period)}` : 'Offen aus Vormonaten';
   const contentId = useId();
   return (

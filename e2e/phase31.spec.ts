@@ -189,7 +189,8 @@ test.describe('Betrag ändern', () => {
     await expect(miete).toHaveAttribute('data-paid', 'true');
     await expect(miete).toContainText(eur('€ 1.008'));
     await expect(miete).toContainText(eur('−€ 42'));
-    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.445'));
+    // Gesamt counts the tick with what was debited (€ 1.008), not the new plan (audit decision C)
+    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
     await openAnalyse(app);
     await expect(app.getByTestId('optimizations-list-head')).toHaveText(eur('Umgesetzt · +€ 504 / Jahr'));
   });

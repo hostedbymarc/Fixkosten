@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixtureBackup, fixtureRaw } from '../../tests/fixtures/dataset';
-import { periodProgress } from '../lib/calc';
+import { periodProgress, plannedForPeriod } from '../lib/calc';
 import { toPeriod } from '../lib/period';
 import type { Category, Payment, Position } from '../lib/types';
 import { BackupError, importIntoEmpty, needsSetup, parseBackup, startEmpty } from './backup';
@@ -113,9 +113,13 @@ describe('migration v1 → v2 → v3 → v4', () => {
 
     expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
     expect(await needsSetup(db)).toBe(false);
-    const progress = periodProgress(await loadDataset(db), '2026-10');
+    const ds = await loadDataset(db);
+    const progress = periodProgress(ds, '2026-10');
     expect(progress.openCount).toBe(0);
-    expect(progress.planned).toBe(3403);
+    // control value of the data: the plan sum is unchanged
+    expect(plannedForPeriod(ds, '2026-10')).toBe(3403);
+    // Gesamt counts ticked positions with what was debited (Strom 71,40, Depot 36,90; audit decision C)
+    expect(progress.planned).toBe(3403 + 7.4 + 1.9);
   });
 
   it('renamed and archived positions: no crash, renamed one stays put', async () => {
