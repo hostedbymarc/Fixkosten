@@ -83,7 +83,8 @@ Ist = heutiger Code. Soll = deine Definitionen. „offen“ = Definition noch zu
   - Seed: Baurechtszins 262,02×2/12 = 43,67 · Parqet 87/12 = 7,25 · Depotentgelt 35×4/12 = 11,67 · Kontoführung 14×4/12 = 4,67 · Amex Gebühr 57,50 · Amex Turbo 1,25 · Steuerberater 105 · Offi 57,17.
   - Exakt (524,04 + 87 + 140 + 56 + 690 + 15 + 1.260 + 686) ÷ 12 = 3.458,04 ÷ 12 = 288,17.
   - Die einzeln gerundeten Zeilen ergäben 288,18, ein Beispiel für die ±1-Cent-Abweichung aus Abschnitt 5.
-- **im Ø-Monat (€ 4.866,83)**: Netto **des angezeigten Monats** (`MonthClose.netSalary` genau dieses Monats, kein Rückgriff auf Vormonate) − Ø pro Monat des angezeigten Monats. 7.819 − 2.952,17 = 4.866,83. Ohne Netto im Monat wird nichts angezeigt.
+- **im Ø-Monat (vor dem Fix € 4.866,83)**: Netto **des angezeigten Monats** (`MonthClose.netSalary` genau dieses Monats, kein Rückgriff auf Vormonate) − Ø pro Monat des angezeigten Monats. 7.819 − 2.952,17 = 4.866,83. Ohne Netto im Monat wird nichts angezeigt.
+  - Seit dem Nachtrag in Abschnitt 4 wird zusätzlich der umgelegte Vermögensaufbau abgezogen: 7.819 − 2.952,17 − 800,00 = 4.066,83.
 - **Kategorie-Ø** (z. B. Wohnen & Leben): dieselbe Formel wie Ø pro Monat, nur die Positionen der Kategorie.
   - Wird im Header nur angezeigt, wenn er von der Monatssumme abweicht.
   - Mit dem Stand 05.10. (`seed.local.json`) ist Wohnen & Leben Ø 1.602 = Monatssumme 1.602.
@@ -109,11 +110,13 @@ Damit gilt in `calc.monthFigures` (eine Quelle für Hero, Kacheln, Kategorie-Hea
 | Anzahl offen | nicht abgehakte Einträge (Posten + Einmalausgaben) |
 | Fortschritt % | Abgebucht ÷ Gesamt, kaufmännisch gerundet, 100 % nur wenn alles abgehakt |
 | Vermögensaufbau | dieselbe Regel für Kategorien mit Vermögensaufbau |
-| Frei verfügbar | Netto − Gesamt |
+| Frei verfügbar | Netto − Gesamt − Vermögensaufbau (seit 24.10.2026, vorher Netto − Gesamt) |
 | Sparquote | Vermögensaufbau ÷ Netto |
 | Kategorie „x/y bezahlt · Summe“ | dieselbe Regel je Kategorie |
 
-**November 2026 mit deinen Daten:** Gesamt 5.649 · Abgebucht 450 · Offen 5.199 · 14 offen · 8 % · Vermögensaufbau 800 · Sparquote 10,2 % · Frei verfügbar 2.170 · Wohnen & Leben 1/6 bezahlt · € 1.572.
+**November 2026 mit deinen Daten:** Gesamt 5.649 · Abgebucht 450 · Offen 5.199 · 14 offen · 8 % · Vermögensaufbau 800 · Sparquote 10,2 % · Frei verfügbar **1.370** (7.819 − 5.649 − 800) · im Ø-Monat **4.066,83** (7.819 − 2.952,17 − 800,00) · Wohnen & Leben 1/6 bezahlt · € 1.572.
+
+**Nachtrag 24.10.2026:** Frei verfügbar zieht auch den Vermögensaufbau ab, „im Ø-Monat“ entsprechend den umgelegten Vermögensaufbau (`wealthBuildingAvg`). Die Sparquote bleibt Vermögensaufbau ÷ Netto.
 
 Abweichend von deiner ursprünglichen Soll-Tabelle sind Gesamt 5.649 (statt 5.679), Offen 5.199 (statt 5.229) und Frei 2.170 (statt 2.140), als Folge von C.
 Der Plan (480) bleibt gespeichert und erscheint weiter in „Plan vs. Ist“ und im Zahlungs-Sheet.

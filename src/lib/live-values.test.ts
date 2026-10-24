@@ -36,13 +36,13 @@ describe('Live values: „Meine Immos“ (savings) is only Vermögensaufbau', ()
   it('fixedCosts € 2.427 (not € 3.418), wealthBuilding € 1.860, free € 2.361, Sparquote 38,8 %', () => {
     expect(fixedCosts(ds, OCT)).toBe(2427);
     expect(wealthBuilding(ds, OCT)).toBe(1860);
-    expect(freeAfterFixed(ds, OCT)).toBe(2361);
+    expect(freeAfterFixed(ds, OCT)).toBe(2361 - 1860); // Frei verfügbar = Netto − Fixkosten − Vermögensaufbau
     expect(Math.round(savingsRate(ds, OCT)! * 1000)).toBe(388);
   });
 
   it('Ø: fixedCostsAvg € 1.917,50 (not € 2.952,17), freeAfterFixedAvg € 2.870,50 (not € 1.835,83)', () => {
     expect(cents(fixedCostsAvg(ds, OCT))).toBe(191750);
-    expect(freeAfterFixedAvg(ds, OCT)).toBe(2870.5);
+    expect(freeAfterFixedAvg(ds, OCT)).toBe(1035.83); // 4.788 − 1.917,50 − Ø Vermögensaufbau 1.834,67
   });
 
   it('no „Meine Immos“ position is counted as a fixed cost, in any month', () => {

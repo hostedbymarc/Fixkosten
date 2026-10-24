@@ -44,7 +44,7 @@ describe('Golden Fixture November 2026 (deine Daten)', () => {
     expect(progressPercent(f)).toBe(8);
     expect(f.wealth).toBe(800);
     expect(f.netSalary).toBe(7819);
-    expect(f.free).toBe(2170);
+    expect(f.free).toBe(1370); // 7.819 − 5.649 − 800 (Frei verfügbar = Netto − Fixkosten − Vermögensaufbau)
     expect(formatPercent(f.savingsRate!).replace(/\s/g, ' ')).toBe('10,2 %');
   });
 
@@ -100,7 +100,7 @@ describe('Golden Fixture November 2026 (deine Daten)', () => {
     const f = monthFigures(ds, NOV);
     expect(f.total).toBe(5649 - 991);
     expect(f.wealth).toBe(800 + 991);
-    expect(f.free).toBe(7819 - (5649 - 991));
+    expect(f.free).toBe(7819 - (5649 - 991) - (800 + 991));
   });
 });
 
@@ -302,7 +302,7 @@ function check(ds: Dataset, period: string, f: MonthFigures) {
   const savingsSum = f.categories.filter((c) => c.category.kind === 'savings').reduce((a, c) => a + cents(c.total), 0);
   expect(savingsSum, `Vermögensaufbau ${tag}`).toBe(cents(f.wealth));
   if (f.netSalary !== null) {
-    expect(cents(f.free!), `Frei = Netto − Gesamt ${tag}`).toBe(cents(f.netSalary) - cents(f.total));
+    expect(cents(f.free!), `Frei = Netto − Gesamt − Vermögensaufbau ${tag}`).toBe(cents(f.netSalary) - cents(f.total) - cents(f.wealth));
     if (f.netSalary > 0) expect(f.savingsRate).toBeCloseTo(f.wealth / f.netSalary, 12);
   }
   // the older API returns the same numbers
@@ -313,7 +313,7 @@ function check(ds: Dataset, period: string, f: MonthFigures) {
 }
 
 describe('Invarianten (Property-Tests, 300 zufällige Datensätze × 24 Monate)', () => {
-  it('Abgebucht + Offen = Gesamt · Σ Kategorien = Gesamt · bezahlt + offen = fällig · Frei = Netto − Gesamt', () => {
+  it('Abgebucht + Offen = Gesamt · Σ Kategorien = Gesamt · bezahlt + offen = fällig · Frei = Netto − Gesamt − Vermögensaufbau', () => {
     for (let seed = 1; seed <= 300; seed++) {
       const ds = randomDataset(seed);
       for (const period of MONTHS) check(ds, period, monthFigures(ds, period));

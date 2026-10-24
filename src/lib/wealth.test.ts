@@ -37,11 +37,11 @@ function allDue(ds: Dataset, period: string): number {
 }
 
 describe('Regression „Frei verfügbar −€ 490“: savings category with monthly + semiannual positions', () => {
-  it('Vermögensaufbau is never subtracted from „Frei verfügbar“; each position counted once', () => {
+  it('Vermögensaufbau is subtracted from „Frei verfügbar“ once; each position counted once', () => {
     const ds = live();
     // Meine Immos: Kredit 1220 € 735, BK 1220 € 169, BK 1160 € 87 monthly + Baurechtszins € 262,02 semiannual (Jun/Dec)
-    expect(freeAfterFixed(ds, OCT)).toBe(4788 - fixedCosts(ds, OCT));
-    expect(freeAfterFixed(ds, OCT)).toBe(2376);
+    expect(freeAfterFixed(ds, OCT)).toBe(4788 - fixedCosts(ds, OCT) - wealthBuilding(ds, OCT));
+    expect(freeAfterFixed(ds, OCT)).toBe(2376 - 1791);
     expect(cents(savingsRate(ds, OCT)!)).toBe(37); // 37,4 %, never 59,5 %
     // December: the semiannual Baurechtszins lands once, in Vermögensaufbau only
     expect(wealthBuilding(ds, '2026-12')).toBe(1791 + 262.02);
@@ -55,13 +55,13 @@ describe('Control values (seed, „Meine Immos“ + „Investing“ as Vermögen
   it('month: fixed € 2.412, Vermögensaufbau € 1.791, free € 2.376, rate 37,4 %', () => {
     expect(fixedCosts(ds, OCT)).toBe(2412);
     expect(wealthBuilding(ds, OCT)).toBe(1791);
-    expect(freeAfterFixed(ds, OCT)).toBe(2376);
+    expect(freeAfterFixed(ds, OCT)).toBe(2376 - 1791); // Frei verfügbar = Netto − Fixkosten − Vermögensaufbau
     expect(Math.round(savingsRate(ds, OCT)! * 1000)).toBe(374);
   });
 
   it('average: fixed € 1.917,50, free € 2.870,50, Vermögensaufbau € 1.834,67, nicht monatlich € 244,50', () => {
     expect(cents(fixedCostsAvg(ds, OCT))).toBe(191750);
-    expect(freeAfterFixedAvg(ds, OCT)).toBe(2870.5);
+    expect(freeAfterFixedAvg(ds, OCT)).toBe(1035.83); // 4.788 − 1.917,50 − Ø Vermögensaufbau 1.834,67
     expect(cents(wealthBuildingAvg(ds, OCT))).toBe(183467);
     expect(cents(reserveNeeded(ds, OCT))).toBe(24450);
   });

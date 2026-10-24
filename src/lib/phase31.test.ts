@@ -102,7 +102,7 @@ describe('Einmalig: Reparatur € 500, fällig 15.11.2026', () => {
 
   it('counts into expected spend, free money and „Demnächst“', () => {
     expect(expectedSpend(ds, '2026-11')).toBe(3164);
-    expect(freeAfterFixedWith(ds, '2026-11', 5000)).toBe(5000 - 3164);
+    expect(freeAfterFixedWith(ds, '2026-11', 5000)).toBe(5000 - 3164 - 800); // Frei verfügbar = Netto − Fixkosten − Vermögensaufbau
     expect(upcomingDue(ds, OCT).map((i) => i.position.name)).toContain('Reparatur');
   });
 
@@ -185,15 +185,15 @@ describe('Betrag ändern ab 01.10.2026, Oktober-Miete schon mit € 1.008 abgeha
 });
 
 describe('Frei verfügbar: dieser Monat vs. Ø (alle Kosten umgelegt)', () => {
-  it('Okt 2026, Gehalt 5.000: diesen Monat € 1.597, Ø € 2.047,83; Einmalige verfälschen den Schnitt nicht', async () => {
+  it('Okt 2026, Gehalt 5.000: diesen Monat € 797, Ø € 1.247,83 (nach Vermögensaufbau); Einmalige verfälschen den Schnitt nicht', async () => {
     const { freeAfterFixedAvg, freeAfterFixed } = await import('./calc');
     const ds = withRepair();
     ds.monthClose.push({ period: OCT, netSalary: 5000, updatedAt: '' }, { period: '2026-11', netSalary: 5000, updatedAt: '' });
-    expect(freeAfterFixed(ds, OCT)).toBe(1597);
-    expect(freeAfterFixedAvg(ds, OCT)).toBe(2047.83);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597 - 800); // Frei verfügbar = Netto − Fixkosten − Vermögensaufbau
+    expect(freeAfterFixedAvg(ds, OCT)).toBe(2047.83 - 800);
     // November carries the € 500 repair: this month drops, the average stays
-    expect(freeAfterFixed(ds, '2026-11')).toBe(5000 - 3164);
-    expect(freeAfterFixedAvg(ds, '2026-11')).toBe(2047.83);
+    expect(freeAfterFixed(ds, '2026-11')).toBe(5000 - 3164 - 800);
+    expect(freeAfterFixedAvg(ds, '2026-11')).toBe(2047.83 - 800);
     expect(freeAfterFixedAvg(fixtureDataset(), OCT)).toBeNull();
   });
 });

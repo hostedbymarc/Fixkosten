@@ -50,12 +50,12 @@ async function tileGeometry(app: Page) {
 }
 
 test.describe('Frei verfügbar & Vermögensaufbau', () => {
-  test('Regression −€ 490: Netto − Fixkosten, Vermögensaufbau als eigene Zeile (Kontrollwerte)', async ({ app }, info) => {
+  test('Kontrollwerte: Frei verfügbar = Netto − Fixkosten − Vermögensaufbau, Vermögensaufbau als eigene Zeile', async ({ app }, info) => {
     await liveSetup(app);
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.412'));
-    await expect(app.getByTestId('free-value')).toHaveText(eur('€ 2.376'));
+    await expect(app.getByTestId('free-value')).toHaveText(eur('€ 585')); // 4.788 − 2.412 − Vermögensaufbau 1.791
     await expect(app.getByTestId('free-sub')).toHaveCount(0); // no „tatsächlich“ any more
-    await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 2.870,50'));
+    await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.035,83'));
     await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 1.791 · Sparquote 37,4 %'));
     await expect(app.getByTestId('kpi-value')).toHaveText(eur('€ 1.917,50'));
     await expect(app.getByTestId('kpi-hint')).toHaveText(eur('davon € 244,50 nicht monatlich'));
@@ -74,7 +74,7 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     await animationsDone(app, 'bottom-sheet');
     await app.getByLabel('Netto-Gehalt').fill('1922');
     await app.getByRole('button', { name: 'Speichern' }).click();
-    await expect(app.getByTestId('free-value')).toHaveText('−€ 490');
+    await expect(app.getByTestId('free-value')).toHaveText('−€ 2.281'); // 1.922 − 2.412 − Vermögensaufbau 1.791
     await expect(app.getByTestId('free-tile')).not.toContainText('-€');
     await expect(app.getByTestId('free-wealth')).not.toContainText('bleibt');
   });

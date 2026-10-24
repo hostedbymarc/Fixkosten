@@ -358,7 +358,7 @@ describe('open from previous months', () => {
     expect(expectedSpend(ds, OCT)).toBe(3368);
     expect(actualForPeriod(ds, OCT)).toBe(3368);
     expect(periodProgress(ds, OCT)).toMatchObject({ openCount: 0, planned: 3368, paidActual: 3368, ratio: 1 });
-    expect(freeAfterFixed(ds, OCT)).toBe(5000 - 3368); // Vermögensaufbau is no fixed cost
+    expect(freeAfterFixed(ds, OCT)).toBe(5000 - 3368 - 800); // Frei verfügbar = Netto − Fixkosten − Vermögensaufbau
   });
 
   it('nothing before the first month with data is ever reported open', () => {
@@ -387,12 +387,12 @@ describe('month close: salary, free money, savings rate', () => {
     const ds = withClose(5000, 650);
     expect(expectedSpend(ds, OCT)).toBe(3403);
     expect(wealthBuilding(ds, OCT)).toBe(800);
-    expect(freeAfterFixed(ds, OCT)).toBe(1597);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597 - 800); // Frei verfügbar = Netto − Fixkosten − Vermögensaufbau
     expect(savingsRate(ds, OCT)).toBeCloseTo(0.16, 9);
   });
 
   it('without freeActual the same calculated value', () => {
-    expect(freeAfterFixed(withClose(5000), OCT)).toBe(1597);
+    expect(freeAfterFixed(withClose(5000), OCT)).toBe(1597 - 800);
   });
 
   it('expectedSpend uses actuals for ticked and plan for open positions, plus one-offs', () => {
@@ -400,7 +400,7 @@ describe('month close: salary, free money, savings rate', () => {
     ds.payments.find((p) => p.positionId === 'pos-strom')!.actualAmount = 76; // +12
     ds.oneOffs.push({ id: 'o1', period: OCT, amount: -40.5, label: 'Gutschrift' });
     expect(expectedSpend(ds, OCT)).toBe(3403 + 12 - 40.5);
-    expect(freeAfterFixed(ds, OCT)).toBe(1597 - 12 + 40.5);
+    expect(freeAfterFixed(ds, OCT)).toBe(1597 - 12 + 40.5 - 800);
   });
 
   it('salary is per month: other months stay null', () => {
