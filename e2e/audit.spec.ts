@@ -43,6 +43,12 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
     expect(await header('Sonstiges')).toEqual(['0/2 bezahlt', expect.stringMatching(eur('€ 3.015'))]);
     expect(await header('Investing')).toEqual(['1/2 bezahlt', expect.stringMatching(eur('€ 800'))]);
 
+    // rounding rule: spread (Ø) amounts always with cents, month amounts without „,00“
+    await expect(page.getByTestId('kpi-hint')).toHaveText(eur('davon € 288,17 nicht monatlich'));
+    await expect(page.getByTestId('free-average')).toHaveText(/^im Ø-Monat €[\s\u00a0]4\.866,83$/);
+    await expect(group(page, 'Wohnen & Leben').getByTestId('group-spread')).toHaveText(/^Ø €[\s\u00a0]1\.602,00 \/ Monat$/);
+    await expect(group(page, 'Meine Immos').getByTestId('group-sum')).toHaveText(/^€[\s\u00a0]991$/);
+
     await expectClean(page, 'main');
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(400);

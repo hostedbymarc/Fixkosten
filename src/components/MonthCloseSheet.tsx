@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { freeAfterFixedAvgWith, freeAfterFixedWith, monthCloseFor } from '../lib/calc';
-import { amountToInput, formatEUR, parseAmount } from '../lib/format';
+import { amountToInput, formatAvg, formatEUR, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel } from '../lib/period';
 import type { Dataset, Period } from '../lib/types';
 import type { MonthCloseInput } from '../db/repo';
@@ -122,7 +122,7 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
             Rechnerisch frei <span className="font-medium">diesen Monat</span>{' '}
             <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(calculated)}</span> ·{' '}
             im <span className="font-medium">Ø-Monat</span>{' '}
-            <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(average)}</span>
+            <span className="num whitespace-nowrap font-semibold text-ink">{formatAvg(average)}</span>
           </p>
         )}
 

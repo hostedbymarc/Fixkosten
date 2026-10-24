@@ -16,6 +16,7 @@ import {
   plannedForPeriod,
   progressPercent,
   savingsRate,
+  shownOpen,
   wealthBuilding,
   type MonthFigures,
 } from './calc';
@@ -103,6 +104,68 @@ describe('Golden Fixture November 2026 (deine Daten)', () => {
   });
 });
 
+describe('Gutschriften (negative Einmalausgaben)', () => {
+  /** Only Handy (10) due in a fresh month, ticked; plus one-offs. */
+  function tiny(oneOffs: Omit<OneOff, 'id' | 'period'>[]): Dataset {
+    const ds = fixtureDataset();
+    ds.positions = ds.positions.filter((p) => p.id === 'pos-handy');
+    ds.payments = [{ id: 'pay', positionId: 'pos-handy', period: NOV, status: 'paid', plannedAmount: 10, actualAmount: 10, paidAt: '2026-11-02T08:00:00.000Z' }];
+    ds.oneOffs = oneOffs.map((o, i) => ({ ...o, id: `o${i}`, period: NOV }));
+    return ds;
+  }
+
+  it('offene Gutschrift: exaktes Offen negativ, angezeigt nie unter € 0; Ring 99 % statt über 100 %', () => {
+    const f = monthFigures(tiny([{ positionId: 'pos-handy', amount: -25, label: 'Gutschrift' }]), NOV);
+    expect([f.total, f.paid, f.open, f.openCount]).toEqual([-15, 10, -25, 1]);
+    expect(shownOpen(f)).toBe(0);
+    expect(f.ratio).toBeGreaterThanOrEqual(0);
+    expect(f.ratio).toBeLessThanOrEqual(1);
+    expect(progressPercent(f)).toBe(0); // Gesamt ≤ 0: nothing to progress against
+  });
+
+  it('Abgebucht > Gesamt (offene Gutschrift kleiner als das Bezahlte): Ring bleibt ≤ 99 % solange etwas offen ist', () => {
+    const ds = tiny([{ positionId: 'pos-handy', amount: -4, label: 'Gutschrift' }]);
+    const f = monthFigures(ds, NOV);
+    expect([f.total, f.paid, f.open]).toEqual([6, 10, -4]);
+    expect(f.paid).toBeGreaterThan(f.total);
+    expect(f.ratio).toBe(1);
+    expect(progressPercent(f)).toBe(99);
+    expect(shownOpen(f)).toBe(0);
+    // ticking the credit closes the month at exactly 100 %
+    ds.oneOffs[0]!.paidAt = '2026-11-20T08:00:00.000Z';
+    const done = monthFigures(ds, NOV);
+    expect([done.total, done.paid, done.open, done.openCount]).toEqual([6, 6, 0, 0]);
+    expect(progressPercent(done)).toBe(100);
+  });
+
+  it('Kategorie unter null: Summe darf negativ sein, Invarianten halten', () => {
+    const f = monthFigures(tiny([{ positionId: 'pos-handy', amount: -40, label: 'Gutschrift', paidAt: '2026-11-20T08:00:00.000Z' }]), NOV);
+    const wohnen = categoryFigures(f, 'cat-wohnen');
+    expect(wohnen.total).toBe(-30);
+    expect(cents(wohnen.paid) + cents(wohnen.open)).toBe(cents(wohnen.total));
+    expect(f.free).toBe(f.netSalary === null ? null : f.netSalary + 30);
+    expect(progressPercent(f)).toBeGreaterThanOrEqual(0);
+    expect(progressPercent(f)).toBeLessThanOrEqual(100);
+  });
+
+  it('zufällig: angezeigtes Offen ≥ 0, Ring 0–100 %, 100 % nur ohne Offenes', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const ds = randomDataset(seed, true);
+      for (const period of MONTHS) {
+        const f = monthFigures(ds, period);
+        expect(shownOpen(f)).toBeGreaterThanOrEqual(0);
+        for (const c of f.categories) expect(shownOpen(c)).toBeGreaterThanOrEqual(0);
+        expect(f.ratio).toBeGreaterThanOrEqual(0);
+        expect(f.ratio).toBeLessThanOrEqual(1);
+        const pct = progressPercent(f);
+        expect(pct).toBeGreaterThanOrEqual(0);
+        expect(pct).toBeLessThanOrEqual(100);
+        if (pct === 100) expect(f.openCount).toBe(0);
+      }
+    }
+  });
+});
+
 describe('Datum, Zeitzone, Rhythmen', () => {
   it('Fälligkeit am 1. und am Letzten landet im richtigen Monat (Text-Datum, keine Zeitzonen-Umrechnung)', () => {
     process.env.TZ = 'Europe/Vienna';
@@ -177,7 +240,7 @@ const DUE: Record<Exclude<Frequency, 'once'>, number[]> = {
   annual: [3],
 };
 
-function randomDataset(seed: number): Dataset {
+function randomDataset(seed: number, heavyCredits = false): Dataset {
   const r = rng(seed);
   const categories: Category[] = Array.from({ length: r.int(1, 5) }, (_, i) => ({
     id: `c${i}`,
@@ -213,8 +276,9 @@ function randomDataset(seed: number): Dataset {
         ...(r.chance(0.3) ? { note: `€${r.int(1, 99)} vom Vormonat abgehoben` } : {}),
       } satisfies Payment);
     }
-    if (r.chance(0.4)) {
-      const amount = r.money() * (r.chance(0.3) ? -1 : 1);
+    if (r.chance(heavyCredits ? 0.8 : 0.4)) {
+      // heavyCredits: mostly large Gutschriften, often bigger than the month itself
+      const amount = heavyCredits && r.chance(0.7) ? -r.money() * 4 : r.money() * (r.chance(0.3) ? -1 : 1);
       ds.oneOffs.push({ id: `o-${period}`, positionId: r.pick(positions).id, period, amount, label: 'Nachzahlung', ...(r.chance(0.5) ? { paidAt: `${period}-20T10:00:00.000Z` } : {}) } satisfies OneOff);
     }
     if (r.chance(0.6)) ds.monthClose.push({ period, netSalary: r.money() * 5, updatedAt: '', ...(r.chance(0.3) ? { note: 'Notiz', freeActual: r.money() } : {}) });

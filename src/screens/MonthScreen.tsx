@@ -44,6 +44,7 @@ import {
   categoryFigures,
   progressPercent,
   sameMoney,
+  shownOpen,
   type MonthFigures,
   type Tally,
   remindersForPeriod,
@@ -55,7 +56,7 @@ import {
   type DueItem,
   type OpenGroup,
 } from '../lib/calc';
-import { formatEUR, formatPercent } from '../lib/format';
+import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
@@ -190,9 +191,9 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             salary={netSalaryForPeriod(ds, period)}
             onOpen={() => openClose(salaryTile.current)}
           />
-          <KpiTile label="Ø pro Monat" value={formatEUR(fixedCostsAvg(ds, period))}>
+          <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
             <span data-testid="kpi-hint">
-              davon <Amount>{formatEUR(reserveNeeded(ds, period))}</Amount> nicht monatlich
+              davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
             </span>
           </KpiTile>
           <FreeTile
@@ -456,7 +457,7 @@ function HeroCard({ figures }: { figures: MonthFigures }) {
               className="num inline-flex h-7 items-center rounded-full bg-accent-soft px-3 text-[13px] font-semibold text-accent-strong"
               data-testid="hero-open"
             >
-              {figures.openCount} offen · {formatEUR(figures.open)}
+              {figures.openCount} offen · {formatEUR(shownOpen(figures))}
             </span>
           )}
         </div>
@@ -581,7 +582,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         )}
         {average !== null && (
           <span className={tileSub} data-testid="free-average">
-            im Ø-Monat <Amount>{formatEUR(average)}</Amount>
+            im Ø-Monat <Amount>{formatAvg(average)}</Amount>
             {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
             {showInfo && <span ref={slot} className="ml-0.5 inline-block h-3 w-4 align-middle" aria-hidden="true" />}
           </span>
@@ -645,7 +646,7 @@ function GroupCard({
         expanded={!collapsed}
         onToggle={onToggleCollapsed}
         headingLevel={2}
-        buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatEUR(spread)} pro Monat` : ''}, ${progress}`}
+        buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${progress}`}
         buttonClassName={`px-4 py-3 hover:bg-zinc-50/40 ${collapsed ? '' : 'border-b border-line'}`}
         buttonTestId="group-toggle"
         header={
@@ -672,7 +673,7 @@ function GroupCard({
               </span>
               {showSpread && (
                 <span className="num whitespace-nowrap text-[12px] text-ink-faint" data-testid="group-spread">
-                  Ø {formatEUR(spread)} / Monat
+                  Ø {formatAvg(spread)} / Monat
                 </span>
               )}
             </span>

@@ -63,7 +63,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
     await expect(app.getByTestId('distribution-headline-label')).toHaveText('Größter Block');
     await expect(app.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
-    await expect(app.getByTestId('distribution-headline-sub')).toHaveText(eur('€ 1.602 von € 2.952,17 pro Monat'));
+    await expect(app.getByTestId('distribution-headline-sub')).toHaveText(eur('€ 1.602,00 von € 2.952,17 pro Monat')); // spread amounts always with cents
     await expect(app.getByTestId('monthclose')).toHaveCount(0); // „Frei verfügbar & Sparquote“ removed
     await expect(app.getByTestId('trend-empty')).toHaveText(
       eur('Ab 3 Monaten siehst du hier die Entwicklung. Bisher: € 2.952,17 Ø pro Monat seit Okt 2026.'),

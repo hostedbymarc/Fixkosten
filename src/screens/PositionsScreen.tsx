@@ -26,7 +26,7 @@ import {
   sumMonthlyEquivalent,
   fixedCostsAvg,
 } from '../lib/calc';
-import { formatEUR } from '../lib/format';
+import { formatAvg, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { useToday } from '../lib/useToday';
 import type { Dataset, PlanEntry, Position } from '../lib/types';
@@ -83,7 +83,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]">Positionen</h1>
           <p className="text-[13px] text-ink-mute">
-            {active.length} aktiv · Ø <span className="num">{formatEUR(fixedCostsAvg(ds, today))}</span> pro Monat
+            {active.length} aktiv · Ø <span className="num">{formatAvg(fixedCostsAvg(ds, today))}</span> pro Monat
           </p>
         </div>
         <button
@@ -107,7 +107,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
                   {category.kind === 'savings' && <span className="ml-2 text-[12px] font-medium text-ink-mute">Vermögensaufbau</span>}
                 </h2>
                 <span className="num text-[13px] text-ink-mute">
-                  Ø {formatEUR(sumMonthlyEquivalent(ds, today, { categoryId: category.id }))}
+                  Ø {formatAvg(sumMonthlyEquivalent(ds, today, { categoryId: category.id }))}
                 </span>
               </header>
               {items.length === 0 ? (
@@ -266,7 +266,7 @@ function PositionListRow({
         <span className="flex shrink-0 flex-col items-end">
           <span className="num text-[16px] font-semibold text-ink">{formatEUR(plan.amount)}</span>
           {plan.frequency !== 'monthly' && plan.frequency !== 'once' && (
-            <span className="num whitespace-nowrap text-[12px] text-ink-mute">Ø {formatEUR(monthlyEquivalentOfPlan(plan))} / Monat</span>
+            <span className="num whitespace-nowrap text-[12px] text-ink-mute">Ø {formatAvg(monthlyEquivalentOfPlan(plan))} / Monat</span>
           )}
         </span>
       </button>

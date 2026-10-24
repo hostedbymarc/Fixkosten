@@ -447,10 +447,18 @@ export function categoryFigures(f: MonthFigures, categoryId: string): Tally {
   return f.categories.find((c) => c.category.id === categoryId) ?? { total: 0, paid: 0, open: 0, count: 0, paidCount: 0, openCount: 0 };
 }
 
-/** Ring label: rounded, but 100 % only when everything is ticked. */
+/** Ring label: rounded, 0–100, and 100 % only when everything is ticked. */
 export function progressPercent(f: Pick<MonthFigures, 'ratio' | 'openCount'>): number {
-  const pct = Math.round(f.ratio * 100);
+  const pct = Math.min(Math.max(Math.round(f.ratio * 100), 0), 100);
   return f.openCount > 0 ? Math.min(pct, 99) : pct;
+}
+
+/**
+ * „Offen“ as shown: never below € 0. An open Gutschrift can push the exact
+ * `open` (Gesamt − Abgebucht) below zero; nothing is then left to pay.
+ */
+export function shownOpen(t: Pick<Tally, 'open'>): number {
+  return Math.max(t.open, 0);
 }
 
 /** Same amount to the cent (display decisions, e.g. hide an equal Ø). */
