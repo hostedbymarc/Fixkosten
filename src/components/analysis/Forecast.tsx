@@ -246,9 +246,8 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
     label: shortMonthName(monthOf(m.period)),
     // stacked: regular fixed costs below (their mean is the Ø line), one-time payments and one-offs on top
     recurring: m.regular,
-    extra: Math.round((m.due - m.regular) * 100) / 100,
   }));
-  const hasOnce = f.months.some((m) => Math.round((m.due - m.regular) * 100) !== 0);
+  const hasOnce = f.months.some((m) => m.extra !== 0);
   const avgText = `Ø ${formatEUR(Math.round(f.average)).replace(/^€\s/, '')}`;
   return (
     <ChartCard

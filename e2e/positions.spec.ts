@@ -299,7 +299,8 @@ test.describe('Offen aus Vormonat & Einmalbeträge', () => {
     const sub = row(app, 'pos-strom').getByTestId('oneoff-row');
     await expect(sub).toContainText('Jahresabrechnung');
     await expect(sub).toContainText(eur('+€ 120'));
-    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.664'));
+    // the one-off counts like a position (audit decision): 2.664 + 120
+    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.784'));
     await sub.getByRole('button', { name: 'Jahresabrechnung als bezahlt markieren' }).click();
     await expect(sub).toHaveAttribute('data-paid', 'true');
 

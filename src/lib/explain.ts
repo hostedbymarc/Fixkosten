@@ -1,7 +1,7 @@
 // Explanations shown next to figures. Values come from calc.ts, never computed here.
 
 import { fixedCostsAvg, freeAfterFixedAvg, netSalaryForPeriod } from './calc';
-import { formatEUR } from './format';
+import { formatAvg, formatEUR } from './format';
 import type { Dataset, Period } from './types';
 
 export interface AverageMonthExplanation {
@@ -24,6 +24,6 @@ export function averageMonthExplanation(ds: Dataset, period: Period): AverageMon
     netSalary,
     fixedCostsAvg: avg,
     free,
-    formula: `Netto ${formatEUR(netSalary)} − Ø Fixkosten ${formatEUR(avg)} = ${formatEUR(free)}`,
+    formula: `Netto ${formatEUR(netSalary)} − Ø Fixkosten ${formatAvg(avg)} = ${formatAvg(free)}`,
   };
 }

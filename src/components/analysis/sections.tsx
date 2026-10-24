@@ -26,7 +26,7 @@ import {
   trendTooShortText,
   type TrendChange,
 } from '../../lib/analytics';
-import { formatCompactEUR, formatDelta, formatEUR, formatPercent } from '../../lib/format';
+import { formatCompactEUR, formatDelta, formatAvg, formatEUR, formatPercent } from '../../lib/format';
 import { periodLabel } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { Disclosure } from '../Disclosure';
@@ -88,7 +88,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
           {d.rows.map((r) => (
             <tr key={r.category.id}>
               <th scope="row">{r.category.name}</th>
-              <td>{formatEUR(r.monthly)}</td>
+              <td>{formatAvg(r.monthly)}</td>
               <td>{formatPercent(r.share)}</td>
             </tr>
           ))}
@@ -107,7 +107,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
                 header={
                   <>
                     <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-ink">{r.category.name}</span>
-                    <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold text-ink">{formatEUR(r.monthly)}</span>
+                    <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold text-ink">{formatAvg(r.monthly)}</span>
                     <span className="num w-[52px] shrink-0 whitespace-nowrap text-right text-[13px] text-ink-mute" data-testid="share">
                       {formatPercent(r.share)}
                     </span>
@@ -131,7 +131,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
                         <li key={p.position.id} className="flex flex-col gap-1">
                           <span className="flex items-baseline gap-2 text-[14px]">
                             <span className="min-w-0 flex-1 truncate text-ink-soft">{p.position.name}</span>
-                            <span className="num shrink-0 whitespace-nowrap text-ink">{formatEUR(p.monthly)}</span>
+                            <span className="num shrink-0 whitespace-nowrap text-ink">{formatAvg(p.monthly)}</span>
                             <span className="num w-[52px] shrink-0 whitespace-nowrap text-right text-[12px] text-ink-mute" data-testid="share">
                               {formatPercent(within)}
                             </span>
@@ -155,7 +155,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
         })}
       </ul>
       <p className="mt-2 text-[13px] text-ink-mute" data-testid="distribution-total">
-        Summe <span className="num font-medium text-ink">{formatEUR(d.total)}</span> Ø pro Monat (heute)
+        Summe <span className="num font-medium text-ink">{formatAvg(d.total)}</span> Ø pro Monat (heute)
       </p>
     </ChartCard>
   );
@@ -192,8 +192,8 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
         head: ['Monat', ...t.categories.map((c) => c.name), 'Gesamt'],
         rows: t.points.map((p) => [
           periodLabel(p.period),
-          ...t.categories.map((c) => formatEUR(p.byCategory[c.id] ?? 0)),
-          formatEUR(p.total),
+          ...t.categories.map((c) => formatAvg(p.byCategory[c.id] ?? 0)),
+          formatAvg(p.total),
         ]),
       }}
     >
@@ -211,9 +211,9 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
                 if (!r) return null;
                 const point = t.points.find((p) => p.period === r.period)!;
                 return (
-                  <TooltipBox title={`${periodLabel(r.period)}: ${formatEUR(point.total)}`}>
+                  <TooltipBox title={`${periodLabel(r.period)}: ${formatAvg(point.total)}`}>
                     {[...t.categories].reverse().map((c) => (
-                      <TooltipRow key={c.id} label={c.name} value={formatEUR(point.byCategory[c.id] ?? 0)} swatch={categoryColor(c.color)} />
+                      <TooltipRow key={c.id} label={c.name} value={formatAvg(point.byCategory[c.id] ?? 0)} swatch={categoryColor(c.color)} />
                     ))}
                     {(t.changes[r.period] ?? []).map((c) => (
                       <p key={c.positionName} className="mt-1 border-t border-line pt-1 text-ink" data-testid="trend-change">
@@ -247,7 +247,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
           <li key={c.id} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: categoryColor(c.color) }} aria-hidden="true" />
             {c.name}
-            <span className="num text-ink">{formatEUR(last.byCategory[c.id] ?? 0)}</span>
+            <span className="num text-ink">{formatAvg(last.byCategory[c.id] ?? 0)}</span>
           </li>
         ))}
         {Object.keys(t.changes).length > 0 && (
