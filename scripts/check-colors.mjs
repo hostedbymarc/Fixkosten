@@ -19,6 +19,7 @@ const NAME_OK = [
   /Fixkosten oder Sparplan/,
   /Monatliche Fixkosten/,
   /Ø Fixkosten/, // tooltip „im Ø-Monat“
+  /\} Fixkosten \+ \$\{/, // hero „€ 5.649 Fixkosten + € 800 Vermögensaufbau“
 ];
 
 function files(dir) {

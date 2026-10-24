@@ -162,8 +162,8 @@
     --glass-opaque: #1c231f;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
     --nebel-base: #0e120f;
-    --nebel-1: rgba(90, 122, 46, 0.28);
-    --nebel-2: rgba(222, 206, 176, 0.06);
+    --nebel-1: rgba(90, 122, 46, 0.22);
+    --nebel-2: rgba(222, 206, 176, 0.045);
     --nebel-3: rgba(90, 122, 46, 0.14);
     --grain-opacity: 0.06;
     --chart-accent: #7f9c4f;
@@ -239,8 +239,8 @@
   --glass-opaque: #1c231f;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
   --nebel-base: #0e120f;
-  --nebel-1: rgba(90, 122, 46, 0.28);
-  --nebel-2: rgba(222, 206, 176, 0.06);
+  --nebel-1: rgba(90, 122, 46, 0.22);
+  --nebel-2: rgba(222, 206, 176, 0.045);
   --nebel-3: rgba(90, 122, 46, 0.14);
   --grain-opacity: 0.06;
   --chart-accent: #7f9c4f;

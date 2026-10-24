@@ -9,6 +9,8 @@ export interface TableData {
 interface Props {
   id: string;
   title: string;
+  /** period the card covers, small under the title („Nov 2026 – Okt 2027“) */
+  period?: string;
   /** two-level heading (label · value · sub) */
   headline?: SummaryData;
   /** table alternative for screen readers and „Als Tabelle anzeigen“ */
@@ -47,14 +49,19 @@ export function Summary({ id, label, value, sub }: SummaryData & { id: string })
 }
 
 /** Section frame of every analysis chart: title, two-level heading, chart, „Details anzeigen“. */
-export function ChartCard({ id, title, headline, table, details, children }: Props) {
+export function ChartCard({ id, title, period, headline, table, details, children }: Props) {
   const [showTable, setShowTable] = useState(false);
   const tableId = useId();
   return (
     <section aria-labelledby={`${id}-title`} data-testid={id} className="min-w-0">
-      <h2 id={`${id}-title`} className="section-title mb-2 px-1">
+      <h2 id={`${id}-title`} className={`section-title px-1 ${period ? '' : 'mb-2'}`}>
         {title}
       </h2>
+      {period && (
+        <p className="num mb-2 px-1 text-[12px] text-ink-mute" data-testid={`${id}-period`}>
+          {period}
+        </p>
+      )}
       <div className="glass min-w-0 p-4">
         {headline && <Summary id={id} {...headline} />}
         {children}

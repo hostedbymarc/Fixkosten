@@ -44,11 +44,25 @@ export function formatAvg(value: number): string {
 }
 
 /** Signed delta: '+€ 12' / '−€ 5' (typographic minus). */
-export function formatDelta(value: number): string {
+export function formatDelta(value: number, opts: { fixed?: boolean } = {}): string {
   const cents = Math.round(value * 100);
-  if (cents === 0) return formatEUR(0);
+  if (cents === 0) return formatEUR(0, opts);
   const sign = cents > 0 ? '+' : MINUS;
-  return `${sign}${formatEUR(Math.abs(cents) / 100)}`;
+  return `${sign}${formatEUR(Math.abs(cents) / 100, opts)}`;
+}
+
+/** True when any of the amounts has cents: amounts compared side by side then all show cents. */
+export function needsCents(...values: number[]): boolean {
+  return values.some((v) => Math.round(v * 100) % 100 !== 0);
+}
+
+/**
+ * Amounts compared directly („€ 3.488,50 von € 3.488,00“, Plan | Ist): one precision for all.
+ * With cents in any of them, every one shows cents; otherwise none does.
+ */
+export function formatEURSet(...values: number[]): string[] {
+  const fixed = needsCents(...values);
+  return values.map((v) => formatEUR(v, { fixed }));
 }
 
 /** '05.10.2026' */

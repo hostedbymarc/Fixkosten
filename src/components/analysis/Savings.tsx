@@ -3,7 +3,7 @@ import { db } from '../../db/db';
 import { saveMonthClose } from '../../db/repo';
 import { savingsAverage, savingsCard, savingsHistory, shortPeriodLabel, type SavingsCard, type SavingsPoint } from '../../lib/analytics';
 import { categoryColor } from '../../lib/categoryColors';
-import { formatEUR, formatPercent } from '../../lib/format';
+import { formatEUR, formatEURSet, formatPercent } from '../../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { Disclosure } from '../Disclosure';
@@ -19,8 +19,10 @@ const TOP = 22;
 const PLOT = 96;
 const LABEL = 22;
 
-const tipText = (p: SavingsPoint) =>
-  `${shortPeriodLabel(p.period)} · ${formatPercent(p.rate!)} · ${formatEUR(p.wealth!)} von ${formatEUR(p.netSalary!)}`;
+const tipText = (p: SavingsPoint) => {
+  const [wealth, net] = formatEURSet(p.wealth!, p.netSalary!);
+  return `${shortPeriodLabel(p.period)} · ${formatPercent(p.rate!)} · ${wealth} von ${net}`;
+};
 
 /** Months that fit the width with ≥ 44 px each, never more than 12. */
 function useColumns(shown: boolean): [React.RefObject<HTMLDivElement>, number] {
@@ -44,11 +46,12 @@ function useColumns(shown: boolean): [React.RefObject<HTMLDivElement>, number] {
 /** One bar: full width = net salary, filled part = Vermögensaufbau (= the Sparquote, capped at 100 %). */
 function SavingsBar({ card }: { card: SavingsCard }) {
   const fill = Math.min(Math.max(card.rate, 0), 1);
+  const [wealth, net] = formatEURSet(card.wealth, card.netSalary);
   return (
     <div>
       <div
         role="img"
-        aria-label={`Sparquote ${formatPercent(card.rate)}: ${formatEUR(card.wealth)} von ${formatEUR(card.netSalary)} Netto-Gehalt fließen in Vermögensaufbau`}
+        aria-label={`Sparquote ${formatPercent(card.rate)}: ${wealth} von ${net} Netto-Gehalt fließen in Vermögensaufbau`}
         className="flex h-[14px] w-full overflow-hidden"
         data-testid="savings-bar"
       >
@@ -59,10 +62,10 @@ function SavingsBar({ card }: { card: SavingsCard }) {
       </div>
       <p className="mt-1.5 flex items-baseline justify-between gap-3 text-[13px] text-ink-mute">
         <span className="whitespace-nowrap" data-testid="savings-saved">
-          <span className="num font-semibold text-ink">{formatEUR(card.wealth)}</span> gespart
+          <span className="num font-semibold text-ink">{wealth}</span> gespart
         </span>
         <span className="whitespace-nowrap" data-testid="savings-net">
-          Netto <span className="num font-semibold text-ink">{formatEUR(card.netSalary)}</span>
+          Netto <span className="num font-semibold text-ink">{net}</span>
         </span>
       </p>
     </div>

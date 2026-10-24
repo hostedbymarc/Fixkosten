@@ -26,7 +26,7 @@ import {
   trendTooShortText,
   type TrendChange,
 } from '../../lib/analytics';
-import { formatCompactEUR, formatDelta, formatAvg, formatEUR, formatPercent, MINUS } from '../../lib/format';
+import { formatCompactEUR, formatDelta, formatAvg, formatEUR, formatEURSet, formatPercent, MINUS, needsCents } from '../../lib/format';
 import { periodLabel } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { Disclosure } from '../Disclosure';
@@ -165,9 +165,9 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
 // 4 · Trend of the spread burden
 // ---------------------------------------------------------------------------
 
-/** 'Miete +€ 42/Monat · Indexanpassung' */
+/** 'Miete +€ 42 / Monat · Indexanpassung' */
 function changeText(c: TrendChange): string {
-  return `${c.positionName} ${formatDelta(c.monthlyDelta)}/Monat${c.reason ? ` · ${c.reason}` : ''}`;
+  return `${c.positionName} ${formatDelta(c.monthlyDelta)} / Monat${c.reason ? ` · ${c.reason}` : ''}`;
 }
 
 export function TrendSection({ ds, periods, today, months }: { ds: Dataset; periods: Period[]; today: Period; months: number }) {
@@ -268,11 +268,12 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
   const p = planVsActual(ds, periods, today);
   if (p.closedMonths === 0) {
     const running = p.rows[p.rows.length - 1];
+    const [actual, planned] = running ? formatEURSet(running.actual, running.planned) : [];
     return (
       <EmptyCard
         id="planactual"
         title="Plan vs. Ist"
-        text={`${running ? `${periodLabel(running.period)} läuft noch: ${formatEUR(running.actual)} von ${formatEUR(running.planned)} abgebucht. ` : ''}Der Vergleich startet, sobald der erste Monat abgeschlossen ist.`}
+        text={`${running ? `${periodLabel(running.period)} läuft noch: ${actual} von ${planned} abgebucht. ` : ''}Der Vergleich startet, sobald der erste Monat abgeschlossen ist.`}
       />
     );
   }
@@ -288,9 +289,8 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
         head: ['Monat', 'Plan', 'Ist', 'Differenz'],
         rows: p.rows.map((r) => [
           periodLabel(r.period),
-          formatEUR(r.planned),
-          formatEUR(r.actual),
-          r.running ? 'läuft' : formatDelta(r.delta!),
+          ...formatEURSet(r.planned, r.actual),
+          r.running ? 'läuft' : formatDelta(r.delta!, { fixed: needsCents(r.planned, r.actual) }),
         ]),
       }}
     >
@@ -307,9 +307,14 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
                 if (!r) return null;
                 return (
                   <TooltipBox title={`${periodLabel(r.period)}${r.running ? ' (läuft)' : ''}`}>
-                    <TooltipRow label="Plan" value={formatEUR(r.planned)} swatch={COLORS.neutral} />
-                    <TooltipRow label="Ist" value={formatEUR(r.actual)} swatch={COLORS.accent} />
-                    {!r.running && <TooltipRow label={r.delta! > 0 ? 'teurer' : 'günstiger'} value={formatDelta(r.delta!)} />}
+                    <TooltipRow label="Plan" value={formatEURSet(r.planned, r.actual)[0]!} swatch={COLORS.neutral} />
+                    <TooltipRow label="Ist" value={formatEURSet(r.planned, r.actual)[1]!} swatch={COLORS.accent} />
+                    {!r.running && (
+                      <TooltipRow
+                        label={r.delta! > 0 ? 'teurer' : 'günstiger'}
+                        value={formatDelta(r.delta!, { fixed: needsCents(r.planned, r.actual) })}
+                      />
+                    )}
                   </TooltipBox>
                 );
               }}
@@ -380,7 +385,7 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
     return (
       <EmptyCard
         id="optimizations"
-        title="Optimierungen"
+        title="Geplante Änderungen"
         text="Noch keine Änderungen. Wenn du einen Vertrag günstiger machst, siehst du hier, was es bringt."
       />
     );
@@ -390,7 +395,7 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
   return (
     <section aria-labelledby="optimizations-title" data-testid="optimizations">
       <h2 id="optimizations-title" className="section-title mb-2 px-1">
-        Optimierungen
+        Geplante Änderungen
       </h2>
       <div className="glass flex flex-col gap-5 p-4">
         {planned.length > 0 && <OptimizationList title="Geplant" total={t.plannedAnnual} entries={planned} testId="optimizations-planned" />}
@@ -402,7 +407,7 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
   );
 }
 
-/** '+€ 27,80/Jahr' red for a rise, brand for a saving, always signed. */
+/** '+€ 27,80 / Jahr' red for a rise, brand for a saving, always signed. */
 function deltaClass(value: number): string {
   const c = Math.round(value * 100);
   return c > 0 ? 'text-over' : c < 0 ? 'text-accent-ink' : 'text-ink-mute';
@@ -433,7 +438,7 @@ function OptimizationList({ title, total, entries, testId }: { title: string; to
                 </span>
               </span>
               <span className={`num shrink-0 whitespace-nowrap text-[14px] font-semibold ${deltaClass(e.annualDelta)}`}>
-                {formatDelta(e.annualDelta)}/Jahr
+                {formatDelta(e.annualDelta)} / Jahr
               </span>
             </li>
           );
