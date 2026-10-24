@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureDataset } from '../../tests/fixtures/dataset';
-import { categoryDistribution, forecastSummary, yearForecast } from './analytics';
+import { categoryDistribution, forecastRange, forecastSummary, yearForecast } from './analytics';
 import { fixedCosts, fixedCostsAvg, sumMoney } from './calc';
 import type { Dataset, Position } from './types';
 
@@ -109,5 +109,20 @@ describe('Jahresvorschau: bar colour follows the Ø line', () => {
   it('heading: „€ 3.158 über Ø“ = 6.110 − 2.952,17, rounded', () => {
     const s = forecastSummary(yearForecast(data(), OCT));
     expect([s.value, s.sub].map((t) => t.replace(/\u00a0/g, ' '))).toEqual(['Nov 2026 · € 6.110', '€ 3.158 über Ø']);
+  });
+});
+
+describe('Zeitraum und Aufschlag ab Jänner', () => {
+  it('Zeitraum unter der Überschrift: die 12 Monate nach dem aktuellen', () => {
+    expect(forecastRange(yearForecast(fixtureDataset(), OCT))).toBe('Nov 2026 – Okt 2027');
+    expect(forecastRange(yearForecast(fixtureDataset(), '2026-11'))).toBe('Dez 2026 – Nov 2027');
+  });
+
+  it('der Jahreswechsel addiert nichts: regulär = heutige Monatsposten + die in dem Monat fälligen nicht-monatlichen', () => {
+    const ds = fixtureDataset();
+    const f = yearForecast(ds, OCT);
+    const monthlyToday = 2664; // 13 monatliche Ausgaben-Posten der Seed-Daten
+    const extra: Record<string, number> = { '2026-12': 262.02 + 87, '2027-01': 49, '2027-02': 1260 + 686, '2027-04': 49, '2027-06': 262.02, '2027-07': 49, '2027-09': 15, '2027-10': 49 + 690 };
+    for (const m of f.months) expect(m.regular, m.period).toBeCloseTo(monthlyToday + (extra[m.period] ?? 0), 2);
   });
 });

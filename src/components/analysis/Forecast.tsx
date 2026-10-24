@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
+import { forecastRange, forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
 import { formatCompactEUR, formatEUR } from '../../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
@@ -253,6 +253,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
     <ChartCard
       id="forecast"
       title="Jahresvorschau"
+      period={forecastRange(f)}
       headline={summary}
       details={
         <>
@@ -273,7 +274,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         // narrow phones: the chart uses half of the card padding, the month labels need it
         className="h-[230px] max-[419px]:-mx-2"
         role="img"
-        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø ${formatEUR(f.average)} pro Monat`}
+        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (heute) ${formatEUR(f.average)}`}
       >
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={{ ...CHART_MARGIN, right: CHIP_ROOM }} accessibilityLayer barCategoryGap="22%">
@@ -345,9 +346,14 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         className="mt-2 flex items-center justify-center gap-x-3 whitespace-nowrap text-[12px] text-ink-mute"
         data-testid="forecast-legend"
       >
-        <span className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full" style={{ background: COLORS.accent }} aria-hidden="true" />
-          über Ø
+        {/* the regular part keeps its colours: neutral, accent when the month is above the Ø */}
+        <span className="flex items-center gap-1.5" data-testid="legend-regular">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: `linear-gradient(90deg, ${COLORS.neutral} 50%, ${COLORS.accent} 50%)` }}
+            aria-hidden="true"
+          />
+          regulär
         </span>
         {hasOnce && (
           <span className="flex items-center gap-1.5">
@@ -357,7 +363,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         )}
         <span className="flex items-center gap-1.5">
           <span className="h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-          Ø pro Monat
+          Ø pro Monat (heute)
         </span>
       </p>
     </ChartCard>

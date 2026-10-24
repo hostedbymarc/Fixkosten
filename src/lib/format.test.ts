@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { amountToInput, formatDate, formatDelta, formatEUR, parseAmount } from './format';
+import { amountToInput, formatDate, formatDelta, formatEUR, formatEURSet, needsCents, parseAmount } from './format';
 import { addPeriods, periodLabel, periodRange } from './period';
 
 // Intl separates '€' and the number with a no-break space
@@ -50,5 +50,22 @@ describe('period', () => {
     expect(addPeriods('2026-12', 1)).toBe('2027-01');
     expect(addPeriods('2026-01', -1)).toBe('2025-12');
     expect(periodRange('2026-11', '2027-02')).toEqual(['2026-11', '2026-12', '2027-01', '2027-02']);
+  });
+});
+
+describe('gleiche Genauigkeit für direkt verglichene Beträge', () => {
+  const plain = (xs: string[]) => xs.map((x) => x.replace(/\u00a0/g, ' '));
+  it('Cent in einem Betrag → beide mit Cent („€ 3.488,50 von € 3.488,00“)', () => {
+    expect(plain(formatEURSet(3488.5, 3488))).toEqual(['€ 3.488,50', '€ 3.488,00']);
+    expect(plain(formatEURSet(3488, 3488.5))).toEqual(['€ 3.488,00', '€ 3.488,50']);
+  });
+  it('ohne Cent → beide ohne', () => {
+    expect(plain(formatEURSet(3368, 3403))).toEqual(['€ 3.368', '€ 3.403']);
+  });
+  it('Differenz folgt derselben Genauigkeit', () => {
+    expect(needsCents(3488.5, 3488)).toBe(true);
+    expect(formatDelta(0.5, { fixed: true }).replace(/\u00a0/g, ' ')).toBe('+€ 0,50');
+    expect(formatDelta(12, { fixed: true }).replace(/\u00a0/g, ' ')).toBe('+€ 12,00');
+    expect(formatDelta(12).replace(/\u00a0/g, ' ')).toBe('+€ 12');
   });
 });

@@ -6,7 +6,7 @@ import {
   planVsActual,
   type Range,
 } from '../src/lib/analytics';
-import { formatDelta, formatEUR } from '../src/lib/format';
+import { formatDelta, formatEUR, formatEURSet, needsCents } from '../src/lib/format';
 import { periodLabel } from '../src/lib/period';
 import { historyDataset, importHistory, openAnalyse, watchConsole } from './analyse-helpers';
 import { eur, expect, goTo, isTouchProject, row, test } from './fixtures';
@@ -144,7 +144,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(planned).toContainText(eur('Handy € 10 → € 8'));
     await expect(planned).not.toContainText('geplant'); // no chip: the section head says it once
     await expect(planned).toContainText(eur('ab 01.11.2026'));
-    await expect(planned).toContainText(eur('−€ 24/Jahr'));
+    await expect(planned).toContainText(eur('−€ 24 / Jahr'));
     await expect(app.getByTestId('optimizations-list')).toHaveCount(0);
     // the forecast follows the change: November € 2.662
     expect((await tableRows(app.getByTestId('forecast')))[0]!.slice(0, 2)).toEqual(['Nov 2026', '€ 2.662']);
@@ -178,11 +178,11 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
 
       const pva = planVsActual(ds, periods, OCT);
       expect(await tableRows(page.getByTestId('planactual'))).toEqual(
+        // Plan and Ist of a row share one precision (cents in one → cents in both)
         pva.rows.map((x) => [
           periodLabel(x.period),
-          text(formatEUR(x.planned)),
-          text(formatEUR(x.actual)),
-          x.running ? 'läuft' : text(formatDelta(x.delta!)),
+          ...formatEURSet(x.planned, x.actual).map(text),
+          x.running ? 'läuft' : text(formatDelta(x.delta!, { fixed: needsCents(x.planned, x.actual) })),
         ]),
       );
       await expect(page.getByTestId('top-deviations').locator('li')).toHaveCount(5);
@@ -224,9 +224,9 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     await expect(list.locator('> li')).toHaveCount(t.entries.filter((e) => !e.planned).length);
     await expect(list).toContainText('Tarifwechsel');
     await expect(list).toContainText(eur('Handy € 15 → € 10'));
-    await expect(list).toContainText(eur('−€ 60/Jahr'));
+    await expect(list).toContainText(eur('−€ 60 / Jahr'));
     await expect(list).toContainText(eur('Gym € 32 → € 35'));
-    await expect(list).toContainText(eur('+€ 36/Jahr'));
+    await expect(list).toContainText(eur('+€ 36 / Jahr'));
     await expect(list).not.toContainText(eur('€ 85')); // the typo entry
   });
 
