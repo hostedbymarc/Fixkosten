@@ -87,10 +87,18 @@ Ist = heutiger Code. Soll = deine Definitionen. „offen“ = Definition noch zu
   - Seit dem Nachtrag in Abschnitt 4 wird zusätzlich der umgelegte Vermögensaufbau abgezogen: 7.819 − 2.952,17 − 800,00 = 4.066,83.
 - **Kategorie-Ø** (z. B. Wohnen & Leben): dieselbe Formel wie Ø pro Monat, nur die Positionen der Kategorie.
   - Wird im Header nur angezeigt, wenn er von der Monatssumme abweicht.
-  - Mit dem Stand 05.10. (`seed.local.json`) ist Wohnen & Leben Ø 1.602 = Monatssumme 1.602.
-  - Deine € 1.675,50 liegen € 73,50/Monat (= € 882/Jahr) darüber. Nach der Formel kann das nur von Wohnen-Positionen kommen, die im Plan stehen, aber im November nicht fällig sind (quartalsweise, halbjährlich oder jährlich). Es kann auch mehr als eine sein.
-  - Eine monatliche Position würde auch die Monatssumme erhöhen, eine einmalige zählt im Ø nicht.
-  - Diese Position(en) sind in deinem Export vom 05.10. nicht enthalten. **Bitte in Positionen → Wohnen & Leben nachsehen**; ich kann deine aktuellen Daten nicht einsehen.
+  - Der Kategorie-Ø enthält die nicht-monatlichen Positionen der Kategorie, die im angezeigten Monat nicht fällig sind.
+  - Es fehlen **keine** Positionen im Export vom 05.10. Dort liegen diese Positionen nur noch in den alten Kategorien „Banking & Finanzen“ und „Mobilität“; in deinen aktuellen Daten sind sie in Wohnen & Leben, Abos und Sonstiges.
+  - Mit den Seed-Beträgen nachgerechnet und bestätigt (November 2026):
+
+| Kategorie | Monatssumme | nicht-monatliche Anteile | Kategorie-Ø |
+|---|---|---|---|
+| Wohnen & Leben | 1.602 (Plan) | Offi 686 + Depotentgelt 35 × 4 = 140 + Kontoführung 14 × 4 = 56 → 882 €/Jahr ÷ 12 = **73,50** | **1.675,50** |
+| Abos | 71 | Parqet 87 ÷ 12 = 7,25 + Amex Gebühr 690 ÷ 12 = 57,50 + Amex Turbo 15 ÷ 12 = 1,25 → **66,00** | **137,00** |
+| Sonstiges | 0 (nur Einmalige, zählen im Ø nicht) | Steuerberater 1.260 ÷ 12 = **105,00** | **105,00** |
+| Immo | 991 | Baurechtszins 262,02 × 2 ÷ 12 = **43,67** | **1.034,67** |
+| **Summe nicht-monatlich** | | 73,50 + 66,00 + 105,00 + 43,67 = **288,17** | = „davon € 288,17 nicht monatlich“ |
+
 - **Kommt bald**: nicht-monatliche Posten (Rhythmus ≠ monatlich, inkl. Einmalige), die in den **2 Monaten nach dem angezeigten Monat** fällig sind.
   - Es zählt nur `period+1` und `period+2`, nie der angezeigte Monat selbst. Die Liste geht in keine Summe ein.
   - Bezugspunkt ist der angezeigte Monat, nicht „heute“.
@@ -144,6 +152,9 @@ Der Plan (480) bleibt gespeichert und erscheint weiter in „Plan vs. Ist“ und
 - **Analyse = Monat**: Die Jahresvorschau-Balken nutzen dieselben Einträge wie der Monat. Property-Test: Balken = Gesamt für jeden Monat. Sparquote-Karte = Monat.
 - **Berechnung außerhalb des Rechenmoduls**: „x/y bezahlt“ (`monthFigures.categories`), das Zählen im Vormonats-Banner (`countOpen`) und der helle Jahresvorschau-Balkenteil (`ForecastMonth.extra`) sind ins Modul verschoben.
   - grep: außerhalb von `src/lib/{calc,analytics,explain}.ts` gibt es kein Betrags-`reduce` und keine Betragssumme.
+- **Minuszeichen**: eine Konstante `MINUS` (U+2212) in `format.ts` für Beträge, Differenzen, Achsen und Prozent. `formatPercent` ersetzt das Bindestrich-Minus von Intl.
+  - grep/Test: kein anderes Minus vor „€“ im Code und auf dem Monat-Screen.
+  - Negative Beträge bei Frei verfügbar, im Ø-Monat und Rechnerisch frei erscheinen in Rot (`text-over`, kontrastgeprüft) und immer mit Minus, nie nur farbig.
 - **Bewusst nicht umgesetzt** (optional): ein Hinweis im Zahlungs-Sheet wie „Gesamt −30 €“, wenn das Ist vom Plan abweicht. Unter C ändert sich „von € X“ beim Abhaken mit abweichendem Betrag; das ist korrekt.
 
 ## 6. Verifikation

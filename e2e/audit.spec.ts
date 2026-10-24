@@ -2,18 +2,19 @@ import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { parseBackup } from '../src/db/backup';
 import { withNovember } from '../tests/fixtures/november';
-import { eur, expect, FIXTURE, test } from './fixtures';
+import { eur, expect, FIXTURE, isTouchProject, test } from './fixtures';
 import { expectClean } from './measure';
 
 const DIR = 'docs/screenshots/audit';
 /** Today = 10.11.2026: the app opens November. */
 const NOV_TODAY = new Date('2026-11-10T10:00:00+01:00');
 
-async function importNovember(page: Page) {
+async function importNovember(page: Page, netSalary?: number) {
   await page.clock.setFixedTime(NOV_TODAY);
   await page.goto('/');
   await expect(page.getByTestId('setup-dialog')).toBeVisible();
   const backup = withNovember(parseBackup(JSON.parse(readFileSync(FIXTURE, 'utf8'))));
+  if (netSalary !== undefined) backup.data.monthClose.find((m) => m.period === '2026-11')!.netSalary = netSalary;
   await page.getByTestId('import-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
   await expect(page.getByTestId('hero')).toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('November 2026');
@@ -88,5 +89,83 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
     await expect(page.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
     await page.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(page.getByTestId('hero-open')).toHaveText(eur('14 offen · € 5.199'));
+  });
+});
+
+/** Colour of the red text token (text-over) in the current theme. */
+async function overColor(page: Page) {
+  return page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.className = 'text-over';
+    document.body.append(probe);
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c;
+  });
+}
+
+/** Amount fully visible on one line (no truncation, no wrap inside the amount). */
+async function expectWhole(locator: ReturnType<Page['getByTestId']>) {
+  const m = await locator.evaluate((el) => ({
+    clipped: el.scrollWidth > el.clientWidth + 1,
+    lines: el.getClientRects().length,
+    height: el.getBoundingClientRect().height,
+    lineHeight: parseFloat(getComputedStyle(el).lineHeight),
+  }));
+  expect(m.clipped, 'clipped').toBe(false);
+  expect(m.height, 'one line').toBeLessThan(m.lineHeight * 1.5);
+}
+
+test.describe('Frei verfügbar positiv und negativ', () => {
+  test('positiv: € 1.370 · im Ø-Monat € 4.066,83 · ⓘ mit allen drei Werten und dem neuen Text', async ({ page }, info) => {
+    await importNovember(page);
+    await expect(page.getByTestId('free-value')).toHaveText(eur('€ 1.370'));
+    await expect(page.getByTestId('free-value')).toHaveAttribute('data-negative', 'false');
+    await expect(page.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 4.066,83'));
+    const icon = page.getByRole('button', { name: 'Erklärung: im Ø-Monat' });
+    await (isTouchProject() ? icon.tap() : icon.hover());
+    await expect(page.getByTestId('free-average-formula')).toHaveText(eur('Netto € 7.819 − Ø Fixkosten € 2.952,17 − Ø Vermögensaufbau € 800,00 = € 4.066,83'));
+    await expect(page.getByRole('tooltip')).toContainText(
+      'So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.',
+    );
+    await (isTouchProject() ? page.getByRole('heading', { level: 1 }).tap() : page.getByRole('heading', { level: 1 }).hover());
+    await expect(page.getByRole('tooltip')).toHaveCount(0);
+    await page.waitForTimeout(300);
+    await page.getByTestId('salary-tile').locator('..').screenshot({ path: `${DIR}/${info.project.name}-frei-positiv.png` });
+  });
+
+  test('negativ (Netto 3.000): Minus U+2212 und Rot, vollständig, Ring heil; Monatsabschluss ebenso', async ({ page }, info) => {
+    await importNovember(page, 3000);
+    const value = page.getByTestId('free-value');
+    await expect(value).toHaveText('\u2212€\u00a03.449');
+    await expect(value).toHaveAttribute('data-negative', 'true');
+    const red = await overColor(page);
+    expect(await value.evaluate((el) => getComputedStyle(el).color)).toBe(red);
+    await expectWhole(value);
+    const avg = page.getByTestId('free-average').locator('.num');
+    await expect(avg).toHaveText('\u2212€\u00a0752,17');
+    expect(await avg.evaluate((el) => getComputedStyle(el).color)).toBe(red);
+    await expectWhole(avg);
+    // the ring does not care about „Frei verfügbar“
+    await expect(page.getByRole('img', { name: '8 Prozent abgebucht' })).toBeVisible();
+    await expect(page.getByTestId('hero-open')).toHaveText(eur('14 offen · € 5.199'));
+    // one minus sign everywhere on the screen
+    const text = await page.locator('main').innerText();
+    expect(text).not.toMatch(/[-\u2010-\u2014][\s\u00a0]?€/);
+    expect(text).not.toMatch(/€[\s\u00a0]?[-\u2010-\u2014]\d/);
+    await expectClean(page, 'main');
+    await page.waitForTimeout(300);
+    await page.getByTestId('salary-tile').locator('..').screenshot({ path: `${DIR}/${info.project.name}-frei-negativ.png` });
+
+    await page.getByTestId('free-tile').click();
+    const sheet = page.getByRole('dialog', { name: 'Monatsabschluss November 2026' });
+    await expect(sheet).toBeVisible();
+    await expect(sheet.getByTestId('close-average')).toHaveText(
+      eur('Rechnerisch frei diesen Monat \u2212€ 3.449 · im Ø-Monat \u2212€ 752,17, jeweils nach den Fixkosten und dem Vermögensaufbau'),
+    );
+    for (const id of ['close-calculated', 'close-average-value']) {
+      expect(await sheet.getByTestId(id).evaluate((el) => getComputedStyle(el).color)).toBe(red);
+      await expectWhole(sheet.getByTestId(id));
+    }
   });
 });

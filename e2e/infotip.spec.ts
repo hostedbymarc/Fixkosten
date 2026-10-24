@@ -82,7 +82,7 @@ test.describe('Tooltip „im Ø-Monat“', () => {
     await expect(pop).toBeVisible();
     await expect(pop).toContainText('Im Ø-Monat');
     await expect(app.getByTestId('free-average-formula')).toHaveText(eur(FORMULA));
-    await expect(pop).toContainText('So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst.');
+    await expect(pop).toContainText('So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.');
     await expect(icon).toHaveAttribute('aria-describedby', (await pop.getAttribute('id'))!);
     await expect(app.getByRole('dialog')).toHaveCount(0);
     await app.waitForTimeout(400); // stays open
