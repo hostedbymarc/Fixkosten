@@ -19,7 +19,7 @@ import {
   savingsRate,
   wealthBuilding,
 } from './calc';
-import { formatAvg, formatDelta, formatEUR, formatPercent } from './format';
+import { formatAvg, formatDelta, formatEUR, formatPercent, MINUS } from './format';
 import { addPeriods, periodRange, shortMonthName, monthOf, yearOf } from './period';
 import type { Category, Dataset, Period, PlanEntry, Position } from './types';
 
@@ -272,7 +272,7 @@ export function trendHeadline(t: BurdenTrend): string {
   const change = first.total > 0 ? last.total / first.total - 1 : 0;
   const since = `seit ${shortPeriodLabel(first.period)}`;
   if (cents(last.total) === cents(first.total)) return `Unverändert ${formatAvg(last.total)} Ø pro Monat ${since}.`;
-  const sign = change > 0 ? '+' : '−';
+  const sign = change > 0 ? '+' : MINUS;
   return `${formatAvg(first.total)} → ${formatAvg(last.total)} Ø pro Monat ${since} (${sign}${formatPercent(Math.abs(change))}).`;
 }
 
@@ -554,7 +554,7 @@ export function trendSummary(t: BurdenTrend): CardSummary {
   return {
     label: 'Ø pro Monat',
     value: formatAvg(last.total),
-    sub: `${change > 0 ? '+' : '−'}${formatPercent(Math.abs(change))} ${since} (${formatAvg(first.total)})`,
+    sub: `${change > 0 ? '+' : MINUS}${formatPercent(Math.abs(change))} ${since} (${formatAvg(first.total)})`,
   };
 }
 

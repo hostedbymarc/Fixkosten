@@ -9,14 +9,14 @@ test.describe('Monatsabschluss', () => {
     await expect(sheet).toBeVisible();
 
     await sheet.getByLabel('Netto-Gehalt').fill('5.000');
-    await expect(sheet.getByTestId('close-average')).toHaveText(eur('Rechnerisch frei diesen Monat € 1.597 · im Ø-Monat € 2.047,83'));
+    await expect(sheet.getByTestId('close-average')).toHaveText(eur('Rechnerisch frei diesen Monat € 797 · im Ø-Monat € 1.247,83'));
     await expect(sheet.getByLabel('Frei verfügbar (tatsächlich)')).toHaveCount(0);
     await expect(sheet.getByLabel('Notiz')).toHaveCount(0); // the month note has its own card
     await sheet.getByRole('button', { name: 'Speichern' }).click();
     await expect(sheet).toBeHidden();
 
     const check = async () => {
-      await expect(app.getByTestId('free-value')).toHaveText(eur('€ 1.597'));
+      await expect(app.getByTestId('free-value')).toHaveText(eur('€ 797'));
       await expect(app.getByTestId('free-sub')).toHaveCount(0);
       await expect(app.getByTestId('free-tile')).not.toContainText('Diff');
       await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
@@ -35,7 +35,7 @@ test.describe('Monatsabschluss', () => {
     const salary = app.getByLabel('Netto-Gehalt');
     await expect(salary).toHaveAttribute('inputmode', 'decimal');
     await salary.fill('4.850,50');
-    await expect(app.getByTestId('close-average')).toContainText(eur('Rechnerisch frei diesen Monat € 1.447,50'));
+    await expect(app.getByTestId('close-average')).toContainText(eur('Rechnerisch frei diesen Monat € 647,50'));
     await salary.fill('viel');
     await expect(app.getByRole('button', { name: 'Speichern' })).toBeDisabled();
   });
