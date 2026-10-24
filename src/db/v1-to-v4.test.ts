@@ -101,7 +101,10 @@ describe('live data: schema v1 (2776e95) → v4 in one step', () => {
 
     // Depotentgelt still open, everything else ticked
     const progress = periodProgress(ds, OCT);
-    expect(progress).toMatchObject({ planned: 3403, openCount: 1, openPlanned: 35 });
+    // control value of the data: the plan sum is unchanged
+    expect(plannedForPeriod(ds, OCT)).toBe(3403);
+    // Gesamt = debited for ticked + plan for open (audit decision C)
+    expect(progress).toMatchObject({ planned: 3368 + 7.4 + 35, openCount: 1, openPlanned: 35 });
     expect(progress.paidActual).toBe(3368 + 7.4);
     expect(dueItems(ds, OCT).find((i) => i.position.id === 'pos-depotentgelt')?.status).toBe('open');
     db.close();

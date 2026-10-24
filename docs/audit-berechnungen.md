@@ -1,6 +1,6 @@
 # Audit: Berechnungen in Erbse
 
-Stand: main `d84694a` (vor dem Fix). Reproduziert mit deinen Daten (`seed.local.json`, Stand 05.10.2026) plus November 2026:
+Stand: main `d84694a` (vor dem Fix); Abschnitt 4 beschreibt den Stand nach dem Fix. Reproduziert mit deinen Daten (`seed.local.json`, Stand 05.10.2026) plus November 2026:
 Netto 7.819, Hotel Copenhagen 504 und iPhones + Zubehör 2.511 (einmalig 3.11.), Lebensmittel & Co abgehakt mit 450 und Notiz, Cash abgehakt.
 
 ## 1. Wie das „Notiz“-Feld modelliert ist
@@ -91,13 +91,29 @@ Ist = heutiger Code. Soll = deine Definitionen. „offen“ = Definition noch zu
   - Es zählt nur `period+1` und `period+2`, nie der angezeigte Monat selbst. Die Liste geht in keine Summe ein.
   - Bezugspunkt ist der angezeigte Monat, nicht „heute“.
 
-## 4. Was noch geklärt werden muss
+## 4. Entscheidungen (von dir, 24.10.2026) und Umsetzung
 
-- **Basis bei abweichendem Ist** (Lebensmittel: Plan 480, abgebucht 450). Deine Soll-Tabelle verlangt Gesamt 5.679 (Plan), Abgebucht 450 (Ist), Offen 5.229, Frei 2.140 (Plan).
-  - Das ist rechnerisch konsistent, heißt aber: Die 30 € Differenz stehen als „offen“, obwohl der Posten abgehakt ist.
-  - Wer den Ist-Betrag ändert, ändert Abgebucht und Offen. Die Invariante „Korrektur-Werte ändern keine Kennzahl“ gilt dann nur für Notiztexte.
-- **Einmalausgaben** (Nachzahlung/Gutschrift): Die Soll-Definitionen erwähnen sie nicht. Heute zählen sie in Frei verfügbar und Vermögensaufbau, aber nicht in Hero und Kategorie-Summe.
-- **Golden Fixture**: Mit deinen echten Daten ist Lebensmittel Plan 480 / Ist 450 und die weitere Position Strom 64 (nicht 450 / 94). Die Summe 1.602 bleibt gleich.
+- **C: Überall der Ist-Betrag.** Ein abgehakter Posten zählt mit dem, was tatsächlich abgebucht wurde. Ein offener zählt mit dem Plan, ein entfallener gar nicht.
+- **Einmalausgaben zählen wie Posten**: in Gesamt, Abgebucht (wenn abgehakt), Offen, Anzahl, Kategorie-Summe und damit Frei verfügbar. Gutschriften zählen negativ.
+
+Damit gilt in `calc.monthFigures` (eine Quelle für Hero, Kacheln, Kategorie-Header; Analyse nutzt dieselben Einträge):
+
+| Kennzahl | Formel |
+|---|---|
+| Gesamt | Σ aller fälligen Einträge ohne Vermögensaufbau: abgehakt = Ist, offen = Plan, + Einmalausgaben |
+| Abgebucht | abgehakter Teil davon |
+| Offen | Gesamt − Abgebucht |
+| Anzahl offen | nicht abgehakte Einträge (Posten + Einmalausgaben) |
+| Fortschritt % | Abgebucht ÷ Gesamt, kaufmännisch gerundet, 100 % nur wenn alles abgehakt |
+| Vermögensaufbau | dieselbe Regel für Kategorien mit Vermögensaufbau |
+| Frei verfügbar | Netto − Gesamt |
+| Sparquote | Vermögensaufbau ÷ Netto |
+| Kategorie „x/y bezahlt · Summe“ | dieselbe Regel je Kategorie |
+
+**November 2026 mit deinen Daten:** Gesamt 5.649 · Abgebucht 450 · Offen 5.199 · 14 offen · 8 % · Vermögensaufbau 800 · Sparquote 10,2 % · Frei verfügbar 2.170 · Wohnen & Leben 1/6 bezahlt · € 1.572.
+
+Abweichend von deiner ursprünglichen Soll-Tabelle sind Gesamt 5.649 (statt 5.679), Offen 5.199 (statt 5.229) und Frei 2.170 (statt 2.140), als Folge von C.
+Der Plan (480) bleibt gespeichert und erscheint weiter in „Plan vs. Ist“ und im Zahlungs-Sheet.
 
 ## 5. Weitere Prüfpunkte
 

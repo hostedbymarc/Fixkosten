@@ -1,17 +1,20 @@
 interface Props {
   /** 0–1 */
   ratio: number;
+  /** label in the middle (rounded by calc.progressPercent) */
+  percent: number;
+  /** everything ticked: a check replaces the percentage */
+  done: boolean;
   size?: number;
   stroke?: number;
   label: string;
 }
 
 /** Month ring: brand on brand-100; a check replaces the percentage once everything is paid. */
-export function ProgressRing({ ratio, size = 104, stroke = 10, label }: Props) {
+export function ProgressRing({ ratio, percent, done, size = 104, stroke = 10, label }: Props) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const clamped = Math.min(1, Math.max(0, ratio));
-  const done = clamped >= 1;
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
@@ -35,7 +38,7 @@ export function ProgressRing({ ratio, size = 104, stroke = 10, label }: Props) {
             <path d="M6 12.5l4.5 4.5 8-9" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ) : (
-          `${Math.floor(clamped * 100)}%`
+          `${percent}%`
         )}
       </div>
     </div>

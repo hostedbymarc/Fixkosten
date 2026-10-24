@@ -74,7 +74,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff, onEd
             {invalid ? (
               <span className="text-over">Bitte einen Betrag eingeben, z. B. 12,50</span>
             ) : Math.round(delta * 100) !== 0 ? (
-              <span className={delta > 0 ? 'text-over' : 'text-paid-ink'}>
+              <span>
                 <span className="num">{formatDelta(delta)}</span> gegenüber Plan
               </span>
             ) : (

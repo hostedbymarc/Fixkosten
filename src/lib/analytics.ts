@@ -68,6 +68,8 @@ export interface ForecastMonth {
   once: number;
   /** regular fixed costs of the month: `due` without one-time payments and one-offs (dark bar part) */
   regular: number;
+  /** due − regular: one-time payments and one-offs (light bar part on top) */
+  extra: number;
   aboveAverage: boolean;
   /** non-monthly positions and one-offs of the month, largest first */
   items: ForecastItem[];
@@ -105,7 +107,7 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
     const due = fixedCosts(ds, period);
     const once = sumMoney(nonMonthly.filter((i) => i.plan?.frequency === 'once').map((i) => i.planned));
     const regular = sumMoney([due, -once, ...oneOffs.map((o) => -o.amount)]);
-    return { period, due, once, regular, items };
+    return { period, due, once, regular, extra: sumMoney([due, -regular]), items };
   });
   const average = fixedCostsAvg(ds, today);
   const months = raw.map((m): ForecastMonth => ({ ...m, aboveAverage: cents(m.due) > cents(average) }));
