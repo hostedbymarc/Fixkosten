@@ -405,8 +405,10 @@ export interface MonthFigures extends Tally {
   ratio: number;
   /** Vermögensaufbau: everything due in savings categories (ticked + open) */
   wealth: number;
+  /** Abzüge vom Netto = Gesamt (Fixkosten) + Vermögensaufbau; shown with or without salary */
+  deductions: number;
   netSalary: number | null;
-  /** Netto − total − Vermögensaufbau; null without salary */
+  /** Netto − Abzüge (= Netto − total − Vermögensaufbau); null without salary */
   free: number | null;
   /** wealth / Netto; null without salary */
   savingsRate: number | null;
@@ -419,7 +421,8 @@ export interface MonthFigures extends Tally {
 /**
  * Hero, tiles and category headers of a month. Definitions:
  * Gesamt = everything due outside Vermögensaufbau · Abgebucht = its ticked part ·
- * Offen = Gesamt − Abgebucht · Frei verfügbar = Netto − Gesamt − Vermögensaufbau · Sparquote = Vermögensaufbau ÷ Netto.
+ * Offen = Gesamt − Abgebucht · Abzüge vom Netto = Gesamt + Vermögensaufbau ·
+ * Frei verfügbar = Netto − Abzüge · Sparquote = Vermögensaufbau ÷ Netto.
  */
 export function monthFigures(ds: Dataset, period: Period): MonthFigures {
   const entries = monthEntries(ds, period);
@@ -430,12 +433,14 @@ export function monthFigures(ds: Dataset, period: Period): MonthFigures {
     .map((category) => ({ category, ...tally(entries.filter((e) => e.categoryId === category.id)) }))
     .filter((c) => c.count > 0);
   const unassigned = entries.filter((e) => e.categoryId === null).reduce((acc, e) => acc + e.cents, 0);
+  const deductionsCents = toCents(expense.total) + wealthCents;
   return {
     ...expense,
     ratio: expense.total > 0 ? Math.min(Math.max(expense.paid / expense.total, 0), 1) : expense.count > 0 && expense.openCount === 0 ? 1 : 0,
     wealth: fromCents(wealthCents),
+    deductions: fromCents(deductionsCents),
     netSalary,
-    free: netSalary === null ? null : fromCents(toCents(netSalary) - toCents(expense.total) - wealthCents),
+    free: netSalary === null ? null : fromCents(toCents(netSalary) - deductionsCents),
     savingsRate: netSalary === null || netSalary <= 0 ? null : fromCents(wealthCents) / netSalary,
     categories,
     unassigned: fromCents(unassigned),

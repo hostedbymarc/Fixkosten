@@ -55,6 +55,7 @@ Ist = heutiger Code. Soll = deine Definitionen. „offen“ = Definition noch zu
 | Frei verfügbar | Monat (Kachel), Monatsabschluss | `freeAfterFixed` / `freeAfterFixedWith` | Netto − (Σ Ist abgehakt + Σ Plan offen + Einmalausgaben) | Netto − Gesamt | **ja** (2.170 statt 2.140) |
 | im Ø-Monat | Monat (Kachel), Monatsabschluss, ⓘ | `freeAfterFixedAvg`, `explain.averageMonthExplanation` | siehe 3 | nur dokumentieren | – |
 | Vermögensaufbau | Monat (Kachel), Analyse Sparquote | `wealthBuilding` | Σ Ist abgehakt + Σ Plan offen + Einmalausgaben, Kategorien mit VA | alle fälligen VA-Posten (bezahlt + offen) | nein bei Ist = Plan; Basis bei Abweichung: offen |
+| Abzüge vom Netto (Nachtrag) | Monat (Hero) | `monthFigures.deductions` | – (neu) | Gesamt + Vermögensaufbau; Netto − Abzüge = Frei verfügbar (Nov: 5.649 + 800 = 6.449; 7.819 − 6.449 = 1.370) | neu |
 | Sparquote | Monat (Kachel), Analyse | `savingsRate` | Vermögensaufbau / Netto | Vermögensaufbau / Netto | nein |
 | Kategorie-Summe | Monat (Header) | `groupByCategory.planned` | Σ Plan der fälligen, nicht übersprungenen | wie Gesamt je Kategorie | nein |
 | Kategorie „x/y bezahlt“ | Monat (Header) | **in der Komponente** `MonthScreen.GroupCard` | gezählt in der Komponente | wie Anzahl je Kategorie | Ort: ja (gehört ins Rechenmodul) |

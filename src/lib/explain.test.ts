@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureDataset } from '../../tests/fixtures/dataset';
-import { averageMonthExplanation } from './explain';
+import { averageMonthExplanation, deductionsExplanation } from './explain';
 import { fixedCostsAvg, freeAfterFixedAvg, netSalaryForPeriod, wealthBuildingAvg } from './calc';
 
 const OCT = '2026-10';
@@ -27,5 +27,21 @@ describe('Tooltip „im Ø-Monat“', () => {
 
   it('no net salary → null (icon hidden)', () => {
     expect(averageMonthExplanation(fixtureDataset(), OCT)).toBeNull();
+  });
+});
+
+describe('Hero „Abzüge vom Netto“', () => {
+  const base = { total: 5649, wealth: 800, deductions: 6449 };
+  it('mit Netto: Aufschlüsselung und Netto − Abzüge = Frei verfügbar', () => {
+    const e = deductionsExplanation({ ...base, netSalary: 7819, free: 1370 });
+    expect(plain(e.breakdown)).toBe('€ 5.649 Fixkosten + € 800 Vermögensaufbau');
+    expect(plain(e.formula)).toBe('Netto € 7.819 − Abzüge € 6.449 = Frei verfügbar € 1.370');
+  });
+  it('ohne Netto: die Rechnung kommt ohne Netto aus', () => {
+    const e = deductionsExplanation({ ...base, netSalary: null, free: null });
+    expect(plain(e.formula)).toBe('€ 5.649 Fixkosten + € 800 Vermögensaufbau = € 6.449');
+  });
+  it('negatives Frei verfügbar mit U+2212', () => {
+    expect(plain(deductionsExplanation({ ...base, netSalary: 3000, free: -3449 }).formula)).toBe('Netto € 3.000 − Abzüge € 6.449 = Frei verfügbar −€ 3.449');
   });
 });

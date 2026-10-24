@@ -4,7 +4,7 @@ import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useCollapsed } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
 import { InfoTip } from '../components/InfoTip';
-import { averageMonthExplanation, type AverageMonthExplanation } from '../lib/explain';
+import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { MonthNoteCard, MonthNoteSheet } from '../components/MonthNote';
@@ -431,36 +431,72 @@ function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Perio
 function HeroCard({ figures }: { figures: MonthFigures }) {
   const allPaid = figures.count > 0 && figures.openCount === 0;
   return (
-    <div className="glass flex items-center gap-5 p-5 lg:gap-6 lg:p-6" data-testid="hero">
-      <ProgressRing
-        ratio={figures.ratio}
-        percent={progressPercent(figures)}
-        done={allPaid}
-        label={`${progressPercent(figures)} Prozent abgebucht`}
-      />
-      <div className="min-w-0">
-        <div className="num text-[32px] font-semibold leading-tight tracking-[-0.03em] text-ink lg:text-[38px]" data-testid="hero-paid">
-          {formatEUR(figures.paid)}
+    <div className="glass flex flex-col gap-4 p-5 md:flex-row md:items-center md:gap-6 lg:p-6" data-testid="hero">
+      <div className="flex min-w-0 items-center gap-5 lg:gap-6">
+        <ProgressRing
+          ratio={figures.ratio}
+          percent={progressPercent(figures)}
+          done={allPaid}
+          label={`${progressPercent(figures)} Prozent abgebucht`}
+        />
+        <div className="min-w-0">
+          <div className="num text-[32px] font-semibold leading-tight tracking-[-0.03em] text-ink lg:text-[38px]" data-testid="hero-paid">
+            {formatEUR(figures.paid)}
+          </div>
+          <div className="text-[15px] text-ink-mute">
+            von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
+          </div>
+          <div className="mt-2.5">
+            {allPaid ? (
+              <span className="inline-flex h-7 items-center rounded-full bg-paid-soft px-3 text-[13px] font-semibold text-paid-ink">
+                Alles abgebucht
+              </span>
+            ) : figures.count === 0 ? (
+              <span className="text-[14px] text-ink-mute">Nichts fällig</span>
+            ) : (
+              <span
+                className="num inline-flex h-7 items-center rounded-full bg-accent-soft px-3 text-[13px] font-semibold text-accent-strong"
+                data-testid="hero-open"
+              >
+                {figures.openCount} offen · {formatEUR(shownOpen(figures))}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="text-[15px] text-ink-mute">
-          von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
-        </div>
-        <div className="mt-2.5">
-          {allPaid ? (
-            <span className="inline-flex h-7 items-center rounded-full bg-paid-soft px-3 text-[13px] font-semibold text-paid-ink">
-              Alles abgebucht
-            </span>
-          ) : figures.count === 0 ? (
-            <span className="text-[14px] text-ink-mute">Nichts fällig</span>
-          ) : (
-            <span
-              className="num inline-flex h-7 items-center rounded-full bg-accent-soft px-3 text-[13px] font-semibold text-accent-strong"
-              data-testid="hero-open"
-            >
-              {figures.openCount} offen · {formatEUR(shownOpen(figures))}
-            </span>
-          )}
-        </div>
+      </div>
+      <HeroDeductions figures={figures} />
+    </div>
+  );
+}
+
+/**
+ * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau (monthFigures.deductions). Phone: an extra
+ * row under ring and amount; from iPad on it uses the free space on the right of the hero.
+ */
+function HeroDeductions({ figures }: { figures: MonthFigures }) {
+  const explanation = deductionsExplanation(figures);
+  return (
+    <div
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-3.5 md:ml-auto md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-6 md:text-right"
+      data-testid="hero-deductions"
+    >
+      <div className="col-start-1 row-start-1 flex items-center text-[13px] font-medium text-ink-mute">
+        Abzüge vom Netto
+        <InfoTip label="Erklärung: Abzüge vom Netto" title="Abzüge vom Netto" className="-my-3 -mr-3" testId="hero-deductions-info">
+          <p className="num text-ink" data-testid="hero-deductions-formula">
+            {explanation.formula}
+          </p>
+          <p>Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.</p>
+        </InfoTip>
+      </div>
+      <div
+        className="num col-start-2 row-start-1 text-right text-[20px] font-semibold leading-7 tracking-[-0.02em] text-ink md:col-start-1 md:row-start-2 md:text-[24px] md:leading-8 lg:text-[28px] lg:leading-9"
+        data-testid="hero-deductions-value"
+      >
+        {formatEUR(figures.deductions)}
+      </div>
+      <div className="num col-span-2 col-start-1 row-start-2 text-[12px] leading-4 text-ink-mute md:col-span-1 md:row-start-3 lg:text-[13px]" data-testid="hero-deductions-breakdown">
+        {explanation.breakdown}
       </div>
     </div>
   );

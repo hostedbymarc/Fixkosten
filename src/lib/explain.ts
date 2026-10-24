@@ -1,6 +1,6 @@
 // Explanations shown next to figures. Values come from calc.ts, never computed here.
 
-import { fixedCostsAvg, freeAfterFixedAvg, netSalaryForPeriod, wealthBuildingAvg } from './calc';
+import { fixedCostsAvg, freeAfterFixedAvg, netSalaryForPeriod, wealthBuildingAvg, type MonthFigures } from './calc';
 import { formatAvg, formatEUR } from './format';
 import type { Dataset, Period } from './types';
 
@@ -29,5 +29,24 @@ export function averageMonthExplanation(ds: Dataset, period: Period): AverageMon
     wealthAvg,
     free,
     formula: `Netto ${formatEUR(netSalary)} − Ø Fixkosten ${formatAvg(avg)} − Ø Vermögensaufbau ${formatAvg(wealthAvg)} = ${formatAvg(free)}`,
+  };
+}
+
+export interface DeductionsExplanation {
+  /** „€ 5.649 Fixkosten + € 800 Vermögensaufbau“ */
+  breakdown: string;
+  /** with salary „Netto € 7.819 − Abzüge € 6.449 = Frei verfügbar € 1.370“, without „… = € 6.449“ */
+  formula: string;
+}
+
+/** Hero „Abzüge vom Netto“: breakdown and calculation, from monthFigures only. */
+export function deductionsExplanation(f: Pick<MonthFigures, 'total' | 'wealth' | 'deductions' | 'netSalary' | 'free'>): DeductionsExplanation {
+  const breakdown = `${formatEUR(f.total)} Fixkosten + ${formatEUR(f.wealth)} Vermögensaufbau`;
+  return {
+    breakdown,
+    formula:
+      f.netSalary === null || f.free === null
+        ? `${breakdown} = ${formatEUR(f.deductions)}`
+        : `Netto ${formatEUR(f.netSalary)} − Abzüge ${formatEUR(f.deductions)} = Frei verfügbar ${formatEUR(f.free)}`,
   };
 }

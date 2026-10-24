@@ -122,6 +122,13 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
   };
 }
 
+/** Period of the forecast, shown under its title: „Nov 2026 – Okt 2027“. */
+export function forecastRange(f: YearForecast): string {
+  const first = f.months[0];
+  const last = f.months[f.months.length - 1];
+  return first && last ? `${shortPeriodLabel(first.period)} – ${shortPeriodLabel(last.period)}` : '';
+}
+
 export interface ForecastSummary {
   label: string;
   value: string;
