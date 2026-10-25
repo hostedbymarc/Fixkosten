@@ -136,8 +136,9 @@ for (const scheme of ['light', 'dark'] as const) {
       await importLive(page, OKT_TODAY);
       await settle(page);
       await page.addStyleTag({ content: `:root { --safe-top: 59px !important; } ${BACKGROUND_ONLY}` });
-      await page.evaluate(() => window.dispatchEvent(new Event('resize')));
-      await page.waitForTimeout(700); // the Nebel repaints 150 ms after a resize has settled
+      // repaint with the new safe area (in reality it changes together with the width on rotation)
+      await page.evaluate((s) => document.documentElement.setAttribute('data-theme', s), scheme);
+      await page.waitForTimeout(300);
       const shot = await page.screenshot({ scale: 'css' });
       const bar = luminance(await barColour(page));
       for (const [i, p] of (await profiles(page, shot, 400)).entries()) {

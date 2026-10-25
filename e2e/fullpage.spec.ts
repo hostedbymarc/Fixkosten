@@ -81,8 +81,12 @@ for (const scheme of ['light', 'dark'] as const) {
         const threshold = vp.width < 500 ? 10 : 5; // Kanten-Kennzahl of PR #27
 
         // 1) first screen of the full-page image = the viewport screenshot (≤ 2 % pixels, tolerance 10 levels)
-        const viewport = await page.screenshot();
-        const firstScreen = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height } });
+        // the forecast chart re-measures while Playwright resizes the viewport for the full-page capture
+        // (Recharts ResponsiveContainer; also on main, ~1 in 24): masked in both, it is not the subject here
+        const mask = [page.locator('[data-testid="forecast"] .recharts-responsive-container')];
+        if (p.route === 'analyse') expect(await mask[0]!.count(), 'chart to mask').toBe(1);
+        const viewport = await page.screenshot({ mask });
+        const firstScreen = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height }, mask });
         expect(await diffShare(page, viewport, firstScreen, 10), 'first screen vs viewport').toBeLessThanOrEqual(0.02);
 
         // 2) background only (content hidden): Chromium full page, then without filter, then the iOS layer model
