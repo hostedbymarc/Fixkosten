@@ -31,7 +31,7 @@ export function OneOffSheet({ position, period, oneOff, onClose, onDelete, retur
   return (
     <BottomSheet
       title={oneOff ? 'Einmalbetrag bearbeiten' : 'Einmalbetrag hinzufügen'}
-      subtitle={`${position.name} · zählt nicht zu den Fixkosten`}
+      subtitle={`${position.name} · zählt in diesem Monat, nicht im Ø pro Monat`}
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >

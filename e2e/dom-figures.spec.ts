@@ -49,7 +49,7 @@ const SOLL: Record<string, Record<string, string>> = {
     'kpi-value': '€ 2.952,17',
     'kpi-hint': 'davon € 288,17 nicht monatlich',
     'wealth-value': '€ 1.860',
-    'wealth-sub': 'Sparquote 38,8 %',
+    'wealth-rate': 'Sparquote 38,8 %',
     'group:Wohnen & Leben': '€ 1.651,50',
     'group:Immo': '€ 991',
     'group:Abos': '€ 776',
@@ -62,7 +62,8 @@ const SOLL: Record<string, Record<string, string>> = {
     'free-value': '€ 499,50',
     'free-average': 'im Ø-Monat € 1.035,83',
     'wealth-value': '€ 1.860',
-    'wealth-sub': 'Sparquote 16,7 % · € 1.060 nicht vom Netto',
+    'wealth-rate': 'Sparquote 16,7 %',
+    'wealth-not-from-net': '€ 1.060 nicht vom Netto',
     'group:Investieren': '€ 1.860',
   },
   November: {
@@ -78,7 +79,7 @@ const SOLL: Record<string, Record<string, string>> = {
     'kpi-value': '€ 2.952,17',
     'kpi-hint': 'davon € 288,17 nicht monatlich',
     'wealth-value': '€ 800',
-    'wealth-sub': 'Sparquote 10,2 %',
+    'wealth-rate': 'Sparquote 10,2 %',
     'group:Wohnen & Leben': '€ 1.572',
     'progress:Wohnen & Leben': '1/6 bezahlt',
     'spread:Wohnen & Leben': 'Ø € 1.675,50',
@@ -185,12 +186,9 @@ async function checkMonth(page: Page, ds: Dataset, period: Period, soll: Record<
   await check(page.getByTestId('free-average'), `im Ø-Monat ${formatAvg(freeAfterFixedAvg(ds, period)!)}`, s('free-average'), 'im Ø-Monat');
   await check(page.getByTestId('wealth-value'), formatEUR(f.wealth), s('wealth-value'), 'Vermögensaufbau');
   const other = Math.round(f.wealthNotFromNet * 100) > 0;
-  await check(
-    page.getByTestId('wealth-sub'),
-    `Sparquote ${formatPercent(f.savingsRate!)}${other ? ` · ${formatEUR(f.wealthNotFromNet)} nicht vom Netto` : ''}`,
-    s('wealth-sub'),
-    'Sparquote',
-  );
+  await check(page.getByTestId('wealth-rate'), `Sparquote ${formatPercent(f.savingsRate!)}`, s('wealth-rate'), 'Sparquote');
+  if (other) await check(page.getByTestId('wealth-not-from-net'), `${formatEUR(f.wealthNotFromNet)} nicht vom Netto`, s('wealth-not-from-net'), 'nicht vom Netto');
+  else await expect(page.getByTestId('wealth-not-from-net')).toHaveCount(0);
 
   // category headers
   for (const c of f.categories) {

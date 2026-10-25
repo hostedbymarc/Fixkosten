@@ -65,8 +65,15 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
   const [saving, setSaving] = useState(false);
 
   const once = frequency === 'once';
-  // „Von ‚Frei verfügbar' abziehen“: only one-time payments in a Vermögensaufbau category
-  const showFromNet = once && categories.find((c) => c.id === categoryId)?.kind === 'savings';
+  // „Von ‚Frei verfügbar‘ abziehen“: only one-time payments in a Vermögensaufbau category
+  const savingsCategory = categories.find((c) => c.id === categoryId)?.kind === 'savings';
+  const showFromNet = once && savingsCategory;
+  // what calc does with it: a one-time payment counts in the month of its due date, into
+  // Vermögensaufbau (savings category) or into that month's Fixkosten (expense category)
+  const dueMonth = /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? dueDate.slice(0, 7) : onceOnly?.period;
+  const onceSubtitle = dueMonth
+    ? `für ${periodLabel(dueMonth)} · ${savingsCategory ? 'zählt zum Vermögensaufbau' : 'zählt zu den Fixkosten dieses Monats'}`
+    : undefined;
   // an existing position keeps its kind: recurring ones never turn into a one-time payment and vice versa
   // the Positionen tab is for fixed costs; one-time payments are created in their month
   const frequencies: Frequency[] = onceOnly || plan?.frequency === 'once' ? [] : RECURRING;
@@ -142,14 +149,14 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
         position
           ? position.name
           : onceOnly
-            ? `für ${periodLabel(onceOnly.period)} – zählt nicht zu den Fixkosten`
+            ? onceSubtitle
             : 'Fixkosten oder Sparplan'
       }
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-4"
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
@@ -215,10 +222,10 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
             />
             {showFromNet && (
               <SwitchField
-                label="Von ‚Frei verfügbar' abziehen"
+                label="Von ‚Frei verfügbar‘ abziehen"
                 checked={fromNet}
                 onChange={setFromNet}
-                hint="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar'."
+                hint="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
                 testId="from-net"
               />
             )}

@@ -319,7 +319,7 @@ function randomDataset(seed: number, heavyCredits = false): Dataset {
     if (r.chance(0.3)) history.push({ validFrom: addPeriods(start, r.int(1, 10)), amount: r.money(), frequency, dueMonths: DUE[frequency] });
     return { id: `p${i}`, name: `P${i}`, categoryId: r.pick(categories).id, history, createdAt: '2026-01-01T00:00:00.000Z', sortOrder: i };
   });
-  // switch „Von ‚Frei verfügbar' abziehen“ off on some positions (own stream: the rest of the data stays as before);
+  // switch „Von ‚Frei verfügbar‘ abziehen“ off on some positions (own stream: the rest of the data stays as before);
   // it only acts on one-time payments in Vermögensaufbau, on every other position it must be ignored
   const sw = rng(seed + 100_000);
   for (const p of positions) if (sw.chance(0.4)) p.fromNet = false;
