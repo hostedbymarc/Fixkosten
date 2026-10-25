@@ -81,8 +81,12 @@ for (const scheme of ['light', 'dark'] as const) {
         const threshold = vp.width < 500 ? 10 : 5; // Kanten-Kennzahl of PR #27
 
         // 1) first screen of the full-page image = the viewport screenshot (≤ 2 % pixels, tolerance 10 levels)
-        const viewport = await page.screenshot();
-        const firstScreen = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height } });
+        // the forecast chart re-measures while Playwright resizes the viewport for the full-page capture
+        // (Recharts ResponsiveContainer; also on main, ~1 in 24): masked in both, it is not the subject here
+        const mask = [page.locator('[data-testid="forecast"] .recharts-responsive-container')];
+        if (p.route === 'analyse') expect(await mask[0]!.count(), 'chart to mask').toBe(1);
+        const viewport = await page.screenshot({ mask });
+        const firstScreen = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height }, mask });
         expect(await diffShare(page, viewport, firstScreen, 10), 'first screen vs viewport').toBeLessThanOrEqual(0.02);
 
         // 2) background only (content hidden): Chromium full page, then without filter, then the iOS layer model
@@ -185,6 +189,7 @@ for (const scheme of ['light', 'dark'] as const) {
           scheme: cs(document.documentElement).colorScheme,
           before: cs(document.body, '::before').display,
           after: cs(document.body, '::after').display,
+          scrim: cs(document.getElementById('root')!, '::before').display,
           adjust: cs(document.body).getPropertyValue('print-color-adjust'),
           glass: [...new Set(glass.map((e) => `${cs(e).backgroundColor}|${cs(e).backdropFilter}`))],
           tabbar: shown(nav) ? { position: cs(nav!).position, top: nav!.getBoundingClientRect().top + scrollY, mainBottom: main.bottom + scrollY } : null,
@@ -195,7 +200,7 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(r.html).toBe(rgb);
       expect(r.body).toBe(rgb);
       expect(r.scheme, 'colour scheme = active theme').toBe(scheme);
-      expect([r.before, r.after]).toEqual(['none', 'none']);
+      expect([r.before, r.after, r.scrim], 'Nebel, grain and the top scrim off in print').toEqual(['none', 'none', 'none']);
       expect(r.adjust).toBe('exact');
       expect(r.glass, 'every glass surface opaque, no blur').toEqual([scheme === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 35, 31, 0.94)|none']);
       expect(!!r.tabbar !== !!r.sidebar, 'exactly one navigation').toBe(true);

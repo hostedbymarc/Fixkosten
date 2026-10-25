@@ -272,6 +272,43 @@ describe('Neue und geänderte Paare (korrekt-ruhig)', () => {
   });
 });
 
+// Oberer Rand (top-fade): iOS paints the status bar itself (status-bar-style „default“): dark glyphs
+// on a light bar, light glyphs on a dark bar; the bar is --nebel-base. Where Safari lets the page show
+// under the bar, the glyphs sit on the scrim (--nebel-base, 0.6 at the top) over whatever scrolls there.
+const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+const GLYPH = { Hell: [0, 0, 0] as RGB, Dunkel: [255, 255, 255] as RGB };
+const UNDER_BAR = ['--nebel-base', '--glass-opaque', '--c-accent', '--c-surface'];
+export function statusBarRows() {
+  return (['Hell', 'Dunkel'] as const).flatMap((theme) => {
+    const v = theme === 'Hell' ? light : dark;
+    const base = rgb(v, '--nebel-base');
+    const scrim: RGBA = [...base, 0.6];
+    return [
+      { theme, what: 'Statusleiste (iOS, deckend) = Basisfarbe', value: contrast(GLYPH[theme], base) },
+      ...UNDER_BAR.map((t) => ({ theme, what: `Safari unter der Leiste: Scrim 0,6 über \`${t}\``, value: contrast(GLYPH[theme], over(scrim, rgb(v, t))) })),
+      { theme, what: `Scrim 0,6 über der Nebel-Mitte`, value: contrast(GLYPH[theme], over(scrim, over(color(v, '--nebel-1'), base))) },
+    ];
+  });
+}
+
+describe('Oberer Rand: Statusleiste lesbar (top-fade)', () => {
+  it('status-bar-style bleibt „default“ (nicht black-translucent)', () => {
+    expect(html).toMatch(/name="apple-mobile-web-app-status-bar-style" content="default"/);
+  });
+  it('black-translucent wäre im hellen Theme unlesbar: weiße Schrift auf der Basisfarbe < 4,5', () => {
+    expect(contrast([255, 255, 255], rgb(light, '--nebel-base'))).toBeLessThan(4.5);
+  });
+  it.each(statusBarRows().map((r) => [`${r.theme}: ${r.what}`, r.value] as const))('%s ≥ 4,5', (_, value) => {
+    expect(value).toBeGreaterThanOrEqual(4.5);
+  });
+  it('theme-color je Theme = Basisfarbe (Hell und Dunkel)', () => {
+    expect(html).toContain(`content="${resolve(light, '--nebel-base')}" media="(prefers-color-scheme: light)"`);
+    expect(html).toContain(`content="${resolve(dark, '--nebel-base')}" media="(prefers-color-scheme: dark)"`);
+    // the channel token used by the scrim is the same colour
+    for (const v of [light, dark]) expect(resolve(v, '--nebel-base-rgb').split(' ').map(Number)).toEqual(rgb(v, '--nebel-base'));
+  });
+});
+
 if (process.env.CONTRAST_REPORT) {
   const lines = [
     '| Thema | Vordergrund | Hintergrund | dunkelster Punkt | hellster Punkt | Ziel | |',
@@ -309,5 +346,7 @@ if (process.env.CONTRAST_REPORT) {
       lines.push(`| \`${a}\` ${resolve(v, a)} | ${cells.join(' | ')} | ${toRefs.join(' | ')} |`);
     }
   }
+  lines.push('', '**Oberer Rand: Statusleisten-Schrift** (Ziel ≥ 4,5)', '', '| Thema | Hintergrund hinter Uhrzeit/Akku | Kontrast |', '|---|---|---|');
+  for (const r of statusBarRows()) lines.push(`| ${r.theme} | ${r.what} | ${r.value.toFixed(2)} |`);
   writeFileSync(process.env.CONTRAST_REPORT, lines.join('\n') + '\n');
 }
