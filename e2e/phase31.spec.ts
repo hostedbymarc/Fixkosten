@@ -124,14 +124,14 @@ test.describe('Betrag ändern', () => {
     await expect(entries.first()).toContainText('Indexanpassung');
     await expect(entries.last()).toContainText('Beginn · Oktober 2026');
     await expect(entries.last().getByRole('button', { name: /löschen/ })).toHaveCount(0); // first entry stays
-    await expect(app.getByTestId('detail-next-change')).toHaveText(eur('Ab 01.04.2027: € 1.050'));
+    await expect(app.getByTestId('detail-next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await sheetReady(app);
     await expectClean(app, '[data-testid="bottom-sheet"]');
     await app.keyboard.press('Escape');
 
-    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('Ab 01.04.2027: € 1.050'));
+    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await goTo(app, 'monat');
-    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('Ab 01.04.2027: € 1.050'));
+    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await expect(row(app, 'pos-miete')).toContainText(eur('€ 1.008'));
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
     await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
@@ -139,7 +139,7 @@ test.describe('Betrag ändern', () => {
     await openAnalyse(app);
     expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');
     expect(await forecastDue(app, 'Apr 2027')).toBe('€ 2.755');
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 504 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
     await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 504 / Jahr'));
   });
 
@@ -160,7 +160,8 @@ test.describe('Betrag ändern', () => {
 
     await openAnalyse(app);
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 1.104 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 1.104 / Jahr'));
 
     await openMiete(app);
     await app.getByRole('button', { name: 'Änderung ab 15.01.2027 auf € 1.100 löschen' }).click();
@@ -173,7 +174,7 @@ test.describe('Betrag ändern', () => {
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
 
     await undo.click();
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 1.104 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
   });
 
@@ -192,7 +193,8 @@ test.describe('Betrag ändern', () => {
     // Gesamt counts the tick with what was debited (€ 1.008), not the new plan (audit decision C)
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
     await openAnalyse(app);
-    await expect(app.getByTestId('optimizations-list-head')).toHaveText(eur('Umgesetzt · +€ 504 / Jahr'));
+    await expect(app.getByTestId('optimizations-list-head')).toHaveText('Umgesetzt');
+    await expect(app.getByTestId('optimizations-list')).toContainText(eur('+€ 504 / Jahr'));
   });
 
   test('Tippfehler korrigieren bleibt eigene Option ohne Verlaufseintrag', async ({ app }) => {

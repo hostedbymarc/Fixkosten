@@ -57,7 +57,7 @@ test('live upgrade 2776e95 (v1) → main (v4) in the same browser profile', asyn
   const immos = page.getByRole('region', { name: 'Meine Immos' });
   await expect(page.getByTestId('category-group').first()).toHaveAttribute('aria-label', 'Meine Immos');
   await expect(immos).toContainText(eur('€ 991'));
-  await expect(immos.getByTestId('group-spread')).toHaveText(eur('Ø € 1.034,67 / Monat'));
+  await expect(immos.getByTestId('group-spread')).toHaveText(eur('Ø € 1.034,67'));
   await expect(page.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
   await expect(page.getByText('variabel', { exact: true })).toHaveCount(0);
 

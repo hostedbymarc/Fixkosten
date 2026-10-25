@@ -31,7 +31,7 @@ describe('Tooltip „im Ø-Monat“', () => {
 });
 
 describe('Hero „Abzüge vom Netto“', () => {
-  const base = { total: 5649, wealth: 800, deductions: 6449 };
+  const base = { total: 5649, wealthFromNet: 800, wealthNotFromNet: 0, deductions: 6449 };
   it('mit Netto: Aufschlüsselung und Netto − Abzüge = Frei verfügbar', () => {
     const e = deductionsExplanation({ ...base, netSalary: 7819, free: 1370 });
     expect(plain(e.breakdown)).toBe('€ 5.649 Fixkosten + € 800 Vermögensaufbau');
@@ -43,5 +43,17 @@ describe('Hero „Abzüge vom Netto“', () => {
   });
   it('negatives Frei verfügbar mit U+2212', () => {
     expect(plain(deductionsExplanation({ ...base, netSalary: 3000, free: -3449 }).formula)).toBe('Netto € 3.000 − Abzüge € 6.449 = Frei verfügbar −€ 3.449');
+  });
+});
+
+describe('Hero: Vermögensaufbau nicht vom Netto', () => {
+  it('Oktober, „Miete 1220“ aus: Aufschlüsselung nennt nur den Teil vom Netto, ⓘ nennt den Rest', () => {
+    const e = deductionsExplanation({ total: 3488.5, wealthFromNet: 800, wealthNotFromNet: 1060, deductions: 4288.5, netSalary: 4788, free: 499.5 });
+    expect(plain(e.breakdown)).toBe('€ 3.488,50 Fixkosten + € 800 Vermögensaufbau');
+    expect(plain(e.formula)).toBe('Netto € 4.788 − Abzüge € 4.288,50 = Frei verfügbar € 499,50');
+    expect(plain(e.notFromNet!)).toBe('€ 1.060 Vermögensaufbau nicht vom Netto, nicht abgezogen');
+  });
+  it('alles vom Netto: kein Zusatz', () => {
+    expect(deductionsExplanation({ total: 1, wealthFromNet: 1, wealthNotFromNet: 0, deductions: 2, netSalary: null, free: null }).notFromNet).toBeNull();
   });
 });

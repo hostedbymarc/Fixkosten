@@ -146,7 +146,7 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
           data-testid="bottom-sheet"
         >
           {/* blur is weakest at the very edge: a short veil keeps content behind the top edge from showing through */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-[linear-gradient(var(--glass-fallback),transparent)]" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-[linear-gradient(var(--glass-fallback),var(--glass-fallback-clear))]" aria-hidden="true" />
           <div className="relative flex justify-center pt-2 lg:hidden" aria-hidden="true">
             <div className="h-1 w-9 rounded-full bg-zinc-200" />
           </div>

@@ -76,7 +76,8 @@ test.describe('Jahresvorschau', () => {
         legendClipped: legend.scrollWidth > legend.clientWidth + 1,
       };
     });
-    expect(m.ticks).toEqual(['Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt']);
+    // current month + 11
+    expect(m.ticks).toEqual(['Okt', 'Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep']);
     expect(m.overlaps).toEqual([]);
     expect(m.onBar, 'Ø chip covers no bar').toBe(0);
     expect(m.chipInside).toBe(true);
@@ -120,8 +121,8 @@ test.describe('Jahresvorschau', () => {
           .map((e) => e.textContent);
       }, lines.toString());
       expect(wraps).toEqual([]);
-      // dot only on months above Ø: Nov, Dez, Feb, Okt
-      await expect(list.getByTestId('above-dot')).toHaveCount(4);
+      // regular bars in one colour: no „über Ø“ dot in the list any more
+      await expect(list.getByTestId('above-dot')).toHaveCount(0);
       const nov = list.locator('[data-period="2026-11"]');
       await expect(nov.getByTestId('forecast-preview')).toHaveText(eur('iPhones + Zubehör€ 2.826·Hotel Copenhagen€ 620'));
       await expect(list.locator('[data-period="2026-11"]').getByTestId('forecast-preview')).not.toContainText('einmalig');

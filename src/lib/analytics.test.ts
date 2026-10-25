@@ -15,7 +15,7 @@ import {
   trendTooShortText,
   yearForecast,
 } from './analytics';
-import { fixedCostsAvg } from './calc';
+import { fixedCostsAvg, monthFigures } from './calc';
 import { formatCompactEUR, formatPercent } from './format';
 import type { Dataset, PlanEntry } from './types';
 
@@ -31,11 +31,12 @@ function changeFrom(ds: Dataset, positionId: string, validFrom: string, amount: 
   ds.changeLog.push({ id: `c-${positionId}`, at: '', positionId, type: 'amount', validFrom, from: before, to: entry });
 }
 
-describe('1 · year forecast (seed, Nov 2026 – Okt 2027)', () => {
+describe('1 · year forecast (seed, Okt 2026 – Sep 2027: current month + 11)', () => {
   const f = yearForecast(fixtureDataset(), OCT);
 
   it('due expenses per month', () => {
     expect(f.months.map((m) => [m.period, m.due])).toEqual([
+      ['2026-10', 3403],
       ['2026-11', 2664],
       ['2026-12', 3013.02],
       ['2027-01', 2713],
@@ -47,8 +48,9 @@ describe('1 · year forecast (seed, Nov 2026 – Okt 2027)', () => {
       ['2027-07', 2713],
       ['2027-08', 2664],
       ['2027-09', 2679],
-      ['2027-10', 3403],
     ]);
+    // the first bar is the Gesamt of the month screen
+    expect(f.months[0]!.due).toBe(monthFigures(fixtureDataset(), OCT).total);
   });
 
   it('invariance: 12 months = € 35.426,04 = 12 × € 2.952,17', () => {
@@ -58,13 +60,13 @@ describe('1 · year forecast (seed, Nov 2026 – Okt 2027)', () => {
   });
 
   it('above average months and their non-monthly positions', () => {
-    expect(f.months.filter((m) => m.aboveAverage).map((m) => m.period)).toEqual(['2026-12', '2027-02', '2027-10']);
+    expect(f.months.filter((m) => m.aboveAverage).map((m) => m.period)).toEqual(['2026-10', '2026-12', '2027-02']);
     const feb = f.months.find((m) => m.period === '2027-02')!;
     expect(feb.items).toEqual([
       { name: 'Steuerberater', amount: 1260 },
       { name: 'Offi (Jahreskarte)', amount: 686 },
     ]);
-    expect(f.months[0]!.items).toEqual([]);
+    expect(f.months.find((m) => m.period === '2026-11')!.items).toEqual([]);
   });
 
   it('heading in two levels: Teuerster Monat / Feb 2027 · € 4.610 / € 1.658 über Ø', () => {
@@ -76,8 +78,9 @@ describe('1 · year forecast (seed, Nov 2026 – Okt 2027)', () => {
     const ds = fixtureDataset();
     ds.oneOffs.push({ id: 'o1', positionId: 'pos-strom', period: '2026-11', amount: 120, label: 'Nachzahlung' });
     const g = yearForecast(ds, OCT);
-    expect(g.months[0]!.due).toBe(2784);
-    expect(g.months[0]!.items).toEqual([{ name: 'Strom: Nachzahlung', amount: 120 }]);
+    const nov = g.months.find((m) => m.period === '2026-11')!;
+    expect(nov.due).toBe(2784);
+    expect(nov.items).toEqual([{ name: 'Strom: Nachzahlung', amount: 120 }]);
     expect(cents(g.average)).toBe(295217);
   });
 });
@@ -144,8 +147,8 @@ describe('6 · optimisations', () => {
 
   it('the forecast follows the changes month by month', () => {
     const f = yearForecast(withChanges(), OCT);
-    expect(f.months[0]!.due).toBe(2662); // Nov: Handy 8
-    expect(f.months[2]!.due).toBe(2714); // Jan: Handy 8, Gym 38, quarterly 49
+    expect(f.months[1]!.due).toBe(2662); // Nov: Handy 8
+    expect(f.months[3]!.due).toBe(2714); // Jan: Handy 8, Gym 38, quarterly 49
   });
 });
 
@@ -158,9 +161,10 @@ describe('history window with 1 month of data (seed)', () => {
   });
 
   it('trend: too short → card text', () => {
-    expect(trendTooShortText(ds, OCT).replace(/ /g, ' ')).toBe(
-      'Ab 3 Monaten siehst du hier die Entwicklung. Bisher: € 2.952,17 Ø pro Monat seit Okt 2026.',
-    );
+    expect(trendTooShortText(ds, OCT).map((l) => l.replace(/\u00a0/g, ' '))).toEqual([
+      'Ab 3 Monaten siehst du hier die Entwicklung.',
+      'Bisher 1 Monat Daten: € 2.952,17 Ø pro Monat seit Okt 2026.',
+    ]);
   });
 
   it('plan vs. actual: the running month is marked and never a deviation', () => {

@@ -8,8 +8,8 @@ export function parseOptionalAmount(text: string): number | undefined | null {
   return text.trim() === '' ? undefined : parseAmount(text);
 }
 
-const labelClass = 'mb-1.5 block text-[14px] font-medium text-ink-soft';
-const hintClass = 'mt-1.5 min-h-[20px] text-[13px] text-ink-mute';
+const labelClass = 'mb-2 block text-[14px] font-medium text-ink-soft';
+const hintClass = 'mt-2 text-[13px] leading-5 text-ink-mute';
 const boxClass = (invalid: boolean) =>
   `rounded-2xl border bg-field focus-within:ring-2 ${
     invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
@@ -50,14 +50,17 @@ export function AmountField({
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={!!error}
-          aria-describedby={`${id}-hint`}
+          aria-describedby={error || hint ? `${id}-hint` : undefined}
           data-testid={testId}
           className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
         />
       </div>
-      <p id={`${id}-hint`} className={hintClass}>
-        {error ? <span className="text-over">{error}</span> : hint}
-      </p>
+      {/* no empty line: the hint row only exists when there is something to say */}
+      {(error || hint) && (
+        <p id={`${id}-hint`} className={hintClass}>
+          {error ? <span className="text-over">{error}</span> : hint}
+        </p>
+      )}
     </div>
   );
 }
@@ -365,4 +368,50 @@ export function longDate(iso: string): string {
 export function todayIso(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** On/off switch with its label on the left and an explanation below (44 px tap target). */
+export function SwitchField({
+  label,
+  checked,
+  onChange,
+  hint,
+  testId,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  hint?: ReactNode;
+  testId?: string;
+}) {
+  const id = useId();
+  return (
+    <div data-testid={testId}>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={id} className="text-[15px] font-medium text-ink">
+          {label}
+        </label>
+        {/* 44 px hit area around the 52 × 32 track */}
+        <button
+          id={id}
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          aria-describedby={hint ? `${id}-hint` : undefined}
+          onClick={() => onChange(!checked)}
+          className="focus-ring -mr-1 flex h-11 w-[60px] shrink-0 items-center justify-center rounded-full"
+          data-testid={testId ? `${testId}-switch` : undefined}
+        >
+          <span aria-hidden="true" className={`relative block h-8 w-[52px] rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-check-open'}`}>
+            <span className={`absolute top-1 h-6 w-6 rounded-full bg-surface shadow-card transition-[left] ${checked ? 'left-[24px]' : 'left-1'}`} />
+          </span>
+        </button>
+      </div>
+      {hint && (
+        <p id={`${id}-hint`} className="text-[13px] leading-snug text-ink-mute">
+          {hint}
+        </p>
+      )}
+    </div>
+  );
 }

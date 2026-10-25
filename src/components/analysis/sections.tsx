@@ -16,7 +16,6 @@ import {
   axisPeriodLabel,
   burdenTrend,
   categoryDistribution,
-  distributionSummary,
   optimizationTimeline,
   type OptimizationEntry,
   planVsActual,
@@ -72,7 +71,11 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
     return <EmptyCard id="distribution" title="Verteilung nach Kategorie" text="Noch keine Ausgaben erfasst." />;
   }
   return (
-    <ChartCard id="distribution" title="Verteilung nach Kategorie" headline={distributionSummary(d)}>
+    <ChartCard id="distribution" title="Verteilung nach Kategorie">
+      {/* one head line only: the sum; the list below says the rest */}
+      <p className="mb-2 text-[13px] text-ink-mute" data-testid="distribution-total">
+        Summe <span className="num whitespace-nowrap font-semibold text-ink">{formatAvg(d.total)}</span> Ø pro Monat (heute)
+      </p>
       {/* the list says it all; screen readers additionally get the numbers as a table */}
       <div className="sr-only">
       <table>
@@ -154,9 +157,6 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
           );
         })}
       </ul>
-      <p className="mt-2 text-[13px] text-ink-mute" data-testid="distribution-total">
-        Summe <span className="num font-medium text-ink">{formatAvg(d.total)}</span> Ø pro Monat (heute)
-      </p>
     </ChartCard>
   );
 }
@@ -273,7 +273,19 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
       <EmptyCard
         id="planactual"
         title="Plan vs. Ist"
-        text={`${running ? `${periodLabel(running.period)} läuft noch: ${actual} von ${planned} abgebucht. ` : ''}Der Vergleich startet, sobald der erste Monat abgeschlossen ist.`}
+        text={[
+          ...(running
+            ? [
+                <>
+                  {periodLabel(running.period)} ist noch nicht abgeschlossen.{' '}
+                  <span className="num whitespace-nowrap" data-testid="planactual-running">
+                    Ist {actual} · Plan {planned}.
+                  </span>
+                </>,
+              ]
+            : []),
+          'Der Vergleich startet nach dem ersten Monatsabschluss.',
+        ]}
       />
     );
   }
@@ -394,10 +406,10 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
   const implemented = t.entries.filter((e) => !e.planned);
   return (
     <section aria-labelledby="optimizations-title" data-testid="optimizations">
-      <h2 id="optimizations-title" className="section-title mb-2 px-1">
+      <h2 id="optimizations-title" className="section-title mb-3 px-1">
         Geplante Änderungen
       </h2>
-      <div className="glass flex flex-col gap-5 p-4">
+      <div className="glass flex flex-col gap-6 p-4 md:p-5">
         {planned.length > 0 && <OptimizationList title="Geplant" total={t.plannedAnnual} entries={planned} testId="optimizations-planned" />}
         {implemented.length > 0 && (
           <OptimizationList title="Umgesetzt" total={t.implementedAnnual} entries={implemented} testId="optimizations-list" />
@@ -417,7 +429,14 @@ function OptimizationList({ title, total, entries, testId }: { title: string; to
   return (
     <div>
       <h3 className="mb-1 text-[13px] font-medium text-ink-mute" data-testid={`${testId}-head`}>
-        {title} · <span className={`num whitespace-nowrap font-semibold ${deltaClass(total)}`}>{formatDelta(total)} / Jahr</span>
+        {title}
+        {/* the sum line only says something new from two changes on */}
+        {entries.length >= 2 && (
+          <>
+            {' · '}
+            <span className={`num whitespace-nowrap font-semibold ${deltaClass(total)}`}>{formatDelta(total)} / Jahr</span>
+          </>
+        )}
       </h3>
       <ol className="flex flex-col divide-y divide-line" data-testid={testId}>
         {entries.map((e) => {

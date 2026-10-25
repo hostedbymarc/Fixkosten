@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureDataset } from '../../tests/fixtures/dataset';
 import { categoryDistribution, forecastRange, forecastSummary, yearForecast } from './analytics';
-import { fixedCosts, fixedCostsAvg, sumMoney } from './calc';
+import { fixedCosts, fixedCostsAvg, monthFigures, sumMoney } from './calc';
 import type { Dataset, Position } from './types';
 
 const OCT = '2026-10';
@@ -74,7 +74,7 @@ describe('Jahresvorschau: consistent with the month screen', () => {
     const savingsIds = new Set(ds.positions.filter((p) => ['cat-investing', 'cat-immos'].includes(p.categoryId)).map((p) => p.name));
     const f = yearForecast(ds, OCT);
     for (const m of f.months) for (const i of m.items) expect(savingsIds.has(i.name), i.name).toBe(false);
-    expect(f.months[0]!.due).toBe(2664 - 991 + 2826 + 620); // Nov without Immos and without the Sondertilgung
+    expect(f.months.find((m) => m.period === '2026-11')!.due).toBe(2664 - 991 + 2826 + 620); // Nov without Immos and without the Sondertilgung
     expect(f.months.find((m) => m.period === '2027-06')!.items.map((i) => i.name)).not.toContain('Baurechtszins');
   });
 
@@ -87,13 +87,14 @@ describe('Jahresvorschau: consistent with the month screen', () => {
 
   it('items sorted by amount, largest first; November peak', () => {
     const f = yearForecast(data(), OCT);
-    expect(f.months[0]!.items.map((i) => [i.name, i.amount, !!i.once])).toEqual([
+    const nov = f.months.find((m) => m.period === '2026-11')!;
+    expect(nov.items.map((i) => [i.name, i.amount, !!i.once])).toEqual([
       ['iPhones + Zubehör', 2826, true],
       ['Hotel Copenhagen', 620, true],
     ]);
-    expect(f.months[0]!.once).toBe(3446);
+    expect(nov.once).toBe(3446);
     expect(f.peak!.period).toBe('2026-11');
-    expect(f.months[0]!.due).toBe(6110);
+    expect(nov.due).toBe(6110);
   });
 });
 
@@ -103,7 +104,7 @@ describe('Jahresvorschau: bar colour follows the Ø line', () => {
     const f = yearForecast(ds, OCT);
     const today = fixedCostsAvg(ds, OCT);
     for (const m of f.months) expect(m.aboveAverage).toBe(Math.round(m.due * 100) > Math.round(today * 100));
-    expect(f.months.filter((m) => m.aboveAverage).map((m) => m.period)).toEqual(['2026-11', '2026-12', '2027-02', '2027-10']);
+    expect(f.months.filter((m) => m.aboveAverage).map((m) => m.period)).toEqual(['2026-10', '2026-11', '2026-12', '2027-02']);
   });
 
   it('heading: „€ 3.158 über Ø“ = 6.110 − 2.952,17, rounded', () => {
@@ -113,16 +114,19 @@ describe('Jahresvorschau: bar colour follows the Ø line', () => {
 });
 
 describe('Zeitraum und Aufschlag ab Jänner', () => {
-  it('Zeitraum unter der Überschrift: die 12 Monate nach dem aktuellen', () => {
-    expect(forecastRange(yearForecast(fixtureDataset(), OCT))).toBe('Nov 2026 – Okt 2027');
-    expect(forecastRange(yearForecast(fixtureDataset(), '2026-11'))).toBe('Dez 2026 – Nov 2027');
+  it('Zeitraum unter der Überschrift: aktueller Monat + 11, der erste Balken = Gesamt im Monat', () => {
+    expect(forecastRange(yearForecast(fixtureDataset(), OCT))).toBe('Okt 2026 – Sep 2027');
+    expect(forecastRange(yearForecast(fixtureDataset(), '2026-11'))).toBe('Nov 2026 – Okt 2027');
+    for (const today of ['2026-10', '2026-11', '2027-02']) {
+      expect(yearForecast(data(), today).months[0]!.due, today).toBe(monthFigures(data(), today).total);
+    }
   });
 
   it('der Jahreswechsel addiert nichts: regulär = heutige Monatsposten + die in dem Monat fälligen nicht-monatlichen', () => {
     const ds = fixtureDataset();
     const f = yearForecast(ds, OCT);
     const monthlyToday = 2664; // 13 monatliche Ausgaben-Posten der Seed-Daten
-    const extra: Record<string, number> = { '2026-12': 262.02 + 87, '2027-01': 49, '2027-02': 1260 + 686, '2027-04': 49, '2027-06': 262.02, '2027-07': 49, '2027-09': 15, '2027-10': 49 + 690 };
+    const extra: Record<string, number> = { '2026-10': 49 + 690, '2026-12': 262.02 + 87, '2027-01': 49, '2027-02': 1260 + 686, '2027-04': 49, '2027-06': 262.02, '2027-07': 49, '2027-09': 15, '2027-10': 49 + 690 };
     for (const m of f.months) expect(m.regular, m.period).toBeCloseTo(monthlyToday + (extra[m.period] ?? 0), 2);
   });
 });

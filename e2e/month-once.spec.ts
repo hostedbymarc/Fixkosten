@@ -103,12 +103,14 @@ test.describe('Frei verfügbar: dieser Monat und Ø-Monat', () => {
     await expect(tile).not.toContainText('5.000');
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 797'));
     await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.247,83'));
-    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
+    await expect(app.getByTestId('wealth-value')).toHaveText(eur('€ 800'));
+    await expect(app.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 16,0 %'));
 
     await addOnce(app, 'Hotel Copenhagen', '620', 'Abos & Freizeit', '2026-10-20');
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 177'));
     await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.247,83'));
-    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
+    await expect(app.getByTestId('wealth-value')).toHaveText(eur('€ 800'));
+    await expect(app.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 16,0 %'));
     await expect(tile).toBeVisible();
     await expectClean(app, 'main');
   });

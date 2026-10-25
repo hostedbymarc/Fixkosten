@@ -15,7 +15,7 @@ import { formatDelta, formatAvg, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import type { Dataset, Period, PlanEntry, Position } from '../lib/types';
 import { BottomSheet } from './BottomSheet';
-import { Badge, DeltaChip, formatIsoDate, planDescription } from './Chips';
+import { Badge, DeltaChip, formatIsoDate, planChangeLabel, planDescription } from './Chips';
 import { PencilIcon, TrashIcon } from './Icons';
 import { PrimaryButton, SecondaryButton } from './form';
 
@@ -85,7 +85,7 @@ export function PositionDetailSheet({
             <div className="rounded-2xl bg-zinc-50 p-3">
               <div className="text-[12px] font-medium text-ink-mute">Fällig am</div>
               <div className="num mt-1 text-[20px] font-semibold text-ink">{plan.dueDate ? formatIsoDate(plan.dueDate) : '–'}</div>
-              <div className="mt-0.5 text-[12px] leading-snug text-ink-mute">zählt nicht zu den Fixkosten</div>
+              <div className="mt-0.5 text-[12px] leading-snug text-ink-mute">zählt nur in diesem Monat, nicht im Ø</div>
             </div>
           ) : (
             <div className="rounded-2xl bg-zinc-50 p-3">
@@ -98,7 +98,7 @@ export function PositionDetailSheet({
         {next && (
           <p className="-mt-2" data-testid="detail-next-change">
             <Badge tone="accent">
-              Ab {formatIsoDate(effectiveDate(next))}: {formatEUR(next.amount)}
+              {planChangeLabel(next)}
             </Badge>
           </p>
         )}
