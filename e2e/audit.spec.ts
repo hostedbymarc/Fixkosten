@@ -31,7 +31,8 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
     await expect(page.getByRole('img', { name: '8 Prozent abgebucht' })).toBeVisible();
     await expect(page.getByTestId('salary-value')).toHaveText(eur('€ 7.819'));
     await expect(page.getByTestId('free-value')).toHaveText(eur('€ 1.370')); // 7.819 − 5.649 − Vermögensaufbau 800
-    await expect(page.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 10,2 %'));
+    await expect(page.getByTestId('wealth-value')).toHaveText(eur('€ 800'));
+    await expect(page.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 10,2 %'));
     await expect(page.getByTestId('kpi-value')).toHaveText(eur('€ 2.952,17'));
 
     const header = async (name: string) => [
@@ -42,12 +43,12 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
     expect(await header('Meine Immos')).toEqual(['0/3 bezahlt', expect.stringMatching(eur('€ 991'))]);
     expect(await header('Abos & Freizeit')).toEqual(['0/4 bezahlt', expect.stringMatching(eur('€ 71'))]);
     expect(await header('Sonstiges')).toEqual(['0/2 bezahlt', expect.stringMatching(eur('€ 3.015'))]);
-    expect(await header('Investing')).toEqual(['1/2 bezahlt', expect.stringMatching(eur('€ 800'))]);
+    expect(await header('Investing')).toEqual(['Vermögensaufbau · 1/2 bezahlt', expect.stringMatching(eur('€ 800'))]);
 
     // rounding rule: spread (Ø) amounts always with cents, month amounts without „,00“
     await expect(page.getByTestId('kpi-hint')).toHaveText(eur('davon € 288,17 nicht monatlich'));
     await expect(page.getByTestId('free-average')).toHaveText(/^im Ø-Monat €[\s\u00a0]4\.066,83$/);
-    await expect(group(page, 'Wohnen & Leben').getByTestId('group-spread')).toHaveText(/^Ø €[\s\u00a0]1\.602,00 \/ Monat$/);
+    await expect(group(page, 'Wohnen & Leben').getByTestId('group-spread')).toHaveText(/^Ø €[\s\u00a0]1\.602,00$/);
     await expect(group(page, 'Meine Immos').getByTestId('group-sum')).toHaveText(/^€[\s\u00a0]991$/);
 
     await expectClean(page, 'main');

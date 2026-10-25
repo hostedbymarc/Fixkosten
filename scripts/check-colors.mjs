@@ -1,4 +1,5 @@
-// Fails when a colour value or the old app name shows up outside the allowed places.
+// Fails when a colour value or the old app name shows up outside the allowed places,
+// or when a German quote („…“, ‚…‘) is closed with a straight " or '.
 //   node scripts/check-colors.mjs
 // Colours: only src/styles/tokens.css. Exceptions: icon files (public/, scripts/brand/),
 // src/lib/categoryColors.ts (hex strings there are database keys, never painted),
@@ -39,6 +40,10 @@ for (const file of [...files('src'), 'index.html']) {
       if (!ALLOWED.has(file) && COLOR.test(code) && !(file === 'index.html' && line.includes('name="theme-color"'))) {
         problems.push(`${file}:${i + 1}: Farbwert außerhalb von tokens.css → ${line.trim()}`);
       }
+      // German quotes close with “ and ‘, never with a straight " or '
+      if (/„[^“”\n]*"|‚[^‘’\n]*'/.test(line)) {
+        problems.push(`${file}:${i + 1}: gerades Anführungszeichen schließt „…“/‚…‘ → ${line.trim()}`);
+      }
       if (OLD_NAME.test(line) && !NAME_OK.some((ok) => ok.test(line)) && !/^\s*(\/\/|\*|\/\*)/.test(line)) {
         problems.push(`${file}:${i + 1}: alter App-Name → ${line.trim()}`);
       }
@@ -49,4 +54,4 @@ if (problems.length) {
   console.error(`check-colors: ${problems.length} Fund(e)\n${problems.join('\n')}`);
   process.exit(1);
 }
-console.log('check-colors: keine Farbwerte außerhalb von tokens.css, kein alter App-Name in der UI');
+console.log('check-colors: keine Farbwerte außerhalb von tokens.css, kein alter App-Name, keine geraden schließenden Anführungszeichen in der UI');

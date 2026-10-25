@@ -54,11 +54,11 @@ export function ChartCard({ id, title, period, headline, table, details, childre
   const tableId = useId();
   return (
     <section aria-labelledby={`${id}-title`} data-testid={id} className="min-w-0">
-      <h2 id={`${id}-title`} className={`section-title px-1 ${period ? '' : 'mb-2'}`}>
+      <h2 id={`${id}-title`} className={`section-title px-1 ${period ? '' : 'mb-3'}`}>
         {title}
       </h2>
       {period && (
-        <p className="num mb-2 px-1 text-[12px] text-ink-mute" data-testid={`${id}-period`}>
+        <p className="num mb-3 px-1 text-[12px] text-ink-mute" data-testid={`${id}-period`}>
           {period}
         </p>
       )}
@@ -131,18 +131,25 @@ export function ChartCard({ id, title, period, headline, table, details, childre
   );
 }
 
-export function EmptyCard({ id, title, text }: { id: string; title: string; text: string }) {
+/** Empty state of every analysis card: dashed, same padding everywhere, at most two short lines. */
+export function EmptyCard({ id, title, text }: { id: string; title: string; text: ReactNode | ReactNode[] }) {
+  const lines = Array.isArray(text) ? text : [text];
   return (
     <section aria-labelledby={`${id}-title`} data-testid={id}>
-      <h2 id={`${id}-title`} className="section-title mb-2 px-1">
+      <h2 id={`${id}-title`} className="section-title mb-3 px-1">
         {title}
       </h2>
-      <div className="rounded-card border border-dashed border-zinc-300 px-4 py-5 text-[14px] text-ink-mute" data-testid={`${id}-empty`}>
-        {text}
+      <div className={EMPTY_CARD} data-testid={`${id}-empty`}>
+        {lines.map((l, i) => (
+          <p key={i}>{l}</p>
+        ))}
       </div>
     </section>
   );
 }
+
+/** Frame of an empty state (also used by cards with a button inside). */
+export const EMPTY_CARD = 'flex flex-col gap-1 rounded-card border border-dashed border-zinc-300 p-4 text-[14px] leading-5 text-ink-mute';
 
 /** Tooltip box shared by all charts (rendered by Recharts into its wrapper). */
 export function TooltipBox({ title, children }: { title: string; children: ReactNode }) {

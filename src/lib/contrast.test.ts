@@ -232,6 +232,46 @@ describe('Farbabstände (CIEDE2000)', () => {
   });
 });
 
+// New and changed text/surface pairs of the sprint „korrekt-ruhig“, light and dark: text ≥ 4.5,
+// the switch (non-text, WCAG 1.4.11) ≥ 3 for its track against the sheet and the knob against the track.
+const SPRINT_PAIRS: { what: string; fg: string; on: Surface; min: number }[] = [
+  { what: 'Schalter-Label', fg: '--c-ink', on: 'Glas strong', min: 4.5 },
+  { what: 'Schalter-Hilfetext', fg: '--c-ink-mute', on: 'Glas strong', min: 4.5 },
+  { what: 'Chip „nicht vom Netto“', fg: '--c-ink-soft', on: 'zinc-100 (Badge)', min: 4.5 },
+  { what: 'Chip Planänderung „ab … · €“', fg: '--c-ink-soft', on: 'zinc-100 (Badge)', min: 4.5 },
+  { what: 'Label „KATEGORIEN“', fg: '--c-ink-soft', on: 'Nebel', min: 4.5 },
+  { what: 'Kategorie-Name / Summe', fg: '--c-ink', on: 'Glas', min: 4.5 },
+  { what: 'Kategorie-Status „1/6 bezahlt“, „Ø € …“', fg: '--c-ink-mute', on: 'Glas', min: 4.5 },
+  { what: 'Kategorie-Status „✓ bezahlt“', fg: '--c-paid-ink', on: 'Glas', min: 4.5 },
+  { what: 'Kachel Vermögensaufbau: Wert', fg: '--c-ink', on: 'Glas', min: 4.5 },
+  { what: 'Kachel Vermögensaufbau: Label, Unterzeile', fg: '--c-ink-mute', on: 'Glas', min: 4.5 },
+  { what: 'Sparquote „+ € … aus anderen Quellen“', fg: '--c-ink-mute', on: 'Glas', min: 4.5 },
+  { what: 'Leerzustand (gestrichelt, auf dem Hintergrund)', fg: '--c-ink-mute', on: 'Nebel', min: 4.5 },
+  { what: 'Zeitraum unter „Jahresvorschau“', fg: '--c-ink-mute', on: 'Nebel', min: 4.5 },
+  { what: 'Schalter an: Spur gegen das Sheet', fg: '--c-accent', on: 'Glas strong', min: 3 },
+  { what: 'Schalter aus: Spur gegen das Sheet', fg: '--c-check-open', on: 'Glas strong', min: 3 },
+];
+
+describe('Neue und geänderte Paare (korrekt-ruhig)', () => {
+  const cases = (['Hell', 'Dunkel'] as const).flatMap((theme) =>
+    SPRINT_PAIRS.map((p) => [`${theme}: ${p.what} (${p.fg} auf ${p.on}) ≥ ${p.min}`, theme, p] as const),
+  );
+  it.each(cases)('%s', (_, theme, p) => {
+    const v = theme === 'Hell' ? light : dark;
+    const [darkest, lightest] = surfaces(v)[p.on];
+    const fg = rgb(v, p.fg);
+    expect(Math.min(contrast(fg, darkest), contrast(fg, lightest))).toBeGreaterThanOrEqual(p.min);
+  });
+
+  it.each([
+    ['Hell', light],
+    ['Dunkel', dark],
+  ] as const)('%s: Schalter-Knopf gegen die Spur an und aus ≥ 3', (_, v) => {
+    expect(contrast(rgb(v, '--c-surface'), rgb(v, '--c-accent'))).toBeGreaterThanOrEqual(3);
+    expect(contrast(rgb(v, '--c-surface'), rgb(v, '--c-check-open'))).toBeGreaterThanOrEqual(3);
+  });
+});
+
 if (process.env.CONTRAST_REPORT) {
   const lines = [
     '| Thema | Vordergrund | Hintergrund | dunkelster Punkt | hellster Punkt | Ziel | |',
@@ -243,6 +283,15 @@ if (process.env.CONTRAST_REPORT) {
     '',
     `ΔE2000 Brand #5A7A2E ↔ Amber-Icon: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn-icon')).toFixed(1)}**, ↔ Amber-Text: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn')).toFixed(1)}**, ↔ Rot: ${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-over')).toFixed(1)}`,
   ];
+  lines.push('', '**Neue und geänderte Paare (korrekt-ruhig)**', '', '| Thema | Element | Vordergrund | Hintergrund | dunkelster / hellster Punkt | Ziel |', '|---|---|---|---|---|---|');
+  for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
+    for (const p of SPRINT_PAIRS) {
+      const [d, l] = surfaces(v)[p.on];
+      const fg = rgb(v, p.fg);
+      lines.push(`| ${theme} | ${p.what} | \`${p.fg}\` | ${p.on} | ${contrast(fg, d).toFixed(2)} / ${contrast(fg, l).toFixed(2)} | ≥ ${p.min} |`);
+    }
+    lines.push(`| ${theme} | Schalter-Knopf auf Spur an / aus | \`--c-surface\` | \`--c-accent\` / \`--c-check-open\` | ${contrast(rgb(v, '--c-surface'), rgb(v, '--c-accent')).toFixed(2)} / ${contrast(rgb(v, '--c-surface'), rgb(v, '--c-check-open')).toFixed(2)} | ≥ 3 |`);
+  }
   lines.push('', '**Delta-Chip** (Text auf Chip-Fläche, Ziel ≥ 4,5)', '', '| Thema | Variante | Text | Fläche | Kontrast |', '|---|---|---|---|---|');
   for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
     for (const [name, fg, bg] of [['weniger (grün)', '--c-paid-ink', '--c-paid-soft'], ['mehr (rot)', '--c-over', '--c-over-soft']] as const) {

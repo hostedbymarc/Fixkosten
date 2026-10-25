@@ -72,15 +72,16 @@
   --glass-border: rgba(255, 255, 255, 0.65);
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 30px rgba(31, 39, 36, 0.06);
   --glass-fallback: rgba(255, 255, 255, 0.92);
+  --glass-fallback-clear: rgba(255, 255, 255, 0); /* fade end: same colour, never `transparent` (black in iOS captures) */
   --glass-opaque: #ffffff;
   --shadow-sheet: 0 -8px 40px rgba(31, 39, 36, 0.14);
 
   /* Nebel + Papierkorn (sizes in vmin with a floor and a cap: never stretched on wide screens) */
   --nebel-base: #f4f5f1;
-  --nebel-1: rgba(90, 122, 46, 0.3);
-  --nebel-2: rgba(222, 206, 176, 0.45);
-  --nebel-3: rgba(90, 122, 46, 0.18);
-  --grain-opacity: 0.06;
+  --nebel-1: rgba(90, 122, 46, 0.2);
+  --nebel-2: rgba(222, 206, 176, 0.32);
+  --nebel-3: rgba(90, 122, 46, 0.12);
+  --grain-opacity: 0.024; /* ≤ 3 levels on the base: no visible edge where a full-page capture ends the layer */
 
   /* charts (SVG attributes take complete colours) */
   --chart-accent: #5a7a2e;
@@ -159,12 +160,14 @@
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 30px rgba(0, 0, 0, 0.35);
     --glass-fallback: rgba(28, 35, 31, 0.94);
+  --glass-fallback-clear: rgba(28, 35, 31, 0);
+    --glass-fallback-clear: rgba(28, 35, 31, 0);
     --glass-opaque: #1c231f;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
     --nebel-base: #0e120f;
-    --nebel-1: rgba(90, 122, 46, 0.22);
-    --nebel-2: rgba(222, 206, 176, 0.045);
-    --nebel-3: rgba(90, 122, 46, 0.14);
+    --nebel-1: rgba(90, 122, 46, 0.16);
+    --nebel-2: rgba(222, 206, 176, 0.04);
+    --nebel-3: rgba(90, 122, 46, 0.1);
     --grain-opacity: 0.06;
     --chart-accent: #7f9c4f;
     --chart-accent-light: #c8d8a9;
@@ -236,12 +239,13 @@
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 30px rgba(0, 0, 0, 0.35);
   --glass-fallback: rgba(28, 35, 31, 0.94);
+  --glass-fallback-clear: rgba(28, 35, 31, 0);
   --glass-opaque: #1c231f;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
   --nebel-base: #0e120f;
-  --nebel-1: rgba(90, 122, 46, 0.22);
-  --nebel-2: rgba(222, 206, 176, 0.045);
-  --nebel-3: rgba(90, 122, 46, 0.14);
+  --nebel-1: rgba(90, 122, 46, 0.16);
+  --nebel-2: rgba(222, 206, 176, 0.04);
+  --nebel-3: rgba(90, 122, 46, 0.1);
   --grain-opacity: 0.06;
   --chart-accent: #7f9c4f;
   --chart-accent-light: #c8d8a9;

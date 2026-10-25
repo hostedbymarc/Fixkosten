@@ -177,6 +177,13 @@ export interface PositionDraft {
   categoryId: string;
   note?: string;
   plan: PlanInput;
+  /** switch „Von ‚Frei verfügbar‘ abziehen“ (one-time payments in Vermögensaufbau); missing = on */
+  fromNet?: boolean;
+}
+
+/** Only an explicit „off“ is stored; „on“ is the default and leaves no field behind. */
+function storedFromNet(value: boolean | undefined): false | undefined {
+  return value === false ? false : undefined;
 }
 
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
@@ -233,6 +240,7 @@ export async function createPosition(db: FixkostenDB, draft: PositionDraft, star
       history: [{ validFrom, ...plan }],
       createdAt: new Date().toISOString(),
       sortOrder: (last?.sortOrder ?? -1) + 1,
+      ...(storedFromNet(draft.fromNet) === false ? { fromNet: false } : {}),
     };
     await db.positions.add(position);
     await db.changeLog.add(log({ positionId: position.id, type: 'created', validFrom, to: position.history[0] }));
@@ -244,14 +252,15 @@ export async function createPosition(db: FixkostenDB, draft: PositionDraft, star
 export async function updatePositionInfo(
   db: FixkostenDB,
   id: string,
-  info: { name: string; categoryId: string; note?: string },
+  info: { name: string; categoryId: string; note?: string; fromNet?: boolean },
 ): Promise<void> {
   await db.transaction('rw', db.positions, db.changeLog, async () => {
     const position = await db.positions.get(id);
     if (!position) throw new RepoError('Position nicht gefunden.');
-    const next = { name: info.name.trim(), categoryId: info.categoryId, note: trimmed(info.note) };
-    const before = { name: position.name, categoryId: position.categoryId, note: position.note };
-    if (before.name === next.name && before.categoryId === next.categoryId && before.note === next.note) return;
+    const next = { name: info.name.trim(), categoryId: info.categoryId, note: trimmed(info.note), fromNet: storedFromNet(info.fromNet) };
+    const before = { name: position.name, categoryId: position.categoryId, note: position.note, fromNet: storedFromNet(position.fromNet) };
+    if (before.name === next.name && before.categoryId === next.categoryId && before.note === next.note && before.fromNet === next.fromNet) return;
+    // undefined removes the field: „on“ is stored as no field at all
     await db.positions.update(id, next);
     await db.changeLog.add(log({ positionId: id, type: 'edited', from: before, to: next }));
   });

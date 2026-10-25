@@ -67,7 +67,7 @@ test.describe('Sparquote-Karte', () => {
     await expect(page.getByTestId('savings-headline-label')).toHaveText('Oktober 2026');
     await expect(page.getByTestId('savings-headline-value')).toHaveText(eur('38,8 % · € 1.860'));
     await expect(page.getByTestId('savings-headline-sub')).toHaveText(eur('Ø 42,8 % der letzten 3 Monate'));
-    await expect(page.getByTestId('savings-saved')).toHaveText(eur('€ 1.860 gespart'));
+    await expect(page.getByTestId('savings-saved')).toHaveText(eur('€ 1.860 aus dem Netto gespart'));
     await expect(page.getByTestId('savings-net')).toHaveText(eur('Netto € 4.788'));
     await expect(page.getByRole('img', { name: /Sparquote 38,8\s%: € 1\.860 von € 4\.788 Netto-Gehalt/ })).toBeVisible();
 

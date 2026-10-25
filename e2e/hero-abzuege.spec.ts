@@ -88,8 +88,8 @@ test.describe('Analyse: Jahresvorschau, Plan vs. Ist, Geplante Änderungen', () 
     await expect(legend).toContainText('regulär');
     await expect(legend).toContainText('Ø pro Monat (heute)');
     await expect(legend).not.toContainText('über Ø');
-    // today = November → the 12 months after it
-    await expect(page.getByTestId('forecast-period')).toHaveText(eur('Dez 2026 – Nov 2027'));
+    // today = November → November + 11
+    await expect(page.getByTestId('forecast-period')).toHaveText(eur('Nov 2026 – Okt 2027'));
     const title = await page.locator('#forecast-title').boundingBox();
     const period = await box(page, 'forecast-period');
     expect(period.y).toBeGreaterThanOrEqual(title!.y + title!.height - 1);

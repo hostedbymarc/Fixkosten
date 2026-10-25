@@ -125,8 +125,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
     toast({
       message:
         removed.status === 'skipped'
-          ? `„${item.position.name}" ist wieder offen`
-          : `Haken bei „${item.position.name}" entfernt`,
+          ? `„${item.position.name}“ ist wieder offen`
+          : `Haken bei „${item.position.name}“ entfernt`,
       actionLabel: 'Rückgängig',
       onAction: () => void restorePayment(db, removed),
     });
@@ -147,7 +147,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   async function skip(item: DueItem) {
     const skipped = await markSkipped(db, item.position.id, item.period, item.planned);
     toast({
-      message: `„${item.position.name}" (${monthName(item.period)}) entfällt`,
+      message: `„${item.position.name}“ (${monthName(item.period)}) entfällt`,
       actionLabel: 'Rückgängig',
       onAction: () => void removePayment(db, skipped.id),
     });
@@ -158,7 +158,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
     const removed = await deleteOneOff(db, oneOff.id);
     if (!removed) return;
     toast({
-      message: `„${oneOff.label}" gelöscht`,
+      message: `„${oneOff.label}“ gelöscht`,
       actionLabel: 'Rückgängig',
       onAction: () => void restoreOneOff(db, removed),
     });
@@ -182,9 +182,10 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         />
       )}
 
-      <div className="grid gap-3 lg:gap-4">
+      <div className="grid gap-3 md:gap-4">
         <HeroCard figures={figures} />
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-3">
+        {/* iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
             ref={salaryTile}
             period={period}
@@ -202,18 +203,20 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             calculated={figures.free}
             average={freeAfterFixedAvg(ds, period)}
             explanation={averageMonthExplanation(ds, period)}
-            wealth={figures.wealth}
-            rate={figures.savingsRate}
             onOpen={() => openClose(closeTile.current)}
           />
+          <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
         </div>
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-8">
-        <section aria-label="Fällige Positionen" className="flex flex-col gap-4">
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section aria-label="Fällige Positionen" className="flex flex-col gap-3 md:gap-4">
           {groups.length > 0 && (
-            <div className="-mb-2 -mt-1 flex justify-end">
+            <div className="-mb-1 flex items-center justify-between px-1">
+              <p className="section-title" data-testid="categories-label">
+                Kategorien
+              </p>
               <button
                 type="button"
                 onClick={() => collapse.setAll(groups.map((g) => g.category.id), !allCollapsed)}
@@ -278,7 +281,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           )}
 
           <section aria-labelledby="upcoming-title">
-            <h2 id="upcoming-title" className="section-title mb-2 flex items-center gap-1.5 px-1">
+            <h2 id="upcoming-title" className="section-title mb-3 flex min-h-11 items-center gap-2 px-1">
               <ClockIcon size={15} /> Kommt bald
             </h2>
             {upcoming.length === 0 ? (
@@ -286,17 +289,24 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             ) : (
               <ul className="glass divide-y divide-line">
                 {upcoming.map((item) => (
-                  <li key={`${item.period}-${item.position.id}`} className="flex items-center gap-3 px-4 py-3">
+                  <li
+                    key={`${item.period}-${item.position.id}`}
+                    className="flex items-start gap-3 px-4 py-3 md:px-5"
+                    data-testid="upcoming-row"
+                  >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-medium text-ink">{item.position.name}</span>
-                      <span className="mt-1 flex flex-wrap gap-1.5">
+                      <span lang="de" className="line-clamp-2 hyphens-auto break-words text-[15px] font-medium leading-6 text-ink">
+                        {item.position.name}
+                      </span>
+                      {/* one meta line: month chip and rhythm; wraps only as whole pieces */}
+                      <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                         <Badge tone="warn">{monthName(item.period)}</Badge>
-                        <span className="text-[13px] leading-[22px] text-ink-mute">
-                          {item.plan && scheduleLabel(item.plan, item.period)}
-                        </span>
+                        {item.plan && (
+                          <span className="whitespace-nowrap text-[13px] leading-[22px] text-ink-mute">{scheduleLabel(item.plan, item.period)}</span>
+                        )}
                       </span>
                     </span>
-                    <span className="num shrink-0 text-[15px] font-semibold text-ink">{formatEUR(item.planned)}</span>
+                    <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold leading-6 text-ink">{formatEUR(item.planned)}</span>
                   </li>
                 ))}
               </ul>
@@ -431,8 +441,8 @@ function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Perio
 function HeroCard({ figures }: { figures: MonthFigures }) {
   const allPaid = figures.count > 0 && figures.openCount === 0;
   return (
-    <div className="glass flex flex-col gap-4 p-5 md:flex-row md:items-center md:gap-6 lg:p-6" data-testid="hero">
-      <div className="flex min-w-0 items-center gap-5 lg:gap-6">
+    <div className="glass flex flex-col gap-4 p-4 md:flex-row md:items-center md:gap-6 md:p-5" data-testid="hero">
+      <div className="flex min-w-0 items-center gap-4 md:gap-6">
         <ProgressRing
           ratio={figures.ratio}
           percent={progressPercent(figures)}
@@ -446,7 +456,7 @@ function HeroCard({ figures }: { figures: MonthFigures }) {
           <div className="text-[15px] text-ink-mute">
             von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
           </div>
-          <div className="mt-2.5">
+          <div className="mt-3">
             {allPaid ? (
               <span className="inline-flex h-7 items-center rounded-full bg-paid-soft px-3 text-[13px] font-semibold text-paid-ink">
                 Alles abgebucht
@@ -470,14 +480,14 @@ function HeroCard({ figures }: { figures: MonthFigures }) {
 }
 
 /**
- * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau (monthFigures.deductions). Phone: an extra
+ * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau vom Netto (monthFigures.deductions). Phone: an extra
  * row under ring and amount; from iPad on it uses the free space on the right of the hero.
  */
 function HeroDeductions({ figures }: { figures: MonthFigures }) {
   const explanation = deductionsExplanation(figures);
   return (
     <div
-      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-3.5 md:ml-auto md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-6 md:text-right"
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-3 md:ml-auto md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-6 md:text-right"
       data-testid="hero-deductions"
     >
       <div className="col-start-1 row-start-1 flex items-center text-[13px] font-medium text-ink-mute">
@@ -486,6 +496,11 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
           <p className="num text-ink" data-testid="hero-deductions-formula">
             {explanation.formula}
           </p>
+          {explanation.notFromNet && (
+            <p className="num text-ink" data-testid="hero-deductions-not-from-net">
+              {explanation.notFromNet}
+            </p>
+          )}
           <p>Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.</p>
         </InfoTip>
       </div>
@@ -503,14 +518,14 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
 }
 
 /**
- * The three tiles under the hero share one structure: label on top, the large
- * number directly below, short sublines below that. Content is top-aligned; the
+ * The four tiles under the hero share one structure: label on top, the large
+ * number directly below, at most one short subline. Content is top-aligned; the
  * grid stretches tiles of a row to the same height, so the numbers share a baseline.
  */
-const tileClass = 'glass flex min-w-0 flex-col items-stretch justify-start rounded-tile p-3 text-left lg:p-4';
-const tileLabel = 'block text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
+const tileClass = 'glass flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
+const tileLabel = 'block truncate text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
 const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 lg:text-[20px] lg:leading-7';
-const tileSub = 'mt-1 block text-[11px] leading-4 text-ink-mute lg:text-[12px]';
+const tileSub = 'mt-1 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:tracking-normal';
 
 /** An amount inside a subline: never wraps in the middle. */
 function Amount({ children, strong, negative }: { children: React.ReactNode; strong?: boolean; negative?: boolean }) {
@@ -559,9 +574,6 @@ interface FreeTileProps {
   average: number | null;
   /** tooltip of „im Ø-Monat“ (null without salary) */
   explanation: AverageMonthExplanation | null;
-  /** Vermögensaufbau due this month */
-  wealth: number;
-  rate: number | null;
   onOpen: () => void;
 }
 
@@ -587,9 +599,9 @@ function useSlotPosition(wrapper: React.RefObject<HTMLDivElement>, slot: React.R
   return pos;
 }
 
-/** "Frei verfügbar": net salary − fixed costs, at most two short lines below. Opens the month close. */
+/** "Frei verfügbar": net salary − Abzüge vom Netto, one subline „im Ø-Monat“ with ⓘ. Opens the month close. */
 const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
-  { period, calculated, average, explanation, wealth, rate, onOpen },
+  { period, calculated, average, explanation, onOpen },
   ref,
 ) {
   const value = calculated;
@@ -599,7 +611,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
   const info = useSlotPosition(wrapper, slot, showInfo);
   return (
     // the ⓘ is its own button next to (not inside) the tile button
-    <div ref={wrapper} className="relative col-span-2 flex min-w-0 sm:col-span-1">
+    <div ref={wrapper} className="relative flex min-w-0">
       <button
         ref={ref}
         type="button"
@@ -623,15 +635,13 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         )}
         {average !== null && (
           <span className={tileSub} data-testid="free-average">
-            im Ø-Monat <Amount negative={average < 0}>{formatAvg(average)}</Amount>
-            {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
-            {showInfo && <span ref={slot} className="ml-0.5 inline-block h-3 w-4 align-middle" aria-hidden="true" />}
-          </span>
-        )}
-        {rate !== null && (
-          <span className={tileSub} data-testid="free-wealth">
-            Vermögensaufbau <Amount>{formatEUR(wealth)}</Amount> · Sparquote{' '}
-            <Amount>{formatPercent(rate)}</Amount>
+            im Ø-Monat{' '}
+            {/* amount and ⓘ stay together: a narrow tile breaks before the amount, never before the icon */}
+            <span className="whitespace-nowrap">
+              <Amount negative={average < 0}>{formatAvg(average)}</Amount>
+              {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
+              {showInfo && <span ref={slot} className="ml-px inline-block h-3 w-[15px] align-middle" aria-hidden="true" />}
+            </span>
           </span>
         )}
       </button>
@@ -652,6 +662,34 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
     </div>
   );
 });
+
+/** Vermögensaufbau gesamt; below the Sparquote (vom Netto) and, on its own line when there is any, the part not from the net salary. */
+function WealthTile({ wealth, notFromNet, rate }: { wealth: number; notFromNet: number; rate: number | null }) {
+  const other = Math.round(notFromNet * 100) > 0;
+  return (
+    <div className={tileClass} data-testid="wealth-tile">
+      <span className={tileLabel}>Vermögensaufbau</span>
+      <span className={`${tileValue} text-ink`} data-testid="wealth-value">
+        {formatEUR(wealth)}
+      </span>
+      {/* two fixed lines when part of it is not from the net salary; neither breaks inside */}
+      {(rate !== null || other) && (
+        <span className={tileSub} data-testid="wealth-sub">
+          {rate !== null && (
+            <span className="block whitespace-nowrap" data-testid="wealth-rate">
+              Sparquote <Amount>{formatPercent(rate)}</Amount>
+            </span>
+          )}
+          {other && (
+            <span className="block whitespace-nowrap" data-testid="wealth-not-from-net">
+              <Amount>{formatEUR(notFromNet)}</Amount> nicht vom Netto
+            </span>
+          )}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function GroupCard({
   group,
@@ -680,42 +718,39 @@ function GroupCard({
   const savings = group.category.kind === 'savings';
   const showSpread = !sameMoney(spread, tally.total);
   const allPaid = tally.count > 0 && tally.openCount === 0;
-  const progress = allPaid ? 'alle bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`;
+  const status = `${savings ? 'Vermögensaufbau · ' : ''}${allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}`;
   return (
     <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
       <Disclosure
         expanded={!collapsed}
         onToggle={onToggleCollapsed}
         headingLevel={2}
-        buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${progress}`}
-        buttonClassName={`px-4 py-3 hover:bg-zinc-50/40 ${collapsed ? '' : 'border-b border-line'}`}
+        buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${status}`}
+        buttonClassName={`px-4 py-3 hover:bg-zinc-50/40 md:px-5 ${collapsed ? '' : 'border-b border-line'}`}
         buttonTestId="group-toggle"
         header={
           <>
             <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
-            {/* name and badge wrap onto two lines instead of pushing the amounts out of the card */}
-            <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="min-w-0 truncate text-[15px] font-semibold text-ink" data-testid="group-name">
+            {/* fixed grid: left name / status, right sum / Ø; every cell one line, long names end in an ellipsis */}
+            <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
+              <span className="truncate text-[15px] font-semibold leading-6 text-ink" data-testid="group-name">
                 {group.category.name}
               </span>
-              {savings && <Badge>Vermögensaufbau</Badge>}
-            </span>
-            <span className="flex shrink-0 flex-col items-end">
-              <span className="flex items-center gap-2">
-                <span
-                  className={`whitespace-nowrap text-[12px] ${allPaid ? 'font-semibold text-paid-ink' : 'text-ink-mute'}`}
-                  data-testid="group-progress"
-                >
-                  {allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}
-                </span>
-                <span className="num whitespace-nowrap text-[14px] font-medium text-ink-mute" data-testid="group-sum">
-                  {formatEUR(tally.total)}
-                </span>
+              <span className="num whitespace-nowrap text-right text-[15px] font-semibold leading-6 text-ink" data-testid="group-sum">
+                {formatEUR(tally.total)}
               </span>
-              {showSpread && (
-                <span className="num whitespace-nowrap text-[12px] text-ink-faint" data-testid="group-spread">
-                  Ø {formatAvg(spread)} / Monat
+              <span
+                className={`truncate text-[12px] leading-4 ${allPaid ? 'font-semibold text-paid-ink' : 'text-ink-mute'}`}
+                data-testid="group-progress"
+              >
+                {status}
+              </span>
+              {showSpread ? (
+                <span className="num whitespace-nowrap text-right text-[12px] leading-4 text-ink-mute" data-testid="group-spread">
+                  Ø {formatAvg(spread)}
                 </span>
+              ) : (
+                <span aria-hidden="true" />
               )}
             </span>
           </>
