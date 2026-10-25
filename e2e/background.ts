@@ -124,3 +124,6 @@ export const NO_FILTER = '*, *::before, *::after { filter: none !important; back
 /** iOS keeps fixed layers where they are at scroll 0: only the first screen. */
 export const FIXED_FIRST_SCREEN = (vh: number) =>
   `body::before, body::after { position: absolute !important; height: ${vh}px !important; bottom: auto !important; }`;
+/** iOS „Ganze Seite“ (real iPhone, 25.10.2026): fixed layers laid out against the whole page. */
+export const FIXED_STRETCHED = (pageHeight: number) =>
+  `body::before, body::after { position: absolute !important; top: 0 !important; height: ${pageHeight}px !important; bottom: auto !important; }`;

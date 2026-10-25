@@ -43,12 +43,11 @@ body {
 }
 
 /* Hintergrund „Nebel + Papierkorn“: two fixed layers behind all content, static.
-   Only radial gradients, no filter, mask or round elements. Positions are px from the top, heights
-   fixed px, widths px via clamp() on the width – never vh/vmax, which a full-page capture resolves
-   against the whole page height. Every blob fades on a bell curve (≈ e^(−4.6 t²), soft centre, soft
-   rim) to 0 above 660 px, so it ends inside even the smallest first screen (iPhone SE, 667 px):
-   whether a renderer keeps the layer to the first screen or stretches it, there is no edge, and
-   below lies the plain base colour. */
+   The Nebel is an opaque bitmap (src/lib/nebel.ts: three bell-shaped blobs from the tokens, drawn
+   over the base colour) at the top, 660 px high, the plain base colour below. No CSS gradient with
+   transparency: iOS Safari „Ganze Seite“ stretches fixed layers over the whole page and paints
+   `transparent` in a gradient as black (hard green disc on black). An image plus a flat colour
+   stays correct whether a renderer keeps the layer to the first screen or stretches it. */
 body::before,
 body::after {
   content: '';
@@ -58,41 +57,11 @@ body::after {
 }
 body::before {
   z-index: -2;
-  background:
-    radial-gradient(
-      clamp(480px, 60vw, 1100px) 620px at 12% 30px,
-      var(--nebel-1),
-      color-mix(in srgb, var(--nebel-1) 90%, transparent) 15%,
-      color-mix(in srgb, var(--nebel-1) 66%, transparent) 30%,
-      color-mix(in srgb, var(--nebel-1) 39%, transparent) 45%,
-      color-mix(in srgb, var(--nebel-1) 19%, transparent) 60%,
-      color-mix(in srgb, var(--nebel-1) 7.5%, transparent) 75%,
-      color-mix(in srgb, var(--nebel-1) 2.4%, transparent) 90%,
-      transparent 100%
-    ),
-    radial-gradient(
-      clamp(440px, 44vw, 860px) 480px at 92% 160px,
-      var(--nebel-2),
-      color-mix(in srgb, var(--nebel-2) 90%, transparent) 15%,
-      color-mix(in srgb, var(--nebel-2) 66%, transparent) 30%,
-      color-mix(in srgb, var(--nebel-2) 39%, transparent) 45%,
-      color-mix(in srgb, var(--nebel-2) 19%, transparent) 60%,
-      color-mix(in srgb, var(--nebel-2) 7.5%, transparent) 75%,
-      color-mix(in srgb, var(--nebel-2) 2.4%, transparent) 90%,
-      transparent 100%
-    ),
-    radial-gradient(
-      clamp(440px, 46vw, 1000px) 440px at 42% 220px,
-      var(--nebel-3),
-      color-mix(in srgb, var(--nebel-3) 90%, transparent) 15%,
-      color-mix(in srgb, var(--nebel-3) 66%, transparent) 30%,
-      color-mix(in srgb, var(--nebel-3) 39%, transparent) 45%,
-      color-mix(in srgb, var(--nebel-3) 19%, transparent) 60%,
-      color-mix(in srgb, var(--nebel-3) 7.5%, transparent) 75%,
-      color-mix(in srgb, var(--nebel-3) 2.4%, transparent) 90%,
-      transparent 100%
-    ),
-    var(--nebel-base);
+  background-color: var(--nebel-base);
+  background-image: var(--nebel-image, none);
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: 100% 660px;
 }
 body::after {
   z-index: -1;
@@ -101,7 +70,7 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Print / PDF – also the path of iOS Safari „Ganze Seite“. The screen stays untouched.
+/* Print / PDF. The screen stays untouched (iOS „Ganze Seite“ uses the screen CSS, see the Nebel above).
    Every background is printed (the print path drops them by default: black below the cards,
    grey glass), the page is the plain base colour of the active theme, the Nebel and the grain are
    gone, glass is opaque without blur, and the navigation shows once without covering content. */
