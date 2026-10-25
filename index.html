@@ -28,6 +28,24 @@
     </script>
   </head>
   <body>
+    <!-- Lade-Animation at app start: visible before the JavaScript has loaded, styles in src/index.css,
+         faded out by src/lib/entrance.ts once the app is ready -->
+    <div id="splash" aria-hidden="true">
+      <svg class="splash-mark" width="76" height="76" viewBox="0 0 28 28">
+        <rect class="splash-pod" width="28" height="28" rx="8" />
+        <circle class="splash-pea" cx="9" cy="14" r="3.4" />
+        <circle class="splash-pea" cx="14" cy="14" r="3.4" opacity=".85" />
+        <circle class="splash-pea" cx="19" cy="14" r="3.4" opacity=".7" />
+      </svg>
+      <span class="splash-word">Erbse</span>
+    </div>
+    <script>
+      // never stay in front of the app (e.g. when the script below fails to load)
+      setTimeout(function () {
+        var s = document.getElementById('splash');
+        if (s) s.remove();
+      }, 8000);
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

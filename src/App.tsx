@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
 import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
 import { Brand } from './components/Logo';
 import { Loader } from './components/Loader';
@@ -8,6 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
+import { hideSplash, playEntrance } from './lib/entrance';
 import { toPeriod } from './lib/period';
 import type { Period } from './lib/types';
 import { MonthScreen } from './screens/MonthScreen';
@@ -49,6 +50,31 @@ export function App() {
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
   const [period, setPeriod] = useState<Period>(() => toPeriod(new Date()));
+  const mainRef = useRef<HTMLElement>(null);
+  const loaded = !!ds;
+
+  // the splash fades once there is something to show: the setup dialog or the data
+  useEffect(() => {
+    if (setup === true || (setup === false && loaded)) void hideSplash();
+  }, [setup, loaded]);
+
+  // every screen comes in (tab change, first screen after the splash); a lazy screen once its loader is gone
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    if (!main || !loaded) return;
+    const loading = () => !!main.querySelector('[data-testid="loader"]');
+    if (!loading()) {
+      void playEntrance(main);
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if (loading()) return;
+      observer.disconnect();
+      void playEntrance(main);
+    });
+    observer.observe(main, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [route, loaded, setup]);
 
   if (setup === undefined) return <Loader />;
   if (setup) return <SetupDialog />;
@@ -58,6 +84,7 @@ export function App() {
       <div className="relative min-h-dvh lg:pl-[240px]">
         <Sidebar route={route} />
         <main
+          ref={mainRef}
           className="pt-safe px-safe"
           style={{ paddingBottom: 'calc(var(--tabbar-space) + 16px)' }}
         >

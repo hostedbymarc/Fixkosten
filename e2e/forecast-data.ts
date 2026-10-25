@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { parseBackup } from '../src/db/backup';
 import type { Position } from '../src/lib/types';
-import { expect, FIXTURE, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, TODAY } from './fixtures';
 
 function once(id: string, name: string, categoryId: string, amount: number, dueDate: string): Position {
   const [y, m, d] = dueDate.split('-').map(Number) as [number, number, number];
@@ -45,4 +45,5 @@ export async function importForecast(page: Page) {
     buffer: Buffer.from(JSON.stringify(forecastBackup())),
   });
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
 }

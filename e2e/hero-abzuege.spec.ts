@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { parseBackup, type BackupFile } from '../src/db/backup';
 import { withNovember } from '../tests/fixtures/november';
-import { eur, expect, FIXTURE, goTo, isTouchProject, test } from './fixtures';
+import { appSettled, eur, expect, FIXTURE, goTo, isTouchProject, test } from './fixtures';
 import { expectClean } from './measure';
 
 /** Today = 10.11.2026: the app opens November (golden fixture, Netto 7.819). */
@@ -16,6 +16,7 @@ async function importNovember(page: Page, edit: (b: BackupFile) => void = () => 
   edit(backup);
   await page.getByTestId('import-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
 }
 
 const box = async (page: Page, testId: string) => (await page.getByTestId(testId).boundingBox())!;
