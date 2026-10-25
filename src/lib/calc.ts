@@ -217,7 +217,7 @@ export function paymentFor(ds: Dataset, positionId: string, period: Period): Pay
 
 /**
  * Does this position's money come out of the net salary? Always, except a one-time
- * payment in a Vermögensaufbau category whose switch „Von ‚Frei verfügbar' abziehen“ is off.
+ * payment in a Vermögensaufbau category whose switch „Von ‚Frei verfügbar‘ abziehen“ is off.
  */
 export function countsFromNet(kind: Kind, position: Position, plan: PlanEntry | null): boolean {
   return !(kind === 'savings' && plan?.frequency === 'once' && position.fromNet === false);

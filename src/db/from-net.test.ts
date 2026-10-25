@@ -8,7 +8,7 @@ import { exportBackup, importIntoEmpty, parseBackup } from './backup';
 import { FixkostenDB } from './db';
 import { createPosition, loadDataset, updatePositionInfo } from './repo';
 
-describe("Schalter „Von ‚Frei verfügbar' abziehen“: Export und Import", () => {
+describe("Schalter „Von ‚Frei verfügbar‘ abziehen“: Export und Import", () => {
   it('alte Dateien (fixkosten-backup Schema 2 vom 05.10., Export vom 25.10. Schema 4) importieren ohne Feld = an', () => {
     for (const raw of [seed, JSON.parse(readFileSync(LIVE_FILE, 'utf8'))]) {
       const backup = parseBackup(structuredClone(raw));

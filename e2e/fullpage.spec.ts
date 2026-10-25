@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
@@ -10,7 +10,8 @@ import { importLive, NOV_TODAY, OKT_TODAY } from './live';
 // Full-page capture (iPad Safari „Ganze Seite“ showed black below the first screen and a hard green
 // disc on top). Chromium always paints the canvas, so black itself does not reproduce here; the tests
 // check what a renderer without canvas or fixed layers would show: body paints the base colour over
-// the whole page, the Nebel ends inside the first screen without an edge, and the PDF keeps it.
+// the whole page and the Nebel ends inside the first screen without an edge. The print path (PDF)
+// drops the Nebel entirely and prints the plain base colour.
 
 const BASE = { light: [244, 245, 241], dark: [14, 18, 15] } as const;
 const PAGES = [
@@ -85,23 +86,111 @@ for (const scheme of ['light', 'dark'] as const) {
       });
     }
 
-    test('PDF (Chromium, Druck): Hintergrund wird mitgedruckt, Seite 2 ist die Basisfarbe, hell nie Schwarz', async ({ page }, info) => {
-      test.skip(info.project.name !== 'ipad-portrait' && info.project.name !== 'desktop' && info.project.name !== 'iphone-15', 'three sizes are enough');
+    // Druckpfad (iOS „Ganze Seite“ is assumed to take it): the page is the plain base colour, no Nebel,
+    // glass opaque, the navigation once and over nothing. printBackground true and false: Chromium honours
+    // print-color-adjust: exact either way, so both must look the same.
+    for (const printBackground of [true, false]) {
+      test(`PDF printBackground ${printBackground}: Basisfarbe auf jeder Seite, kein Nebel, Karten deckend, Navigation einmal`, async ({ page }, info) => {
+        test.skip(info.project.name !== 'iphone-15' && info.project.name !== 'ipad-portrait', 'iPhone 15 and iPad');
+        await importLive(page, OKT_TODAY);
+        await settle(page);
+        const vp = page.viewportSize()!;
+        const base = BASE[scheme] as unknown as [number, number, number];
+        const pdfPages = async (tag: string) => {
+          const dir = mkdtempSync(join(tmpdir(), 'erbse-pdf-'));
+          const pdf = join(dir, 'page.pdf');
+          await page.pdf({ path: pdf, width: `${vp.width}px`, height: `${vp.height}px`, printBackground });
+          // 72 dpi = 0.75 px per CSS px; the last partial pixel row/column of a page is paper, not page
+          execFileSync('pdftoppm', ['-png', '-r', '72', '-x', '0', '-y', '0', '-W', String(Math.floor(vp.width * 0.75)), '-H', String(Math.floor(vp.height * 0.75)), pdf, join(dir, tag)]);
+          const text = execFileSync('pdftotext', [pdf, '-']).toString();
+          const files = readdirSync(dir).filter((f) => f.startsWith(tag) && f.endsWith('.png')).sort();
+          return { text, pngs: files.map((f) => readFileSync(join(dir, f))) };
+        };
+
+        // with content: never black in light, the tab bar printed once
+        const full = await pdfPages('voll');
+        expect(full.pngs.length).toBeGreaterThan(1);
+        for (const [i, png] of full.pngs.entries()) {
+          const st = await pixelStats(page, png, { base, from: 1e9, scale: 0.75 });
+          if (scheme === 'light') expect(st.nearBlack, `page ${i + 1}: no pixel ≤ #101010`).toBe(0);
+          expect(st.transparent).toBe(0);
+        }
+        expect(full.text.match(/Einstellungen/g)?.length, 'navigation printed once').toBe(1);
+
+        // cards opaque: the padding above the first tile is glass-fallback over the base colour
+        await page.emulateMedia({ media: 'print', colorScheme: scheme });
+        const card = (await page.getByTestId('salary-value').locator('xpath=ancestor::*[contains(@class,"glass")][1]').boundingBox())!;
+        const glass = scheme === 'light' ? [254, 254, 254] : [27, 34, 30];
+        const px = await page.evaluate(
+          async ([b64, x, y]) => {
+            const img = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
+            const c = new OffscreenCanvas(img.width, img.height);
+            const g = c.getContext('2d')!;
+            g.drawImage(img, 0, 0);
+            return [...g.getImageData(x, y, 1, 1).data].slice(0, 3);
+          },
+          [full.pngs[0]!.toString('base64'), Math.round((card.x + card.width / 2) * 0.75), Math.round((card.y + 4) * 0.75)] as const,
+        );
+        for (const k of [0, 1, 2]) expect(Math.abs(px[k]! - glass[k]!), `card pixel ${px.join(',')}`).toBeLessThanOrEqual(3);
+        // back to no emulated media type: with 'screen' page.pdf() would print the screen CSS
+        await page.emulateMedia({ media: null, colorScheme: scheme });
+
+        // background only: every page is the base colour ± 3 – no Nebel, no green area, no edge, no white paper
+        await page.addStyleTag({ content: HIDE_CONTENT });
+        const bare = await pdfPages('leer');
+        for (const [i, png] of bare.pngs.entries()) {
+          const st = await pixelStats(page, png, { base, from: 0, scale: 0.75 });
+          expect(st.maxDevBelow, `page ${i + 1}: base colour ± 3`).toBeLessThanOrEqual(3);
+        }
+      });
+    }
+
+    test('Druckansicht (emulateMedia print): kein Nebel, Glas deckend ohne Blur, Navigation am Ende ohne Überdeckung', async ({ page }) => {
       await importLive(page, OKT_TODAY);
       await settle(page);
-      const vp = page.viewportSize()!;
-      await page.addStyleTag({ content: HIDE_CONTENT });
       await page.emulateMedia({ media: 'print', colorScheme: scheme });
-      const dir = mkdtempSync(join(tmpdir(), 'erbse-pdf-'));
-      const pdf = join(dir, 'page.pdf');
-      await page.pdf({ path: pdf, width: `${vp.width}px`, height: `${vp.height}px` });
-      execFileSync('pdftoppm', ['-png', '-r', '48', '-f', '1', '-l', '2', '-x', '0', '-y', '0', '-W', String(Math.floor(vp.width / 2) - 1), '-H', String(Math.floor(vp.height / 2) - 1), pdf, join(dir, 'p')]);
-      const base = BASE[scheme] as unknown as [number, number, number];
-      const p1 = await pixelStats(page, readFileSync(join(dir, 'p-1.png')), { base, from: 1e9, scale: 0.5 });
-      const p2 = await pixelStats(page, readFileSync(join(dir, 'p-2.png')), { base, from: 0, scale: 0.5 });
-      if (scheme === 'light') expect(p1.nearBlack + p2.nearBlack).toBe(0);
-      expect(p2.maxDevBelow, 'page 2: printed base colour, no white paper').toBeLessThanOrEqual(3);
-      expect(p1.kink).toBeLessThan(vp.width < 500 ? 10 : 5);
+      await page.waitForTimeout(100);
+      const r = await page.evaluate(() => {
+        const cs = (el: Element, pseudo?: string) => getComputedStyle(el, pseudo);
+        const glass = [...document.querySelectorAll('.glass, .glass-strong')].filter((e) => e.getBoundingClientRect().height > 0);
+        const nav = document.querySelector<HTMLElement>('[data-testid="tabbar"]');
+        const side = document.querySelector<HTMLElement>('[data-testid="sidebar"]');
+        const shown = (e: HTMLElement | null) => !!e && cs(e).display !== 'none';
+        const main = document.querySelector('main')!.getBoundingClientRect();
+        return {
+          html: cs(document.documentElement).backgroundColor,
+          body: cs(document.body).backgroundColor,
+          scheme: cs(document.documentElement).colorScheme,
+          before: cs(document.body, '::before').display,
+          after: cs(document.body, '::after').display,
+          adjust: cs(document.body).getPropertyValue('print-color-adjust'),
+          glass: [...new Set(glass.map((e) => `${cs(e).backgroundColor}|${cs(e).backdropFilter}`))],
+          tabbar: shown(nav) ? { position: cs(nav!).position, top: nav!.getBoundingClientRect().top + scrollY, mainBottom: main.bottom + scrollY } : null,
+          sidebar: shown(side) ? { position: cs(side!).position, right: side!.getBoundingClientRect().right, mainLeft: main.left } : null,
+        };
+      });
+      const rgb = `rgb(${BASE[scheme].join(', ')})`;
+      expect(r.html).toBe(rgb);
+      expect(r.body).toBe(rgb);
+      expect(r.scheme, 'colour scheme = active theme').toBe(scheme);
+      expect([r.before, r.after]).toEqual(['none', 'none']);
+      expect(r.adjust).toBe('exact');
+      expect(r.glass, 'every glass surface opaque, no blur').toEqual([scheme === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 35, 31, 0.94)|none']);
+      expect(!!r.tabbar !== !!r.sidebar, 'exactly one navigation').toBe(true);
+      if (r.tabbar) {
+        expect(r.tabbar.position).toBe('static');
+        expect(r.tabbar.top, 'tab bar below the content').toBeGreaterThanOrEqual(r.tabbar.mainBottom - 1);
+      }
+      if (r.sidebar) {
+        expect(r.sidebar.position).toBe('absolute');
+        expect(r.sidebar.right, 'sidebar left of the content').toBeLessThanOrEqual(r.sidebar.mainLeft + 1);
+      }
+      // background only, full page: base colour ± 3 everywhere
+      await page.addStyleTag({ content: HIDE_CONTENT });
+      const png = await page.screenshot({ fullPage: true, scale: 'css' });
+      const st = await pixelStats(page, png, { base: BASE[scheme] as unknown as [number, number, number], from: 0, scale: 1 });
+      expect(st.maxDevBelow).toBeLessThanOrEqual(3);
+      expect(st.transparent).toBe(0);
     });
   });
 }

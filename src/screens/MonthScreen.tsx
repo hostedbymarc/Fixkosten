@@ -125,8 +125,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
     toast({
       message:
         removed.status === 'skipped'
-          ? `„${item.position.name}" ist wieder offen`
-          : `Haken bei „${item.position.name}" entfernt`,
+          ? `„${item.position.name}“ ist wieder offen`
+          : `Haken bei „${item.position.name}“ entfernt`,
       actionLabel: 'Rückgängig',
       onAction: () => void restorePayment(db, removed),
     });
@@ -147,7 +147,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   async function skip(item: DueItem) {
     const skipped = await markSkipped(db, item.position.id, item.period, item.planned);
     toast({
-      message: `„${item.position.name}" (${monthName(item.period)}) entfällt`,
+      message: `„${item.position.name}“ (${monthName(item.period)}) entfällt`,
       actionLabel: 'Rückgängig',
       onAction: () => void removePayment(db, skipped.id),
     });
@@ -158,7 +158,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
     const removed = await deleteOneOff(db, oneOff.id);
     if (!removed) return;
     toast({
-      message: `„${oneOff.label}" gelöscht`,
+      message: `„${oneOff.label}“ gelöscht`,
       actionLabel: 'Rückgängig',
       onAction: () => void restoreOneOff(db, removed),
     });
@@ -663,7 +663,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
   );
 });
 
-/** Vermögensaufbau gesamt; subline Sparquote (vom Netto) and, when there is any, the part not from the net salary. */
+/** Vermögensaufbau gesamt; below the Sparquote (vom Netto) and, on its own line when there is any, the part not from the net salary. */
 function WealthTile({ wealth, notFromNet, rate }: { wealth: number; notFromNet: number; rate: number | null }) {
   const other = Math.round(notFromNet * 100) > 0;
   return (
@@ -672,18 +672,18 @@ function WealthTile({ wealth, notFromNet, rate }: { wealth: number; notFromNet: 
       <span className={`${tileValue} text-ink`} data-testid="wealth-value">
         {formatEUR(wealth)}
       </span>
+      {/* two fixed lines when part of it is not from the net salary; neither breaks inside */}
       {(rate !== null || other) && (
         <span className={tileSub} data-testid="wealth-sub">
           {rate !== null && (
-            <>
+            <span className="block whitespace-nowrap" data-testid="wealth-rate">
               Sparquote <Amount>{formatPercent(rate)}</Amount>
-            </>
+            </span>
           )}
-          {rate !== null && other && ' · '}
           {other && (
-            <>
+            <span className="block whitespace-nowrap" data-testid="wealth-not-from-net">
               <Amount>{formatEUR(notFromNet)}</Amount> nicht vom Netto
-            </>
+            </span>
           )}
         </span>
       )}

@@ -1,10 +1,11 @@
 import { animationsDone, eur, expect, isTouchProject, test } from './fixtures';
+import { withMieteNotFromNet } from '../tests/fixtures/live';
 import { importLive, OKT_TODAY } from './live';
 import { expectClean } from './measure';
 
-const SWITCH_LABEL = "Von ‚Frei verfügbar' abziehen";
+const SWITCH_LABEL = 'Von ‚Frei verfügbar‘ abziehen';
 const HINT =
-  "Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar'.";
+  "Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.";
 
 test.describe('Schalter „Von ‚Frei verfügbar‘ abziehen“ (Einmalige im Vermögensaufbau)', () => {
   test('Neue einmalige Zahlung: Schalter nur in Vermögensaufbau-Kategorien, Default an', async ({ page }) => {
@@ -50,7 +51,13 @@ test.describe('Schalter „Von ‚Frei verfügbar‘ abziehen“ (Einmalige im V
     await expect(page.getByTestId('hero-deductions-value')).toHaveText(eur('€ 4.288,50'));
     await expect(page.getByTestId('hero-deductions-breakdown')).toHaveText(eur('€ 3.488,50 Fixkosten + € 800 Vermögensaufbau'));
     await expect(page.getByTestId('wealth-value')).toHaveText(eur('€ 1.860'));
-    await expect(page.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 16,7 % · € 1.060 nicht vom Netto'));
+    // two fixed lines, neither breaks inside
+    await expect(page.getByTestId('wealth-rate')).toHaveText(eur('Sparquote 16,7 %'));
+    await expect(page.getByTestId('wealth-not-from-net')).toHaveText(eur('€ 1.060 nicht vom Netto'));
+    for (const id of ['wealth-rate', 'wealth-not-from-net']) {
+      const [h, lh] = await page.getByTestId(id).evaluate((el) => [el.getBoundingClientRect().height, parseFloat(getComputedStyle(el).lineHeight)]);
+      expect(Math.round(h / lh), id).toBe(1);
+    }
     await expect(row.getByTestId('not-from-net')).toHaveText('nicht vom Netto');
     // unchanged: Fixkosten, im Ø-Monat, Investieren header
     await expect(page.getByTestId('hero-planned')).toHaveText(eur('€ 3.488,50'));
@@ -65,6 +72,33 @@ test.describe('Schalter „Von ‚Frei verfügbar‘ abziehen“ (Einmalige im V
     await toggleTo(true);
     await expect(page.getByTestId('free-value')).toHaveText(eur('−€ 560,50'));
     await expect(page.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 38,8 %'));
+    await expect(page.getByTestId('wealth-not-from-net')).toHaveCount(0);
     await expect(row.getByTestId('not-from-net')).toHaveCount(0);
+  });
+  test('VA-Kachel: „Sparquote 16,7 %“ und „€ 1.060 nicht vom Netto“ je eine Zeile, ohne Umbruch (auch iPhone SE)', async ({ page }, info) => {
+    await importLive(page, OKT_TODAY, (b) => {
+      b.data = withMieteNotFromNet(b.data);
+    });
+    // iPhone SE (375 × 667) alongside the iPhone 15 project
+    const sizes = info.project.name === 'iphone-15' ? [page.viewportSize()!, { width: 375, height: 667 }] : [page.viewportSize()!];
+    for (const size of sizes) {
+      await page.setViewportSize(size);
+      await page.waitForTimeout(100);
+      await expect(page.getByTestId('wealth-rate')).toHaveText(eur('Sparquote 16,7 %'));
+      await expect(page.getByTestId('wealth-not-from-net')).toHaveText(eur('€ 1.060 nicht vom Netto'));
+      const lines = await page.getByTestId('wealth-sub').evaluate((sub) =>
+        [...sub.children].map((el) => {
+          const r = el.getBoundingClientRect();
+          return { h: r.height, lh: parseFloat(getComputedStyle(el).lineHeight), right: r.right, tile: sub.closest('button, div.glass')!.getBoundingClientRect().right, scroll: el.scrollWidth - el.clientWidth };
+        }),
+      );
+      expect(lines).toHaveLength(2);
+      for (const [i, l] of lines.entries()) {
+        expect(Math.round(l.h / l.lh), `${size.width}: line ${i + 1} on one line`).toBe(1);
+        expect(l.scroll, `${size.width}: line ${i + 1} not cut`).toBeLessThanOrEqual(0);
+        expect(l.right, `${size.width}: line ${i + 1} inside the tile`).toBeLessThanOrEqual(l.tile);
+      }
+      await expectClean(page, '[data-testid="wealth-sub"]');
+    }
   });
 });

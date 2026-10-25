@@ -8,8 +8,8 @@ export function parseOptionalAmount(text: string): number | undefined | null {
   return text.trim() === '' ? undefined : parseAmount(text);
 }
 
-const labelClass = 'mb-1.5 block text-[14px] font-medium text-ink-soft';
-const hintClass = 'mt-1.5 min-h-[20px] text-[13px] text-ink-mute';
+const labelClass = 'mb-2 block text-[14px] font-medium text-ink-soft';
+const hintClass = 'mt-2 text-[13px] leading-5 text-ink-mute';
 const boxClass = (invalid: boolean) =>
   `rounded-2xl border bg-field focus-within:ring-2 ${
     invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
@@ -50,14 +50,17 @@ export function AmountField({
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={!!error}
-          aria-describedby={`${id}-hint`}
+          aria-describedby={error || hint ? `${id}-hint` : undefined}
           data-testid={testId}
           className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
         />
       </div>
-      <p id={`${id}-hint`} className={hintClass}>
-        {error ? <span className="text-over">{error}</span> : hint}
-      </p>
+      {/* no empty line: the hint row only exists when there is something to say */}
+      {(error || hint) && (
+        <p id={`${id}-hint`} className={hintClass}>
+          {error ? <span className="text-over">{error}</span> : hint}
+        </p>
+      )}
     </div>
   );
 }

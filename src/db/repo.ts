@@ -177,7 +177,7 @@ export interface PositionDraft {
   categoryId: string;
   note?: string;
   plan: PlanInput;
-  /** switch „Von ‚Frei verfügbar' abziehen“ (one-time payments in Vermögensaufbau); missing = on */
+  /** switch „Von ‚Frei verfügbar‘ abziehen“ (one-time payments in Vermögensaufbau); missing = on */
   fromNet?: boolean;
 }
 
