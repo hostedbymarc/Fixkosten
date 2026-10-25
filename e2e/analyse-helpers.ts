@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { parseBackup } from '../src/db/backup';
 import type { Dataset } from '../src/lib/types';
-import { expect, goTo, TODAY } from './fixtures';
+import { appSettled, expect, goTo, TODAY } from './fixtures';
 
 export const HISTORY = 'tests/fixtures/history-24m.json';
 
@@ -27,6 +27,7 @@ export async function importHistory(page: Page, file: string | { name: string; m
   await expect(page.getByTestId('setup-dialog')).toBeVisible();
   await page.getByTestId('import-file').setInputFiles(file);
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
 }
 
 export async function openAnalyse(page: Page) {

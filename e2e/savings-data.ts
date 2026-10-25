@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { parseBackup } from '../src/db/backup';
 import { withSavings, type SavingsScenario } from '../tests/fixtures/savings';
-import { expect, FIXTURE, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, TODAY } from './fixtures';
 
 /** First start with the Sparquote data (today = 05.10.2026), optionally in dark mode. */
 export async function importSavings(page: Page, scenario: SavingsScenario = 'history', dark = false) {
@@ -17,4 +17,5 @@ export async function importSavings(page: Page, scenario: SavingsScenario = 'his
     buffer: Buffer.from(JSON.stringify(backup)),
   });
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
 }
