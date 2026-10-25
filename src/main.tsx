@@ -10,6 +10,8 @@ import { initTheme } from './lib/theme';
 
 initTheme();
 initNebel();
+// tests: this build has the Lade-Animation (older builds in the upgrade tests do not)
+document.documentElement.dataset.entrance = '';
 // failsafe: the splash never stays longer than 6 s, whatever happens while loading
 window.setTimeout(() => void hideSplash(), 6000);
 
