@@ -178,28 +178,23 @@ test.describe('Analyse', () => {
     await expect(forecast.locator('.recharts-bar-rectangle').first()).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
 
-    // forecast: bars below Ø neutral, above Ø brand (Nov, Dez, Feb, Okt)
+    // forecast: the regular part in one colour (legend „regulär“), the Ø line marks the expensive months
     const fills = await forecast.locator('.bar-recurring .recharts-bar-rectangle path').evaluateAll((ps) =>
       ps.map((p) => p.getAttribute('fill')),
     );
-    expect(fills).toEqual([
-      'var(--chart-accent)', 'var(--chart-accent)', 'var(--chart-neutral)', 'var(--chart-accent)',
-      'var(--chart-neutral)', 'var(--chart-neutral)', 'var(--chart-neutral)', 'var(--chart-neutral)',
-      'var(--chart-neutral)', 'var(--chart-neutral)', 'var(--chart-neutral)', 'var(--chart-accent)',
-    ]);
+    expect(fills).toEqual(Array(12).fill('var(--chart-accent)'));
 
-    // two-level headings everywhere
-    for (const id of ['forecast', 'distribution']) {
-      await expect(page.getByTestId(`${id}-headline-label`)).toBeVisible();
-      await expect(page.getByTestId(`${id}-headline-value`)).toBeVisible();
-    }
-    await expect(page.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
+    // two-level heading on the forecast; the distribution has only its sum line on top
+    await expect(page.getByTestId('forecast-headline-label')).toBeVisible();
+    await expect(page.getByTestId('forecast-headline-value')).toBeVisible();
+    await expect(page.getByTestId('distribution-headline')).toHaveCount(0);
+    await expect(page.getByTestId('distribution-total')).toBeVisible();
 
     // „Frei verfügbar & Sparquote“ is gone (no actual values any more)
     await expect(page.getByTestId('monthclose')).toHaveCount(0);
 
     // optimisations („Geplante Änderungen“): „Geplant“ once inside the card, no chip, signed amount
-    await expect(page.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · +€ 27,80 / Jahr'));
+    await expect(page.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
     await expect(page.getByTestId('optimizations').locator('.glass').getByText('Geplant', { exact: false })).toHaveCount(1);
     const row = page.getByTestId('optimizations-planned').locator('li');
     await expect(row).toContainText(eur('Amex Gebühr € 690 → € 717,80'));

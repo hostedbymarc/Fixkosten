@@ -525,7 +525,7 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
 const tileClass = 'glass flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
 const tileLabel = 'block truncate text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
 const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 lg:text-[20px] lg:leading-7';
-const tileSub = 'mt-1 block text-[11px] leading-4 text-ink-mute lg:text-[12px]';
+const tileSub = 'mt-1 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:tracking-normal';
 
 /** An amount inside a subline: never wraps in the middle. */
 function Amount({ children, strong, negative }: { children: React.ReactNode; strong?: boolean; negative?: boolean }) {
@@ -635,9 +635,13 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         )}
         {average !== null && (
           <span className={tileSub} data-testid="free-average">
-            im Ø-Monat <Amount negative={average < 0}>{formatAvg(average)}</Amount>
-            {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
-            {showInfo && <span ref={slot} className="ml-0.5 inline-block h-3 w-4 align-middle" aria-hidden="true" />}
+            im Ø-Monat{' '}
+            {/* amount and ⓘ stay together: a narrow tile breaks before the amount, never before the icon */}
+            <span className="whitespace-nowrap">
+              <Amount negative={average < 0}>{formatAvg(average)}</Amount>
+              {/* room for the ⓘ: the line keeps its layout, the icon button lies on top */}
+              {showInfo && <span ref={slot} className="ml-px inline-block h-3 w-[15px] align-middle" aria-hidden="true" />}
+            </span>
           </span>
         )}
       </button>

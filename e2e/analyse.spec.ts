@@ -61,14 +61,18 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(app.getByTestId('forecast-headline-label')).toHaveText('Teuerster Monat');
     await expect(app.getByTestId('forecast-headline-value')).toHaveText(eur('Feb 2027 · € 4.610'));
     await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
-    await expect(app.getByTestId('distribution-headline-label')).toHaveText('Größter Block');
-    await expect(app.getByTestId('distribution-headline-value')).toHaveText(/^Wohnen & Leben · 54,3\s%$/);
-    await expect(app.getByTestId('distribution-headline-sub')).toHaveText(eur('€ 1.602,00 von € 2.952,17 pro Monat')); // spread amounts always with cents
+    // Verteilung: no second head line, only the sum on top (spread amounts always with cents)
+    await expect(app.getByTestId('distribution-headline')).toHaveCount(0);
+    await expect(app.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat (heute)'));
     await expect(app.getByTestId('monthclose')).toHaveCount(0); // „Frei verfügbar & Sparquote“ removed
+    // the data hint lives in the empty states (no „Verlauf / Bisher 1 Monat Daten“ heading)
     await expect(app.getByTestId('trend-empty')).toHaveText(
-      eur('Ab 3 Monaten siehst du hier die Entwicklung. Bisher: € 2.952,17 Ø pro Monat seit Okt 2026.'),
+      eur('Ab 3 Monaten siehst du hier die Entwicklung.Bisher 1 Monat Daten: € 2.952,17 Ø pro Monat seit Okt 2026.'),
     );
-    await expect(app.getByTestId('planactual-empty')).toContainText(eur('Oktober 2026 läuft noch: € 3.368 von € 3.403 abgebucht.'));
+    await expect(app.getByTestId('planactual-empty')).toHaveText(
+      eur('Oktober 2026 ist noch nicht abgeschlossen. Ist € 3.368 · Plan € 3.403.Der Vergleich startet nach dem ersten Monatsabschluss.'),
+    );
+    await expect(app.getByText('Bisher 1 Monat Daten', { exact: true })).toHaveCount(0);
     await expect(app.getByTestId('optimizations-empty')).toHaveText(
       'Noch keine Änderungen. Wenn du einen Vertrag günstiger machst, siehst du hier, was es bringt.',
     );
@@ -83,7 +87,9 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
   test('forecast table: 12 months with control values', async ({ app }) => {
     await openAnalyse(app);
     const rows = await tableRows(app.getByTestId('forecast'));
+    // current month + 11: the first bar is the Gesamt of the month screen
     expect(rows.map((r) => r.slice(0, 2))).toEqual([
+      ['Okt 2026', '€ 3.403'],
       ['Nov 2026', '€ 2.664'],
       ['Dez 2026', '€ 3.013,02'],
       ['Jän 2027', '€ 2.713'],
@@ -95,9 +101,8 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
       ['Jul 2027', '€ 2.713'],
       ['Aug 2027', '€ 2.664'],
       ['Sep 2027', '€ 2.679'],
-      ['Okt 2027', '€ 3.403'],
     ]);
-    expect(rows[3]![2]).toBe('Steuerberater€ 1.260Offi (Jahreskarte)€ 686');
+    expect(rows[4]![2]).toBe('Steuerberater€ 1.260Offi (Jahreskarte)€ 686');
     // „Details anzeigen“ makes them visible
     const toggle = app.getByTestId('forecast').getByRole('button', { name: 'Details anzeigen' });
     await toggle.click();
@@ -138,7 +143,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await app.keyboard.press('Escape');
     await openAnalyse(app);
     // November lies after "today" (October): a planned change
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText(eur('Geplant · −€ 24 / Jahr'));
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
     const planned = app.getByTestId('optimizations-planned');
     await expect(planned.locator('> li')).toHaveCount(1);
     await expect(planned).toContainText(eur('Handy € 10 → € 8'));
@@ -147,7 +152,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(planned).toContainText(eur('−€ 24 / Jahr'));
     await expect(app.getByTestId('optimizations-list')).toHaveCount(0);
     // the forecast follows the change: November € 2.662
-    expect((await tableRows(app.getByTestId('forecast')))[0]!.slice(0, 2)).toEqual(['Nov 2026', '€ 2.662']);
+    expect((await tableRows(app.getByTestId('forecast')))[1]!.slice(0, 2)).toEqual(['Nov 2026', '€ 2.662']);
   });
 });
 
@@ -159,7 +164,7 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     const ds = historyDataset();
     const range = page.getByTestId('range');
     await expect(range.getByRole('radio', { name: 'Letzte 12 Monate' })).toHaveAttribute('aria-checked', 'true');
-    await expect(page.getByText('Bisher 24 Monate Daten')).toBeVisible();
+    await expect(page.getByText('Bisher 24 Monate Daten')).toHaveCount(0); // no separate „Verlauf“ heading any more
 
     for (const [r, name] of [
       ['12m', 'Letzte 12 Monate'],
@@ -215,8 +220,10 @@ test.describe('Analyse mit 24-Monats-Fixture', () => {
     await openAnalyse(page);
     const t = optimizationTimeline(historyDataset(), OCT);
     const plain = (v: number) => formatDelta(v).replace(/ /g, ' ');
-    await expect(page.getByTestId('optimizations-planned-head')).toHaveText(eur(`Geplant · ${plain(t.plannedAnnual)} / Jahr`));
-    await expect(page.getByTestId('optimizations-list-head')).toHaveText(eur(`Umgesetzt · ${plain(t.implementedAnnual)} / Jahr`));
+    // the sum line only from two changes on
+    const head = (title: string, n: number, total: number) => (n >= 2 ? eur(`${title} · ${plain(total)} / Jahr`) : title);
+    await expect(page.getByTestId('optimizations-planned-head')).toHaveText(head('Geplant', t.entries.filter((e) => e.planned).length, t.plannedAnnual));
+    await expect(page.getByTestId('optimizations-list-head')).toHaveText(head('Umgesetzt', t.entries.filter((e) => !e.planned).length, t.implementedAnnual));
     await expect(page.getByTestId('optimizations-planned').locator('> li')).toHaveCount(t.entries.filter((e) => e.planned).length);
     await expect(page.getByTestId('optimizations-planned')).toContainText(eur('Kredit 1220 € 735 → € 760'));
     await expect(page.getByTestId('optimizations-planned')).toContainText('Zinsanpassung');
@@ -291,7 +298,7 @@ test.describe('Tooltips', () => {
     await openAnalyse(page);
     await page.evaluate(() => document.fonts.ready);
     const forecast = page.getByTestId('forecast');
-    const feb = forecast.locator('.recharts-bar-rectangle').nth(3);
+    const feb = forecast.locator('.recharts-bar-rectangle').nth(4); // Okt 2026 is the first bar
     const box = await stableBox(feb);
     const finger = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     // fixture: Kredit +€ 25 from Jan 2027

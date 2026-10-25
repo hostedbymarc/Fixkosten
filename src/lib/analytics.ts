@@ -286,9 +286,13 @@ export function trendHeadline(t: BurdenTrend): string {
 }
 
 /** Empty state below 3 months of data. */
-export function trendTooShortText(ds: Dataset, today: Period): string {
+export function trendTooShortText(ds: Dataset, today: Period): [string, string] {
   const start = dataStart(ds, today);
-  return `Ab 3 Monaten siehst du hier die Entwicklung. Bisher: ${formatAvg(fixedCostsAvg(ds, today))} Ø pro Monat seit ${shortPeriodLabel(start)}.`;
+  const months = dataMonths(ds, today);
+  return [
+    'Ab 3 Monaten siehst du hier die Entwicklung.',
+    `Bisher ${months === 1 ? '1 Monat' : `${months} Monate`} Daten: ${formatAvg(fixedCostsAvg(ds, today))} Ø pro Monat seit ${shortPeriodLabel(start)}.`,
+  ];
 }
 
 // ---------------------------------------------------------------------------

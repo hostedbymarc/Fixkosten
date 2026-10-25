@@ -388,6 +388,7 @@ export function SwitchField({
         <label htmlFor={id} className="text-[15px] font-medium text-ink">
           {label}
         </label>
+        {/* 44 px hit area around the 52 × 32 track */}
         <button
           id={id}
           type="button"
@@ -395,13 +396,12 @@ export function SwitchField({
           aria-checked={checked}
           aria-describedby={hint ? `${id}-hint` : undefined}
           onClick={() => onChange(!checked)}
-          className={`focus-ring relative h-8 w-[52px] shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-zinc-300'}`}
+          className="focus-ring -mr-1 flex h-11 w-[60px] shrink-0 items-center justify-center rounded-full"
           data-testid={testId ? `${testId}-switch` : undefined}
         >
-          <span
-            aria-hidden="true"
-            className={`absolute top-1 h-6 w-6 rounded-full bg-raised shadow-card transition-[left] ${checked ? 'left-[24px]' : 'left-1'}`}
-          />
+          <span aria-hidden="true" className={`relative block h-8 w-[52px] rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-check-open'}`}>
+            <span className={`absolute top-1 h-6 w-6 rounded-full bg-surface shadow-card transition-[left] ${checked ? 'left-[24px]' : 'left-1'}`} />
+          </span>
         </button>
       </div>
       {hint && (

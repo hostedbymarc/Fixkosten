@@ -161,9 +161,10 @@ describe('history window with 1 month of data (seed)', () => {
   });
 
   it('trend: too short → card text', () => {
-    expect(trendTooShortText(ds, OCT).replace(/ /g, ' ')).toBe(
-      'Ab 3 Monaten siehst du hier die Entwicklung. Bisher: € 2.952,17 Ø pro Monat seit Okt 2026.',
-    );
+    expect(trendTooShortText(ds, OCT).map((l) => l.replace(/\u00a0/g, ' '))).toEqual([
+      'Ab 3 Monaten siehst du hier die Entwicklung.',
+      'Bisher 1 Monat Daten: € 2.952,17 Ø pro Monat seit Okt 2026.',
+    ]);
   });
 
   it('plan vs. actual: the running month is marked and never a deviation', () => {

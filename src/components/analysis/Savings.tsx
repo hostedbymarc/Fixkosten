@@ -8,7 +8,7 @@ import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { Disclosure } from '../Disclosure';
 import { MonthCloseSheet } from '../MonthCloseSheet';
-import { ChartCard } from './ChartCard';
+import { ChartCard, EMPTY_CARD } from './ChartCard';
 import { COLORS } from './chartTheme';
 
 /** Every month column is at least this wide: the whole column is the tap target. */
@@ -275,10 +275,10 @@ export function SavingsSection({ ds, today }: { ds: Dataset; today: Period }) {
   if (!card) {
     return (
       <section aria-labelledby="savings-title" data-testid="savings">
-        <h2 id="savings-title" className="section-title mb-2 px-1">
+        <h2 id="savings-title" className="section-title mb-3 px-1">
           Sparquote
         </h2>
-        <div className="rounded-card border border-dashed border-zinc-300 px-4 py-4 text-[14px] text-ink-mute" data-testid="savings-empty">
+        <div className={EMPTY_CARD} data-testid="savings-empty">
           <p>Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.</p>
           <button
             ref={link}

@@ -19,7 +19,8 @@ test.describe('Monatsabschluss', () => {
       await expect(app.getByTestId('free-value')).toHaveText(eur('€ 797'));
       await expect(app.getByTestId('free-sub')).toHaveCount(0);
       await expect(app.getByTestId('free-tile')).not.toContainText('Diff');
-      await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 800 · Sparquote 16,0 %'));
+      await expect(app.getByTestId('wealth-value')).toHaveText(eur('€ 800'));
+    await expect(app.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 16,0 %'));
       await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 5.000'));
     };
     await check();
@@ -76,7 +77,7 @@ test.describe('Monatsabschluss', () => {
     await app.getByTestId('free-tile').click();
     await app.getByLabel('Netto-Gehalt').fill('12.345,67');
     await app.getByRole('button', { name: 'Speichern' }).click();
-    await expect(app.getByTestId('free-wealth')).toBeVisible();
+    await expect(app.getByTestId('wealth-sub')).toBeVisible();
 
     const tile = app.getByTestId('free-tile');
     const clipped = await tile.evaluate((el) => {
