@@ -64,13 +64,13 @@ export function App() {
     if (!main || !loaded) return;
     const loading = () => !!main.querySelector('[data-testid="loader"]');
     if (!loading()) {
-      void playEntrance(main);
+      void playEntrance(main, route);
       return;
     }
     const observer = new MutationObserver(() => {
       if (loading()) return;
       observer.disconnect();
-      void playEntrance(main);
+      void playEntrance(main, route);
     });
     observer.observe(main, { childList: true, subtree: true });
     return () => observer.disconnect();
