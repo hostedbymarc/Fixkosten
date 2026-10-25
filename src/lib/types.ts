@@ -52,6 +52,12 @@ export interface Position {
   archivedAt?: string;
   pauses?: Pause[];
   sortOrder: number;
+  /**
+   * One-time payment in a Vermögensaufbau category only: false = the money does not come
+   * from the net salary (e.g. a rental income). It still counts as Vermögensaufbau, but not
+   * against „Frei verfügbar“ or the Sparquote. Missing = true (old data, every other position).
+   */
+  fromNet?: boolean;
 }
 
 export type PaymentStatus = 'paid' | 'skipped';

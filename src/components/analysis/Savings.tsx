@@ -43,10 +43,11 @@ function useColumns(shown: boolean): [React.RefObject<HTMLDivElement>, number] {
   return [ref, columns];
 }
 
-/** One bar: full width = net salary, filled part = Vermögensaufbau (= the Sparquote, capped at 100 %). */
+/** One bar: full width = net salary, filled part = Vermögensaufbau vom Netto (= the Sparquote, capped at 100 %). */
 function SavingsBar({ card }: { card: SavingsCard }) {
   const fill = Math.min(Math.max(card.rate, 0), 1);
-  const [wealth, net] = formatEURSet(card.wealth, card.netSalary);
+  const [wealth, net] = formatEURSet(card.wealthFromNet, card.netSalary);
+  const other = Math.round(card.wealthNotFromNet * 100) > 0;
   return (
     <div>
       <div
@@ -60,22 +61,60 @@ function SavingsBar({ card }: { card: SavingsCard }) {
         )}
         {fill < 1 && <span className="h-full min-w-0 flex-1 rounded-[4px] bg-zinc-100" style={{ marginLeft: fill > 0 ? 2 : 0 }} />}
       </div>
-      <p className="mt-1.5 flex items-baseline justify-between gap-3 text-[13px] text-ink-mute">
+      <p className="mt-2 flex items-baseline justify-between gap-3 text-[13px] text-ink-mute">
         <span className="whitespace-nowrap" data-testid="savings-saved">
-          <span className="num font-semibold text-ink">{wealth}</span> gespart
+          <span className="num font-semibold text-ink">{wealth}</span> aus dem Netto gespart
         </span>
         <span className="whitespace-nowrap" data-testid="savings-net">
           Netto <span className="num font-semibold text-ink">{net}</span>
         </span>
       </p>
+      {other && (
+        <p className="mt-1 text-[13px] text-ink-mute" data-testid="savings-other">
+          + <span className="num font-semibold text-ink">{formatEUR(card.wealthNotFromNet)}</span> aus anderen Quellen
+        </p>
+      )}
     </div>
   );
 }
 
-/** „Zusammensetzung · € 1.860“: savings categories (or the positions of the only one), collapsed by default. */
+/** One group of the composition: title with its total, then the parts with their share of the whole Vermögensaufbau. */
+function PartGroup({ title, total, parts, testId }: { title: string; total: number; parts: SavingsCard['parts']; testId: string }) {
+  return (
+    <div data-testid={testId}>
+      <p className="mb-2 flex justify-between gap-3 text-[12px] text-ink-mute">
+        <span>{title}</span>
+        <span className="num whitespace-nowrap">{formatEUR(total)}</span>
+      </p>
+      <ul className="flex flex-col gap-2">
+        {parts.map((p) => (
+          <li key={p.id} className="flex flex-col gap-1" data-testid="savings-part">
+            <span className="flex items-baseline gap-2 text-[14px]">
+              <span className="min-w-0 flex-1 truncate text-ink-soft">{p.name}</span>
+              <span className="num shrink-0 whitespace-nowrap text-ink">{formatEUR(p.amount)}</span>
+              <span className="num w-[52px] shrink-0 whitespace-nowrap text-right text-[12px] text-ink-mute" data-testid="share">
+                {formatPercent(p.share)}
+              </span>
+            </span>
+            {/* bar length = the percentage next to it */}
+            <span className="block h-1 rounded-full bg-zinc-100" aria-hidden="true">
+              <span
+                className="block h-1 rounded-full opacity-70"
+                style={{ width: `${Math.min(Math.max(p.share, 0), 1) * 100}%`, background: categoryColor(p.color) }}
+                data-testid="share-bar"
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** „Zusammensetzung · € 1.860“: from the net salary and from other sources, each by category or position; collapsed by default. */
 function Composition({ card }: { card: SavingsCard }) {
   const [open, setOpen] = useState(false);
-  if (card.parts.length === 0) return null;
+  if (card.parts.length === 0 && card.otherParts.length === 0) return null;
   return (
     <div className="-mx-2 mt-3 border-t border-line pt-1" data-testid="savings-composition">
       <Disclosure
@@ -89,29 +128,11 @@ function Composition({ card }: { card: SavingsCard }) {
           </span>
         }
       >
-        <div className="mb-2 ml-[30px] mr-2 border-l border-line py-1 pl-3" data-testid="savings-parts">
-          <p className="mb-1.5 text-[12px] text-ink-mute">Anteil am Vermögensaufbau</p>
-          <ul className="flex flex-col gap-2">
-            {card.parts.map((p) => (
-              <li key={p.id} className="flex flex-col gap-1" data-testid="savings-part">
-                <span className="flex items-baseline gap-2 text-[14px]">
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{p.name}</span>
-                  <span className="num shrink-0 whitespace-nowrap text-ink">{formatEUR(p.amount)}</span>
-                  <span className="num w-[52px] shrink-0 whitespace-nowrap text-right text-[12px] text-ink-mute" data-testid="share">
-                    {formatPercent(p.share)}
-                  </span>
-                </span>
-                {/* bar length = the percentage next to it */}
-                <span className="block h-1.5 rounded-full bg-zinc-100" aria-hidden="true">
-                  <span
-                    className="block h-1.5 rounded-full opacity-70"
-                    style={{ width: `${Math.min(Math.max(p.share, 0), 1) * 100}%`, background: categoryColor(p.color) }}
-                    data-testid="share-bar"
-                  />
-                </span>
-              </li>
-            ))}
-          </ul>
+        <div className="mb-2 ml-[30px] mr-2 flex flex-col gap-3 border-l border-line py-1 pl-3" data-testid="savings-parts">
+          <PartGroup title={card.otherParts.length > 0 ? 'Aus dem Netto' : 'Anteil am Vermögensaufbau'} total={card.wealthFromNet} parts={card.parts} testId="savings-parts-net" />
+          {card.otherParts.length > 0 && (
+            <PartGroup title="Aus anderen Quellen" total={card.wealthNotFromNet} parts={card.otherParts} testId="savings-parts-other" />
+          )}
         </div>
       </Disclosure>
     </div>
@@ -293,7 +314,7 @@ export function SavingsSection({ ds, today }: { ds: Dataset; today: Period }) {
         value: (
           <>
             {formatPercent(card.rate)}
-            <span className="text-ink-mute"> · {formatEUR(card.wealth)}</span>
+            <span className="text-ink-mute"> · {formatEUR(card.wealthFromNet)}</span>
           </>
         ),
         sub: withChart

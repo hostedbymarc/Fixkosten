@@ -215,6 +215,14 @@ export function paymentFor(ds: Dataset, positionId: string, period: Period): Pay
   return ds.payments.find((p) => p.positionId === positionId && p.period === period);
 }
 
+/**
+ * Does this position's money come out of the net salary? Always, except a one-time
+ * payment in a Vermögensaufbau category whose switch „Von ‚Frei verfügbar' abziehen“ is off.
+ */
+export function countsFromNet(kind: Kind, position: Position, plan: PlanEntry | null): boolean {
+  return !(kind === 'savings' && plan?.frequency === 'once' && position.fromNet === false);
+}
+
 function kindOfPositionId(ds: Dataset, id: string | undefined): Kind {
   const position = id ? ds.positions.find((p) => p.id === id) : undefined;
   return position ? kindOf(ds, position) : 'expense';
@@ -243,6 +251,8 @@ export interface DueItem {
   delta: number | null;
   /** one-offs of this position in the period (Nachzahlung / Gutschrift) */
   oneOffs: OneOff[];
+  /** paid from the net salary (see countsFromNet); false only for a switched-off one-time VA payment */
+  fromNet: boolean;
 }
 
 /**
@@ -275,6 +285,7 @@ export function dueItems(ds: Dataset, period: Period): DueItem[] {
       payment,
       delta: payment && status === 'paid' ? fromCents(toCents(payment.actualAmount) - toCents(planned)) : null,
       oneOffs,
+      fromNet: countsFromNet(category.kind, position, plan),
     });
   }
   const order = new Map(sortedCategories(ds).map((c, i) => [c.id, i]));
@@ -357,6 +368,8 @@ interface MonthEntry {
   categoryId: string | null;
   cents: number;
   paid: boolean;
+  /** comes out of the net salary (countsFromNet); one-offs of the old table always do */
+  fromNet: boolean;
 }
 
 function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
@@ -365,13 +378,14 @@ function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
     categoryId: i.category.id,
     cents: toCents(i.status === 'paid' ? i.payment!.actualAmount : i.planned),
     paid: i.status === 'paid',
+    fromNet: i.fromNet,
   }));
   const cats = categoryMap(ds);
   for (const o of ds.oneOffs) {
     if (o.period !== period) continue;
     const position = o.positionId ? ds.positions.find((p) => p.id === o.positionId) : undefined;
     const category = position ? cats.get(position.categoryId) : undefined;
-    entries.push({ kind: category?.kind ?? 'expense', categoryId: category?.id ?? null, cents: toCents(o.amount), paid: !!o.paidAt });
+    entries.push({ kind: category?.kind ?? 'expense', categoryId: category?.id ?? null, cents: toCents(o.amount), paid: !!o.paidAt, fromNet: true });
   }
   return entries;
 }
@@ -403,14 +417,18 @@ export interface CategoryTally extends Tally {
 export interface MonthFigures extends Tally {
   /** paid / total, 0–1 (0 when nothing is due) */
   ratio: number;
-  /** Vermögensaufbau: everything due in savings categories (ticked + open) */
+  /** Vermögensaufbau gesamt: everything due in savings categories (ticked + open) */
   wealth: number;
-  /** Abzüge vom Netto = Gesamt (Fixkosten) + Vermögensaufbau; shown with or without salary */
+  /** part of `wealth` paid from the net salary */
+  wealthFromNet: number;
+  /** part of `wealth` from other sources (one-time payments with the switch off); wealth = fromNet + notFromNet */
+  wealthNotFromNet: number;
+  /** Abzüge vom Netto = Gesamt (Fixkosten) + Vermögensaufbau vom Netto; shown with or without salary */
   deductions: number;
   netSalary: number | null;
-  /** Netto − Abzüge (= Netto − total − Vermögensaufbau); null without salary */
+  /** Netto − Abzüge; null without salary */
   free: number | null;
-  /** wealth / Netto; null without salary */
+  /** Vermögensaufbau vom Netto ÷ Netto; null without salary */
   savingsRate: number | null;
   /** every category with something due this month, in category order (savings included) */
   categories: CategoryTally[];
@@ -421,27 +439,32 @@ export interface MonthFigures extends Tally {
 /**
  * Hero, tiles and category headers of a month. Definitions:
  * Gesamt = everything due outside Vermögensaufbau · Abgebucht = its ticked part ·
- * Offen = Gesamt − Abgebucht · Abzüge vom Netto = Gesamt + Vermögensaufbau ·
- * Frei verfügbar = Netto − Abzüge · Sparquote = Vermögensaufbau ÷ Netto.
+ * Offen = Gesamt − Abgebucht · Vermögensaufbau = vom Netto + nicht vom Netto ·
+ * Abzüge vom Netto = Gesamt + Vermögensaufbau vom Netto · Frei verfügbar = Netto − Abzüge ·
+ * Sparquote = Vermögensaufbau vom Netto ÷ Netto.
  */
 export function monthFigures(ds: Dataset, period: Period): MonthFigures {
   const entries = monthEntries(ds, period);
   const expense = tally(entries.filter((e) => e.kind === 'expense'));
-  const wealthCents = entries.filter((e) => e.kind === 'savings').reduce((acc, e) => acc + e.cents, 0);
+  const savings = entries.filter((e) => e.kind === 'savings');
+  const wealthCents = savings.reduce((acc, e) => acc + e.cents, 0);
+  const fromNetCents = savings.filter((e) => e.fromNet).reduce((acc, e) => acc + e.cents, 0);
   const netSalary = netSalaryForPeriod(ds, period);
   const categories = sortedCategories(ds)
     .map((category) => ({ category, ...tally(entries.filter((e) => e.categoryId === category.id)) }))
     .filter((c) => c.count > 0);
   const unassigned = entries.filter((e) => e.categoryId === null).reduce((acc, e) => acc + e.cents, 0);
-  const deductionsCents = toCents(expense.total) + wealthCents;
+  const deductionsCents = toCents(expense.total) + fromNetCents;
   return {
     ...expense,
     ratio: expense.total > 0 ? Math.min(Math.max(expense.paid / expense.total, 0), 1) : expense.count > 0 && expense.openCount === 0 ? 1 : 0,
     wealth: fromCents(wealthCents),
+    wealthFromNet: fromCents(fromNetCents),
+    wealthNotFromNet: fromCents(wealthCents - fromNetCents),
     deductions: fromCents(deductionsCents),
     netSalary,
     free: netSalary === null ? null : fromCents(toCents(netSalary) - deductionsCents),
-    savingsRate: netSalary === null || netSalary <= 0 ? null : fromCents(wealthCents) / netSalary,
+    savingsRate: netSalary === null || netSalary <= 0 ? null : fromCents(fromNetCents) / netSalary,
     categories,
     unassigned: fromCents(unassigned),
   };
@@ -664,12 +687,17 @@ export function wealthBuilding(ds: Dataset, period: Period): number {
   return expectedSpend(ds, period, 'savings');
 }
 
-/** netSalary − fixed costs − Vermögensaufbau for a given salary (live preview in the month close). */
-export function freeAfterFixedWith(ds: Dataset, period: Period, netSalary: number): number {
-  return fromCents(toCents(netSalary) - toCents(fixedCosts(ds, period)) - toCents(wealthBuilding(ds, period)));
+/** Vermögensaufbau of the month paid from the net salary (wealthBuilding minus switched-off one-time payments). */
+export function wealthFromNet(ds: Dataset, period: Period): number {
+  return fromCents(monthEntries(ds, period).filter((e) => e.kind === 'savings' && e.fromNet).reduce((acc, e) => acc + e.cents, 0));
 }
 
-/** „Frei verfügbar“: net salary − fixed costs − Vermögensaufbau of this month. Null without salary. */
+/** netSalary − fixed costs − Vermögensaufbau vom Netto for a given salary (live preview in the month close). */
+export function freeAfterFixedWith(ds: Dataset, period: Period, netSalary: number): number {
+  return fromCents(toCents(netSalary) - toCents(fixedCosts(ds, period)) - toCents(wealthFromNet(ds, period)));
+}
+
+/** „Frei verfügbar“: net salary − fixed costs − Vermögensaufbau vom Netto of this month. Null without salary. */
 export function freeAfterFixed(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
   return salary === null ? null : freeAfterFixedWith(ds, period, salary);
@@ -698,13 +726,14 @@ export function gap(actual: number | null | undefined, calculated: number | null
 
 
 /**
- * Sparquote: Vermögensaufbau of the month (every savings position, one-time payments
- * and one-offs included) ÷ net salary, 0–1. Null without salary.
+ * Sparquote: Vermögensaufbau of the month paid from the net salary (every savings position,
+ * one-time payments and one-offs included, switched-off one-time payments not) ÷ net salary.
+ * Null without salary.
  */
 export function savingsRate(ds: Dataset, period: Period): number | null {
   const salary = netSalaryForPeriod(ds, period);
   if (salary === null || salary <= 0) return null;
-  return wealthBuilding(ds, period) / salary;
+  return wealthFromNet(ds, period) / salary;
 }
 
 // ---------------------------------------------------------------------------

@@ -11,6 +11,8 @@ const history = JSON.parse(readFileSync(new URL('../tests/fixtures/history-24m.j
 for (const p of history.data.positions) terms.add(p.name);
 for (const o of history.data.oneOffs) terms.add(o.label);
 terms.add('history-24m');
+// live export of 25.10.2026 (golden fixtures): its distinctive names and amounts
+for (const t of ['Kredit 1160', 'Miete 1220', 'Öbb MUC', 'Hotel Copenhagen', 'Hotel MUC', 'iPhones + Zubehör', 'Amex Turbopunkte', '717.8', '3488.5', '5348.5']) terms.add(t);
 
 function files(dir) {
   return readdirSync(dir).flatMap((f) => {
@@ -19,8 +21,8 @@ function files(dir) {
   });
 }
 
-// UI copy that happens to contain a generic seed word (dictated hint in the position form)
-const allowedPhrases = ['strom-nachzahlung'];
+// UI copy that happens to contain a generic seed word (dictated hints in the position form)
+const allowedPhrases = ['strom-nachzahlung', 'eine mieteinnahme'];
 
 const leaks = [];
 for (const file of files('dist').filter((f) => /\.(js|css|html|json|webmanifest|map)$/.test(f))) {

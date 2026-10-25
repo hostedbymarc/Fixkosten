@@ -77,10 +77,10 @@
 
   /* Nebel + Papierkorn (sizes in vmin with a floor and a cap: never stretched on wide screens) */
   --nebel-base: #f4f5f1;
-  --nebel-1: rgba(90, 122, 46, 0.3);
-  --nebel-2: rgba(222, 206, 176, 0.45);
-  --nebel-3: rgba(90, 122, 46, 0.18);
-  --grain-opacity: 0.06;
+  --nebel-1: rgba(90, 122, 46, 0.2);
+  --nebel-2: rgba(222, 206, 176, 0.32);
+  --nebel-3: rgba(90, 122, 46, 0.12);
+  --grain-opacity: 0.024; /* ≤ 3 levels on the base: no visible edge where a full-page capture ends the layer */
 
   /* charts (SVG attributes take complete colours) */
   --chart-accent: #5a7a2e;
@@ -162,9 +162,9 @@
     --glass-opaque: #1c231f;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
     --nebel-base: #0e120f;
-    --nebel-1: rgba(90, 122, 46, 0.22);
-    --nebel-2: rgba(222, 206, 176, 0.045);
-    --nebel-3: rgba(90, 122, 46, 0.14);
+    --nebel-1: rgba(90, 122, 46, 0.16);
+    --nebel-2: rgba(222, 206, 176, 0.04);
+    --nebel-3: rgba(90, 122, 46, 0.1);
     --grain-opacity: 0.06;
     --chart-accent: #7f9c4f;
     --chart-accent-light: #c8d8a9;
@@ -239,9 +239,9 @@
   --glass-opaque: #1c231f;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
   --nebel-base: #0e120f;
-  --nebel-1: rgba(90, 122, 46, 0.22);
-  --nebel-2: rgba(222, 206, 176, 0.045);
-  --nebel-3: rgba(90, 122, 46, 0.14);
+  --nebel-1: rgba(90, 122, 46, 0.16);
+  --nebel-2: rgba(222, 206, 176, 0.04);
+  --nebel-3: rgba(90, 122, 46, 0.1);
   --grain-opacity: 0.06;
   --chart-accent: #7f9c4f;
   --chart-accent-light: #c8d8a9;

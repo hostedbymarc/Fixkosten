@@ -33,20 +33,25 @@ export function averageMonthExplanation(ds: Dataset, period: Period): AverageMon
 }
 
 export interface DeductionsExplanation {
-  /** „€ 5.649 Fixkosten + € 800 Vermögensaufbau“ */
+  /** „€ 5.649 Fixkosten + € 800 Vermögensaufbau“ (Vermögensaufbau vom Netto) */
   breakdown: string;
   /** with salary „Netto € 7.819 − Abzüge € 6.449 = Frei verfügbar € 1.370“, without „… = € 6.449“ */
   formula: string;
+  /** „€ 1.060 Vermögensaufbau nicht vom Netto, nicht abgezogen“; null when everything comes from the net salary */
+  notFromNet: string | null;
 }
 
 /** Hero „Abzüge vom Netto“: breakdown and calculation, from monthFigures only. */
-export function deductionsExplanation(f: Pick<MonthFigures, 'total' | 'wealth' | 'deductions' | 'netSalary' | 'free'>): DeductionsExplanation {
-  const breakdown = `${formatEUR(f.total)} Fixkosten + ${formatEUR(f.wealth)} Vermögensaufbau`;
+export function deductionsExplanation(
+  f: Pick<MonthFigures, 'total' | 'wealthFromNet' | 'wealthNotFromNet' | 'deductions' | 'netSalary' | 'free'>,
+): DeductionsExplanation {
+  const breakdown = `${formatEUR(f.total)} Fixkosten + ${formatEUR(f.wealthFromNet)} Vermögensaufbau`;
   return {
     breakdown,
     formula:
       f.netSalary === null || f.free === null
         ? `${breakdown} = ${formatEUR(f.deductions)}`
         : `Netto ${formatEUR(f.netSalary)} − Abzüge ${formatEUR(f.deductions)} = Frei verfügbar ${formatEUR(f.free)}`,
+    notFromNet: Math.round(f.wealthNotFromNet * 100) > 0 ? `${formatEUR(f.wealthNotFromNet)} Vermögensaufbau nicht vom Netto, nicht abgezogen` : null,
   };
 }

@@ -22,6 +22,7 @@ import {
   PrimaryButton,
   Segmented,
   SelectField,
+  SwitchField,
   TextField,
 } from './form';
 
@@ -55,6 +56,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
   const [dueDayText, setDueDayText] = useState(plan?.dueDay && plan.frequency !== 'once' ? String(plan.dueDay) : '');
   const [dueDate, setDueDate] = useState(plan?.dueDate ?? onceOnly?.dueDate ?? '');
   const [note, setNote] = useState(position?.note ?? '');
+  const [fromNet, setFromNet] = useState(position?.fromNet !== false);
   const [validFrom, setValidFrom] = useState<Period>(today);
   const [changeMode, setChangeMode] = useState<'from' | 'correct'>('from');
   const [fromPeriod, setFromPeriod] = useState<Period>(today);
@@ -63,6 +65,8 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
   const [saving, setSaving] = useState(false);
 
   const once = frequency === 'once';
+  // „Von ‚Frei verfügbar' abziehen“: only one-time payments in a Vermögensaufbau category
+  const showFromNet = once && categories.find((c) => c.id === categoryId)?.kind === 'savings';
   // an existing position keeps its kind: recurring ones never turn into a one-time payment and vice versa
   // the Positionen tab is for fixed costs; one-time payments are created in their month
   const frequencies: Frequency[] = onceOnly || plan?.frequency === 'once' ? [] : RECURRING;
@@ -109,11 +113,11 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
     setSaving(true);
     try {
       if (!position) {
-        const id = await createPosition(db, { name, categoryId, note, plan: nextPlan }, validFrom);
+        const id = await createPosition(db, { name, categoryId, note, plan: nextPlan, fromNet: showFromNet ? fromNet : undefined }, validFrom);
         onSaved(id);
         return;
       }
-      await updatePositionInfo(db, position.id, { name, categoryId, note });
+      await updatePositionInfo(db, position.id, { name, categoryId, note, fromNet: showFromNet ? fromNet : undefined });
       if (planChanged) {
         await changePlan(
           db,
@@ -209,6 +213,15 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
               hint={dueDate ? 'erscheint nur in diesem Monat' : 'Pflichtfeld – die Zahlung erscheint nur im Monat der Fälligkeit'}
               testId="due-date"
             />
+            {showFromNet && (
+              <SwitchField
+                label="Von ‚Frei verfügbar' abziehen"
+                checked={fromNet}
+                onChange={setFromNet}
+                hint="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar'."
+                testId="from-net"
+              />
+            )}
             {!position && (
               <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="once-hint">
                 Gehört die Zahlung zu einer bestehenden Position (z. B. Strom-Nachzahlung)? Dann dort ‚Einmalbetrag hinzufügen‘.

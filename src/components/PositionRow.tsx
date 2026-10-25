@@ -1,7 +1,7 @@
-import { effectiveDate, nextPlannedChange, type DueItem } from '../lib/calc';
+import { nextPlannedChange, type DueItem } from '../lib/calc';
 import { formatDelta, formatEUR } from '../lib/format';
 import type { OneOff } from '../lib/types';
-import { Badge, DeltaChip, formatIsoDate, scheduleLabel } from './Chips';
+import { Badge, DeltaChip, planChangeLabel, scheduleLabel } from './Chips';
 
 interface Props {
   item: DueItem;
@@ -73,30 +73,40 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
             type="button"
             onClick={onOpen}
             aria-label={`${position.name} – Details`}
-            className="focus-ring flex min-h-[56px] min-w-0 flex-1 items-center gap-3 rounded-xl py-2.5 pr-4 text-left hover:bg-zinc-50/60"
+            className="focus-ring flex min-h-[56px] min-w-0 flex-1 items-start gap-3 rounded-xl py-3 pr-4 text-left hover:bg-zinc-50/60"
           >
             <span className="min-w-0 flex-1">
-              <span className={`block truncate text-[16px] font-medium transition-colors ${done ? 'text-ink-mute' : 'text-ink'}`}>
+              {/* title: at most 2 lines, then an ellipsis; German hyphenation */}
+              <span
+                lang="de"
+                className={`line-clamp-2 hyphens-auto break-words text-[16px] font-medium leading-6 transition-colors ${done ? 'text-ink-mute' : 'text-ink'}`}
+                data-testid="position-title"
+              >
                 {position.name}
               </span>
-              {(schedule || payment?.note || status === 'skipped' || next) && (
+              {(schedule || payment?.note || status === 'skipped' || next || !item.fromNet) && (
                 <span className="mt-1 flex flex-wrap items-center gap-1.5">
                   {status === 'skipped' && <Badge>entfallen</Badge>}
                   {schedule && <Badge tone="accent">{schedule}</Badge>}
-                  {next && (
-                    <span data-testid="next-change">
-                      <Badge>
-                        Ab {formatIsoDate(effectiveDate(next))}: {formatEUR(next.amount)}
-                      </Badge>
+                  {!item.fromNet && (
+                    <span data-testid="not-from-net">
+                      <Badge>nicht vom Netto</Badge>
                     </span>
                   )}
-                  {payment?.note && <span className="truncate text-[13px] text-ink-mute">{payment.note}</span>}
+                  {next && (
+                    <span data-testid="next-change">
+                      <Badge>{planChangeLabel(next)}</Badge>
+                    </span>
+                  )}
+                  {payment?.note && <span className="min-w-0 basis-full truncate text-[13px] text-ink-mute">{payment.note}</span>}
                 </span>
               )}
             </span>
+            {/* amount on the title line, the delta chip below it */}
             <span className="flex shrink-0 flex-col items-end gap-1">
               <span
-                className={`num text-[16px] font-semibold ${done ? 'text-ink-soft' : 'text-ink'} ${status === 'skipped' ? 'line-through' : ''}`}
+                className={`num whitespace-nowrap text-[16px] font-semibold leading-6 ${done ? 'text-ink-soft' : 'text-ink'} ${status === 'skipped' ? 'line-through' : ''}`}
+                data-testid="position-amount"
               >
                 {formatEUR(amount)}
               </span>
