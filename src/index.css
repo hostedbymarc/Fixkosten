@@ -70,6 +70,62 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* Oberer Rand – the one place for the status bar area (no per-screen copies).
+   iOS paints the status bar itself as a flat colour sampled from the page (body background =
+   --nebel-base; no fixed element with a colour sits at the top edge), and theme-color carries the
+   same colour for browsers that still read it. The Nebel bitmap fades to exactly that colour at
+   the bar's lower edge (src/lib/nebel.ts), so there is no step. Above everything that scrolls lies
+   this scrim: --nebel-base, 0.6 at the top, ease-out (0.6 · (1 − t)³) to 0 over safe area + 48 px,
+   so content glides out softly under the bar. Over the faded Nebel it is invisible at rest.
+   src/lib/nebel.ts draws the same curve as a bitmap (--scrim-image: no gradient dithering, safe in
+   iOS captures); the 9-stop gradient here is the same curve until that has run. */
+#root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15; /* above the page content, below menus (20), tab bar (30), sheets (40), toasts (50) */
+  height: calc(var(--safe-top) + 48px);
+  pointer-events: none;
+  background-repeat: no-repeat; /* no wrap-around sampling at the lower edge */
+  background-size: 100% 100%;
+  background-image: var(
+    --scrim-image,
+    linear-gradient(
+      rgb(var(--nebel-base-rgb) / 0.6) 0%,
+      rgb(var(--nebel-base-rgb) / 0.402) 12.5%,
+      rgb(var(--nebel-base-rgb) / 0.253) 25%,
+      rgb(var(--nebel-base-rgb) / 0.146) 37.5%,
+      rgb(var(--nebel-base-rgb) / 0.075) 50%,
+      rgb(var(--nebel-base-rgb) / 0.032) 62.5%,
+      rgb(var(--nebel-base-rgb) / 0.009) 75%,
+      rgb(var(--nebel-base-rgb) / 0.001) 87.5%,
+      rgb(var(--nebel-base-rgb) / 0) 100%
+    )
+  );
+}
+/* Transparenz reduzieren: covering base colour behind the status bar, then the same ease-out fade */
+@media (prefers-reduced-transparency: reduce) {
+  #root::before {
+    background-image: var(
+      --scrim-image-solid,
+      linear-gradient(
+        rgb(var(--nebel-base-rgb)) 0,
+        rgb(var(--nebel-base-rgb)) var(--safe-top),
+        rgb(var(--nebel-base-rgb) / 0.67) calc(var(--safe-top) + 6px),
+        rgb(var(--nebel-base-rgb) / 0.42) calc(var(--safe-top) + 12px),
+        rgb(var(--nebel-base-rgb) / 0.244) calc(var(--safe-top) + 18px),
+        rgb(var(--nebel-base-rgb) / 0.125) calc(var(--safe-top) + 24px),
+        rgb(var(--nebel-base-rgb) / 0.053) calc(var(--safe-top) + 30px),
+        rgb(var(--nebel-base-rgb) / 0.016) calc(var(--safe-top) + 36px),
+        rgb(var(--nebel-base-rgb) / 0.002) calc(var(--safe-top) + 42px),
+        rgb(var(--nebel-base-rgb) / 0) calc(var(--safe-top) + 48px)
+      )
+    );
+  }
+}
+
 /* Print / PDF. The screen stays untouched (iOS „Ganze Seite“ uses the screen CSS, see the Nebel above).
    Every background is printed (the print path drops them by default: black below the cards,
    grey glass), the page is the plain base colour of the active theme, the Nebel and the grain are
@@ -86,7 +142,8 @@ body::after {
     background: var(--nebel-base) !important;
   }
   body::before,
-  body::after {
+  body::after,
+  #root::before {
     display: none !important;
   }
   .glass,
