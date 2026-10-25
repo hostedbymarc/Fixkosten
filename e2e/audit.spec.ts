@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { parseBackup } from '../src/db/backup';
 import { withNovember } from '../tests/fixtures/november';
-import { eur, expect, FIXTURE, isTouchProject, test } from './fixtures';
+import { appSettled, eur, expect, FIXTURE, isTouchProject, test } from './fixtures';
 import { expectClean } from './measure';
 
 const DIR = 'docs/screenshots/audit';
@@ -17,6 +17,7 @@ async function importNovember(page: Page, netSalary?: number) {
   if (netSalary !== undefined) backup.data.monthClose.find((m) => m.period === '2026-11')!.netSalary = netSalary;
   await page.getByTestId('import-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('November 2026');
 }
 

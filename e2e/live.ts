@@ -2,7 +2,7 @@
 import type { Page } from '@playwright/test';
 import type { BackupFile } from '../src/db/backup';
 import { liveBackup } from '../tests/fixtures/live';
-import { expect } from './fixtures';
+import { appSettled, expect } from './fixtures';
 
 export const OKT_TODAY = new Date('2026-10-25T12:00:00+01:00');
 export const NOV_TODAY = new Date('2026-11-10T10:00:00+01:00');
@@ -15,4 +15,5 @@ export async function importLive(page: Page, today: Date = OKT_TODAY, edit: (b: 
   const file = edit(backup) ?? backup;
   await page.getByTestId('import-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(file)) });
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
 }

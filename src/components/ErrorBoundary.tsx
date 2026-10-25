@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from 'react';
+import { hideSplash } from '../lib/entrance';
 
 interface State {
   error: Error | null;
@@ -10,6 +11,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { error };
+  }
+
+  componentDidCatch() {
+    void hideSplash(); // the message must not stay behind the splash
   }
 
   render() {

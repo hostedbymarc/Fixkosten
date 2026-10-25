@@ -4,11 +4,39 @@ import { test as base, expect, type Page } from '@playwright/test';
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
 export const FIXTURE = 'tests/fixtures/seed.json';
 
+/**
+ * Lade-Animation over: the splash is gone and the entrance of the current screen has finished
+ * (a lazy screen first replaces its loader). Nothing is moving or fading any more afterwards.
+ */
+export async function appSettled(page: Page) {
+  await expect(page.locator('#splash')).toHaveCount(0);
+  // the current screen has come in (a lazy screen only after its loader)
+  const [route, supported] = await page.evaluate(() => [location.hash.replace(/^#\/?/, '') || 'monat', document.documentElement.hasAttribute('data-entrance')] as const);
+  if (supported) await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
+  await expect(page.locator('main [data-testid="loader"]')).toHaveCount(0);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() =>
+            void Promise.all(
+              document
+                .getAnimations()
+                .filter((a) => a.id === 'entrance')
+                .map((a) => a.finished),
+            ).then(() => resolve()),
+          ),
+        ),
+      ),
+  );
+}
+
 /** First start on an empty database → import the fixture through the setup dialog. */
 export async function importFixture(page: Page) {
   await expect(page.getByTestId('setup-dialog')).toBeVisible();
   await page.getByTestId('import-file').setInputFiles(FIXTURE);
   await expect(page.getByTestId('hero')).toBeVisible();
+  await appSettled(page);
 }
 
 export const test = base.extend<{ app: Page; fresh: Page }>({
@@ -23,6 +51,7 @@ export const test = base.extend<{ app: Page; fresh: Page }>({
   fresh: async ({ page }, use) => {
     await page.clock.setFixedTime(TODAY);
     await page.goto('/');
+    await expect(page.locator('#splash')).toHaveCount(0);
     await use(page);
   },
 });
@@ -51,6 +80,7 @@ export async function animationsDone(page: Page, testId: string) {
 
 export async function goTo(page: Page, route: 'monat' | 'positionen' | 'analyse' | 'einstellungen') {
   await page.goto(`/#/${route}`);
+  await appSettled(page);
 }
 
 /** Touch swipe made of real PointerEvents (Chromium has no native touch-move API in Playwright). */
