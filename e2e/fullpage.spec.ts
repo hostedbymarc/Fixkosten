@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, goTo, test } from './fixtures';
-import { diffShare, FIXED_FIRST_SCREEN, HIDE_CONTENT, NO_FILTER, pixelStats } from './background';
+import { diffShare, FIXED_FIRST_SCREEN, FIXED_STRETCHED, HIDE_CONTENT, NO_FILTER, pixelStats } from './background';
 import { importLive, NOV_TODAY, OKT_TODAY } from './live';
 
 // Full-page capture (iPad Safari „Ganze Seite“ showed black below the first screen and a hard green
@@ -50,6 +50,26 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(r.isolation).toBe('isolate');
     });
 
+    test('kein CSS-Verlauf mit Transparenz (iOS „Ganze Seite“ malt ihn schwarz); Nebel ist ein deckendes Bild', async ({ page }) => {
+      await importLive(page, OKT_TODAY);
+      await page.getByTestId('add-once').click(); // the sheet has a fade too
+      await page.getByRole('dialog').waitFor();
+      const r = await page.evaluate(() => {
+        const bad: string[] = [];
+        for (const el of [document.documentElement, ...document.querySelectorAll('*')])
+          for (const pseudo of [null, '::before', '::after']) {
+            const bg = getComputedStyle(el, pseudo).backgroundImage;
+            if (bg.includes('gradient(') && /transparent|rgba\(0, 0, 0, 0\)/.test(bg)) bad.push(`${el.tagName.toLowerCase()}${pseudo ?? ''}`);
+          }
+        const before = getComputedStyle(document.body, '::before');
+        return { bad, image: before.backgroundImage.slice(0, 27), size: before.backgroundSize, color: before.backgroundColor };
+      });
+      expect(r.bad).toEqual([]);
+      expect(r.image).toBe('url("data:image/png;base64,');
+      expect(r.size).toBe('100% 660px');
+      expect(r.color).toBe(`rgb(${BASE[scheme].join(', ')})`);
+    });
+
     for (const p of PAGES) {
       test(`${p.name}: Full-Page = Viewport im ersten Bildschirm, darunter ruhig die Basisfarbe, keine Kante`, async ({ page }) => {
         await importLive(page, p.today);
@@ -69,19 +89,21 @@ for (const scheme of ['light', 'dark'] as const) {
         await page.addStyleTag({ content: HIDE_CONTENT });
         await page.waitForTimeout(100);
         const base = BASE[scheme] as unknown as [number, number, number];
-        for (const variant of ['normal', 'ohne filter', 'iOS: fixierte Ebenen nur im ersten Bildschirm'] as const) {
+        const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+        for (const variant of ['normal', 'ohne filter', 'iOS: fixierte Ebenen über die ganze Seite gestreckt', 'iOS: fixierte Ebenen nur im ersten Bildschirm'] as const) {
           if (variant === 'ohne filter') await page.addStyleTag({ content: NO_FILTER });
-          if (variant.startsWith('iOS')) await page.addStyleTag({ content: FIXED_FIRST_SCREEN(vp.height) });
+          if (variant.includes('gestreckt')) await page.addStyleTag({ content: FIXED_STRETCHED(pageHeight) });
+          if (variant.includes('ersten Bildschirm')) await page.addStyleTag({ content: FIXED_FIRST_SCREEN(vp.height) });
           await page.waitForTimeout(100);
           const png = await page.screenshot({ fullPage: true, scale: 'css', omitBackground: variant.startsWith('iOS') });
-          const s = await pixelStats(page, png, { base, from: vp.height, edge: variant.startsWith('iOS') ? vp.height : undefined, scale });
+          const s = await pixelStats(page, png, { base, from: vp.height, edge: variant.includes('ersten Bildschirm') ? vp.height : undefined, scale });
           const tag = `${p.name} · ${variant}`;
           if (scheme === 'light') expect(s.nearBlack, `${tag}: no pixel ≤ #101010`).toBe(0);
           expect(s.transparent, `${tag}: nothing transparent`).toBe(0);
           expect(s.maxDevBelow, `${tag}: below the first screen = base ± 3`).toBeLessThanOrEqual(3);
           expect(s.kink, `${tag}: Kanten-Kennzahl`).toBeLessThan(threshold);
           // a page no taller than one screen has no edge to look at
-          if (variant.startsWith('iOS') && s.height > vp.height + 1) expect(s.edgeStep, `${tag}: no step where the fixed layer ends`).toBeLessThanOrEqual(3);
+          if (variant.includes('ersten Bildschirm') && s.height > vp.height + 1) expect(s.edgeStep, `${tag}: no step where the fixed layer ends`).toBeLessThanOrEqual(3);
         }
       });
     }
