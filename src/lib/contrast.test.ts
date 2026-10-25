@@ -283,6 +283,15 @@ if (process.env.CONTRAST_REPORT) {
     '',
     `ΔE2000 Brand #5A7A2E ↔ Amber-Icon: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn-icon')).toFixed(1)}**, ↔ Amber-Text: **${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-warn')).toFixed(1)}**, ↔ Rot: ${deltaE(rgb(light, '--brand-500'), rgb(light, '--c-over')).toFixed(1)}`,
   ];
+  lines.push('', '**Neue und geänderte Paare (korrekt-ruhig)**', '', '| Thema | Element | Vordergrund | Hintergrund | dunkelster / hellster Punkt | Ziel |', '|---|---|---|---|---|---|');
+  for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
+    for (const p of SPRINT_PAIRS) {
+      const [d, l] = surfaces(v)[p.on];
+      const fg = rgb(v, p.fg);
+      lines.push(`| ${theme} | ${p.what} | \`${p.fg}\` | ${p.on} | ${contrast(fg, d).toFixed(2)} / ${contrast(fg, l).toFixed(2)} | ≥ ${p.min} |`);
+    }
+    lines.push(`| ${theme} | Schalter-Knopf auf Spur an / aus | \`--c-surface\` | \`--c-accent\` / \`--c-check-open\` | ${contrast(rgb(v, '--c-surface'), rgb(v, '--c-accent')).toFixed(2)} / ${contrast(rgb(v, '--c-surface'), rgb(v, '--c-check-open')).toFixed(2)} | ≥ 3 |`);
+  }
   lines.push('', '**Delta-Chip** (Text auf Chip-Fläche, Ziel ≥ 4,5)', '', '| Thema | Variante | Text | Fläche | Kontrast |', '|---|---|---|---|---|');
   for (const [theme, v] of [['Hell', light], ['Dunkel', dark]] as const) {
     for (const [name, fg, bg] of [['weniger (grün)', '--c-paid-ink', '--c-paid-soft'], ['mehr (rot)', '--c-over', '--c-over-soft']] as const) {
