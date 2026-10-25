@@ -5,7 +5,7 @@ import { NOV, withNovember } from '../../tests/fixtures/november';
 import { exportBackup, importIntoEmpty, parseBackup } from '../db/backup';
 import { FixkostenDB } from '../db/db';
 import { loadDataset } from '../db/repo';
-import { savingsCard, yearForecast } from './analytics';
+import { categoryDistribution, savingsCard, yearForecast } from './analytics';
 import {
   categoryFigures,
   dueInPeriod,
@@ -18,6 +18,9 @@ import {
   savingsRate,
   shownOpen,
   wealthBuilding,
+  wealthBuildingAvg,
+  wealthFromNet,
+  fixedCostsAvg,
   type MonthFigures,
 } from './calc';
 import { formatAvg, formatDelta, formatEUR, formatCompactEUR, formatPercent, MINUS } from './format';
@@ -316,6 +319,10 @@ function randomDataset(seed: number, heavyCredits = false): Dataset {
     if (r.chance(0.3)) history.push({ validFrom: addPeriods(start, r.int(1, 10)), amount: r.money(), frequency, dueMonths: DUE[frequency] });
     return { id: `p${i}`, name: `P${i}`, categoryId: r.pick(categories).id, history, createdAt: '2026-01-01T00:00:00.000Z', sortOrder: i };
   });
+  // switch „Von ‚Frei verfügbar' abziehen“ off on some positions (own stream: the rest of the data stays as before);
+  // it only acts on one-time payments in Vermögensaufbau, on every other position it must be ignored
+  const sw = rng(seed + 100_000);
+  for (const p of positions) if (sw.chance(0.4)) p.fromNet = false;
   const ds: Dataset = { categories, positions, payments: [], oneOffs: [], monthClose: [], reminders: [], changeLog: [] };
   for (const period of MONTHS) {
     for (const item of dueItems(ds, period)) {
@@ -357,15 +364,22 @@ function check(ds: Dataset, period: string, f: MonthFigures) {
   }
   const savingsSum = f.categories.filter((c) => c.category.kind === 'savings').reduce((a, c) => a + cents(c.total), 0);
   expect(savingsSum, `Vermögensaufbau ${tag}`).toBe(cents(f.wealth));
-  expect(cents(f.deductions), `Abzüge = Gesamt + Vermögensaufbau ${tag}`).toBe(cents(f.total) + cents(f.wealth));
+  expect(cents(f.wealth), `Vermögensaufbau = vom Netto + nicht vom Netto ${tag}`).toBe(cents(f.wealthFromNet) + cents(f.wealthNotFromNet));
+  // only one-time payments in Vermögensaufbau with the switch off are „nicht vom Netto“
+  const notFromNet = dueItems(ds, period)
+    .filter((i) => i.kind === 'savings' && i.due && i.status !== 'skipped' && i.plan?.frequency === 'once' && i.position.fromNet === false)
+    .reduce((a, i) => a + cents(i.status === 'paid' ? i.payment!.actualAmount : i.planned), 0);
+  expect(cents(f.wealthNotFromNet), `nicht vom Netto ${tag}`).toBe(notFromNet);
+  expect(cents(f.deductions), `Abzüge = Gesamt + Vermögensaufbau vom Netto ${tag}`).toBe(cents(f.total) + cents(f.wealthFromNet));
   if (f.netSalary !== null) {
     expect(cents(f.netSalary) - cents(f.deductions), `Netto − Abzüge = Frei ${tag}`).toBe(cents(f.free!));
-    expect(cents(f.free!), `Frei = Netto − Gesamt − Vermögensaufbau ${tag}`).toBe(cents(f.netSalary) - cents(f.total) - cents(f.wealth));
-    if (f.netSalary > 0) expect(f.savingsRate).toBeCloseTo(f.wealth / f.netSalary, 12);
+    expect(cents(f.free!), `Frei = Netto − Gesamt − VA vom Netto ${tag}`).toBe(cents(f.netSalary) - cents(f.total) - cents(f.wealthFromNet));
+    if (f.netSalary > 0) expect(f.savingsRate).toBeCloseTo(f.wealthFromNet / f.netSalary, 12);
   }
   // the older API returns the same numbers
   expect(fixedCosts(ds, period)).toBe(f.total);
   expect(wealthBuilding(ds, period)).toBe(f.wealth);
+  expect(wealthFromNet(ds, period)).toBe(f.wealthFromNet);
   expect(freeAfterFixed(ds, period)).toBe(f.free);
   expect(savingsRate(ds, period)).toBe(f.savingsRate);
 }
@@ -376,6 +390,41 @@ describe('Invarianten (Property-Tests, 300 zufällige Datensätze × 24 Monate)'
       const ds = randomDataset(seed);
       for (const period of MONTHS) check(ds, period, monthFigures(ds, period));
     }
+  });
+
+  it('Σ Verteilung = Ø pro Monat (ungerundet exakt, angezeigte gerundete Zeilen ± 0,01 je Zeile)', () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const ds = randomDataset(seed);
+      for (const period of ['2026-03', '2026-10', '2027-06']) {
+        const d = categoryDistribution(ds, period);
+        const avg = fixedCostsAvg(ds, period);
+        expect(d.rows.reduce((a, r) => a + r.monthly, 0), `seed ${seed} ${period}`).toBeCloseTo(avg, 9);
+        const shown = d.rows.reduce((a, r) => a + cents(r.monthly), 0);
+        expect(Math.abs(shown - cents(avg)), `seed ${seed} ${period}`).toBeLessThanOrEqual(d.rows.length);
+      }
+    }
+  });
+
+  it('Schalter umlegen ändert NUR Abzüge, Frei verfügbar, Sparquote und die VA-Aufschlüsselung', () => {
+    const ONLY = ['deductions', 'free', 'savingsRate', 'wealthFromNet', 'wealthNotFromNet'];
+    let flipped = 0;
+    for (let seed = 1; seed <= 300; seed++) {
+      const ds = randomDataset(seed);
+      const flip: Dataset = { ...ds, positions: ds.positions.map((p) => ({ ...p, fromNet: p.fromNet === false ? undefined : false })) };
+      for (const period of MONTHS) {
+        const a = monthFigures(ds, period);
+        const b = monthFigures(flip, period);
+        const strip = (f: MonthFigures) => Object.fromEntries(Object.entries(f).filter(([k]) => !ONLY.includes(k)));
+        expect(strip(b), `seed ${seed} ${period}`).toEqual(strip(a));
+        // the averages and the analysis do not move either
+        expect(fixedCostsAvg(flip, period)).toBe(fixedCostsAvg(ds, period));
+        expect(wealthBuildingAvg(flip, period)).toBe(wealthBuildingAvg(ds, period));
+        expect(freeAfterFixedAvg(flip, period)).toBe(freeAfterFixedAvg(ds, period));
+        if (a.wealthNotFromNet !== b.wealthNotFromNet) flipped++;
+      }
+      expect(yearForecast(flip, '2026-06').months.map((m) => m.due)).toEqual(yearForecast(ds, '2026-06').months.map((m) => m.due));
+    }
+    expect(flipped, 'the switch acted in some months').toBeGreaterThan(50);
   });
 
   it('Notizen und Altfelder (Notiz, freeActual) ändern keine Kennzahl', () => {

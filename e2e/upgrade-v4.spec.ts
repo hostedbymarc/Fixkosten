@@ -95,7 +95,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await expect(page.getByTestId('hero-paid')).toHaveText(eur('€ 3.375,40'));
   await expect(row(page, 'pos-strom')).toContainText('Abschlag erhöht');
   await expect(page.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
-  await expect(row(page, 'pos-handy').getByTestId('next-change')).toHaveText(eur('Ab 01.11.2026: € 8'));
+  await expect(row(page, 'pos-handy').getByTestId('next-change')).toHaveText(eur('ab 01.11.2026 · € 8'));
 
   // the migrated change appears in the new timeline and as a planned optimisation
   await goTo(page, 'positionen');

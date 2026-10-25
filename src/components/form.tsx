@@ -366,3 +366,49 @@ export function todayIso(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+
+/** On/off switch with its label on the left and an explanation below (44 px tap target). */
+export function SwitchField({
+  label,
+  checked,
+  onChange,
+  hint,
+  testId,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  hint?: ReactNode;
+  testId?: string;
+}) {
+  const id = useId();
+  return (
+    <div data-testid={testId}>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={id} className="text-[15px] font-medium text-ink">
+          {label}
+        </label>
+        <button
+          id={id}
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          aria-describedby={hint ? `${id}-hint` : undefined}
+          onClick={() => onChange(!checked)}
+          className={`focus-ring relative h-8 w-[52px] shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-zinc-300'}`}
+          data-testid={testId ? `${testId}-switch` : undefined}
+        >
+          <span
+            aria-hidden="true"
+            className={`absolute top-1 h-6 w-6 rounded-full bg-raised shadow-card transition-[left] ${checked ? 'left-[24px]' : 'left-1'}`}
+          />
+        </button>
+      </div>
+      {hint && (
+        <p id={`${id}-hint`} className="text-[13px] leading-snug text-ink-mute">
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}

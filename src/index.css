@@ -21,11 +21,18 @@
   }
 }
 
-html {
-  background: var(--nebel-base);
-}
-
+/* The base colour is painted by html AND body (body at least as tall as the page): renderers that
+   skip the canvas or fixed layers (iOS „Ganze Seite“, PDF) still get the base colour, never black. */
+html,
 body {
+  background-color: var(--nebel-base);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+body {
+  /* own stacking context: the fixed Nebel layers (z-index −2/−1) paint above body's own background */
+  isolation: isolate;
+  min-height: 100vh;
   color: rgb(var(--c-ink));
   font-family: 'Inter Variable', Inter, system-ui, -apple-system, sans-serif;
   font-feature-settings: 'cv11', 'ss01';
@@ -36,9 +43,12 @@ body {
 }
 
 /* Hintergrund „Nebel + Papierkorn“: two fixed layers behind all content, static.
-   Blob sizes follow the larger side (vmax) with a floor, so they grow with the screen instead of
-   ending as a small disc on 1920/2560 px. Each blob fades on an eased curve (several stops,
-   down to 0 at its edge): a straight two-stop fade leaves a visible rim, most of all in dark mode. */
+   Only radial gradients, no filter, mask or round elements. Positions are px from the top, heights
+   fixed px, widths px via clamp() on the width – never vh/vmax, which a full-page capture resolves
+   against the whole page height. Every blob fades on a bell curve (≈ e^(−4.6 t²), soft centre, soft
+   rim) to 0 above 660 px, so it ends inside even the smallest first screen (iPhone SE, 667 px):
+   whether a renderer keeps the layer to the first screen or stretches it, there is no edge, and
+   below lies the plain base colour. */
 body::before,
 body::after {
   content: '';
@@ -50,30 +60,36 @@ body::before {
   z-index: -2;
   background:
     radial-gradient(
-      max(300px, 44vmax) max(240px, 34vmax) at 12% 8%,
+      clamp(480px, 60vw, 1100px) 620px at 12% 30px,
       var(--nebel-1),
-      color-mix(in srgb, var(--nebel-1) 62%, transparent) 22%,
-      color-mix(in srgb, var(--nebel-1) 34%, transparent) 42%,
-      color-mix(in srgb, var(--nebel-1) 14%, transparent) 60%,
-      color-mix(in srgb, var(--nebel-1) 4%, transparent) 78%,
+      color-mix(in srgb, var(--nebel-1) 90%, transparent) 15%,
+      color-mix(in srgb, var(--nebel-1) 66%, transparent) 30%,
+      color-mix(in srgb, var(--nebel-1) 39%, transparent) 45%,
+      color-mix(in srgb, var(--nebel-1) 19%, transparent) 60%,
+      color-mix(in srgb, var(--nebel-1) 7.5%, transparent) 75%,
+      color-mix(in srgb, var(--nebel-1) 2.4%, transparent) 90%,
       transparent 100%
     ),
     radial-gradient(
-      max(280px, 40vmax) max(220px, 30vmax) at 92% 35%,
+      clamp(440px, 44vw, 860px) 480px at 92% 160px,
       var(--nebel-2),
-      color-mix(in srgb, var(--nebel-2) 62%, transparent) 22%,
-      color-mix(in srgb, var(--nebel-2) 34%, transparent) 42%,
-      color-mix(in srgb, var(--nebel-2) 14%, transparent) 60%,
-      color-mix(in srgb, var(--nebel-2) 4%, transparent) 78%,
+      color-mix(in srgb, var(--nebel-2) 90%, transparent) 15%,
+      color-mix(in srgb, var(--nebel-2) 66%, transparent) 30%,
+      color-mix(in srgb, var(--nebel-2) 39%, transparent) 45%,
+      color-mix(in srgb, var(--nebel-2) 19%, transparent) 60%,
+      color-mix(in srgb, var(--nebel-2) 7.5%, transparent) 75%,
+      color-mix(in srgb, var(--nebel-2) 2.4%, transparent) 90%,
       transparent 100%
     ),
     radial-gradient(
-      max(340px, 50vmax) max(240px, 36vmax) at 40% 98%,
+      clamp(440px, 46vw, 1000px) 440px at 42% 220px,
       var(--nebel-3),
-      color-mix(in srgb, var(--nebel-3) 62%, transparent) 22%,
-      color-mix(in srgb, var(--nebel-3) 34%, transparent) 42%,
-      color-mix(in srgb, var(--nebel-3) 14%, transparent) 60%,
-      color-mix(in srgb, var(--nebel-3) 4%, transparent) 78%,
+      color-mix(in srgb, var(--nebel-3) 90%, transparent) 15%,
+      color-mix(in srgb, var(--nebel-3) 66%, transparent) 30%,
+      color-mix(in srgb, var(--nebel-3) 39%, transparent) 45%,
+      color-mix(in srgb, var(--nebel-3) 19%, transparent) 60%,
+      color-mix(in srgb, var(--nebel-3) 7.5%, transparent) 75%,
+      color-mix(in srgb, var(--nebel-3) 2.4%, transparent) 90%,
       transparent 100%
     ),
     var(--nebel-base);
@@ -83,6 +99,14 @@ body::after {
   opacity: var(--grain-opacity);
   background-size: 160px 160px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* print / PDF: fixed layers would repeat on every page; the Nebel belongs to the top of the document */
+@media print {
+  body::before,
+  body::after {
+    position: absolute;
+  }
 }
 
 @layer utilities {

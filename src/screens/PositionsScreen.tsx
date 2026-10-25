@@ -2,7 +2,7 @@ import { useRef, useState, type MouseEvent } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { AmountChangeSheet } from '../components/AmountChangeSheet';
 import { CategoriesSheet } from '../components/CategoriesSheet';
-import { Badge, formatIsoDate, planDescription } from '../components/Chips';
+import { Badge, formatIsoDate, planChangeLabel, planDescription } from '../components/Chips';
 import { OneOffSheet } from '../components/OneOffSheet';
 import { PositionDetailSheet } from '../components/PositionDetailSheet';
 import { PositionFormSheet } from '../components/PositionFormSheet';
@@ -258,7 +258,7 @@ function PositionListRow({
           {next && (
             <span className="mt-1 block" data-testid="next-change">
               <Badge tone="accent">
-                Ab {formatIsoDate(effectiveDate(next))}: {formatEUR(next.amount)}
+                {planChangeLabel(next)}
               </Badge>
             </span>
           )}

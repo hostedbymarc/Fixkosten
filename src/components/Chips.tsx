@@ -1,6 +1,6 @@
-import { dueDayInPeriod } from '../lib/calc';
+import { dueDayInPeriod, effectiveDate } from '../lib/calc';
 import { ClockIcon } from './Icons';
-import { formatDayMonth, formatDelta } from '../lib/format';
+import { formatDayMonth, formatDelta, formatEUR } from '../lib/format';
 import { shortMonthName } from '../lib/period';
 import type { Frequency, Period, PlanEntry } from '../lib/types';
 
@@ -47,6 +47,11 @@ export function planDescription(plan: PlanEntry): string {
   const months = [...plan.dueMonths].sort((a, b) => a - b).map(shortMonthName).join(', ');
   const day = plan.dueDay ? ` · am ${plan.dueDay === 31 ? 'Monatsletzten' : `${plan.dueDay}.`}` : '';
   return `${FREQUENCY_LABEL[plan.frequency]} · ${months}${day}`;
+}
+
+/** Planned change, the same everywhere: „ab 06.10.2027 · € 717,80“. */
+export function planChangeLabel(next: PlanEntry): string {
+  return `ab ${formatIsoDate(effectiveDate(next))} · ${formatEUR(next.amount)}`;
 }
 
 export function Badge({

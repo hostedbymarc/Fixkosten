@@ -15,7 +15,7 @@ import { formatDelta, formatAvg, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import type { Dataset, Period, PlanEntry, Position } from '../lib/types';
 import { BottomSheet } from './BottomSheet';
-import { Badge, DeltaChip, formatIsoDate, planDescription } from './Chips';
+import { Badge, DeltaChip, formatIsoDate, planChangeLabel, planDescription } from './Chips';
 import { PencilIcon, TrashIcon } from './Icons';
 import { PrimaryButton, SecondaryButton } from './form';
 
@@ -98,7 +98,7 @@ export function PositionDetailSheet({
         {next && (
           <p className="-mt-2" data-testid="detail-next-change">
             <Badge tone="accent">
-              Ab {formatIsoDate(effectiveDate(next))}: {formatEUR(next.amount)}
+              {planChangeLabel(next)}
             </Badge>
           </p>
         )}

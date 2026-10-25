@@ -91,7 +91,7 @@ describe('Einmalig: Reparatur € 500, fällig 15.11.2026', () => {
 
   it('forecast: Nov € 3.164 with a € 500 one-time part; sum € 35.926,04 = 12 × Ø + one-time payments', () => {
     const f = yearForecast(ds, OCT);
-    const nov = f.months[0]!;
+    const nov = f.months.find((m) => m.period === '2026-11')!;
     expect([nov.period, nov.due, nov.once]).toEqual(['2026-11', 3164, 500]);
     expect(nov.items).toEqual([{ name: 'Reparatur', amount: 500, once: true }]);
     expect(f.total).toBe(35926.04);

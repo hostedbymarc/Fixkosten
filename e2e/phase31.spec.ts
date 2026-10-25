@@ -124,14 +124,14 @@ test.describe('Betrag ändern', () => {
     await expect(entries.first()).toContainText('Indexanpassung');
     await expect(entries.last()).toContainText('Beginn · Oktober 2026');
     await expect(entries.last().getByRole('button', { name: /löschen/ })).toHaveCount(0); // first entry stays
-    await expect(app.getByTestId('detail-next-change')).toHaveText(eur('Ab 01.04.2027: € 1.050'));
+    await expect(app.getByTestId('detail-next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await sheetReady(app);
     await expectClean(app, '[data-testid="bottom-sheet"]');
     await app.keyboard.press('Escape');
 
-    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('Ab 01.04.2027: € 1.050'));
+    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await goTo(app, 'monat');
-    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('Ab 01.04.2027: € 1.050'));
+    await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await expect(row(app, 'pos-miete')).toContainText(eur('€ 1.008'));
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
     await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
