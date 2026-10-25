@@ -31,7 +31,7 @@ const entrance = (page: Page) =>
   );
 
 test.describe('Lade-Animation', () => {
-  test('Start: Splash mit Logo und „Erbse“, sofort sichtbar, endlich, blockiert nichts, nach ≥ 700 ms weg', async ({ page }) => {
+  test('Start: Splash mit den drei Erbsen, sofort sichtbar, endlich, blockiert nichts, nach ≥ 700 ms weg', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await watchSplash(page);
     await page.reload({ waitUntil: 'commit' });
@@ -39,7 +39,8 @@ test.describe('Lade-Animation', () => {
     await expect(splash).toBeVisible();
     await expect(splash).toHaveAttribute('aria-hidden', 'true');
     await expect(splash.locator('svg circle')).toHaveCount(3);
-    await expect(splash).toContainText('Erbse');
+    await expect(splash.locator('rect')).toHaveCount(0);
+    await expect(splash).toHaveText('');
     const info = await splash.evaluate((el) => ({
       pointer: getComputedStyle(el).pointerEvents,
       infinite: el.getAnimations({ subtree: true }).filter((a) => a.effect!.getComputedTiming().iterations === Infinity).length,
@@ -47,7 +48,7 @@ test.describe('Lade-Animation', () => {
     }));
     expect(info.pointer).toBe('none');
     expect(info.infinite, 'no endless animation in the splash').toBe(0);
-    expect(info.animated, 'pod, 3 peas and the word animate').toBeGreaterThanOrEqual(5);
+    expect(info.animated, 'the 3 peas animate').toBe(3);
     await expect(splash).toHaveCount(0, { timeout: 3000 });
     const gone = await page.evaluate(() => (window as unknown as { splashGoneAt: number }).splashGoneAt);
     expect(gone, 'shown at least 700 ms').toBeGreaterThanOrEqual(700);
