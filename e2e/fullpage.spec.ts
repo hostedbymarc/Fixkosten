@@ -185,6 +185,7 @@ for (const scheme of ['light', 'dark'] as const) {
           scheme: cs(document.documentElement).colorScheme,
           before: cs(document.body, '::before').display,
           after: cs(document.body, '::after').display,
+          scrim: cs(document.getElementById('root')!, '::before').display,
           adjust: cs(document.body).getPropertyValue('print-color-adjust'),
           glass: [...new Set(glass.map((e) => `${cs(e).backgroundColor}|${cs(e).backdropFilter}`))],
           tabbar: shown(nav) ? { position: cs(nav!).position, top: nav!.getBoundingClientRect().top + scrollY, mainBottom: main.bottom + scrollY } : null,
@@ -195,7 +196,7 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(r.html).toBe(rgb);
       expect(r.body).toBe(rgb);
       expect(r.scheme, 'colour scheme = active theme').toBe(scheme);
-      expect([r.before, r.after]).toEqual(['none', 'none']);
+      expect([r.before, r.after, r.scrim], 'Nebel, grain and the top scrim off in print').toEqual(['none', 'none', 'none']);
       expect(r.adjust).toBe('exact');
       expect(r.glass, 'every glass surface opaque, no blur').toEqual([scheme === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 35, 31, 0.94)|none']);
       expect(!!r.tabbar !== !!r.sidebar, 'exactly one navigation').toBe(true);

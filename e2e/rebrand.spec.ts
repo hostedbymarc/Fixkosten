@@ -31,7 +31,10 @@ test.describe('Rebrand „Erbse“: Name und Icons', () => {
   test('title, home-screen title, manifest and theme colour', async ({ app }) => {
     await expect(app).toHaveTitle('Erbse');
     await expect(app.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute('content', 'Erbse');
-    await expect(app.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#5A7A2E');
+    // status bar = page top (sprint top-fade): theme-color is the base colour of the active theme
+    const base = await app.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--nebel-base').trim());
+    await expect(app.locator('meta[name="theme-color"]')).toHaveCount(2);
+    for (const meta of await app.locator('meta[name="theme-color"]').all()) await expect(meta).toHaveAttribute('content', base);
     const manifest = await (await app.request.get('/manifest.webmanifest')).json();
     expect(manifest).toMatchObject({ name: 'Erbse', short_name: 'Erbse', start_url: '/', theme_color: '#5A7A2E', background_color: '#F4F5F1' });
     for (const icon of [...manifest.icons.map((i: { src: string }) => i.src), '/apple-touch-icon.png', '/favicon.svg']) {
