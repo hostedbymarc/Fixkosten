@@ -193,11 +193,18 @@ export function initNebel() {
     if (bar) document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', bar));
   };
   update();
-  // while a window is being resized, paint once it has settled
+  // while a window is being resized, paint once it has settled – and only if the width changed:
+  // a height-only resize (full-page capture, iOS toolbar) must not even read the layout, or the
+  // forced layout pulls other re-measurements (charts) into the middle of a capture
   let timer = 0;
+  let width = window.innerWidth;
   const schedule = () => {
     clearTimeout(timer);
-    timer = window.setTimeout(update, 150);
+    timer = window.setTimeout(() => {
+      if (window.innerWidth === width) return;
+      width = window.innerWidth;
+      update();
+    }, 150);
   };
   window.addEventListener('resize', schedule);
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', update);
