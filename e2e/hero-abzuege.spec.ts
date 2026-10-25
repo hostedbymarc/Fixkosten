@@ -132,7 +132,7 @@ test.describe('Hintergrund: Nebel ohne Kante', () => {
       await page.addStyleTag({ content: 'body > * { visibility: hidden } body::after { display: none }' });
       for (const size of sizes) {
         await page.setViewportSize(size);
-        await page.waitForTimeout(200);
+        await page.waitForTimeout(700); // the Nebel repaints 150 ms after a resize has settled
         const kink = await page.evaluate(async (b64) => {
           const img = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
           const c = new OffscreenCanvas(img.width, img.height);

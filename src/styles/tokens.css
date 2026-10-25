@@ -78,6 +78,7 @@
 
   /* Nebel + Papierkorn (sizes in vmin with a floor and a cap: never stretched on wide screens) */
   --nebel-base: #f4f5f1;
+  --nebel-base-rgb: 244 245 241; /* the same colour as channels, for the top scrim (rgb(… / alpha)) */
   --nebel-1: rgba(90, 122, 46, 0.2);
   --nebel-2: rgba(222, 206, 176, 0.32);
   --nebel-3: rgba(90, 122, 46, 0.12);
@@ -165,6 +166,7 @@
     --glass-opaque: #1c231f;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
     --nebel-base: #0e120f;
+    --nebel-base-rgb: 14 18 15;
     --nebel-1: rgba(90, 122, 46, 0.16);
     --nebel-2: rgba(222, 206, 176, 0.04);
     --nebel-3: rgba(90, 122, 46, 0.1);
@@ -243,6 +245,7 @@
   --glass-opaque: #1c231f;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
   --nebel-base: #0e120f;
+  --nebel-base-rgb: 14 18 15;
   --nebel-1: rgba(90, 122, 46, 0.16);
   --nebel-2: rgba(222, 206, 176, 0.04);
   --nebel-3: rgba(90, 122, 46, 0.1);
