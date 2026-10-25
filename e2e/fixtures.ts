@@ -10,6 +10,9 @@ export const FIXTURE = 'tests/fixtures/seed.json';
  */
 export async function appSettled(page: Page) {
   await expect(page.locator('#splash')).toHaveCount(0);
+  // the current screen has come in (a lazy screen only after its loader)
+  const route = await page.evaluate(() => location.hash.replace(/^#\/?/, '') || 'monat');
+  await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
   await expect(page.locator('main [data-testid="loader"]')).toHaveCount(0);
   await page.evaluate(
     () =>

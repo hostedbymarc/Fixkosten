@@ -44,7 +44,7 @@ test.describe('Lade-Animation', () => {
     const info = await splash.evaluate((el) => ({
       pointer: getComputedStyle(el).pointerEvents,
       infinite: el.getAnimations({ subtree: true }).filter((a) => a.effect!.getComputedTiming().iterations === Infinity).length,
-      animated: el.getAnimations({ subtree: true }).length,
+      animated: el.getAnimations({ subtree: true }).filter((a) => (a as CSSAnimation).animationName === 'splash-pea').length,
     }));
     expect(info.pointer).toBe('none');
     expect(info.infinite, 'no endless animation in the splash').toBe(0);

@@ -51,8 +51,10 @@ const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
  * Screen entrance: the screen fades in, its cards (glass surfaces in view, at most 10) rise by
  * 14 px one after another. Runs after the splash has started to fade.
  */
-export async function playEntrance(main: HTMLElement) {
+export async function playEntrance(main: HTMLElement, name: string) {
   await splashFading();
+  // marks which screen has come in (tests wait for it before measuring)
+  main.dataset.screen = name;
   if (reducedMotion()) return;
   const screen = main.firstElementChild as HTMLElement | null;
   if (!screen) return;
