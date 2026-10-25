@@ -85,12 +85,6 @@ function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string
   const head = (
     <>
       <span className="flex items-center gap-3">
-        <span
-          className="h-2 w-2 shrink-0 rounded-full"
-          style={{ background: m.aboveAverage ? COLORS.accent : 'transparent' }}
-          aria-hidden="true"
-          data-testid={m.aboveAverage ? 'above-dot' : undefined}
-        />
         <span className="whitespace-nowrap text-[15px] text-ink" data-testid="forecast-month">
           {shortPeriodLabel(m.period)}
         </span>
@@ -104,7 +98,7 @@ function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string
         </span>
       </span>
       {m.items.length > 0 && !open && (
-        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 pl-5 text-[13px] text-ink-mute" data-testid="forecast-preview">
+        <span className="mt-1 flex min-w-0 items-center gap-2 text-[13px] text-ink-mute" data-testid="forecast-preview">
           {shown.map((i, n) => (
             <span key={i.name} className="flex min-w-0 items-center gap-1.5">
               {n > 0 && <span aria-hidden="true">·</span>}
@@ -134,7 +128,7 @@ function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string
         </div>
       )}
       {open && (
-        <div className="pb-2.5 pl-5 text-[13px] text-ink-mute" data-testid="forecast-expanded">
+        <div className="pb-3 text-[13px] text-ink-mute" data-testid="forecast-expanded">
           {m.items.length > 0 && <ItemLines items={m.items} />}
           {note && (
             <p
@@ -192,11 +186,6 @@ function MonthTable({ f, notes }: { f: YearForecast; notes: Map<Period, string> 
           <tr key={m.period} className="border-t border-line align-top">
             <th scope="row" className="whitespace-nowrap py-2 font-normal text-ink">
               <span className="flex items-center gap-2">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: m.aboveAverage ? COLORS.accent : 'transparent' }}
-                  aria-hidden="true"
-                />
                 {shortPeriodLabel(m.period)}
                 {notes.has(m.period) && (
                   <span className="text-ink-mute" aria-label="mit Notiz">
@@ -314,8 +303,9 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
               name="Fällig"
               className="bar-recurring"
             >
+              {/* regular part: one colour; the Ø line shows which months lie above */}
               {rows.map((m) => (
-                <Cell key={m.period} fill={m.aboveAverage ? COLORS.accent : COLORS.neutral} />
+                <Cell key={m.period} fill={COLORS.accent} />
               ))}
             </Bar>
             {hasOnce && (
@@ -346,13 +336,8 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         className="mt-2 flex items-center justify-center gap-x-3 whitespace-nowrap text-[12px] text-ink-mute"
         data-testid="forecast-legend"
       >
-        {/* the regular part keeps its colours: neutral, accent when the month is above the Ø */}
         <span className="flex items-center gap-1.5" data-testid="legend-regular">
-          <span
-            className="h-2 w-2 rounded-full"
-            style={{ background: `linear-gradient(90deg, ${COLORS.neutral} 50%, ${COLORS.accent} 50%)` }}
-            aria-hidden="true"
-          />
+          <span className="h-2 w-2 rounded-full" style={{ background: COLORS.accent }} aria-hidden="true" />
           regulär
         </span>
         {hasOnce && (

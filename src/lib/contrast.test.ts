@@ -232,6 +232,46 @@ describe('Farbabstände (CIEDE2000)', () => {
   });
 });
 
+// New and changed text/surface pairs of the sprint „korrekt-ruhig“, light and dark: text ≥ 4.5,
+// the switch (non-text, WCAG 1.4.11) ≥ 3 for its track against the sheet and the knob against the track.
+const SPRINT_PAIRS: { what: string; fg: string; on: Surface; min: number }[] = [
+  { what: 'Schalter-Label', fg: '--c-ink', on: 'Glas strong', min: 4.5 },
+  { what: 'Schalter-Hilfetext', fg: '--c-ink-mute', on: 'Glas strong', min: 4.5 },
+  { what: 'Chip „nicht vom Netto“', fg: '--c-ink-soft', on: 'zinc-100 (Badge)', min: 4.5 },
+  { what: 'Chip Planänderung „ab … · €“', fg: '--c-ink-soft', on: 'zinc-100 (Badge)', min: 4.5 },
+  { what: 'Label „KATEGORIEN“', fg: '--c-ink-soft', on: 'Nebel', min: 4.5 },
+  { what: 'Kategorie-Name / Summe', fg: '--c-ink', on: 'Glas', min: 4.5 },
+  { what: 'Kategorie-Status „1/6 bezahlt“, „Ø € …“', fg: '--c-ink-mute', on: 'Glas', min: 4.5 },
+  { what: 'Kategorie-Status „✓ bezahlt“', fg: '--c-paid-ink', on: 'Glas', min: 4.5 },
+  { what: 'Kachel Vermögensaufbau: Wert', fg: '--c-ink', on: 'Glas', min: 4.5 },
+  { what: 'Kachel Vermögensaufbau: Label, Unterzeile', fg: '--c-ink-mute', on: 'Glas', min: 4.5 },
+  { what: 'Sparquote „+ € … aus anderen Quellen“', fg: '--c-ink-mute', on: 'Glas', min: 4.5 },
+  { what: 'Leerzustand (gestrichelt, auf dem Hintergrund)', fg: '--c-ink-mute', on: 'Nebel', min: 4.5 },
+  { what: 'Zeitraum unter „Jahresvorschau“', fg: '--c-ink-mute', on: 'Nebel', min: 4.5 },
+  { what: 'Schalter an: Spur gegen das Sheet', fg: '--c-accent', on: 'Glas strong', min: 3 },
+  { what: 'Schalter aus: Spur gegen das Sheet', fg: '--c-check-open', on: 'Glas strong', min: 3 },
+];
+
+describe('Neue und geänderte Paare (korrekt-ruhig)', () => {
+  const cases = (['Hell', 'Dunkel'] as const).flatMap((theme) =>
+    SPRINT_PAIRS.map((p) => [`${theme}: ${p.what} (${p.fg} auf ${p.on}) ≥ ${p.min}`, theme, p] as const),
+  );
+  it.each(cases)('%s', (_, theme, p) => {
+    const v = theme === 'Hell' ? light : dark;
+    const [darkest, lightest] = surfaces(v)[p.on];
+    const fg = rgb(v, p.fg);
+    expect(Math.min(contrast(fg, darkest), contrast(fg, lightest))).toBeGreaterThanOrEqual(p.min);
+  });
+
+  it.each([
+    ['Hell', light],
+    ['Dunkel', dark],
+  ] as const)('%s: Schalter-Knopf gegen die Spur an und aus ≥ 3', (_, v) => {
+    expect(contrast(rgb(v, '--c-surface'), rgb(v, '--c-accent'))).toBeGreaterThanOrEqual(3);
+    expect(contrast(rgb(v, '--c-surface'), rgb(v, '--c-check-open'))).toBeGreaterThanOrEqual(3);
+  });
+});
+
 if (process.env.CONTRAST_REPORT) {
   const lines = [
     '| Thema | Vordergrund | Hintergrund | dunkelster Punkt | hellster Punkt | Ziel | |',

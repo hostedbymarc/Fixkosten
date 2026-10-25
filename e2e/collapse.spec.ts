@@ -219,10 +219,10 @@ test.describe('Verteilung', () => {
     await page.waitForTimeout(300);
     await dist.screenshot({ path: `${DIR}/${info.project.name}-verteilung-offen-nachher.png` });
 
-    // „Summe …“ starts where the rows' content starts (no extra indent)
+    // „Summe …“ (now the only head line) starts where the rows' content starts (no extra indent)
     const lefts = await dist.evaluate((card) => {
       const total = card.querySelector('[data-testid="distribution-total"]')!.getBoundingClientRect().left;
-      const head = card.querySelector('[data-testid="distribution-headline-label"]')!.getBoundingClientRect().left;
+      const head = card.querySelector('[data-testid="distribution-list"] li button svg')!.getBoundingClientRect().left;
       return { total, head };
     });
     expect(Math.abs(lefts.total - lefts.head)).toBeLessThanOrEqual(0.5);

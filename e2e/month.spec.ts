@@ -110,7 +110,7 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     await expect(immos.getByTestId('position-row')).toHaveCount(3);
     await expect(immos).toContainText(eur('€ 991'));
     // Baurechtszins belongs to the category even when not due: visible in the spread amount
-    await expect(immos.getByTestId('group-spread')).toHaveText(eur('Ø € 1.034,67 / Monat'));
+    await expect(immos.getByTestId('group-spread')).toHaveText(eur('Ø € 1.034,67'));
     await expect(app.getByRole('region', { name: 'Wohnen & Leben' }).getByTestId('group-spread')).toHaveCount(0);
     await expect(row(app, 'pos-baurechtszins')).toHaveCount(0);
     await expect(app.getByRole('region', { name: 'Kommt bald' })).toContainText('Baurechtszins');

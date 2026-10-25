@@ -59,7 +59,8 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     await expect(app.getByTestId('free-value')).toHaveText(eur('€ 585')); // 4.788 − 2.412 − Vermögensaufbau 1.791
     await expect(app.getByTestId('free-sub')).toHaveCount(0); // no „tatsächlich“ any more
     await expect(app.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.035,83'));
-    await expect(app.getByTestId('free-wealth')).toHaveText(eur('Vermögensaufbau € 1.791 · Sparquote 37,4 %'));
+    await expect(app.getByTestId('wealth-value')).toHaveText(eur('€ 1.791'));
+    await expect(app.getByTestId('wealth-sub')).toHaveText(eur('Sparquote 37,4 %'));
     await expect(app.getByTestId('kpi-value')).toHaveText(eur('€ 1.917,50'));
     await expect(app.getByTestId('kpi-hint')).toHaveText(eur('davon € 244,50 nicht monatlich'));
     await expect(app.getByRole('region', { name: 'Meine Immos' })).toContainText('Vermögensaufbau');
@@ -79,14 +80,14 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByTestId('free-value')).toHaveText('−€ 2.281'); // 1.922 − 2.412 − Vermögensaufbau 1.791
     await expect(app.getByTestId('free-tile')).not.toContainText('-€');
-    await expect(app.getByTestId('free-wealth')).not.toContainText('bleibt');
+    await expect(app.getByTestId('wealth-tile')).not.toContainText('bleibt');
   });
 
   test('Kacheln: gleicher Aufbau, gleiche Höhe pro Reihe, gleiche Baseline, nichts abgeschnitten oder umgebrochen', async ({ app }, info) => {
     await liveSetup(app);
-    await expect(app.getByTestId('free-wealth')).toBeVisible();
+    await expect(app.getByTestId('wealth-sub')).toBeVisible();
     const tiles = await tileGeometry(app);
-    expect(tiles).toHaveLength(3);
+    expect(tiles).toHaveLength(4); // Netto, Ø pro Monat, Frei verfügbar, Vermögensaufbau
     for (const t of tiles) {
       expect(t.labelToValue, 'gap label → number').toBeLessThanOrEqual(6);
       expect(t.valueTop, 'number sits right under the label').toBe(tiles[0]!.valueTop);
@@ -101,13 +102,12 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
       expect(new Set(row.map((t) => t.height)).size, 'same height in a row').toBe(1);
       expect(new Set(row.map((t) => t.valueBottom)).size, 'same baseline in a row').toBe(1);
     }
-    // phone: Netto + Ø side by side, Frei verfügbar full width below; tablet/desktop: one row of three
+    // phone 2 × 2, tablet/desktop one row of four
     expect(rows.size).toBe(info.project.name.startsWith('iphone') ? 2 : 1);
-    // Frei verfügbar has at most three lines below the number
-    expect(tiles[2]!.subLines.length).toBeLessThanOrEqual(3);
-    // sublines fit on one line; on the phone the half-width Ø tile may use two
-    const maxLines = info.project.name.startsWith('iphone') ? 2 : 1;
-    for (const t of tiles) expect(t.subLines.every((n) => n <= maxLines), 'sublines fit').toBe(true);
+    // every tile: label, value, at most one subline
+    for (const t of tiles) expect(t.subLines.length).toBeLessThanOrEqual(1);
+    // one subline per tile, at most two lines (2 × 2 on phones, 4 in a row on tablets); amounts never split (above)
+    for (const t of tiles) expect(t.subLines.every((n) => n <= 2), 'sublines fit').toBe(true);
     expect(tiles[2]!.subLines.every((n) => n === 1), 'Frei verfügbar: one line each').toBe(true);
     await expectClean(app, 'main');
   });
