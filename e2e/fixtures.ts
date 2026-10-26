@@ -31,6 +31,19 @@ export async function appSettled(page: Page) {
   );
 }
 
+/**
+ * „heute“ moves on (local clock) and the app is opened again: it shows that month. Used where a month
+ * has to be over, e.g. for the banner „Offen aus …“ (only months before today).
+ */
+export async function setToday(page: Page, date: Date) {
+  await page.clock.setFixedTime(date);
+  await page.reload();
+  await appSettled(page);
+}
+
+/** 05.11.2026: October is over. */
+export const NOV_5 = new Date('2026-11-05T10:00:00+01:00');
+
 /** First start on an empty database → import the fixture through the setup dialog. */
 export async function importFixture(page: Page) {
   await expect(page.getByTestId('setup-dialog')).toBeVisible();
