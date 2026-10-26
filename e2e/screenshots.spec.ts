@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { HISTORY, importHistory, openAnalyse } from './analyse-helpers';
-import { animationsDone, expect, goTo, test } from './fixtures';
+import { animationsDone, expect, goTo, test, NOV_5, setToday } from './fixtures';
 
 const DIR = 'docs/screenshots/phase-2';
 
@@ -19,7 +19,7 @@ test.describe('Screenshots Phase 2', () => {
   test('month screens', async ({ app }) => {
     await app.evaluate(() => document.fonts.ready);
     await shot(app, 'monat');
-    await app.getByRole('button', { name: 'Nächster Monat' }).click();
+    await setToday(app, NOV_5); // October is over: „Offen aus Oktober“
     await app.getByRole('button', { name: /Offen aus Oktober/ }).click();
     // one-off as sub-row under Strom
     await app.getByRole('button', { name: 'Strom – Details' }).click();
