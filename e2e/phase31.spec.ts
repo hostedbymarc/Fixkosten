@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { openAnalyse } from './analyse-helpers';
-import { animationsDone, eur, expect, goTo, isTouchProject, row, test } from './fixtures';
+import { animationsDone, eur, expect, goTo, isTouchProject, row, test, setToday } from './fixtures';
 import { expectClean } from './measure';
 
 async function tap(_page: Page, locator: ReturnType<Page['locator']>) {
@@ -96,8 +96,7 @@ test.describe('Einmalig', () => {
 
   test('unbezahlt im vergangenen Monat → „Offen aus …“', async ({ app }) => {
     await createRepair(app);
-    await app.getByRole('button', { name: 'Nächster Monat' }).click();
-    await app.getByRole('button', { name: 'Nächster Monat' }).click();
+    await setToday(app, new Date('2026-12-05T10:00:00+01:00')); // today December: October and November are over
     // October (Depotentgelt) and November are open → „Offen aus Vormonaten“
     await app.getByRole('button', { name: /Offen aus/ }).click();
     const open = app.getByTestId('open-item').filter({ hasText: 'Reparatur' });
@@ -139,7 +138,7 @@ test.describe('Betrag ändern', () => {
     await openAnalyse(app);
     expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');
     expect(await forecastDue(app, 'Apr 2027')).toBe('€ 2.755');
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 504 / Jahr'));
   });
 
@@ -160,7 +159,7 @@ test.describe('Betrag ändern', () => {
 
     await openAnalyse(app);
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 1.104 / Jahr'));
 
     await openMiete(app);
@@ -174,7 +173,7 @@ test.describe('Betrag ändern', () => {
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
 
     await undo.click();
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
   });
 
@@ -193,7 +192,7 @@ test.describe('Betrag ändern', () => {
     // Gesamt counts the tick with what was debited (€ 1.008), not the new plan (audit decision C)
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
     await openAnalyse(app);
-    await expect(app.getByTestId('optimizations-list-head')).toHaveText('Umgesetzt');
+    await expect(app.getByTestId('optimizations-list-head')).toHaveCount(0); // exactly one change: no label
     await expect(app.getByTestId('optimizations-list')).toContainText(eur('+€ 504 / Jahr'));
   });
 

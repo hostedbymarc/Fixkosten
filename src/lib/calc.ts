@@ -519,18 +519,42 @@ export function firstDataPeriod(ds: Dataset): Period | null {
 
 export interface OpenGroup {
   period: Period;
+  /** open Fixkosten items of the month (the rows of the banner) */
   items: DueItem[];
+  /** „offen“ as in that month's hero: Fixkosten without Vermögensaufbau, one-offs included */
+  count: number;
   planned: number;
+  /** open Vermögensaufbau items of the month – shown separately, never in the banner figure */
+  savingsItems: DueItem[];
+  savingsCount: number;
+  savingsPlanned: number;
 }
 
-/** Unticked items of earlier months (since the first month with data), newest first. */
-export function openFromPrevious(ds: Dataset, period: Period): OpenGroup[] {
+/**
+ * „Offen aus <Monat>“: what is still open in months that are over. Only months before both the
+ * shown month and today's month (local time) – a running or future month never produces a banner.
+ * Count and amount per month are exactly the hero's „offen“ (monthFigures: Fixkosten without
+ * Vermögensaufbau); open Vermögensaufbau is kept apart. Since the first month with data, newest first.
+ */
+export function openFromPrevious(ds: Dataset, period: Period, today: Period): OpenGroup[] {
   const first = firstDataPeriod(ds);
   if (!first) return [];
+  const before = period < today ? period : today;
   const groups: OpenGroup[] = [];
-  for (let p = addPeriods(period, -1); p >= first; p = addPeriods(p, -1)) {
-    const items = dueItems(ds, p).filter((i) => i.due && i.status === 'open');
-    if (items.length) groups.push({ period: p, items, planned: sumMoney(items.map((i) => i.planned)) });
+  for (let p = addPeriods(before, -1); p >= first; p = addPeriods(p, -1)) {
+    const f = monthFigures(ds, p);
+    const savings = tally(monthEntries(ds, p).filter((e) => e.kind === 'savings'));
+    if (f.openCount === 0 && savings.openCount === 0) continue;
+    const open = dueItems(ds, p).filter((i) => i.due && i.status === 'open');
+    groups.push({
+      period: p,
+      items: open.filter((i) => i.kind === 'expense'),
+      count: f.openCount,
+      planned: shownOpen(f),
+      savingsItems: open.filter((i) => i.kind === 'savings'),
+      savingsCount: savings.openCount,
+      savingsPlanned: shownOpen(savings),
+    });
   }
   return groups;
 }
@@ -562,13 +586,19 @@ export function paymentDelta(payment: Payment): number {
   return payment.status === 'paid' ? fromCents(toCents(payment.actualAmount) - toCents(payment.plannedAmount)) : 0;
 }
 
+/** Banner amount: Σ „offen“ (hero) of the months in the banner. */
 export function sumOpen(groups: OpenGroup[]): number {
   return sumMoney(groups.map((g) => g.planned));
 }
 
-/** Number of open items in „Offen aus Vormonaten“. */
+/** Banner count: Σ open count (hero) of the months in the banner. */
 export function countOpen(groups: OpenGroup[]): number {
-  return groups.reduce((n, g) => n + g.items.length, 0);
+  return groups.reduce((n, g) => n + g.count, 0);
+}
+
+/** The separate line „+ n Vermögensaufbau · € …“ of the banner detail. */
+export function openSavings(groups: OpenGroup[]): { count: number; planned: number } {
+  return { count: groups.reduce((n, g) => n + g.savingsCount, 0), planned: sumMoney(groups.map((g) => g.savingsPlanned)) };
 }
 
 /** Last `limit` payments of a position, newest first. */

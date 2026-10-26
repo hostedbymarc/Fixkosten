@@ -40,6 +40,7 @@ import {
   openFromPrevious,
   sumOpen,
   countOpen,
+  openSavings,
   monthFigures,
   categoryFigures,
   progressPercent,
@@ -58,6 +59,7 @@ import {
 } from '../lib/calc';
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
+import { useToday } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
 interface Props {
@@ -92,7 +94,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
-  const openGroups = useMemo(() => openFromPrevious(ds, period), [ds, period]);
+  const today = useToday();
+  const openGroups = useMemo(() => openFromPrevious(ds, period, today), [ds, period, today]);
   const openItem =
     openKey === null
       ? null
@@ -298,13 +301,15 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
                       <span lang="de" className="line-clamp-2 hyphens-auto break-words text-[15px] font-medium leading-6 text-ink">
                         {item.position.name}
                       </span>
-                      {/* one meta line: month chip and rhythm; wraps only as whole pieces */}
-                      <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      {/* fixed grid on every viewport: line 2 the month chip, line 3 the rhythm */}
+                      <span className="mt-1 flex" data-testid="upcoming-month">
                         <Badge tone="warn">{monthName(item.period)}</Badge>
-                        {item.plan && (
-                          <span className="whitespace-nowrap text-[13px] leading-[22px] text-ink-mute">{scheduleLabel(item.plan, item.period)}</span>
-                        )}
                       </span>
+                      {item.plan && (
+                        <span className="mt-0.5 block text-[13px] leading-5 text-ink-mute" data-testid="upcoming-rhythm">
+                          {scheduleLabel(item.plan, item.period)}
+                        </span>
+                      )}
                     </span>
                     <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold leading-6 text-ink">{formatEUR(item.planned)}</span>
                   </li>
@@ -630,7 +635,8 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         </span>
         {calculated === null && (
           <span className={tileSub} data-testid="free-sub">
-            rechnet mit dem <span className="font-semibold text-accent-ink">Netto-Gehalt</span>
+            {/* „Netto-Gehalt“ never splits at its hyphen: the line breaks before it */}
+            rechnet mit dem <span className="whitespace-nowrap font-semibold text-accent-ink">Netto-Gehalt</span>
           </span>
         )}
         {average !== null && (
@@ -786,6 +792,8 @@ function OpenFromPrevious({
 }) {
   const [expanded, setExpanded] = useState(false);
   const count = countOpen(groups);
+  const savings = openSavings(groups);
+  const savingsText = `+ ${savings.count} Vermögensaufbau · ${formatEUR(savings.planned)}`;
   const title = groups.length === 1 ? `Offen aus ${monthName(groups[0]!.period)}` : 'Offen aus Vormonaten';
   const contentId = useId();
   return (
@@ -799,8 +807,8 @@ function OpenFromPrevious({
       >
         <AlertIcon size={18} className="shrink-0 text-over" />
         <span className="flex-1 text-[15px] font-semibold text-ink">{title}</span>
-        <span className="num text-[14px] text-ink-mute">
-          {count} · {formatEUR(sumOpen(groups))}
+        <span className="num text-[14px] text-ink-mute" data-testid="open-previous-sum">
+          {count > 0 ? `${count} · ${formatEUR(sumOpen(groups))}` : savingsText}
         </span>
         <ChevronRight size={18} className={`text-ink-mute transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </button>
@@ -811,42 +819,61 @@ function OpenFromPrevious({
               {groups.length > 1 && <div className="section-title px-4 pb-1 pt-3">{periodLabel(g.period)}</div>}
               <ul className="divide-y divide-line">
                 {g.items.map((item) => (
-                  <li
-                    key={item.position.id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
-                    data-testid="open-item"
-                    data-position={item.position.id}
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-medium text-ink">{item.position.name}</span>
-                      <span className="num text-[13px] text-ink-mute">
-                        {formatEUR(item.planned)} · {periodLabel(item.period)}
-                      </span>
-                    </span>
-                    <span className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onPay(item)}
-                        className="focus-ring h-11 rounded-xl bg-accent-soft px-3 text-[14px] font-semibold text-accent-strong hover:bg-accent-soft-hover"
-                      >
-                        Bezahlt
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onSkip(item)}
-                        className="focus-ring h-11 rounded-xl px-3 text-[14px] font-medium text-ink-soft hover:bg-zinc-100"
-                      >
-                        Entfallen
-                      </button>
-                    </span>
-                  </li>
+                  <OpenItemRow key={`${item.period}-${item.position.id}`} item={item} onPay={onPay} onSkip={onSkip} />
                 ))}
               </ul>
             </div>
           ))}
+          {/* open Vermögensaufbau of these months: own line, then its rows – not part of the banner figure */}
+          {savings.count > 0 && (
+            <div className="border-t border-line">
+              <p className="num px-4 pb-1 pt-3 text-[13px] text-ink-mute" data-testid="open-previous-savings">
+                {savingsText}
+              </p>
+              <ul className="divide-y divide-line">
+                {groups.flatMap((g) => g.savingsItems).map((item) => (
+                  <OpenItemRow key={`${item.period}-${item.position.id}`} item={item} onPay={onPay} onSkip={onSkip} />
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
     </section>
+  );
+}
+
+/** One open item of an earlier month with „Bezahlt“ / „Entfallen“. */
+function OpenItemRow({ item, onPay, onSkip }: { item: DueItem; onPay: (item: DueItem) => void; onSkip: (item: DueItem) => void }) {
+  return (
+    <li
+      className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3"
+      data-testid="open-item"
+      data-position={item.position.id}
+    >
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-[15px] font-medium text-ink">{item.position.name}</span>
+        <span className="num text-[13px] text-ink-mute">
+          {formatEUR(item.planned)} · {periodLabel(item.period)}
+        </span>
+      </span>
+      <span className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onPay(item)}
+          className="focus-ring h-11 rounded-xl bg-accent-soft px-3 text-[14px] font-semibold text-accent-strong hover:bg-accent-soft-hover"
+        >
+          Bezahlt
+        </button>
+        <button
+          type="button"
+          onClick={() => onSkip(item)}
+          className="focus-ring h-11 rounded-xl px-3 text-[14px] font-medium text-ink-soft hover:bg-zinc-100"
+        >
+          Entfallen
+        </button>
+      </span>
+    </li>
   );
 }
 

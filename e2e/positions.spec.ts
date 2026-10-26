@@ -1,4 +1,4 @@
-import { eur, expect, goTo, isSidebarLayout, isTouchProject, row, test, touchSwipe } from './fixtures';
+import { eur, expect, goTo, isSidebarLayout, isTouchProject, row, test, touchSwipe, NOV_5, setToday } from './fixtures';
 import type { Page } from '@playwright/test';
 
 const listRow = (page: Page, name: string) =>
@@ -259,7 +259,7 @@ test.describe('Sortieren', () => {
 
 test.describe('Offen aus Vormonat & Einmalbeträge', () => {
   test('November shows "Offen aus Oktober" collapsed; Entfallen removes it', async ({ app }) => {
-    await nextMonth(app);
+    await setToday(app, NOV_5); // October is over: today is November
     const section = app.getByTestId('open-previous');
     await expect(section).toContainText('Offen aus Oktober');
     await expect(section).toContainText(eur('1 · € 35'));
@@ -275,7 +275,7 @@ test.describe('Offen aus Vormonat & Einmalbeträge', () => {
   });
 
   test('"Bezahlt" books it in October: € 3.403 abgebucht, November unchanged', async ({ app }) => {
-    await nextMonth(app);
+    await setToday(app, NOV_5);
     const section = app.getByTestId('open-previous');
     await section.getByRole('button', { name: /Offen aus Oktober/ }).click();
     await section.getByRole('button', { name: 'Bezahlt' }).click();

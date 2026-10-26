@@ -280,11 +280,11 @@ describe('one-offs and skipped payments', () => {
   it('open from Oct: pay later with another amount', async () => {
     const db = await imported();
     let ds = await loadDataset(db);
-    expect(openFromPrevious(ds, NOV)[0]?.items.map((i) => i.position.id)).toEqual(['pos-depotentgelt']);
+    expect(openFromPrevious(ds, NOV, NOV)[0]?.items.map((i) => i.position.id)).toEqual(['pos-depotentgelt']);
     const p = await markPaid(db, 'pos-depotentgelt', OCT, 35);
     await updatePayment(db, p.id, { actualAmount: 36.9 });
     ds = await loadDataset(db);
-    expect(openFromPrevious(ds, NOV)).toEqual([]);
+    expect(openFromPrevious(ds, NOV, NOV)).toEqual([]);
     expect(periodProgress(ds, OCT).paidActual).toBe(3404.9);
     expect(plannedForPeriod(ds, NOV)).toBe(2664);
   });
@@ -294,7 +294,7 @@ describe('one-offs and skipped payments', () => {
     const skipped: Payment = await markSkipped(db, 'pos-depotentgelt', OCT, 35);
     expect(skipped.status).toBe('skipped');
     const ds = await loadDataset(db);
-    expect(openFromPrevious(ds, NOV)).toEqual([]);
+    expect(openFromPrevious(ds, NOV, NOV)).toEqual([]);
     expect(plannedForPeriod(ds, OCT)).toBe(3368);
     expect((await markPaid(db, 'pos-depotentgelt', OCT, 35)).status).toBe('paid');
   });
