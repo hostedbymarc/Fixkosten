@@ -193,9 +193,9 @@ test.describe('Analyse', () => {
     // „Frei verfügbar & Sparquote“ is gone (no actual values any more)
     await expect(page.getByTestId('monthclose')).toHaveCount(0);
 
-    // optimisations („Geplante Änderungen“): „Geplant“ once inside the card, no chip, signed amount
-    await expect(page.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
-    await expect(page.getByTestId('optimizations').locator('.glass').getByText('Geplant', { exact: false })).toHaveCount(1);
+    // optimisations („Geplante Änderungen“): one change → no „Geplant“ label inside the card, no chip, signed amount
+    await expect(page.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
+    await expect(page.getByTestId('optimizations').locator('.glass').getByText('Geplant', { exact: false })).toHaveCount(0);
     const row = page.getByTestId('optimizations-planned').locator('li');
     await expect(row).toContainText(eur('Amex Gebühr € 690 → € 717,80'));
     await expect(row).toContainText('ab 06.10.2027');

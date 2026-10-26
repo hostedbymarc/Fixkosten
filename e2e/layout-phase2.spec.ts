@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { animationsDone, expect, goTo, test } from './fixtures';
+import { animationsDone, expect, goTo, test, NOV_5, setToday } from './fixtures';
 import { expectClean } from './measure';
 
 async function sheet(page: Page) {
@@ -73,7 +73,7 @@ test.describe('Layout Phase 2 (gemessen)', () => {
   });
 
   test('Monat with open items and one-off row', async ({ app }) => {
-    await app.getByRole('button', { name: 'Nächster Monat' }).click();
+    await setToday(app, NOV_5); // October is over
     await app.getByRole('button', { name: /Offen aus Oktober/ }).click();
     await expectClean(app, 'main');
   });
