@@ -410,9 +410,12 @@ export function OptimizationSection({ ds, today }: { ds: Dataset; today: Period 
         Geplante Änderungen
       </h2>
       <div className="glass flex flex-col gap-6 p-4 md:p-5">
-        {planned.length > 0 && <OptimizationList title="Geplant" total={t.plannedAnnual} entries={planned} testId="optimizations-planned" />}
+        {/* exactly one change: no label above it (the section title already says it) */}
+        {planned.length > 0 && (
+          <OptimizationList title="Geplant" showTitle={t.entries.length > 1} total={t.plannedAnnual} entries={planned} testId="optimizations-planned" />
+        )}
         {implemented.length > 0 && (
-          <OptimizationList title="Umgesetzt" total={t.implementedAnnual} entries={implemented} testId="optimizations-list" />
+          <OptimizationList title="Umgesetzt" showTitle={t.entries.length > 1} total={t.implementedAnnual} entries={implemented} testId="optimizations-list" />
         )}
       </div>
     </section>
@@ -425,19 +428,33 @@ function deltaClass(value: number): string {
   return c > 0 ? 'text-over' : c < 0 ? 'text-accent-ink' : 'text-ink-mute';
 }
 
-function OptimizationList({ title, total, entries, testId }: { title: string; total: number; entries: OptimizationEntry[]; testId: string }) {
+function OptimizationList({
+  title,
+  showTitle,
+  total,
+  entries,
+  testId,
+}: {
+  title: string;
+  showTitle: boolean;
+  total: number;
+  entries: OptimizationEntry[];
+  testId: string;
+}) {
   return (
     <div>
-      <h3 className="mb-1 text-[13px] font-medium text-ink-mute" data-testid={`${testId}-head`}>
-        {title}
-        {/* the sum line only says something new from two changes on */}
-        {entries.length >= 2 && (
-          <>
-            {' · '}
-            <span className={`num whitespace-nowrap font-semibold ${deltaClass(total)}`}>{formatDelta(total)} / Jahr</span>
-          </>
-        )}
-      </h3>
+      {showTitle && (
+        <h3 className="mb-1 text-[13px] font-medium text-ink-mute" data-testid={`${testId}-head`}>
+          {title}
+          {/* the sum line only says something new from two changes on */}
+          {entries.length >= 2 && (
+            <>
+              {' · '}
+              <span className={`num whitespace-nowrap font-semibold ${deltaClass(total)}`}>{formatDelta(total)} / Jahr</span>
+            </>
+          )}
+        </h3>
+      )}
       <ol className="flex flex-col divide-y divide-line" data-testid={testId}>
         {entries.map((e) => {
           const sameSchedule = planDescription(e.from) === planDescription(e.to);

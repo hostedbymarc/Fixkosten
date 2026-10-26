@@ -111,7 +111,7 @@ describe('Einmalig: Reparatur € 500, fällig 15.11.2026', () => {
     expect(isOnceDone(ds, p, OCT)).toBe(false);
     expect(isOnceDone(ds, p, '2026-11')).toBe(false);
     expect(isOnceDone(ds, p, '2026-12')).toBe(true);
-    expect(openFromPrevious(ds, '2026-12').find((g) => g.period === '2026-11')!.items.map((i) => i.position.name)).toContain('Reparatur');
+    expect(openFromPrevious(ds, '2026-12', '2026-12').find((g) => g.period === '2026-11')!.items.map((i) => i.position.name)).toContain('Reparatur');
     const paid = withRepair();
     paid.payments.push({ id: 'x', positionId: 'pos-reparatur', period: '2026-11', status: 'paid', plannedAmount: 500, actualAmount: 480, paidAt: '2026-11-15T10:00:00.000Z' });
     expect(isOnceDone(paid, position(paid, 'pos-reparatur'), '2026-11')).toBe(true);

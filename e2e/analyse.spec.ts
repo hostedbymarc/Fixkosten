@@ -143,7 +143,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await app.keyboard.press('Escape');
     await openAnalyse(app);
     // November lies after "today" (October): a planned change
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     const planned = app.getByTestId('optimizations-planned');
     await expect(planned.locator('> li')).toHaveCount(1);
     await expect(planned).toContainText(eur('Handy € 10 → € 8'));

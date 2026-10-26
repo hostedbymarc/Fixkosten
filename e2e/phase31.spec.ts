@@ -139,7 +139,7 @@ test.describe('Betrag ändern', () => {
     await openAnalyse(app);
     expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');
     expect(await forecastDue(app, 'Apr 2027')).toBe('€ 2.755');
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 504 / Jahr'));
   });
 
@@ -160,7 +160,7 @@ test.describe('Betrag ändern', () => {
 
     await openAnalyse(app);
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     await expect(app.getByTestId('optimizations-planned')).toContainText(eur('+€ 1.104 / Jahr'));
 
     await openMiete(app);
@@ -174,7 +174,7 @@ test.describe('Betrag ändern', () => {
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
 
     await undo.click();
-    await expect(app.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+    await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
     expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
   });
 
