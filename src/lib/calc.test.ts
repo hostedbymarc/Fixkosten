@@ -330,7 +330,7 @@ describe('actuals, deltas, one-offs', () => {
 describe('open from previous months', () => {
   it('Depotentgelt open in Oct → shown in Nov under "Offen aus Oktober"; paid → Oct € 3.403, Nov unchanged', () => {
     const ds = seed();
-    const groups = openFromPrevious(ds, '2026-11');
+    const groups = openFromPrevious(ds, '2026-11', '2026-11');
     expect(groups.map((g) => [g.period, g.items.map((i) => i.position.name), g.planned])).toEqual([
       ['2026-10', ['Depotentgelt'], 35],
     ]);
@@ -341,7 +341,7 @@ describe('open from previous months', () => {
       id: 'p-depot', positionId: 'pos-depotentgelt', period: OCT, status: 'paid',
       plannedAmount: 35, actualAmount: 35, paidAt: '2026-11-02T08:00:00.000Z',
     });
-    expect(openFromPrevious(ds, '2026-11')).toEqual([]);
+    expect(openFromPrevious(ds, '2026-11', '2026-11')).toEqual([]);
     expect(periodProgress(ds, OCT).paidActual).toBe(3403);
     expect(plannedForPeriod(ds, '2026-11')).toBe(2664);
   });
@@ -353,7 +353,7 @@ describe('open from previous months', () => {
       id: 'p-skip', positionId: 'pos-depotentgelt', period: OCT, status: 'skipped',
       plannedAmount: 35, actualAmount: 0, paidAt: '2026-11-02T08:00:00.000Z',
     });
-    expect(openFromPrevious(ds, '2026-11')).toEqual([]);
+    expect(openFromPrevious(ds, '2026-11', '2026-11')).toEqual([]);
     expect(plannedForPeriod(ds, OCT)).toBe(3368);
     expect(expectedSpend(ds, OCT)).toBe(3368);
     expect(actualForPeriod(ds, OCT)).toBe(3368);
@@ -363,8 +363,8 @@ describe('open from previous months', () => {
 
   it('nothing before the first month with data is ever reported open', () => {
     const ds = seed();
-    expect(openFromPrevious(ds, OCT)).toEqual([]);
-    const groups = openFromPrevious(ds, '2027-01');
+    expect(openFromPrevious(ds, OCT, OCT)).toEqual([]);
+    const groups = openFromPrevious(ds, '2027-01', '2027-01');
     expect(groups.map((g) => g.period)).toEqual(['2026-12', '2026-11', '2026-10']);
   });
 });

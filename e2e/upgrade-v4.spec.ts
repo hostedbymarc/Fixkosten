@@ -104,7 +104,8 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await expect(page.getByTestId('history-entry').first()).toContainText(eur('−€ 2 / Monat · −€ 24 / Jahr'));
   await page.keyboard.press('Escape');
   await openAnalyse(page);
-  await expect(page.getByTestId('optimizations-planned-head')).toHaveText('Geplant');
+  await expect(page.getByTestId('optimizations-planned')).toContainText('Handy'); // one change: listed without the „Geplant“ label
+  await expect(page.getByTestId('optimizations-planned-head')).toHaveCount(0);
   // „Frei verfügbar (tatsächlich)“ is no longer shown; the value stays in the database (monthClose compared above)
   await expect(page.getByTestId('monthclose')).toHaveCount(0);
   expect((await rawTable(page, 'monthClose')) as { freeActual?: number }[]).toEqual([expect.objectContaining({ freeActual: 650 })]);
