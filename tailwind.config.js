@@ -56,7 +56,7 @@ export default {
           900: c('zinc-900'),
         },
       },
-      borderRadius: { card: '20px', tile: '16px' },
+      borderRadius: { card: '24px', tile: '20px' },
       boxShadow: {
         card: 'var(--glass-shadow)',
         sheet: 'var(--shadow-sheet)',

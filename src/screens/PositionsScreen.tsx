@@ -1,4 +1,5 @@
 import { useRef, useState, type MouseEvent } from 'react';
+import { Screen } from '../components/Screen';
 import { categoryColor } from '../lib/categoryColors';
 import { AmountChangeSheet } from '../components/AmountChangeSheet';
 import { CategoriesSheet } from '../components/CategoriesSheet';
@@ -78,7 +79,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-24 lg:px-8">
+    <Screen name="positionen" className="mx-auto w-full max-w-[1100px] px-4 pb-24 lg:px-8">
       <header className="flex items-center justify-between gap-3 py-3 lg:py-6">
         <div>
           <h1 className="text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]">Positionen</h1>
@@ -206,7 +207,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
       {sheet?.kind === 'categories' && (
         <CategoriesSheet ds={ds} onClose={() => setSheet(null)} returnFocusTo={trigger.current} />
       )}
-    </div>
+    </Screen>
   );
 }
 

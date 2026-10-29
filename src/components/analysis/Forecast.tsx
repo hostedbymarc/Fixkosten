@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DeferredChart } from './DeferredChart';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { forecastRange, forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
 import { formatCompactEUR, formatEUR } from '../../lib/format';
@@ -323,6 +324,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         role="img"
         aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
       >
+        <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart
             data={rows}
@@ -402,6 +404,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             />
           </BarChart>
         </ResponsiveContainer>
+        </DeferredChart>
       </div>
       <p
         className="mt-2 flex items-center justify-center gap-x-3 whitespace-nowrap text-[12px] text-ink-mute"

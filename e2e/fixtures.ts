@@ -6,14 +6,14 @@ export const FIXTURE = 'tests/fixtures/seed.json';
 
 /**
  * Lade-Animation over: the splash is gone and the entrance of the current screen has finished
- * (a lazy screen first replaces its loader). Nothing is moving or fading any more afterwards.
+ * (a lazy screen first replaces its skeleton). Nothing is moving or fading any more afterwards.
  */
 export async function appSettled(page: Page) {
   await expect(page.locator('#splash')).toHaveCount(0);
-  // the current screen has come in (a lazy screen only after its loader)
+  // the current screen has come in (a lazy screen only after its skeleton)
   const [route, supported] = await page.evaluate(() => [location.hash.replace(/^#\/?/, '') || 'monat', document.documentElement.hasAttribute('data-entrance')] as const);
   if (supported) await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
-  await expect(page.locator('main [data-testid="loader"]')).toHaveCount(0);
+  await expect(page.locator('main [data-testid="skeleton"]')).toHaveCount(0);
   await page.evaluate(
     () =>
       new Promise<void>((resolve) =>
@@ -24,7 +24,10 @@ export async function appSettled(page: Page) {
                 .getAnimations()
                 .filter((a) => a.id === 'entrance')
                 .map((a) => a.finished),
-            ).then(() => resolve()),
+            )
+              // Analyse: the bars grow once the cards have arrived
+              .then(() => Promise.all(document.getAnimations().filter((a) => a.id === 'bar-grow').map((a) => a.finished)))
+              .then(() => resolve()),
           ),
         ),
       ),

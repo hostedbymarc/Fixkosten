@@ -28,7 +28,8 @@ async function liveSetup(app: Page) {
 async function tileGeometry(app: Page) {
   return app.getByTestId('salary-tile').locator('..').evaluate((row) => {
     // „Frei verfügbar“ sits in a wrapper next to its ⓘ button: measure the tile itself
-    const tiles = Array.from(row.children).map((c) => (c.matches('button, [data-testid="kpi-value"]') || c.querySelector(':scope > [data-testid="kpi-value"]') ? c : c.querySelector('[data-testid="free-tile"]') ?? c)) as HTMLElement[];
+    // the shared blur layer of the tile group is not a tile
+    const tiles = Array.from(row.children).filter((c) => !c.classList.contains('glass-group-blur')).map((c) => (c.matches('button, [data-testid="kpi-value"]') || c.querySelector(':scope > [data-testid="kpi-value"]') ? c : c.querySelector('[data-testid="free-tile"]') ?? c)) as HTMLElement[];
     return tiles.map((tile) => {
       const [label, value, ...subs] = Array.from(tile.children) as HTMLElement[];
       const t = tile.getBoundingClientRect();

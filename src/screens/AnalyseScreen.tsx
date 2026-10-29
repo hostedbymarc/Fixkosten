@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { startTransition, useLayoutEffect, useState } from 'react';
+import { Screen } from '../components/Screen';
+import { growBars } from '../lib/barGrowth';
 import {
   DistributionSection,
   ForecastSection,
@@ -23,13 +25,18 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
   const [range, setRange] = useState<Range>('12m');
   const periods = historyPeriods(ds, today, range);
   const months = dataMonths(ds, today);
+  // the sections render as a transition (in slices of a few ms): opening the tab never blocks the
+  // main thread for long; the entrance starts once they are there
+  const [shown, setShown] = useState(false);
+  useLayoutEffect(() => startTransition(() => setShown(true)), []);
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8" data-testid="analyse">
+    <Screen name="analyse" className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8" data-testid="analyse" ready={shown} onEntered={growBars}>
       <header className="py-3 lg:py-6">
         <h1 className="flex h-11 items-center text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]">Analyse</h1>
       </header>
 
+      {shown && (
       <div className="flex flex-col gap-8">
         <div className="grid min-w-0 grid-cols-1 gap-8 xl:grid-cols-2">
           <ForecastSection ds={ds} today={today} />
@@ -69,6 +76,7 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
           <OptimizationSection ds={ds} today={today} />
         </div>
       </div>
-    </div>
+      )}
+    </Screen>
   );
 }

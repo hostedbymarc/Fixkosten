@@ -3,6 +3,8 @@ import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
+import { GlassGroup } from '../components/GlassGroup';
+import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
@@ -182,7 +184,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   }
 
   return (
-    <div
+    <Screen
+      name="monat"
       className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8"
       style={{ touchAction: 'pan-y' }}
       data-testid="month-screen"
@@ -202,7 +205,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       <div className="grid gap-3 md:gap-4">
         <HeroCard figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         {/* iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
             ref={salaryTile}
             period={period}
@@ -223,7 +226,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             onOpen={() => openClose(closeTile.current)}
           />
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
-        </div>
+        </GlassGroup>
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
@@ -419,7 +422,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           onDelete={(o) => void removeOneOff(o)}
         />
       )}
-    </div>
+    </Screen>
   );
 }
 
@@ -597,7 +600,7 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
  * number directly below, at most one short subline. Content is top-aligned; the
  * grid stretches tiles of a row to the same height, so the numbers share a baseline.
  */
-const tileClass = 'glass flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
+const tileClass = 'glass glass-tile flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
 const tileLabel = 'block truncate text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
 const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 lg:text-[20px] lg:leading-7';
 const tileSub = 'mt-1 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:tracking-normal';

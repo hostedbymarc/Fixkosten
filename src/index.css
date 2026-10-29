@@ -9,8 +9,11 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
-  /* floating tab bar: 60 px bar, 12 px from the edges, home indicator respected */
-  --tabbar-h: 60px;
+  /* floating tab bar: 64 px capsule (52 px compact), 12 px from the edges, home indicator respected */
+  --tabbar-h: 64px;
+  --tabbar-h-compact: 52px;
+  /* compact: icons move into the middle of the 52 px capsule, the labels fade out */
+  --tab-compact-shift: 15px;
   --tabbar-gap: max(12px, var(--safe-bottom));
   --tabbar-space: calc(var(--tabbar-h) + var(--tabbar-gap));
 }
@@ -63,11 +66,36 @@ body::before {
   background-position: left top;
   background-size: 100% 660px;
 }
+/* Körnung: fine and calm. A 256 × 256 CSS px tile drawn for 2× pixel density (the SVG is 512 units:
+   vector, so the browser rasterises it at the device resolution – sharp on Retina): feTurbulence
+   fractalNoise, baseFrequency .85, 3 octaves, fixed seed, monochrome (R = G = B, opaque), in
+   soft-light at --grain-opacity (light .045, dark .06).
+   body::after is an opaque copy of the background (base colour + Nebel) with the grain blended in as
+   one more background layer (background-blend-mode): no mix-blend-mode, so the page is never one big
+   blend group that has to be composited again in every frame. Soft-light is linear on each side of
+   50 % grey, so noise squeezed towards grey by the factor k equals the noise at opacity k:
+   s' = 0.5 + k · (s − 0.5) = k · s + (1 − k) / 2 (the colour matrix below; keep k = --grain-opacity).
+   Only this background layer carries it – glass blurs it away. Static and fixed, gone in print and
+   with „Transparenz reduzieren“ (body::before then shows the plain background). */
+:root {
+  --grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.045 0 0 0 0.4775 0.045 0 0 0 0.4775 0.045 0 0 0 0.4775 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.06 0 0 0 0.47 0.06 0 0 0 0.47 0.06 0 0 0 0.47 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+:root[data-theme='dark'] {
+  --grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.06 0 0 0 0.47 0.06 0 0 0 0.47 0.06 0 0 0 0.47 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 body::after {
   z-index: -1;
-  opacity: var(--grain-opacity);
-  background-size: 160px 160px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-color: var(--nebel-base);
+  background-image: var(--grain-image), var(--nebel-image, none);
+  background-blend-mode: soft-light, normal;
+  background-repeat: repeat, no-repeat;
+  background-position: left top, left top;
+  background-size: 256px 256px, 100% 660px;
 }
 
 /* Oberer Rand – the one place for the status bar area (no per-screen copies).
@@ -148,10 +176,20 @@ body::after {
     display: none !important;
   }
   .glass,
-  .glass-strong {
+  .glass-strong,
+  .glass-clear {
     background: var(--glass-fallback) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+  }
+  .glass-group-blur,
+  .glass::before,
+  .glass::after,
+  .glass-strong::before,
+  .glass-strong::after,
+  .glass-clear::before,
+  .glass-clear::after {
+    display: none !important;
   }
   /* tab bar: once, at the end of the page instead of floating over the content */
   [data-testid='tabbar'] {
@@ -183,21 +221,153 @@ body::after {
 }
 
 @layer components {
-  /* Glas: THE surface style (cards, hero, tiles, banner, sidebar, toasts).
-     .glass-strong for tab bar, sheets and dialogs. Rows inside stay transparent. */
+  /* Liquid Glass – THE material, defined only here (no copies per component):
+     .glass        cards, hero, tiles, banner, toasts' content cards (radius 24, tiles 20 via .glass-tile)
+     .glass-strong sheets, dialogs, menus, toasts (fill .72)
+     .glass-clear  tab bar and sidebar (fill .40, stronger rim)
+     Fill + 1 px rim (::before, 135° gradient through a mask-composite ring) + static specular
+     (::after, radial, top left) + two-step shadow. Both pseudos sit at z-index −1 inside the surface's
+     own stacking context: above its fill, below its content. No refraction (SVG displacement in
+     backdrop-filter): Safari does not support it.
+     Blur: always on .glass-strong / .glass-clear; on cards only with [data-blur], which
+     src/lib/glassBudget.ts grants to at most 8 surfaces per screen (the visible ones first). */
   .glass,
-  .glass-strong {
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
+  .glass-strong,
+  .glass-clear {
+    --glass-r: 24px;
+    --glass-fill: var(--glass-bg);
+    --rim-1: var(--glass-rim-1);
+    --rim-2: var(--glass-rim-2);
+    --rim-3: var(--glass-rim-3);
+    position: relative;
+    isolation: isolate;
+    /* the rim is drawn in this 1 px: the box keeps its size */
+    border: 1px solid var(--glass-fallback-clear);
+    border-radius: var(--glass-r);
+    background: var(--glass-fill);
     box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    backdrop-filter: blur(20px) saturate(160%);
-  }
-  .glass {
-    background: var(--glass-bg);
   }
   .glass-strong {
-    background: var(--glass-strong-bg);
+    --glass-fill: var(--glass-strong-bg);
+  }
+  .glass-clear {
+    --glass-fill: var(--glass-clear-bg);
+    --rim-1: var(--glass-rim-clear-1);
+    --rim-2: var(--glass-rim-clear-2);
+    --rim-3: var(--glass-rim-clear-3);
+  }
+  .glass-tile {
+    --glass-r: 20px;
+  }
+  .glass::before,
+  .glass-strong::before,
+  .glass-clear::before,
+  .glass-pill::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    padding: 1px;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(135deg, var(--rim-1), var(--rim-2) 50%, var(--rim-3));
+    -webkit-mask:
+      linear-gradient(var(--mask-solid), var(--mask-solid)) content-box,
+      linear-gradient(var(--mask-solid), var(--mask-solid));
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(var(--mask-solid), var(--mask-solid)) content-box exclude,
+      linear-gradient(var(--mask-solid), var(--mask-solid));
+  }
+  .glass::after,
+  .glass-strong::after,
+  .glass-clear::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(120% 60% at 20% 0%, var(--glass-specular), var(--glass-specular-end) 70%);
+  }
+  .glass-strong,
+  .glass-clear,
+  .glass[data-blur],
+  .glass-group-blur[data-blur] {
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+  }
+  /* no nested blur: a surface inside another surface never blurs */
+  :is(.glass, .glass-strong, .glass-clear) :is(.glass, .glass-strong, .glass-clear, .glass-group-blur) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  /* Selection indicator of tab bar and sidebar: the same rim, a brighter fill, never blurred
+     (it moves; the blur stays on the resting container). */
+  .glass-pill {
+    --rim-1: var(--glass-rim-clear-1);
+    --rim-2: var(--glass-rim-clear-2);
+    --rim-3: var(--glass-rim-clear-3);
+    position: absolute;
+    isolation: isolate;
+    background: var(--glass-pill-bg);
+    box-shadow: var(--glass-shadow);
+  }
+  /* one blur surface behind a group of tiles (src/components/GlassGroup.tsx): masked to the tiles */
+  .glass-group-blur {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  /* Tab bar: the nav keeps its 64 px box (no layout ever moves); the capsule inside rests and only
+     shrinks to 52 px while scrolling down (anchored at the bottom: height + translateY, no shift). */
+  .tabbar-surface {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: var(--tabbar-h);
+    border-radius: 9999px;
+    transition:
+      height 240ms cubic-bezier(0.32, 0.72, 0, 1),
+      transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .tabbar[data-compact] .tabbar-surface {
+    height: var(--tabbar-h-compact);
+    transform: translateY(calc(var(--tabbar-h) - var(--tabbar-h-compact)));
+  }
+  .tabbar-pill {
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+  }
+  .tab-icon,
+  .tab-label {
+    transition:
+      transform 240ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 160ms ease-out;
+  }
+  .tabbar[data-compact] .tab-icon,
+  .tabbar[data-compact] .tab-label {
+    transform: translateY(var(--tab-compact-shift));
+  }
+  .tabbar[data-compact] .tab-label {
+    opacity: 0;
+  }
+  /* press feedback on the tab content, never on the blurred container */
+  .tab-press {
+    transition: transform 120ms ease-out;
+  }
+  [data-nav-link]:active .tab-press,
+  .tab-press[data-nav-link]:active {
+    transform: scale(0.96);
+  }
+  /* inner surfaces follow the outer radius: outer − inset, at least 8 */
+  .r-inner {
+    border-radius: max(8px, calc(var(--glass-r, 24px) - var(--glass-inset, 12px)));
   }
   /* no blur while an element moves (sheet/toast entry): the blur comes back when it rests */
   .glass[data-animating],
@@ -214,27 +384,55 @@ body::after {
   }
 }
 
-/* while a sheet is open, the app behind the scrim is static: no blur to recompute */
-body[data-sheets] #root .glass,
-body[data-sheets] #root .glass-strong {
+/* nothing blurs while it moves: the cards during their entrance and the screen during a tab switch
+   (the blur comes on when they rest) */
+:is(.glass, .glass-group-blur)[data-entering],
+:root[data-tab-switch] main :is(.glass, .glass-group-blur) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+/* while a sheet is open, the app behind the scrim is static: no blur to recompute */
+body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear, .glass-group-blur) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
   background: var(--glass-fallback);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
-  .glass-strong {
+  .glass-strong,
+  .glass-clear {
     background: var(--glass-fallback);
   }
 }
 
+/* Transparenz reduzieren: opaque surfaces, the rim stays as a fine line, no specular, no grain */
 @media (prefers-reduced-transparency: reduce) {
   .glass,
-  .glass-strong {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+  .glass-strong,
+  .glass-clear,
+  .glass-group-blur {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .glass,
+  .glass-strong,
+  .glass-clear {
     background: var(--glass-opaque);
+  }
+  .glass::before,
+  .glass-strong::before,
+  .glass-clear::before,
+  .glass-pill::before {
+    background: var(--glass-rim-solid);
+  }
+  .glass::after,
+  .glass-strong::after,
+  .glass-clear::after {
+    display: none;
   }
   body::after {
     display: none;
@@ -385,38 +583,7 @@ body[data-sheets] #root .glass-strong {
     transform: scale(1);
   }
 }
-/* loading: the three peas of the logo pulse one after another */
-@keyframes pea-pulse {
-  0%,
-  80%,
-  100% {
-    transform: scale(0.7);
-    opacity: 0.45;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@keyframes pea-fade {
-  0%,
-  80%,
-  100% {
-    opacity: 0.45;
-  }
-  40% {
-    opacity: 1;
-  }
-}
-.anim-pea {
-  animation: pea-pulse 1.2s ease-in-out infinite both;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  /* no scaling, only a slow change of brightness */
-  .anim-pea {
-    animation: pea-fade 1.8s ease-in-out infinite both;
-  }
   .splash-pea,
   .anim-check,
   .anim-check path,
@@ -445,8 +612,76 @@ body[data-sheets] #root .glass-strong {
    feedback instead, gone as soon as the finger lifts – nothing stays grey after a tap */
 @media (hover: none), (pointer: coarse) {
   button:not(:disabled):active,
-  a[href]:active,
+  a[href]:not([data-nav-link]):active,
   [role='button']:active {
     background-image: linear-gradient(rgb(var(--c-ink) / 0.06), rgb(var(--c-ink) / 0.06));
+  }
+}
+
+/* Tabwechsel (src/lib/tabTransition.ts): the new screen comes in 12 px from the side of its tab and
+   fades in, the old one fades out, 280 ms ease-out. Tab bar, sidebar and background (root) do not
+   take part. The CSS fallback without View Transitions plays the same keyframes on the elements. */
+/* Only the screen gets a name, and only while switching: a named element is a backdrop root, so at
+   rest the cards blur the background itself. Tab bar, sidebar and background stay in the root,
+   which does not animate: its new image is live, the indicator glides on as usual. */
+:root[data-tab-switch] main[data-screen] {
+  view-transition-name: screen;
+}
+/* taps go through to the live page while the transition runs */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root),
+::view-transition-group(screen) {
+  animation: none;
+}
+/* the root's old image never shows (the live new one lies on top, opaque) */
+::view-transition-old(root) {
+  display: none;
+}
+/* the old screen stays where it was on screen (its tab may have been scrolled further) */
+::view-transition-old(screen) {
+  translate: 0 var(--tab-old-shift, 0px);
+  animation: tab-out var(--tab-ms, 280ms) ease-out both;
+}
+::view-transition-new(screen) {
+  animation: tab-in var(--tab-ms, 280ms) ease-out both;
+}
+.tab-anim-out {
+  animation: tab-out var(--tab-ms, 280ms) ease-out both;
+}
+.tab-anim-in {
+  animation: tab-in var(--tab-ms, 280ms) ease-out both;
+}
+@keyframes tab-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--tab-from, 12px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+:root[data-tab-dir='left'] {
+  --tab-from: -12px;
+}
+:root[data-tab-dir='right'] {
+  --tab-from: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tab-ms: 120ms;
+    --tab-from: 0px !important;
   }
 }

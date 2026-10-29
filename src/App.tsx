@@ -1,47 +1,97 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
-import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
-import { Brand } from './components/Logo';
-import { Loader } from './components/Loader';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Sidebar, TabBar } from './components/Navigation';
+import { Skeleton } from './components/Skeleton';
 import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
-import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
-import { hideSplash, playEntrance } from './lib/entrance';
+import { activeMonth, localToday, MONTH_START_KEY, toMonthStart, type MonthStart } from './lib/activeMonth';
+import { hideSplash } from './lib/entrance';
+import { startGlassBudget } from './lib/glassBudget';
+import { readRoute, type Route } from './lib/routes';
+import { switchTab } from './lib/tabTransition';
 import { ActiveMonthContext } from './lib/useToday';
-import type { Period } from './lib/types';
+import type { Dataset, Period } from './lib/types';
 import { MonthScreen } from './screens/MonthScreen';
 import { PositionsScreen } from './screens/PositionsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-// Recharts is only loaded with the analysis tab, the month view stays light
-const AnalyseScreen = lazy(() => import('./screens/AnalyseScreen'));
+// Recharts lives in the analysis chunk: never part of the start (the month view stays light). It is
+// fetched once the app is idle after its start, so the first visit of the tab does not compile code
+// while the tab transition plays; until then (or if the visit comes first) it loads on demand.
+const loadAnalyse = () => import('./screens/AnalyseScreen');
+const AnalyseScreen = lazy(loadAnalyse);
+const PREFETCH_AFTER_MS = 1200;
+
+/** Time the off-screen warm-up render stays mounted (its charts mount one per frame). */
+const WARM_MS = 1000;
+
+/**
+ * Idle after the start: fetch the analysis chunk and render the screen once, off screen and invisible. The browser compiles Recharts and the analysis code there,
+ * not during the first visit's tab transition.
+ */
+function prefetchAnalyse(ds: Dataset, context: { start: MonthStart; active: Period }): () => void {
+  const done = () => {
+    document.documentElement.dataset.analyseReady = '';
+  };
+  const run = () =>
+    void loadAnalyse().then(({ default: Screen }) => {
+      // off screen, invisible, in a closed shadow root: it has a size (the charts measure it) but
+      // nothing outside – no query, no assistive technology, no blur budget – ever sees it
+      const host = document.createElement('div');
+      host.setAttribute('aria-hidden', 'true');
+      host.inert = true;
+      host.style.cssText = 'position:fixed;left:-10000px;top:0;width:390px;height:900px;overflow:hidden;visibility:hidden;pointer-events:none';
+      const mount = document.createElement('div');
+      host.attachShadow({ mode: 'closed' }).appendChild(mount);
+      document.body.appendChild(host);
+      const root = createRoot(mount);
+      root.render(
+        <ActiveMonthContext.Provider value={context}>
+          <Screen ds={ds} />
+        </ActiveMonthContext.Provider>,
+      );
+      window.setTimeout(() => {
+        root.unmount();
+        host.remove();
+        done();
+      }, WARM_MS);
+    }, () => {});
+  // not before the start screen has come in, then when the browser is idle (Safari has no
+  // requestIdleCallback: right then)
+  let idle = 0;
+  const timer = setTimeout(() => {
+    if (typeof window.requestIdleCallback === 'function') idle = window.requestIdleCallback(run, { timeout: 2000 });
+    else run();
+  }, PREFETCH_AFTER_MS);
+  return () => {
+    clearTimeout(timer);
+    if (idle) window.cancelIdleCallback(idle);
+  };
+}
 
 /** Manual month navigation keeps the shown month this long before the app returns to the active one. */
 const NAV_HOLD_MS = 30 * 60_000;
 
-type Route = 'monat' | 'positionen' | 'analyse' | 'einstellungen';
-
-const NAV: { route: Route; label: string; icon: ComponentType<{ size?: number }> }[] = [
-  { route: 'monat', label: 'Monat', icon: CalendarIcon },
-  { route: 'positionen', label: 'Positionen', icon: ListIcon },
-  { route: 'analyse', label: 'Analyse', icon: ChartIcon },
-  { route: 'einstellungen', label: 'Einstellungen', icon: SettingsIcon },
-];
-
-function readRoute(): Route {
-  const hash = window.location.hash.replace(/^#\/?/, '');
-  return NAV.some((n) => n.route === hash) ? (hash as Route) : 'monat';
-}
-
+/** The route from the URL; a tab change plays the tab transition, every tab keeps its scroll position. */
 function useHashRoute(): Route {
   const [route, setRoute] = useState<Route>(readRoute);
+  const current = useRef(route);
+  const scroll = useRef(new Map<Route, number>());
   useEffect(() => {
     const onHash = () => {
-      setRoute(readRoute());
-      window.scrollTo(0, 0);
+      const next = readRoute();
+      const prev = current.current;
+      if (next === prev) return;
+      scroll.current.set(prev, window.scrollY);
+      current.current = next;
+      switchTab(prev, next, () => {
+        setRoute(next);
+        window.scrollTo(0, scroll.current.get(next) ?? 0);
+      });
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
@@ -85,7 +135,6 @@ export function App() {
   }, []);
   // a new active month (new day, changed setting) is shown unless the user just navigated
   useEffect(() => followActive.current(), [active]);
-  const mainRef = useRef<HTMLElement>(null);
   // data and the setting „Neuer Monat beginnt am“: only then is there a screen to show
   const loaded = !!ds && start !== undefined;
 
@@ -94,25 +143,20 @@ export function App() {
     if (setup === true || (setup === false && loaded)) void hideSplash();
   }, [setup, loaded]);
 
-  // every screen comes in (tab change, first screen after the splash); a lazy screen once its loader is gone
-  useLayoutEffect(() => {
-    const main = mainRef.current;
-    if (!main || !loaded) return;
-    const loading = () => !!main.querySelector('[data-testid="loader"]');
-    if (!loading()) {
-      void playEntrance(main, route);
-      return;
-    }
-    const observer = new MutationObserver(() => {
-      if (loading()) return;
-      observer.disconnect();
-      void playEntrance(main, route);
-    });
-    observer.observe(main, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [route, loaded, setup]);
+  // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
+  useEffect(() => startGlassBudget(), []);
+  // once per app start (the warm-up renders with the data of the moment it runs)
+  const latest = useRef({ ds, start, active });
+  latest.current = { ds, start, active };
+  useEffect(() => {
+    if (!loaded) return;
+    const { ds: data, start: s, active: a } = latest.current;
+    if (!data || s === undefined || !a) return;
+    return prefetchAnalyse(data, { start: s, active: a });
+  }, [loaded]);
 
-  if (setup === undefined || start === undefined || !active || !period) return <Loader />;
+  // behind the splash: nothing to show yet
+  if (setup === undefined || start === undefined || !active || !period) return null;
   if (setup) return <SetupDialog />;
 
   return (
@@ -121,22 +165,17 @@ export function App() {
         <div className="relative min-h-dvh lg:pl-[240px]">
           <Sidebar route={route} />
           <main
-            ref={mainRef}
             className="pt-safe px-safe"
             style={{ paddingBottom: 'calc(var(--tabbar-space) + 16px)' }}
           >
             {!ds ? (
-              <Loader />
+              <Skeleton />
             ) : route === 'monat' ? (
               <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
             ) : route === 'positionen' ? (
               <PositionsScreen ds={ds} />
             ) : route === 'analyse' ? (
-              <Suspense
-                fallback={
-                  <Loader />
-                }
-              >
+              <Suspense fallback={<Skeleton />}>
                 <AnalyseScreen ds={ds} />
               </Suspense>
             ) : (
@@ -147,80 +186,5 @@ export function App() {
         </div>
       </ToastProvider>
     </ActiveMonthContext.Provider>
-  );
-}
-
-function TabBar({ route }: { route: Route }) {
-  return (
-    <nav
-      aria-label="Hauptnavigation"
-      className="glass-strong fixed z-30 mx-auto max-w-lg rounded-[22px] px-1 lg:hidden"
-      style={{
-        // floating: 12 px from the edges, above the home indicator
-        left: 'calc(12px + var(--safe-left))',
-        right: 'calc(12px + var(--safe-right))',
-        bottom: 'var(--tabbar-gap)',
-      }}
-      data-testid="tabbar"
-    >
-      <ul className="flex h-[var(--tabbar-h)]">
-        {NAV.map(({ route: r, label, icon: Icon }) => {
-          const active = r === route;
-          return (
-            <li key={r} className="flex-1">
-              <a
-                href={`#/${r}`}
-                aria-current={active ? 'page' : undefined}
-                className={`focus-ring flex h-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] ${
-                  active ? 'font-semibold text-accent-ink' : 'font-medium text-ink-mute'
-                }`}
-              >
-                <span
-                  className={`flex h-[30px] w-[54px] items-center justify-center rounded-full transition-colors ${
-                    active ? 'bg-accent-soft' : ''
-                  }`}
-                >
-                  <Icon size={22} />
-                </span>
-                {label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-}
-
-function Sidebar({ route }: { route: Route }) {
-  return (
-    <nav
-      aria-label="Hauptnavigation"
-      className="glass fixed bottom-3 left-3 top-3 z-30 hidden w-[228px] flex-col px-3 py-6 lg:flex"
-      data-testid="sidebar"
-    >
-      <div className="mb-6 flex items-center gap-2.5 px-3">
-        <Brand />
-      </div>
-      <ul className="flex flex-col gap-1">
-        {NAV.map(({ route: r, label, icon: Icon }) => {
-          const active = r === route;
-          return (
-            <li key={r}>
-              <a
-                href={`#/${r}`}
-                aria-current={active ? 'page' : undefined}
-                className={`focus-ring flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium ${
-                  active ? 'bg-accent-soft text-accent-strong' : 'text-ink-soft hover:bg-zinc-100/70'
-                }`}
-              >
-                <Icon size={20} />
-                {label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
   );
 }
