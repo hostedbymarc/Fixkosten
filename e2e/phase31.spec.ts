@@ -173,8 +173,9 @@ test.describe('Betrag ändern', () => {
     await expect(app.getByTestId('optimizations-empty')).toBeVisible();
 
     await undo.click();
+    // the forecast follows the database: wait for it instead of reading once
+    await expect.poll(() => forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
     await expect(app.getByTestId('optimizations-planned-head')).toHaveCount(0); // exactly one change: no „Geplant“ label
-    expect(await forecastDue(app, 'Jän 2027')).toBe('€ 2.805');
   });
 
   test('Vergangenheit: Oktober schon mit € 1.008 abgehakt → Haken bleibt, Plan € 1.050, −€ 42', async ({ app }) => {

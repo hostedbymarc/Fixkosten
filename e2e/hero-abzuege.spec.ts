@@ -82,12 +82,12 @@ test.describe('Hero: Abzüge vom Netto', () => {
 });
 
 test.describe('Analyse: Jahresvorschau, Plan vs. Ist, Geplante Änderungen', () => {
-  test('Legende „regulär“ und „Ø pro Monat (heute)“, Zeitraum unter der Überschrift', async ({ page }) => {
+  test('Legende „regulär“ und „Ø pro Monat (aktiver Monat)“, Zeitraum unter der Überschrift', async ({ page }) => {
     await importNovember(page);
     await goTo(page, 'analyse');
     const legend = page.getByTestId('forecast-legend');
     await expect(legend).toContainText('regulär');
-    await expect(legend).toContainText('Ø pro Monat (heute)');
+    await expect(legend).toContainText('Ø pro Monat (aktiver Monat)');
     await expect(legend).not.toContainText('über Ø');
     // today = November → November + 11
     await expect(page.getByTestId('forecast-period')).toHaveText(eur('Nov 2026 – Okt 2027'));

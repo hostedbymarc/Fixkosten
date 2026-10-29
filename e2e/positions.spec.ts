@@ -1,4 +1,4 @@
-import { eur, expect, goTo, isSidebarLayout, isTouchProject, row, test, touchSwipe, NOV_5, setToday } from './fixtures';
+import { eur, expandAll, expect, goTo, isSidebarLayout, isTouchProject, row, test, touchSwipe, NOV_5, setToday } from './fixtures';
 import type { Page } from '@playwright/test';
 
 const listRow = (page: Page, name: string) =>
@@ -237,6 +237,7 @@ test.describe('Sortieren', () => {
     await app.reload();
     await expect.poll(names).toEqual(sorted);
     await goTo(app, 'monat');
+    await expandAll(app);
     const monthImmos = app.getByRole('region', { name: 'Meine Immos' }).getByTestId('position-row');
     await expect(monthImmos.first()).toHaveAttribute('data-position', 'pos-bk-1220');
   });
@@ -269,6 +270,7 @@ test.describe('Offen aus Vormonat & Einmalbeträge', () => {
     await expect(section).toHaveCount(0);
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 2.664'));
     await app.getByRole('button', { name: 'Vorheriger Monat' }).click();
+    await expandAll(app); // October: everything settled, everything collapsed
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-status', 'skipped');
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.368'));
     await expect(app.getByText('Alles abgebucht')).toBeVisible();

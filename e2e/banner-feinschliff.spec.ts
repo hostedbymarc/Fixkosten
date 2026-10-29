@@ -37,10 +37,14 @@ test.describe('Banner „Offen aus …“', () => {
 });
 
 test.describe('Feinschliff', () => {
-  test('„Kommt bald“: Titel + Betrag, darunter Monats-Chip, darunter Rhythmus – auf jedem Viewport', async ({ page }) => {
+  test('„Kommt bald“: Titel + Betrag, darunter Monats-Chip und Rhythmus nebeneinander (bricht er um: alle darunter) – auf jedem Viewport', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     const rows = page.getByTestId('upcoming-row');
     expect(await rows.count()).toBeGreaterThan(2);
+    // iPhone: first 3 entries, the rest after „Alle anzeigen (n)“
+    const more = page.getByTestId('upcoming-more');
+    if (await more.isVisible()) await more.click();
+    const stacked = (await page.getByTestId('upcoming-list').getAttribute('data-stacked')) === 'true';
     for (const row of await rows.all()) {
       const r = await row.evaluate((li) => {
         const box = (el: Element | null) => el!.getBoundingClientRect();
@@ -52,9 +56,12 @@ test.describe('Feinschliff', () => {
       });
       expect(r.chip.top, 'chip below the title').toBeGreaterThanOrEqual(r.title.bottom - 1);
       expect(Math.abs(r.amount.top - r.title.top), 'amount on the title line').toBeLessThanOrEqual(2);
-      if (r.rhythm) {
+      if (r.rhythm && stacked) {
         expect(r.rhythm.top, 'rhythm below the chip').toBeGreaterThanOrEqual(r.chip.bottom - 1);
         expect(Math.abs(r.rhythm.left - r.chip.left), 'chip and rhythm aligned').toBeLessThanOrEqual(1);
+      } else if (r.rhythm) {
+        expect(r.rhythm.left, 'rhythm right of the chip').toBeGreaterThanOrEqual(r.chip.right);
+        expect(Math.abs(r.rhythm.top + r.rhythm.height / 2 - (r.chip.top + r.chip.height / 2)), 'one line').toBeLessThanOrEqual(3);
       }
     }
   });

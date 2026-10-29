@@ -8,7 +8,7 @@ import {
 } from '../components/analysis/sections';
 import { SavingsSection } from '../components/analysis/Savings';
 import { dataMonths, historyPeriods, type Range } from '../lib/analytics';
-import { useToday } from '../lib/useToday';
+import { useActiveMonth } from '../lib/useToday';
 import type { Dataset } from '../lib/types';
 
 const RANGES: { value: Range; label: string; aria: string }[] = [
@@ -19,7 +19,7 @@ const RANGES: { value: Range; label: string; aria: string }[] = [
 
 /** Loaded lazily: Recharts only ships when the analysis tab is opened. */
 export default function AnalyseScreen({ ds }: { ds: Dataset }) {
-  const today = useToday();
+  const today = useActiveMonth();
   const [range, setRange] = useState<Range>('12m');
   const periods = historyPeriods(ds, today, range);
   const months = dataMonths(ds, today);

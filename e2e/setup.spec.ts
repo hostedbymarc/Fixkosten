@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { FIXTURE, TODAY, eur, expect, importFixture, row, test } from './fixtures';
+import { FIXTURE, TODAY, eur, expandAll, expect, importFixture, row, test } from './fixtures';
 
 test.describe('Erststart: Import oder leer', () => {
   test('empty database shows the import dialog; import → same state; reload → no dialog', async ({ fresh }) => {
@@ -98,6 +98,7 @@ test('existing v1 database: no dialog, upgraded to v4, ticks and notes kept', as
   await expect(page.getByTestId('hero')).toBeVisible();
   await expect(page.getByTestId('setup-dialog')).toHaveCount(0);
   await expect(page.getByTestId('category-group').first()).toHaveAttribute('aria-label', 'Meine Immos');
+  await expandAll(page); // fully paid categories open collapsed
   const immos = page.getByRole('region', { name: 'Meine Immos' });
   for (const id of ['pos-kredit-1220', 'pos-bk-1220', 'pos-bk-1160']) {
     await expect(immos.locator(`[data-position="${id}"]`)).toHaveAttribute('data-paid', 'true');

@@ -76,8 +76,9 @@ test.describe('Jahresvorschau', () => {
         legendClipped: legend.scrollWidth > legend.clientWidth + 1,
       };
     });
-    // current month + 11
-    expect(m.ticks).toEqual(['Okt', 'Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep']);
+    // current month + 11; below 430 px one letter per month
+    const months = ['Okt', 'Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep'];
+    expect(m.ticks).toEqual((page.viewportSize()?.width ?? 0) < 430 ? months.map((t) => t[0]) : months);
     expect(m.overlaps).toEqual([]);
     expect(m.onBar, 'Ø chip covers no bar').toBe(0);
     expect(m.chipInside).toBe(true);
@@ -113,12 +114,15 @@ test.describe('Jahresvorschau', () => {
       await expect(page.getByTestId('forecast-table')).toBeHidden();
       const list = page.getByTestId('forecast-list');
       await expect(list.getByTestId('forecast-row')).toHaveCount(12);
-      // month and amount on one line; preview line one line
+      // month and amount on one line; item names never cut off, at most 2 lines
       const wraps = await list.evaluate((l, linesSrc) => {
         const count = new Function(`return ${linesSrc}`)() as (el: Element) => number;
-        return Array.from(l.querySelectorAll('[data-testid="forecast-month"], [data-testid="forecast-due"], [data-testid="forecast-preview"]'))
-          .filter((e) => count(e) > 1)
-          .map((e) => e.textContent);
+        return [
+          ...Array.from(l.querySelectorAll('[data-testid="forecast-month"], [data-testid="forecast-due"]')).filter((e) => count(e) > 1),
+          ...Array.from(l.querySelectorAll<HTMLElement>('[data-testid="forecast-item-name"]')).filter(
+            (e) => count(e) > 2 || e.scrollHeight > e.clientHeight + 1,
+          ),
+        ].map((e) => e.textContent);
       }, lines.toString());
       expect(wraps).toEqual([]);
       // regular bars in one colour: no „über Ø“ dot in the list any more
@@ -129,10 +133,11 @@ test.describe('Jahresvorschau', () => {
       await expect(list.locator('[data-period="2027-03"]').getByTestId('forecast-preview')).toHaveCount(0);
 
       const feb = list.locator('[data-period="2027-02"]');
-      await expect(feb.getByTestId('forecast-preview')).toContainText('+2 weitere');
+      await expect(feb.getByTestId('forecast-more')).toHaveText('+2 weitere');
       const febButton = feb.getByRole('button');
       await expect(febButton).toHaveAttribute('aria-expanded', 'false');
-      await tap(febButton);
+      // „+2 weitere“ itself expands the month
+      await tap(feb.getByTestId('forecast-more'));
       await expect(febButton).toHaveAttribute('aria-expanded', 'true');
       await expect(feb.getByTestId('forecast-expanded').locator('li')).toHaveCount(4);
       await expect(feb.getByTestId('forecast-once-sum')).toHaveText(eur('davon einmalig€ 830'));

@@ -144,11 +144,13 @@ test.describe('Monatsnotiz', () => {
     await tap(card.getByRole('button', { name: 'Details anzeigen' }));
     if ((page.viewportSize()?.width ?? 0) >= 1024) {
       const row = page.getByTestId('forecast-table').locator('tbody tr', { hasText: 'Nov 2026' });
-      await expect(row.getByLabel('mit Notiz')).toBeVisible();
+      await expect(row.getByRole('img', { name: 'Monat hat eine Notiz' })).toBeVisible();
       await expect(row.getByTestId('forecast-note')).toHaveText('Bonus 1.200 netto');
     } else {
       const row = page.getByTestId('forecast-list').locator('[data-period="2026-11"]');
       await expect(row.getByTestId('forecast-note-icon')).toBeVisible();
+      await expect(row.getByTestId('forecast-note-icon')).toHaveAttribute('title', 'Monat hat eine Notiz');
+      await expect(row.getByRole('button')).toHaveAccessibleName(/Monat hat eine Notiz/);
       await tap(row.getByRole('button'));
       await expect(row.getByTestId('forecast-note')).toHaveText('Bonus 1.200 netto');
     }

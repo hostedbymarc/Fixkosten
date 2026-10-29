@@ -169,7 +169,8 @@ test.describe('Frei verfügbar positiv und negativ', () => {
     await expect(page.getByRole('tooltip')).toContainText(
       'So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.',
     );
-    await (isTouchProject() ? page.getByRole('heading', { level: 1 }).tap() : page.getByRole('heading', { level: 1 }).hover());
+    // tap / hover next to it (the month title would open the month grid)
+    await (isTouchProject() ? page.getByTestId('hero-paid').tap() : page.getByTestId('hero-paid').hover());
     await expect(page.getByRole('tooltip')).toHaveCount(0);
     await page.waitForTimeout(300);
     await page.getByTestId('salary-tile').locator('..').screenshot({ path: `${DIR}/${info.project.name}-frei-positiv.png` });
