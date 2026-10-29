@@ -1,3 +1,4 @@
+import { localToday, MONTH_START_KEY, toMonthStart, type MonthStart } from '../lib/activeMonth';
 import type {
   Category,
   ChangeLog,
@@ -27,6 +28,11 @@ export interface BackupFile {
     monthClose: MonthClose[];
     changeLog: ChangeLog[];
     reminders: Reminder[];
+  };
+  /** device settings that travel with the data; missing in older files (→ defaults) */
+  settings?: {
+    /** Einstellungen → „Neuer Monat beginnt am“ (src/lib/activeMonth.ts) */
+    monthStartDay?: MonthStart;
   };
 }
 
@@ -68,6 +74,11 @@ export function parseBackup(raw: unknown): BackupFile {
     );
   }
   raw.schemaVersion = SCHEMA_VERSION;
+  // settings are optional; an unknown value is dropped (→ default on import)
+  if (raw.settings !== undefined) {
+    const settings = isObject(raw.settings) ? raw.settings : {};
+    raw.settings = settings.monthStartDay === undefined ? {} : { monthStartDay: toMonthStart(settings.monthStartDay) };
+  }
   const positions = data.positions as Position[];
   const categoryIds = new Set((data.categories as Category[]).map((c) => c.id));
   for (const p of positions) {
@@ -88,6 +99,22 @@ export async function needsSetup(db: FixkostenDB): Promise<boolean> {
     db.meta.get('setupCompletedAt'),
   ]);
   return categories === 0 && positions === 0 && payments === 0 && !seeded && !setup;
+}
+
+/** Einstellung „Neuer Monat beginnt am“ (meta, no schema change); default 1. */
+export async function readMonthStart(db: FixkostenDB): Promise<MonthStart> {
+  return toMonthStart((await db.meta.get(MONTH_START_KEY))?.value);
+}
+
+export async function writeMonthStart(db: FixkostenDB, start: MonthStart): Promise<void> {
+  await db.meta.put({ key: MONTH_START_KEY, value: toMonthStart(start) });
+}
+
+/** The file's setting; a file without it sets the default 1 (replace, first import, undo) or keeps the current one (merge). */
+async function importSettings(db: FixkostenDB, backup: BackupFile, keepWhenMissing: boolean) {
+  const start = backup.settings?.monthStartDay;
+  if (start !== undefined) await writeMonthStart(db, start);
+  else if (!keepWhenMissing) await writeMonthStart(db, 1);
 }
 
 async function markSetupDone(db: FixkostenDB, extra: { key: string; value: unknown }[] = []) {
@@ -111,6 +138,7 @@ export async function importIntoEmpty(db: FixkostenDB, backup: BackupFile): Prom
     await db.monthClose.bulkAdd(backup.data.monthClose);
     await db.changeLog.bulkAdd(backup.data.changeLog);
     await db.reminders.bulkAdd(backup.data.reminders);
+    await importSettings(db, backup, false);
     await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
   });
 }
@@ -151,6 +179,7 @@ export async function exportBackup(db: FixkostenDB): Promise<BackupFile> {
     schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     data: { categories, positions, payments, oneOffs, monthClose, changeLog, reminders },
+    settings: { monthStartDay: await readMonthStart(db) },
   };
 }
 
@@ -160,7 +189,7 @@ export async function exportBackup(db: FixkostenDB): Promise<BackupFile> {
  * fixkosten-*.json files keep working.
  */
 export function backupFileName(prefix = 'erbse-backup'): string {
-  const d = new Date();
+  const d = localToday();
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${prefix}-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
 }
@@ -245,6 +274,7 @@ export async function importBackup(db: FixkostenDB, backup: BackupFile, mode: Im
       await db.changeLog.bulkPut(d.changeLog);
       await db.reminders.bulkPut(d.reminders);
     }
+    await importSettings(db, backup, mode === 'merge');
     await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
   });
 }
@@ -264,6 +294,7 @@ export async function undoLastImport(db: FixkostenDB): Promise<boolean> {
     const { snapshot } = entry.value as { snapshot: BackupFile };
     await clearAll(db);
     await writeAll(db, snapshot.data);
+    await importSettings(db, snapshot, false);
     await db.meta.delete(UNDO_KEY);
     return true;
   });

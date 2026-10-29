@@ -152,10 +152,17 @@ export function EmptyCard({ id, title, text }: { id: string; title: string; text
 export const EMPTY_CARD = 'flex flex-col gap-1 rounded-card border border-dashed border-zinc-300 p-4 text-[14px] leading-5 text-ink-mute';
 
 /** Tooltip box shared by all charts (rendered by Recharts into its wrapper). */
-export function TooltipBox({ title, children }: { title: string; children: ReactNode }) {
+export function TooltipBox({ title, badge, children }: { title: string; badge?: string; children: ReactNode }) {
   return (
     <div className="max-w-[260px] rounded-xl border border-edge bg-surface px-3 py-2 text-[13px] shadow-sheet" data-testid="chart-tooltip">
-      <p className="font-semibold text-ink">{title}</p>
+      <p className="flex items-center gap-2 font-semibold text-ink">
+        {title}
+        {badge && (
+          <span className="rounded-full bg-accent-soft px-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-accent-ink" data-testid="tooltip-badge">
+            {badge}
+          </span>
+        )}
+      </p>
       <div className="mt-0.5 flex flex-col gap-0.5 text-ink-soft">{children}</div>
     </div>
   );

@@ -36,6 +36,9 @@ test.describe('Umbrüche: Kategorie-Header, Beträge, Chips', () => {
         b.data.categories.find((c) => c.name === 'Wohnen & Leben')!.name = LONG;
       });
       await expect(page.getByRole('region', { name: LONG })).toBeVisible();
+      // phones: every „Kommt bald“ entry shown, so all of them are measured
+      const more = page.getByTestId('upcoming-more');
+      if (await more.isVisible()) await more.click();
 
       // header: every cell one line, nothing outside the card
       for (const id of ['group-name', 'group-sum', 'group-progress', 'group-spread']) {

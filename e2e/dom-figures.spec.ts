@@ -99,7 +99,7 @@ const SOLL: Record<string, Record<string, string>> = {
     'forecast-period': 'Okt 2026 – Sep 2027',
     'forecast-headline-value': 'Nov 2026 · € 5.649',
     'forecast-headline-sub': '€ 2.697 über Ø',
-    'distribution-total': 'Summe € 2.952,17 Ø pro Monat (heute)',
+    'distribution-total': 'Summe € 2.952,17 Ø pro Monat (aktiver Monat)',
     'dist:Wohnen & Leben': '€ 1.675,50 56,8 %',
     'dist:Immo': '€ 1.034,67 35,0 %',
     'dist:Abos': '€ 137,00 4,6 %',
@@ -213,8 +213,13 @@ async function checkMonth(page: Page, ds: Dataset, period: Period, soll: Record<
     if (!i.fromNet) await check(row.getByTestId('not-from-net'), 'nicht vom Netto', undefined, `Chip ${i.position.name}`);
   }
 
-  // Kommt bald
+  // Kommt bald (iPhone: the rest after „Alle anzeigen (n)“)
   const upcoming = upcomingDue(ds, period, 2);
+  const more = page.getByTestId('upcoming-more');
+  if (await more.isVisible()) {
+    await expect(more).toHaveText(`Alle anzeigen (${upcoming.length})`);
+    await more.click();
+  }
   await expect(page.getByTestId('upcoming-row')).toHaveCount(upcoming.length);
   for (const [n, i] of upcoming.entries()) {
     const row = page.getByTestId('upcoming-row').nth(n);
@@ -243,7 +248,7 @@ async function checkAnalyse(page: Page, ds: Dataset, today: Period, soll: Record
   expect(Math.max(...values)).toBeGreaterThanOrEqual(Math.max(...f.months.map((m) => m.due)));
 
   const d = categoryDistribution(ds, today);
-  await check(page.getByTestId('distribution-total'), `Summe ${formatAvg(d.total)} Ø pro Monat (heute)`, s('distribution-total'), 'Summe Verteilung');
+  await check(page.getByTestId('distribution-total'), `Summe ${formatAvg(d.total)} Ø pro Monat (aktiver Monat)`, s('distribution-total'), 'Summe Verteilung');
   for (const r of d.rows) {
     const li = page.locator(`[data-testid="distribution-list"] > li[data-category="${r.category.id}"] button`).first();
     const text = norm(await li.innerText()).replace(r.category.name, '').trim();

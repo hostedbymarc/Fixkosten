@@ -1,7 +1,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Page } from '@playwright/test';
-import { eur, expect, goTo, row, test, TODAY } from './fixtures';
+import { eur, expandAll, expect, goTo, row, test, TODAY } from './fixtures';
 
 // Simulates the real publish: the browser profile ran 2776e95 (live, schema v1),
 // then the same origin serves the current build. Both are served through
@@ -50,6 +50,7 @@ test('live upgrade 2776e95 (v1) → main (v4) in the same browser profile', asyn
   // Gesamt = debited for ticked (3.375,40) + plan for open (35), audit decision C; the plan sum 3.403 is unchanged data
   await expect(page.getByTestId('hero-planned')).toHaveText(eur('€ 3.410,40'));
   await expect(page.getByTestId('hero-open')).toHaveText(eur('1 offen · € 35'));
+  await expandAll(page); // fully paid categories open collapsed
   await expect(row(page, 'pos-strom')).toContainText('Nachzahlung');
   await expect(row(page, 'pos-strom')).toContainText(eur('+€ 7,40'));
   await expect(row(page, 'pos-depotentgelt')).toHaveAttribute('data-status', 'open');

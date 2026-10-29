@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
 import { IMMOS_COLOR_KEY } from '../lib/categoryColors';
-import { toPeriod } from '../lib/period';
+import { calendarMonth } from '../lib/activeMonth';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, type PositionV2 } from './migrations';
 import type {
   Category,
@@ -117,7 +117,7 @@ export async function migrateToV2(tx: Transaction): Promise<void> {
   if (legacyIncome.length > 0) {
     const latest = legacyIncome.reduce((a, b) => (b.validFrom > a.validFrom ? b : a));
     await tx.table<MonthClose, string>('monthClose').put({
-      period: toPeriod(new Date()),
+      period: calendarMonth(), // the month of the upgrade, as before
       netSalary: latest.netMonthly,
       updatedAt: new Date().toISOString(),
     });

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { FEATURE_REMINDERS } from '../lib/features';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
-import { Segmented } from '../components/form';
+import { Segmented, SelectField } from '../components/form';
 import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
@@ -15,6 +15,7 @@ import {
   markExported,
   readBackupFile,
   undoLastImport,
+  writeMonthStart,
   type BackupFile,
 } from '../db/backup';
 import { db } from '../db/db';
@@ -24,7 +25,8 @@ import { archivedPeriod, archivedPositions, currentPlan, positionUsage } from '.
 import { formatDate, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { useThemePref, type ThemePref } from '../lib/theme';
-import { useToday } from '../lib/useToday';
+import { MONTH_START_CHOICES, monthStartLabel, toMonthStart } from '../lib/activeMonth';
+import { useActiveMonth, useMonthStart } from '../lib/useToday';
 import { versionLabel } from '../lib/version';
 import type { Dataset, Position } from '../lib/types';
 
@@ -36,7 +38,7 @@ function deleteText(usage: { payments: number; oneOffs: number }): string {
 }
 
 export function SettingsScreen({ ds }: { ds: Dataset }) {
-  const today = useToday();
+  const today = useActiveMonth();
   const toast = useToast();
   const [confirm, setConfirm] = useState<Position | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
@@ -51,6 +53,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
 
       <div className="flex max-w-2xl flex-col gap-6">
         <AppearanceSection />
+        <MonthSection />
 
         <section aria-labelledby="archive-title">
           <h2 id="archive-title" className="section-title mb-2 px-1">
@@ -254,6 +257,31 @@ const THEME_HINT: Record<ThemePref, string> = {
   light: 'Immer hell, auch wenn dein Gerät dunkel ist.',
   dark: 'Immer dunkel, angenehm am Abend.',
 };
+
+/** „Neuer Monat beginnt am“: stored in the database (meta) and carried by backups. */
+function MonthSection() {
+  const start = useMonthStart();
+  const active = useActiveMonth();
+  return (
+    <section aria-labelledby="month-title">
+      <h2 id="month-title" className="section-title mb-2 px-1">
+        Monat
+      </h2>
+      <div className="glass flex flex-col gap-2 p-4" data-testid="month-settings">
+        <SelectField
+          label="Neuer Monat beginnt am"
+          value={String(start)}
+          onChange={(v) => void writeMonthStart(db, toMonthStart(v === 'last' ? 'last' : Number(v)))}
+          options={MONTH_START_CHOICES.map((c) => ({ value: String(c), label: monthStartLabel(c) }))}
+          hint="Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt."
+        />
+        <p className="px-1 text-[13px] text-ink-mute" data-testid="active-month">
+          Aktiver Monat: <span className="font-semibold text-ink-soft">{periodLabel(active)}</span>
+        </p>
+      </div>
+    </section>
+  );
+}
 
 /** Light, dark or "System"; stored per device, not in backups. */
 function AppearanceSection() {

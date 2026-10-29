@@ -74,7 +74,7 @@ export function DistributionSection({ ds, today }: { ds: Dataset; today: Period 
     <ChartCard id="distribution" title="Verteilung nach Kategorie">
       {/* one head line only: the sum; the list below says the rest */}
       <p className="mb-2 text-[13px] text-ink-mute" data-testid="distribution-total">
-        Summe <span className="num whitespace-nowrap font-semibold text-ink">{formatAvg(d.total)}</span> Ø pro Monat (heute)
+        Summe <span className="num whitespace-nowrap font-semibold text-ink">{formatAvg(d.total)}</span> Ø pro Monat (aktiver Monat)
       </p>
       {/* the list says it all; screen readers additionally get the numbers as a table */}
       <div className="sr-only">

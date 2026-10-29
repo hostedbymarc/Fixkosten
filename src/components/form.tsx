@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react';
+import { localToday } from '../lib/activeMonth';
 import { parseAmount } from '../lib/format';
 import { addPeriods, periodLabel, shortMonthName } from '../lib/period';
 import type { Period } from '../lib/types';
@@ -366,7 +367,7 @@ export function longDate(iso: string): string {
 
 /** Local calendar date of today as 'YYYY-MM-DD'. */
 export function todayIso(): string {
-  const d = new Date();
+  const d = localToday();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 

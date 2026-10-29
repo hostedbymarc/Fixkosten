@@ -93,7 +93,7 @@ test.describe('Tooltip „im Ø-Monat“', () => {
     await expect(pop).toHaveCount(0);
     await icon.tap();
     await expect(pop).toBeVisible();
-    await app.getByRole('heading', { level: 1 }).first().tap();
+    await app.getByTestId('hero-paid').tap(); // next to it (the month title would open the month grid)
     await expect(pop).toHaveCount(0);
     await expect(app.getByRole('dialog')).toHaveCount(0);
   });

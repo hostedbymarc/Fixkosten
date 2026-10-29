@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { forecastBackup } from './forecast-data';
-import { appSettled, expect, TODAY } from './fixtures';
+import { appSettled, expandAll, expect, TODAY } from './fixtures';
 
 /**
  * Like the live data: forecast demo data plus net salary in October and a planned
@@ -31,4 +31,5 @@ export async function importSprint(page: Page) {
   });
   await expect(page.getByTestId('hero')).toBeVisible();
   await appSettled(page);
+  await expandAll(page);
 }

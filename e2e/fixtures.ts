@@ -39,6 +39,23 @@ export async function setToday(page: Page, date: Date) {
   await page.clock.setFixedTime(date);
   await page.reload();
   await appSettled(page);
+  await expandAll(page);
+}
+
+/**
+ * Opens every collapsed category of the shown month (fully paid ones start collapsed). Tests that
+ * work with single rows call it; collapse by status itself is tested in aktiver-monat.spec.ts.
+ */
+export async function expandAll(page: Page) {
+  const collapsed = page.locator('[data-testid="category-group"][data-collapsed="true"] [data-testid="group-toggle"]');
+  // one card per attempt; a click lost during the entrance animation is simply repeated
+  await expect(async () => {
+    if ((await collapsed.count()) > 0) await collapsed.first().click({ timeout: 2000 });
+    await expect(collapsed).toHaveCount(0, { timeout: 500 });
+  }).toPass({ intervals: [100, 250], timeout: 20000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  // leave no hover behind (it would show up in later screenshots)
+  await page.mouse.move(0, 0);
 }
 
 /** 05.11.2026: October is over. */
@@ -58,6 +75,7 @@ export const test = base.extend<{ app: Page; fresh: Page }>({
     await page.clock.setFixedTime(TODAY);
     await page.goto('/');
     await importFixture(page);
+    await expandAll(page);
     await use(page);
   },
   /** App on an empty database, before any setup. */

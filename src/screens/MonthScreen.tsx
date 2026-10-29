@@ -1,7 +1,7 @@
 import { forwardRef, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
-import { useCollapsed } from '../lib/useCollapsed';
+import { useMonthCollapse } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
@@ -59,7 +59,9 @@ import {
 } from '../lib/calc';
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
-import { useToday } from '../lib/useToday';
+import { calendarMonth, localToday } from '../lib/activeMonth';
+import { MonthPicker } from '../components/MonthPicker';
+import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
 interface Props {
@@ -88,13 +90,25 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
   const items = useMemo(() => dueItems(ds, period), [ds, period]);
   const groups = useMemo(() => groupByCategory(items), [items]);
-  const collapse = useCollapsed();
-  const allCollapsed = groups.length > 0 && groups.every((g) => collapse.isCollapsed(g.category.id));
   // every amount of the month comes from here (hero, tiles, category headers)
   const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
+  // fully paid categories start collapsed, categories with something open expanded
+  const collapse = useMonthCollapse(period, (id) => {
+    const t = categoryFigures(figures, id);
+    return t.count > 0 && t.openCount === 0;
+  });
+  // „n offen“ in the hero: only the open positions
+  const [openOnlyFor, setOpenOnlyFor] = useState<Period | null>(null); // per month: a month change shows all again
+  const filtering = openOnlyFor === period && figures.openCount > 0;
+  const shownGroups = filtering
+    ? groups
+        .map((g) => ({ ...g, items: g.items.filter((i) => i.due && i.status === 'open') }))
+        .filter((g) => g.items.length > 0)
+    : groups;
+  const allCollapsed = groups.length > 0 && groups.every((g) => collapse.isCollapsed(g.category.id));
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
-  const today = useToday();
+  const today = useActiveMonth();
   const openGroups = useMemo(() => openFromPrevious(ds, period, today), [ds, period, today]);
   const openItem =
     openKey === null
@@ -174,7 +188,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       data-testid="month-screen"
       {...swipe.handlers}
     >
-      <MonthHeader period={period} onChange={onPeriodChange} />
+      <MonthHeader ds={ds} period={period} active={today} onChange={onPeriodChange} />
       <div key={swipe.enterKey} className={swipe.enterClass} style={swipe.style}>
 
       {openGroups.length > 0 && (
@@ -186,7 +200,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       )}
 
       <div className="grid gap-3 md:gap-4">
-        <HeroCard figures={figures} />
+        <HeroCard figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         {/* iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
@@ -215,7 +229,22 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section aria-label="Fällige Positionen" className="flex flex-col gap-3 md:gap-4">
-          {groups.length > 0 && (
+          {filtering && (
+            <div className="-mb-1 flex items-center justify-between px-1">
+              <p className="section-title" data-testid="categories-label">
+                Nur offene
+              </p>
+              <button
+                type="button"
+                onClick={() => setOpenOnlyFor(null)}
+                className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+                data-testid="show-all"
+              >
+                Alle anzeigen
+              </button>
+            </div>
+          )}
+          {groups.length > 0 && !filtering && (
             <div className="-mb-1 flex items-center justify-between px-1">
               <p className="section-title" data-testid="categories-label">
                 Kategorien
@@ -235,12 +264,12 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               Für {periodLabel(period)} ist nichts fällig. Neue Positionen legst du unter „Positionen“ an.
             </EmptyCard>
           ) : (
-            groups.map((group) => (
+            shownGroups.map((group) => (
               <GroupCard
                 key={group.category.id}
                 group={group}
                 tally={categoryFigures(figures, group.category.id)}
-                collapsed={collapse.isCollapsed(group.category.id)}
+                collapsed={!filtering && collapse.isCollapsed(group.category.id)}
                 onToggleCollapsed={() => collapse.toggle(group.category.id)}
                 spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
                 onToggle={toggle}
@@ -290,31 +319,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             {upcoming.length === 0 ? (
               <EmptyCard>In den nächsten 2 Monaten keine Sonderzahlungen.</EmptyCard>
             ) : (
-              <ul className="glass divide-y divide-line">
-                {upcoming.map((item) => (
-                  <li
-                    key={`${item.period}-${item.position.id}`}
-                    className="flex items-start gap-3 px-4 py-3 md:px-5"
-                    data-testid="upcoming-row"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span lang="de" className="line-clamp-2 hyphens-auto break-words text-[15px] font-medium leading-6 text-ink">
-                        {item.position.name}
-                      </span>
-                      {/* fixed grid on every viewport: line 2 the month chip, line 3 the rhythm */}
-                      <span className="mt-1 flex" data-testid="upcoming-month">
-                        <Badge tone="warn">{monthName(item.period)}</Badge>
-                      </span>
-                      {item.plan && (
-                        <span className="mt-0.5 block text-[13px] leading-5 text-ink-mute" data-testid="upcoming-rhythm">
-                          {scheduleLabel(item.plan, item.period)}
-                        </span>
-                      )}
-                    </span>
-                    <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold leading-6 text-ink">{formatEUR(item.planned)}</span>
-                  </li>
-                ))}
-              </ul>
+              <UpcomingList items={upcoming} />
             )}
           </section>
         </aside>
@@ -418,32 +423,86 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   );
 }
 
-/** Today when the month shown is the current one, otherwise the 1st of that month. */
+/** Today when the month shown is the calendar month, otherwise the 1st of that month. */
 function defaultDueDate(period: Period): string {
-  const now = new Date();
-  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const now = localToday();
+  const current = calendarMonth(now);
   return period === current ? `${current}-${String(now.getDate()).padStart(2, '0')}` : `${period}-01`;
 }
 
-function MonthHeader({ period, onChange }: { period: Period; onChange: (p: Period) => void }) {
+function MonthHeader({
+  ds,
+  period,
+  active,
+  onChange,
+}: {
+  ds: Dataset;
+  period: Period;
+  active: Period;
+  onChange: (p: Period) => void;
+}) {
+  const [picker, setPicker] = useState(false);
+  const titleButton = useRef<HTMLButtonElement>(null);
+  const hintId = useId();
   const navButton =
     'focus-ring flex h-11 w-11 items-center justify-center rounded-full text-ink-soft hover:bg-zinc-100 active:bg-zinc-200';
   return (
-    <header className="flex items-center justify-between py-3 lg:py-6">
-      <button type="button" className={navButton} onClick={() => onChange(addPeriods(period, -1))} aria-label="Vorheriger Monat">
-        <ChevronLeft size={22} />
-      </button>
-      <h1 className="text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]" aria-live="polite">
-        {periodLabel(period)}
-      </h1>
-      <button type="button" className={navButton} onClick={() => onChange(addPeriods(period, 1))} aria-label="Nächster Monat">
-        <ChevronRight size={22} />
-      </button>
-    </header>
+    <>
+      <header className="flex items-center justify-between py-3 lg:py-6">
+        <button type="button" className={navButton} onClick={() => onChange(addPeriods(period, -1))} aria-label="Vorheriger Monat">
+          <ChevronLeft size={22} />
+        </button>
+        <h1 className="text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]" aria-live="polite">
+          {/* tap the title: month grid */}
+          <button
+            ref={titleButton}
+            type="button"
+            onClick={() => setPicker(true)}
+            aria-haspopup="dialog"
+            aria-describedby={hintId}
+            className="focus-ring min-h-11 rounded-xl px-2"
+            data-testid="month-title"
+          >
+            {periodLabel(period)}
+          </button>
+        </h1>
+        <span id={hintId} hidden>
+          Monat wählen
+        </span>
+        <button type="button" className={navButton} onClick={() => onChange(addPeriods(period, 1))} aria-label="Nächster Monat">
+          <ChevronRight size={22} />
+        </button>
+      </header>
+      {period !== active && (
+        <div className="-mt-1 mb-3 flex justify-center lg:-mt-3">
+          <button
+            type="button"
+            onClick={() => onChange(active)}
+            className="focus-ring inline-flex min-h-11 items-center rounded-full border border-edge bg-field px-4 text-[14px] font-medium text-accent-ink"
+            data-testid="to-active-month"
+          >
+            Zum aktiven Monat ({monthName(active)})
+          </button>
+        </div>
+      )}
+      {picker && (
+        <MonthPicker
+          ds={ds}
+          shown={period}
+          active={active}
+          onPick={(p) => {
+            setPicker(false);
+            onChange(p);
+          }}
+          onClose={() => setPicker(false)}
+          returnFocusTo={titleButton.current}
+        />
+      )}
+    </>
   );
 }
 
-function HeroCard({ figures }: { figures: MonthFigures }) {
+function HeroCard({ figures, openOnly, onToggleOpenOnly }: { figures: MonthFigures; openOnly: boolean; onToggleOpenOnly: () => void }) {
   const allPaid = figures.count > 0 && figures.openCount === 0;
   return (
     <div className="glass flex flex-col gap-4 p-4 md:flex-row md:items-center md:gap-6 md:p-5" data-testid="hero">
@@ -469,12 +528,23 @@ function HeroCard({ figures }: { figures: MonthFigures }) {
             ) : figures.count === 0 ? (
               <span className="text-[14px] text-ink-mute">Nichts fällig</span>
             ) : (
-              <span
-                className="num inline-flex h-7 items-center rounded-full bg-accent-soft px-3 text-[13px] font-semibold text-accent-strong"
-                data-testid="hero-open"
+              // a filter: only the open positions; tapping again shows all
+              <button
+                type="button"
+                onClick={onToggleOpenOnly}
+                aria-pressed={openOnly}
+                className="focus-ring -my-2 inline-flex min-h-11 items-center rounded-full"
+                data-testid="hero-open-filter"
               >
-                {figures.openCount} offen · {formatEUR(shownOpen(figures))}
-              </span>
+                <span
+                  className={`num inline-flex h-7 items-center rounded-full px-3 text-[13px] font-semibold ${
+                    openOnly ? 'bg-accent text-white' : 'bg-accent-soft text-accent-strong'
+                  }`}
+                  data-testid="hero-open"
+                >
+                  {figures.openCount} offen · {formatEUR(shownOpen(figures))}
+                </span>
+              </button>
             )}
           </div>
         </div>
@@ -874,6 +944,81 @@ function OpenItemRow({ item, onPay, onSkip }: { item: DueItem; onPay: (item: Due
         </button>
       </span>
     </li>
+  );
+}
+
+/** iPhone: the first 3, then „Alle anzeigen (n)“; iPad and desktop: all. */
+const UPCOMING_PHONE = 3;
+
+/**
+ * „Kommt bald“: line 1 title and amount, line 2 month chip and rhythm side by side. If the rhythm
+ * does not fit next to the chip in one entry, it goes to line 3 as a whole – in every entry of the
+ * list, so the grid stays the same.
+ */
+function UpcomingList({ items }: { items: DueItem[] }) {
+  const [all, setAll] = useState(false);
+  const [stacked, setStacked] = useState(false);
+  const list = useRef<HTMLUListElement>(null);
+  useLayoutEffect(() => {
+    const ul = list.current;
+    if (!ul) return;
+    const measure = () => {
+      const rows = [...ul.querySelectorAll<HTMLElement>('[data-testid="upcoming-meta"]')].filter((m) => m.offsetParent !== null);
+      const need = rows.some((meta) => {
+        const chip = meta.querySelector<HTMLElement>('[data-testid="upcoming-month"]')!;
+        const rhythm = meta.querySelector<HTMLElement>('[data-testid="upcoming-rhythm"]');
+        return !!rhythm && chip.offsetWidth + 8 + rhythm.scrollWidth > meta.clientWidth;
+      });
+      setStacked(need);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(ul);
+    return () => observer.disconnect();
+  }, [items, all]);
+  const hidden = items.length - UPCOMING_PHONE;
+  return (
+    <div className="glass overflow-hidden">
+      <ul ref={list} className="divide-y divide-line" data-testid="upcoming-list" data-stacked={stacked || undefined}>
+        {items.map((item, i) => (
+          <li
+            key={`${item.period}-${item.position.id}`}
+            className={`items-start gap-3 px-4 py-3 md:flex md:px-5 ${i >= UPCOMING_PHONE && !all ? 'hidden' : 'flex'}`}
+            data-testid="upcoming-row"
+          >
+            <span className="min-w-0 flex-1">
+              <span lang="de" className="line-clamp-2 hyphens-auto break-words text-[15px] font-medium leading-6 text-ink">
+                {item.position.name}
+              </span>
+              <span
+                className={`mt-1 flex ${stacked ? 'flex-col items-start gap-0.5' : 'items-center gap-2'}`}
+                data-testid="upcoming-meta"
+              >
+                <span className="flex shrink-0" data-testid="upcoming-month">
+                  <Badge tone="warn">{monthName(item.period)}</Badge>
+                </span>
+                {item.plan && (
+                  <span className="whitespace-nowrap text-[13px] leading-5 text-ink-mute" data-testid="upcoming-rhythm">
+                    {scheduleLabel(item.plan, item.period)}
+                  </span>
+                )}
+              </span>
+            </span>
+            <span className="num shrink-0 whitespace-nowrap text-[15px] font-semibold leading-6 text-ink">{formatEUR(item.planned)}</span>
+          </li>
+        ))}
+      </ul>
+      {hidden > 0 && !all && (
+        <button
+          type="button"
+          onClick={() => setAll(true)}
+          className="focus-ring flex min-h-11 w-full items-center justify-center border-t border-line text-[14px] font-medium text-accent-ink md:hidden"
+          data-testid="upcoming-more"
+        >
+          Alle anzeigen ({items.length})
+        </button>
+      )}
+    </div>
   );
 }
 

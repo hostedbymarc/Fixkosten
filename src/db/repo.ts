@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import { format } from 'date-fns';
+import { localToday } from '../lib/activeMonth';
 import { archivedPeriod, compareEntries, currentPlan, entryKey, planForPeriod, planHistory } from '../lib/calc';
 import { addPeriods, periodLabel } from '../lib/period';
 import type {
@@ -440,7 +441,7 @@ export async function restorePlanEntry(db: FixkostenDB, id: string, entry: PlanE
 
 /** Local calendar date, so the archive month never shifts at midnight UTC. */
 function localDate(): string {
-  return format(new Date(), 'yyyy-MM-dd');
+  return format(localToday(), 'yyyy-MM-dd');
 }
 
 export interface ArchiveUndo {

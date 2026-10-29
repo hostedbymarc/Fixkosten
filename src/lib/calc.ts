@@ -559,6 +559,22 @@ export function openFromPrevious(ds: Dataset, period: Period, today: Period): Op
   return groups;
 }
 
+export type MonthStatus = { kind: 'paid' } | { kind: 'open'; count: number } | { kind: 'none' };
+
+/**
+ * Status of a month in the month grid: „✓“ everything ticked, „n offen“ (the hero's count:
+ * Fixkosten without Vermögensaufbau), nothing for a future month without ticks, a month before
+ * the first month with data, or a month with nothing due.
+ */
+export function monthStatus(ds: Dataset, period: Period, active: Period): MonthStatus {
+  const first = firstDataPeriod(ds);
+  if (!first || period < first) return { kind: 'none' };
+  const f = monthFigures(ds, period);
+  if (f.count === 0) return { kind: 'none' };
+  if (period > active && f.paidCount === 0) return { kind: 'none' };
+  return f.openCount === 0 ? { kind: 'paid' } : { kind: 'open', count: f.openCount };
+}
+
 /** What a permanent delete would remove besides the position itself. */
 export function positionUsage(ds: Dataset, positionId: string): { payments: number; oneOffs: number } {
   return {

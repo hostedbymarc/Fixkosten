@@ -1,4 +1,4 @@
-import { eur, expect, row, test } from './fixtures';
+import { appSettled, eur, expandAll, expect, row, test } from './fixtures';
 
 test.describe('Monat-Screen (Seed Oktober 2026)', () => {
   test('hero shows € 3.368 von € 3.403 and 1 open position', async ({ app }) => {
@@ -87,6 +87,8 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     await row(app, 'pos-depotentgelt').getByTestId('toggle-paid').click();
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'true');
     await app.reload();
+    await appSettled(app);
+    await expandAll(app); // Banking is fully paid now: it opens collapsed
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'true');
     await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 3.403'));
   });

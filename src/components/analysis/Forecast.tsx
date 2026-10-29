@@ -16,9 +16,9 @@ interface TipProps<T> {
 /** Room right of the plot for the Ø chip at the end of the line (never on a bar). */
 const CHIP_ROOM = 48;
 
-const NARROW = '(max-width: 419px)';
+const NARROW = '(max-width: 429px)';
 
-/** Phones narrower than the iPhone Pro Max: every pixel of plot width goes to the 12 month labels. */
+/** Phones narrower than 430 px: every pixel of plot width goes to the 12 month labels (one letter each). */
 function useNarrow(): boolean {
   const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia(NARROW).matches);
   useEffect(() => {
@@ -34,9 +34,10 @@ function useNarrow(): boolean {
 function OnceDot({ size = 6 }: { size?: number }) {
   return (
     <span
-      className="inline-block shrink-0 rounded-full"
+      className="inline-block shrink-0 -translate-y-px self-center rounded-full"
       style={{ width: size, height: size, background: COLORS.accentLight }}
       aria-hidden="true"
+      data-testid="once-dot"
     />
   );
 }
@@ -45,12 +46,14 @@ function itemLabel(i: ForecastItem): string {
   return `${i.name}${i.once ? ' (einmalig)' : ''} ${formatEUR(i.amount)}`;
 }
 
-/** Name … amount, the name truncates, the amount never wraps. */
+/** Name … amount: the name wraps (at most 2 lines, never cut off mid-line), the amount never wraps. */
 function ItemInline({ item }: { item: ForecastItem }) {
   return (
-    <span className="flex min-w-0 items-center gap-1">
+    <span className="flex min-w-0 max-w-full items-baseline gap-1" data-testid="forecast-item" data-once={item.once || undefined}>
       {item.once && <OnceDot />}
-      <span className="min-w-0 truncate">{item.name}</span>
+      <span className="line-clamp-2 min-w-0 break-words" data-testid="forecast-item-name">
+        {item.name}
+      </span>
       <span className="num shrink-0 whitespace-nowrap">{formatEUR(item.amount)}</span>
     </span>
   );
@@ -60,10 +63,12 @@ function ItemLines({ items }: { items: ForecastItem[] }) {
   return (
     <ul className="flex flex-col gap-0.5">
       {items.map((i) => (
-        <li key={i.name} className="flex items-baseline justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-1.5">
+        <li key={i.name} className="flex items-baseline justify-between gap-3" data-testid="forecast-item" data-once={i.once || undefined}>
+          <span className="flex min-w-0 items-baseline gap-1.5">
             {i.once && <OnceDot />}
-            <span className="min-w-0 truncate">{i.name}</span>
+            <span className="line-clamp-2 min-w-0 break-words" data-testid="forecast-item-name">
+              {i.name}
+            </span>
           </span>
           <span className="num shrink-0 whitespace-nowrap">{formatEUR(i.amount)}</span>
         </li>
@@ -74,13 +79,27 @@ function ItemLines({ items }: { items: ForecastItem[] }) {
 
 const VISIBLE_ITEMS = 2;
 
+const NOTE_LABEL = 'Monat hat eine Notiz';
+
 /** iPhone / iPad portrait: one row per month, tap shows all non-monthly items. */
-function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string; open: boolean; onToggle: () => void }) {
+function MonthRow({
+  m,
+  note,
+  open,
+  selected,
+  onToggle,
+}: {
+  m: ForecastMonth;
+  note?: string;
+  open: boolean;
+  selected: boolean;
+  onToggle: () => void;
+}) {
   const shown = m.items.slice(0, VISIBLE_ITEMS);
   const more = m.items.length - shown.length;
   const label = `${periodLabel(m.period)}: ${formatEUR(m.due)} fällig${m.aboveAverage ? ', über dem Schnitt' : ''}${
     m.items.length ? `, nicht monatlich: ${m.items.map(itemLabel).join(', ')}` : ''
-  }${note ? ', mit Notiz' : ''}`;
+  }${note ? `, ${NOTE_LABEL}` : ''}`;
   const expandable = m.items.length > 0 || !!note;
   const head = (
     <>
@@ -89,7 +108,7 @@ function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string
           {shortPeriodLabel(m.period)}
         </span>
         {note && (
-          <span className="text-ink-mute" aria-hidden="true" data-testid="forecast-note-icon">
+          <span className="text-ink-mute" title={NOTE_LABEL} aria-hidden="true" data-testid="forecast-note-icon">
             <NoteIcon size={14} />
           </span>
         )}
@@ -98,20 +117,38 @@ function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string
         </span>
       </span>
       {m.items.length > 0 && !open && (
-        <span className="mt-1 flex min-w-0 items-center gap-2 text-[13px] text-ink-mute" data-testid="forecast-preview">
-          {shown.map((i, n) => (
-            <span key={i.name} className="flex min-w-0 items-center gap-1.5">
-              {n > 0 && <span aria-hidden="true">·</span>}
-              <ItemInline item={i} />
-            </span>
-          ))}
-          {more > 0 && <span className="shrink-0 whitespace-nowrap">+{more} weitere</span>}
+        // each entry starts with 14 px room for its „·“; the inner row is shifted left by that much and
+        // clipped, so an entry that wraps to the start of a line shows no stray separator
+        <span className="mt-1 block min-w-0 overflow-hidden text-[13px] text-ink-mute" data-testid="forecast-preview">
+          <span className="-ml-3.5 flex flex-wrap items-baseline gap-y-0.5">
+            {shown.map((i, n) => (
+              <span key={i.name} className="relative flex min-w-0 max-w-full items-baseline pl-3.5">
+                {n > 0 && (
+                  <span className="absolute left-[4px]" aria-hidden="true">
+                    ·
+                  </span>
+                )}
+                <ItemInline item={i} />
+              </span>
+            ))}
+            {/* part of the row button: tapping it expands the month */}
+            {more > 0 && (
+              <span className="shrink-0 whitespace-nowrap pl-3.5 font-medium text-accent-ink underline-offset-2 hover:underline" data-testid="forecast-more">
+                +{more} weitere
+              </span>
+            )}
+          </span>
         </span>
       )}
     </>
   );
   return (
-    <li className="border-t border-line first:border-t-0" data-testid="forecast-row" data-period={m.period}>
+    <li
+      className={`-mx-2 rounded-lg border-t border-line px-2 first:border-t-0 ${selected ? 'bg-accent-soft' : ''}`}
+      data-testid="forecast-row"
+      data-period={m.period}
+      data-selected={selected || undefined}
+    >
       {expandable ? (
         <button
           type="button"
@@ -153,19 +190,26 @@ function MonthRow({ m, note, open, onToggle }: { m: ForecastMonth; note?: string
   );
 }
 
-function MonthList({ f, notes }: { f: YearForecast; notes: Map<Period, string> }) {
+function MonthList({ f, notes, selected }: { f: YearForecast; notes: Map<Period, string>; selected: Period | null }) {
   const [open, setOpen] = useState<Period | null>(null);
   return (
     <ul role="list" aria-label="Fällige Ausgaben der nächsten 12 Monate" className="lg:hidden" data-testid="forecast-list">
       {f.months.map((m) => (
-        <MonthRow key={m.period} m={m} note={notes.get(m.period)} open={open === m.period} onToggle={() => setOpen((p) => (p === m.period ? null : m.period))} />
+        <MonthRow
+          key={m.period}
+          m={m}
+          note={notes.get(m.period)}
+          open={open === m.period}
+          selected={selected === m.period}
+          onToggle={() => setOpen((p) => (p === m.period ? null : m.period))}
+        />
       ))}
     </ul>
   );
 }
 
 /** From iPad landscape: a real table, items as a list in the third column. */
-function MonthTable({ f, notes }: { f: YearForecast; notes: Map<Period, string> }) {
+function MonthTable({ f, notes, selected }: { f: YearForecast; notes: Map<Period, string>; selected: Period | null }) {
   return (
     <table className="hidden w-full table-fixed text-left text-[13px] lg:table" data-testid="forecast-table">
       <caption className="sr-only">Fällige Ausgaben der nächsten 12 Monate</caption>
@@ -183,19 +227,24 @@ function MonthTable({ f, notes }: { f: YearForecast; notes: Map<Period, string> 
       </thead>
       <tbody>
         {f.months.map((m) => (
-          <tr key={m.period} className="border-t border-line align-top">
-            <th scope="row" className="whitespace-nowrap py-2 font-normal text-ink">
+          <tr
+            key={m.period}
+            className={`border-t border-line align-top ${selected === m.period ? 'bg-accent-soft' : ''}`}
+            data-period={m.period}
+            data-selected={selected === m.period || undefined}
+          >
+            <th scope="row" className="whitespace-nowrap py-2 pl-2 font-normal text-ink">
               <span className="flex items-center gap-2">
                 {shortPeriodLabel(m.period)}
                 {notes.has(m.period) && (
-                  <span className="text-ink-mute" aria-label="mit Notiz">
+                  <span className="text-ink-mute" role="img" aria-label={NOTE_LABEL} title={NOTE_LABEL} data-testid="forecast-note-icon">
                     <NoteIcon size={13} />
                   </span>
                 )}
               </span>
             </th>
             <td className="num whitespace-nowrap py-2 pr-4 text-right font-semibold text-ink">{formatEUR(m.due)}</td>
-            <td className="py-2 text-ink-soft">
+            <td className="py-2 pr-2 text-ink-soft">
               {m.items.length === 0 && !notes.has(m.period) ? <span className="text-ink-faint">–</span> : <ItemLines items={m.items} />}
               {notes.has(m.period) && (
                 <p className={`whitespace-pre-line break-words text-ink-mute ${m.items.length > 0 ? 'mt-1' : ''}`} data-testid="forecast-note">
@@ -225,14 +274,23 @@ function AvgChip({ viewBox, text }: { viewBox?: { x?: number; y?: number; width?
   );
 }
 
+/** The active month's bar (the first one): outlined, regular and one-time part alike. */
+const ACTIVE_OUTLINE = { stroke: COLORS.ink, strokeWidth: 1.5 };
+
 export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
   const f = yearForecast(ds, today);
   const summary = forecastSummary(f);
   const narrow = useNarrow();
+  // tapped bar: its row in „Details“ is highlighted
+  const [selected, setSelected] = useState<Period | null>(null);
+  const active = f.months[0]?.period;
+  // the bar itself, not the chart: the chart's click state still holds the previous hover
+  const selectBar = (bar: { payload?: { period?: Period } }) => {
+    if (bar.payload?.period) setSelected(bar.payload.period);
+  };
   const notes = new Map(ds.monthClose.filter((c) => c.note).map((c) => [c.period, c.note!] as const));
   const rows = f.months.map((m) => ({
     ...m,
-    label: shortMonthName(monthOf(m.period)),
     // stacked: regular fixed costs below (their mean is the Ø line), one-time payments and one-offs on top
     recurring: m.regular,
   }));
@@ -246,8 +304,8 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
       headline={summary}
       details={
         <>
-          <MonthList f={f} notes={notes} />
-          <MonthTable f={f} notes={notes} />
+          <MonthList f={f} notes={notes} selected={selected} />
+          <MonthTable f={f} notes={notes} selected={selected} />
           <p className="mt-2 border-t border-line pt-2 text-[13px] text-ink-mute" data-testid="forecast-footer">
             12 Monate <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(f.total)}</span>
             {f.onceTotal > 0 && (
@@ -261,14 +319,26 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
     >
       <div
         // narrow phones: the chart uses half of the card padding, the month labels need it
-        className="h-[230px] max-[419px]:-mx-2"
+        className="h-[230px] max-[429px]:-mx-2"
         role="img"
-        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (heute) ${formatEUR(f.average)}`}
+        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
       >
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
-          <BarChart data={rows} margin={{ ...CHART_MARGIN, right: CHIP_ROOM }} accessibilityLayer barCategoryGap="22%">
+          <BarChart
+            data={rows}
+            margin={{ ...CHART_MARGIN, right: CHIP_ROOM }}
+            accessibilityLayer
+            barCategoryGap="22%"
+          >
             <CartesianGrid vertical={false} stroke={COLORS.grid} />
-            <XAxis dataKey="label" {...xAxisProps} interval={0} tick={{ ...AXIS_TICK, fontSize: narrow ? 10 : 11 }} />
+            <XAxis
+              dataKey="period"
+              {...xAxisProps}
+              interval={0}
+              // below 430 px one letter (O N D J …), from there three letters (Okt Nov Dez …)
+              tickFormatter={(p: Period) => (narrow ? shortMonthName(monthOf(p)).charAt(0) : shortMonthName(monthOf(p)))}
+              tick={AXIS_TICK}
+            />
             <YAxis
               {...yAxisProps}
               // the card is about euros: narrow phones drop the '€ ' of the scale ('8k')
@@ -282,14 +352,9 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
                 const m = props.active && props.payload?.length ? (props.payload[0]!.payload ?? null) : null;
                 if (!m) return null;
                 return (
-                  <TooltipBox title={`${periodLabel(m.period)}: ${formatEUR(m.due)}`}>
-                    {m.items.length === 0 ? (
-                      <p>Nur monatliche Posten</p>
-                    ) : (
-                      m.items.map((i) => (
-                        <TooltipRow key={i.name} label={i.name} value={formatEUR(i.amount)} swatch={i.once ? COLORS.accentLight : undefined} />
-                      ))
-                    )}
+                  <TooltipBox title={periodLabel(m.period)} badge={m.period === active ? 'aktiv' : undefined}>
+                    <TooltipRow label="Summe" value={formatEUR(m.due)} />
+                    <TooltipRow label="davon einmalig" value={formatEUR(m.once)} swatch={COLORS.accentLight} />
                   </TooltipBox>
                 );
               }}
@@ -302,10 +367,11 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
               isAnimationActive={false}
               name="Fällig"
               className="bar-recurring"
+              onClick={selectBar}
             >
               {/* regular part: one colour; the Ø line shows which months lie above */}
               {rows.map((m) => (
-                <Cell key={m.period} fill={COLORS.accent} />
+                <Cell key={m.period} fill={COLORS.accent} {...(m.period === active ? ACTIVE_OUTLINE : {})} />
               ))}
             </Bar>
             {hasOnce && (
@@ -320,7 +386,12 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
                 stroke={COLORS.surface}
                 strokeWidth={1}
                 className="bar-once"
-              />
+                onClick={selectBar}
+              >
+                {rows.map((m) => (
+                  <Cell key={m.period} {...(m.period === active ? ACTIVE_OUTLINE : {})} />
+                ))}
+              </Bar>
             )}
             <ReferenceLine
               y={f.average}
@@ -348,7 +419,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         )}
         <span className="flex items-center gap-1.5">
           <span className="h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-          Ø pro Monat (heute)
+          Ø pro Monat (aktiver Monat)
         </span>
       </p>
     </ChartCard>
