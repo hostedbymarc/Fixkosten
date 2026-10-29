@@ -28,7 +28,7 @@ import {
 } from '../lib/calc';
 import { formatAvg, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
-import { useToday } from '../lib/useToday';
+import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, PlanEntry, Position } from '../lib/types';
 
 type Sheet =
@@ -40,7 +40,7 @@ type Sheet =
   | { kind: 'categories' };
 
 export function PositionsScreen({ ds }: { ds: Dataset }) {
-  const today = useToday();
+  const today = useActiveMonth();
   const toast = useToast();
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const trigger = useRef<HTMLElement | null>(null);

@@ -8,8 +8,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
+import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
 import { hideSplash, playEntrance } from './lib/entrance';
-import { toPeriod } from './lib/period';
+import { ActiveMonthContext } from './lib/useToday';
 import type { Period } from './lib/types';
 import { MonthScreen } from './screens/MonthScreen';
 import { PositionsScreen } from './screens/PositionsScreen';
@@ -17,6 +18,9 @@ import { SettingsScreen } from './screens/SettingsScreen';
 
 // Recharts is only loaded with the analysis tab, the month view stays light
 const AnalyseScreen = lazy(() => import('./screens/AnalyseScreen'));
+
+/** Manual month navigation keeps the shown month this long before the app returns to the active one. */
+const NAV_HOLD_MS = 30 * 60_000;
 
 type Route = 'monat' | 'positionen' | 'analyse' | 'einstellungen';
 
@@ -49,7 +53,38 @@ export function App() {
   const route = useHashRoute();
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
-  const [period, setPeriod] = useState<Period>(() => toPeriod(new Date()));
+  const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
+  const [now, setNow] = useState(localToday);
+  const active = start === undefined ? null : activeMonth(now, start);
+  const [shown, setShown] = useState<Period | null>(null);
+  const period = shown ?? active;
+  // manual navigation (arrows, swipe, month grid, „Zum aktiven Monat“) holds the shown month for 30 min
+  const navigatedAt = useRef(0);
+  const setPeriod = (p: Period) => {
+    navigatedAt.current = Date.now();
+    setShown(p);
+  };
+  const followActive = useRef<() => void>(() => {});
+  followActive.current = () => {
+    if (active && Date.now() - navigatedAt.current > NAV_HOLD_MS) setShown(active);
+  };
+  // the clock: every minute and on return from the background (the active month may have moved on)
+  useEffect(() => {
+    const tick = () => setNow(localToday());
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      tick();
+      followActive.current();
+    };
+    const timer = window.setInterval(tick, 60_000);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+  // a new active month (new day, changed setting) is shown unless the user just navigated
+  useEffect(() => followActive.current(), [active]);
   const mainRef = useRef<HTMLElement>(null);
   const loaded = !!ds;
 
@@ -76,39 +111,41 @@ export function App() {
     return () => observer.disconnect();
   }, [route, loaded, setup]);
 
-  if (setup === undefined) return <Loader />;
+  if (setup === undefined || start === undefined || !active || !period) return <Loader />;
   if (setup) return <SetupDialog />;
 
   return (
-    <ToastProvider>
-      <div className="relative min-h-dvh lg:pl-[240px]">
-        <Sidebar route={route} />
-        <main
-          ref={mainRef}
-          className="pt-safe px-safe"
-          style={{ paddingBottom: 'calc(var(--tabbar-space) + 16px)' }}
-        >
-          {!ds ? (
-            <Loader />
-          ) : route === 'monat' ? (
-            <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
-          ) : route === 'positionen' ? (
-            <PositionsScreen ds={ds} />
-          ) : route === 'analyse' ? (
-            <Suspense
-              fallback={
-                <Loader />
-              }
-            >
-              <AnalyseScreen ds={ds} />
-            </Suspense>
-          ) : (
-            <SettingsScreen ds={ds} />
-          )}
-        </main>
-        <TabBar route={route} />
-      </div>
-    </ToastProvider>
+    <ActiveMonthContext.Provider value={{ start, active }}>
+      <ToastProvider>
+        <div className="relative min-h-dvh lg:pl-[240px]">
+          <Sidebar route={route} />
+          <main
+            ref={mainRef}
+            className="pt-safe px-safe"
+            style={{ paddingBottom: 'calc(var(--tabbar-space) + 16px)' }}
+          >
+            {!ds ? (
+              <Loader />
+            ) : route === 'monat' ? (
+              <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
+            ) : route === 'positionen' ? (
+              <PositionsScreen ds={ds} />
+            ) : route === 'analyse' ? (
+              <Suspense
+                fallback={
+                  <Loader />
+                }
+              >
+                <AnalyseScreen ds={ds} />
+              </Suspense>
+            ) : (
+              <SettingsScreen ds={ds} />
+            )}
+          </main>
+          <TabBar route={route} />
+        </div>
+      </ToastProvider>
+    </ActiveMonthContext.Provider>
   );
 }
 

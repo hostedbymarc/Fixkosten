@@ -59,7 +59,8 @@ import {
 } from '../lib/calc';
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
-import { useToday } from '../lib/useToday';
+import { calendarMonth, localToday } from '../lib/activeMonth';
+import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
 interface Props {
@@ -94,7 +95,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
-  const today = useToday();
+  const today = useActiveMonth();
   const openGroups = useMemo(() => openFromPrevious(ds, period, today), [ds, period, today]);
   const openItem =
     openKey === null
@@ -418,10 +419,10 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   );
 }
 
-/** Today when the month shown is the current one, otherwise the 1st of that month. */
+/** Today when the month shown is the calendar month, otherwise the 1st of that month. */
 function defaultDueDate(period: Period): string {
-  const now = new Date();
-  const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const now = localToday();
+  const current = calendarMonth(now);
   return period === current ? `${current}-${String(now.getDate()).padStart(2, '0')}` : `${period}-01`;
 }
 

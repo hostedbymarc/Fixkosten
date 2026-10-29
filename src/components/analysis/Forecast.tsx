@@ -263,7 +263,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         // narrow phones: the chart uses half of the card padding, the month labels need it
         className="h-[230px] max-[419px]:-mx-2"
         role="img"
-        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (heute) ${formatEUR(f.average)}`}
+        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
       >
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={{ ...CHART_MARGIN, right: CHIP_ROOM }} accessibilityLayer barCategoryGap="22%">
@@ -348,7 +348,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         )}
         <span className="flex items-center gap-1.5">
           <span className="h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-          Ø pro Monat (heute)
+          Ø pro Monat (aktiver Monat)
         </span>
       </p>
     </ChartCard>

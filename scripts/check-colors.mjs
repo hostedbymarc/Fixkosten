@@ -44,6 +44,10 @@ for (const file of [...files('src'), 'index.html']) {
       if (/„[^“”\n]*"|‚[^‘’\n]*'/.test(line)) {
         problems.push(`${file}:${i + 1}: gerades Anführungszeichen schließt „…“/‚…‘ → ${line.trim()}`);
       }
+      // „heute“ for month logic only via src/lib/activeMonth.ts (timestamps with toISOString are fine)
+      if (/new Date\(\)(?!\.toISOString\(\))/.test(line) && file !== 'src/lib/activeMonth.ts' && !/^\s*(\/\/|\*|\/\*)/.test(line)) {
+        problems.push(`${file}:${i + 1}: new Date() außerhalb von activeMonth.ts – localToday()/activeMonth() verwenden → ${line.trim()}`);
+      }
       if (OLD_NAME.test(line) && !NAME_OK.some((ok) => ok.test(line)) && !/^\s*(\/\/|\*|\/\*)/.test(line)) {
         problems.push(`${file}:${i + 1}: alter App-Name → ${line.trim()}`);
       }
@@ -54,4 +58,4 @@ if (problems.length) {
   console.error(`check-colors: ${problems.length} Fund(e)\n${problems.join('\n')}`);
   process.exit(1);
 }
-console.log('check-colors: keine Farbwerte außerhalb von tokens.css, kein alter App-Name, keine geraden schließenden Anführungszeichen in der UI');
+console.log('check-colors: keine Farbwerte außerhalb von tokens.css, kein alter App-Name, keine geraden schließenden Anführungszeichen in der UI, Monatslogik nur über activeMonth');
