@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Download, Page } from '@playwright/test';
-import { eur, expect, goTo, importFixture, row, test } from './fixtures';
+import { eur, expandAll, expect, goTo, importFixture, row, test } from './fixtures';
 
 const BOOKMARKLET = readFileSync('docs/export-bookmarklet.txt', 'utf8').trim();
 
@@ -75,6 +75,7 @@ test.describe('Sicherung', () => {
 
     await importFile(app, exported.json, 'Zusammenführen');
     await goTo(app, 'monat');
+    await expandAll(app); // now fully paid categories open collapsed
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'true');
     await expect(row(app, 'pos-strom')).toContainText(eur('+€ 7,40'));
     await expect(app.getByTestId('salary-value')).toHaveText(eur('€ 4.700')); // live-only month close kept

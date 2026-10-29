@@ -9,7 +9,7 @@ import {
 import { formatDelta, formatEUR, formatEURSet, needsCents } from '../src/lib/format';
 import { periodLabel } from '../src/lib/period';
 import { historyDataset, importHistory, openAnalyse, watchConsole } from './analyse-helpers';
-import { eur, expect, goTo, isTouchProject, row, test } from './fixtures';
+import { eur, expect, goTo, isTouchProject, test } from './fixtures';
 import { expectClean } from './measure';
 
 const OCT = '2026-10';
@@ -63,7 +63,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
     // Verteilung: no second head line, only the sum on top (spread amounts always with cents)
     await expect(app.getByTestId('distribution-headline')).toHaveCount(0);
-    await expect(app.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat (heute)'));
+    await expect(app.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat (aktiver Monat)'));
     await expect(app.getByTestId('monthclose')).toHaveCount(0); // „Frei verfügbar & Sparquote“ removed
     // the data hint lives in the empty states (no „Verlauf / Bisher 1 Monat Daten“ heading)
     await expect(app.getByTestId('trend-empty')).toHaveText(
@@ -302,7 +302,7 @@ test.describe('Tooltips', () => {
     const box = await stableBox(feb);
     const finger = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     // fixture: Kredit +€ 25 from Jan 2027
-    await tapAndCheck(page, finger, await tooltipOf(forecast), [eur('Februar 2027: € 4.635'), eur('Steuerberater€ 1.260')]);
+    await tapAndCheck(page, finger, await tooltipOf(forecast), ['Februar 2027', eur('Summe€ 4.635'), eur('davon einmalig€ 0')]);
 
     // a different spot per chart: centred charts end up at the same screen position, and a
     // second tap on identical coordinates sends no mouse move, so no tooltip (flaky before)
@@ -333,8 +333,8 @@ test.describe('Tooltips', () => {
     await expect(tip).toContainText(/2026|2027/);
     // walk to February with the arrow keys
     for (let i = 0; i < 12 && !/Februar 2027/.test(text((await tip.textContent()) ?? '')); i++) await page.keyboard.press('ArrowRight');
-    await expect(tip).toContainText(eur('Februar 2027: € 4.635')); // fixture: Kredit +€ 25 from Jan 2027
-    await expect(tip).toContainText('Steuerberater');
+    await expect(tip).toContainText(eur('Summe€ 4.635')); // fixture: Kredit +€ 25 from Jan 2027
+    await expect(tip).toContainText('davon einmalig');
 
     // hover works too
     const bar = page.getByTestId('planactual').locator('.recharts-bar-rectangle').first();
@@ -349,7 +349,7 @@ test.describe('Lazy loading', () => {
     page.on('request', (r) => requests.push(r.url()));
     await page.reload();
     await expect(page.getByTestId('hero')).toBeVisible();
-    await expect(row(page, 'pos-miete')).toBeVisible();
+    await expect(page.getByTestId('category-group').first()).toBeVisible();
     expect(requests.filter((u) => /AnalyseScreen/.test(u))).toEqual([]);
     await openAnalyse(app);
     expect(requests.filter((u) => /AnalyseScreen/.test(u))).toHaveLength(1);

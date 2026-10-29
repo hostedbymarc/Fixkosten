@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, eur, expect, goTo, isSidebarLayout, isTouchProject, test } from './fixtures';
+import { animationsDone, appSettled, eur, expect, goTo, isSidebarLayout, isTouchProject, test } from './fixtures';
 import { expectClean } from './measure';
 import { importSprint } from './sprint-data';
 
@@ -33,6 +33,19 @@ async function expectNoWrap(page: Page, selector: string) {
   expect(wrapped, `wrapped: ${selector}`).toEqual([]);
 }
 
+/** Collapse by status: fully paid categories collapsed, everything else expanded. */
+async function expectByStatus(page: Page) {
+  const groups = await page.getByTestId('category-group').evaluateAll((els) =>
+    els.map((g) => ({
+      name: g.getAttribute('aria-label'),
+      expanded: g.querySelector('[data-testid="group-toggle"]')!.getAttribute('aria-expanded'),
+      paid: g.querySelector('[data-testid="group-progress"]')!.textContent!.includes('✓ bezahlt'),
+    })),
+  );
+  expect(groups.length).toBeGreaterThan(0);
+  for (const g of groups) expect(g.expanded, g.name ?? '').toBe(g.paid ? 'false' : 'true');
+}
+
 /** Every figure of the month screen that must not depend on collapsed groups. */
 async function figures(page: Page) {
   return {
@@ -45,7 +58,7 @@ async function figures(page: Page) {
 }
 
 test.describe('Kategorien einklappen (Monat)', () => {
-  test('einklappen: Positionen weg, Kopf mit Summe + Fortschritt; Monat wechseln und Reload behalten den Zustand', async ({ page }, info) => {
+  test('einklappen: Positionen weg, Kopf mit Summe + Fortschritt; Zustand bleibt pro Monat, nach Reload wieder nach Status', async ({ page }, info) => {
     await importSprint(page);
     const immos = group(page, 'Meine Immos');
     await expect(immos.getByTestId('position-row')).toHaveCount(3);
@@ -66,13 +79,19 @@ test.describe('Kategorien einklappen (Monat)', () => {
     await page.waitForTimeout(300);
     await page.locator('main').screenshot({ path: `${DIR}/${info.project.name}-monat-nachher-teilweise.png` });
 
+    // another month opens by status; back in October the manual state is still there
     await page.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'November 2026' })).toBeVisible();
+    await expectByStatus(page);
+    await page.getByRole('button', { name: 'Vorheriger Monat' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Oktober 2026' })).toBeVisible();
     await expect(toggleOf(page, 'Meine Immos')).toHaveAttribute('aria-expanded', 'false');
-    await expect(group(page, 'Meine Immos').getByTestId('position-row')).toHaveCount(0);
+    await expect(toggleOf(page, 'Banking & Finanzen')).toHaveAttribute('aria-expanded', 'false');
+    // a new start of the app: by status again (Meine Immos fully paid → collapsed)
     await page.reload();
+    await appSettled(page);
+    await expectByStatus(page);
     await expect(toggleOf(page, 'Meine Immos')).toHaveAttribute('aria-expanded', 'false');
-    await expect(toggleOf(page, 'Wohnen & Leben')).toHaveAttribute('aria-expanded', 'true');
 
     // expand again: ticking works as before
     await tap(toggleOf(page, 'Meine Immos'));
@@ -115,7 +134,7 @@ test.describe('Kategorien einklappen (Monat)', () => {
     await expect(group(page, 'Wohnen & Leben').getByTestId('position-row')).not.toHaveCount(0);
   });
 
-  test('eingeklappte Kategorie sortieren: Reihenfolge und Zustand bleiben nach Reload (Desktop)', async ({ page }) => {
+  test('eingeklappte Kategorie sortieren: Reihenfolge bleibt nach Reload, die bezahlte Kategorie startet eingeklappt (Desktop)', async ({ page }) => {
     test.skip(!isSidebarLayout(page), 'desktop keyboard flow');
     await importSprint(page);
     await tap(toggleOf(page, 'Meine Immos'));

@@ -1,7 +1,11 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 /** Horizontal distance (px) that switches the month. */
-const THRESHOLD = 64;
+export const SWIPE_THRESHOLD = 60;
+const THRESHOLD = SWIPE_THRESHOLD;
+/** At most this angle to the horizontal (degrees) counts as a swipe; anything steeper is scrolling. */
+export const SWIPE_MAX_ANGLE = 30;
+const TAN = Math.tan((SWIPE_MAX_ANGLE * Math.PI) / 180);
 /** Movement before the gesture decides between horizontal swipe and vertical scroll. */
 const LOCK = 10;
 /** Touches starting this close to the screen edge belong to the system (iOS back gesture). */
@@ -32,6 +36,8 @@ export function useMonthSwipe(onNext: () => void, onPrev: () => void) {
       // events from bottom sheets bubble through their React portal: only the screen itself counts
       if (!e.currentTarget.contains(e.target as Node)) return;
       if (e.clientX < EDGE || e.clientX > window.innerWidth - EDGE) return;
+      // never while a sheet (dialog) is open
+      if (document.querySelector('[role="dialog"]')) return;
       gesture.current = { id: e.pointerId, x: e.clientX, y: e.clientY, mode: 'pending' };
     },
     onPointerMove(e: ReactPointerEvent<HTMLElement>) {
@@ -40,8 +46,9 @@ export function useMonthSwipe(onNext: () => void, onPrev: () => void) {
       const dx = e.clientX - g.x;
       const dy = e.clientY - g.y;
       if (g.mode === 'pending') {
-        if (Math.abs(dy) > LOCK && Math.abs(dy) >= Math.abs(dx)) return reset(); // vertical scroll
-        if (Math.abs(dx) <= LOCK || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+        // steeper than 30° to the horizontal: vertical scrolling, the gesture is over
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > LOCK && Math.abs(dy) > Math.abs(dx) * TAN) return reset();
+        if (Math.abs(dx) <= LOCK) return;
         g.mode = 'swipe';
       }
       // follows the finger with resistance, at most the threshold
@@ -51,7 +58,9 @@ export function useMonthSwipe(onNext: () => void, onPrev: () => void) {
       const g = gesture.current;
       if (!g || g.id !== e.pointerId) return;
       const dx = e.clientX - g.x;
-      const swiped = g.mode === 'swipe' && Math.abs(dx) >= THRESHOLD;
+      const dy = e.clientY - g.y;
+      // ≥ 60 px and, over the whole gesture, flatter than 30°
+      const swiped = g.mode === 'swipe' && Math.abs(dx) >= THRESHOLD && Math.abs(dy) <= Math.abs(dx) * TAN;
       reset();
       if (g.mode === 'swipe') {
         // a swipe ending on a row is no tap; cleared again if no click follows

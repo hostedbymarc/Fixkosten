@@ -86,7 +86,8 @@ export function App() {
   // a new active month (new day, changed setting) is shown unless the user just navigated
   useEffect(() => followActive.current(), [active]);
   const mainRef = useRef<HTMLElement>(null);
-  const loaded = !!ds;
+  // data and the setting „Neuer Monat beginnt am“: only then is there a screen to show
+  const loaded = !!ds && start !== undefined;
 
   // the splash fades once there is something to show: the setup dialog or the data
   useEffect(() => {

@@ -15,6 +15,18 @@ export function liveBackup(): BackupFile {
   return parseBackup(JSON.parse(readFileSync(LIVE_FILE, 'utf8')));
 }
 
+/** Live export of 29.10.2026 (golden „aktiver Monat“): copied unchanged, without the setting. */
+export const LIVE_FILE_29 = fileURLToPath(new URL('./live-2026-10-29.json', import.meta.url));
+
+export function live29Backup(): BackupFile {
+  return parseBackup(JSON.parse(readFileSync(LIVE_FILE_29, 'utf8')));
+}
+
+export function live29Dataset(): Dataset {
+  const { categories, positions, payments, oneOffs, monthClose, reminders, changeLog } = live29Backup().data;
+  return { categories, positions, payments, oneOffs, monthClose, reminders, changeLog };
+}
+
 export function liveDataset(): Dataset {
   const { categories, positions, payments, oneOffs, monthClose, reminders, changeLog } = liveBackup().data;
   return { categories, positions, payments, oneOffs, monthClose, reminders, changeLog };
