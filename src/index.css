@@ -384,16 +384,37 @@ body::after {
   }
 }
 
-/* a tab kept from an earlier visit while another one is shown (src/App.tsx); stronger than the
-   screen's own display class */
+/* a tab kept from an earlier visit (or built ahead) while another one is shown (src/App.tsx):
+   laid out at its place but invisible, out of the page flow and of zero height – showing it again
+   needs no new layout, and it adds nothing to the page height */
+main {
+  position: relative;
+}
 [data-screen-root][data-tab-hidden] {
-  display: none;
+  position: absolute;
+  top: 0;
+  left: var(--safe-left);
+  right: var(--safe-right);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-/* nothing blurs while it moves: the cards during their entrance and the screen during a tab switch
-   (the blur comes on when they rest) */
-:is(.glass, .glass-group-blur)[data-entering],
-:root[data-tab-switch] main :is(.glass, .glass-group-blur) {
+/* charts (Recharts' keyboard layer focuses the chart or one of its groups): the focus ring only
+   for the keyboard, never after a tap or a click on a bar */
+.recharts-wrapper:focus,
+.recharts-wrapper :focus {
+  outline: none;
+}
+.recharts-wrapper:focus-visible,
+.recharts-wrapper :focus-visible {
+  outline: 2px solid rgb(var(--c-focus));
+  outline-offset: 2px;
+}
+
+/* nothing blurs while it moves: the cards during their entrance (the blur comes on when they rest) */
+:is(.glass, .glass-group-blur)[data-entering] {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
@@ -624,70 +645,3 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
   }
 }
 
-/* Tabwechsel (src/lib/tabTransition.ts): the new screen comes in 12 px from the side of its tab and
-   fades in, the old one fades out, 280 ms ease-out. Tab bar, sidebar and background (root) do not
-   take part. The CSS fallback without View Transitions plays the same keyframes on the elements. */
-/* Only the screen gets a name, and only while switching: a named element is a backdrop root, so at
-   rest the cards blur the background itself. Tab bar, sidebar and background stay in the root,
-   which does not animate: its new image is live, the indicator glides on as usual. */
-:root[data-tab-switch] main[data-screen] {
-  view-transition-name: screen;
-}
-/* taps go through to the live page while the transition runs */
-::view-transition {
-  pointer-events: none;
-}
-::view-transition-group(root),
-::view-transition-old(root),
-::view-transition-new(root),
-::view-transition-group(screen) {
-  animation: none;
-}
-/* the root's old image never shows (the live new one lies on top, opaque) */
-::view-transition-old(root) {
-  display: none;
-}
-/* the old screen stays where it was on screen (its tab may have been scrolled further) */
-::view-transition-old(screen) {
-  translate: 0 var(--tab-old-shift, 0px);
-  animation: tab-out var(--tab-ms, 280ms) ease-out both;
-}
-::view-transition-new(screen) {
-  animation: tab-in var(--tab-ms, 280ms) ease-out both;
-}
-.tab-anim-out {
-  animation: tab-out var(--tab-ms, 280ms) ease-out both;
-}
-.tab-anim-in {
-  animation: tab-in var(--tab-ms, 280ms) ease-out both;
-}
-@keyframes tab-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-@keyframes tab-in {
-  from {
-    opacity: 0;
-    transform: translateX(var(--tab-from, 12px));
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-:root[data-tab-dir='left'] {
-  --tab-from: -12px;
-}
-:root[data-tab-dir='right'] {
-  --tab-from: 12px;
-}
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --tab-ms: 120ms;
-    --tab-from: 0px !important;
-  }
-}

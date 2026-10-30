@@ -29,6 +29,11 @@ export const Screen = forwardRef<HTMLDivElement, Props>(function Screen({ name, 
   const entered = useRef(onEntered);
   entered.current = onEntered;
   const visible = useContext(TabVisibleContext);
+  // a hidden tab is out of reach: no focus, no assistive technology (also for children that show
+  // themselves with visibility: visible)
+  useLayoutEffect(() => {
+    if (own.current) own.current.inert = !visible;
+  }, [visible]);
   useLayoutEffect(() => {
     const el = own.current;
     const main = el?.closest('main');

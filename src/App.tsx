@@ -1,5 +1,4 @@
 import { lazy, memo, startTransition, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import { Sidebar, TabBar } from './components/Navigation';
 import { TabVisibleContext } from './components/Screen';
 import { Skeleton } from './components/Skeleton';
@@ -9,7 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
-import { activeMonth, localToday, MONTH_START_KEY, toMonthStart, type MonthStart } from './lib/activeMonth';
+import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
 import { hideSplash } from './lib/entrance';
 import { startGlassBudget } from './lib/glassBudget';
 import { NAV, readRoute, type Route } from './lib/routes';
@@ -20,56 +19,35 @@ import { MonthScreen } from './screens/MonthScreen';
 import { PositionsScreen } from './screens/PositionsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-// Recharts lives in the analysis chunk: never part of the start (the month view stays light). It is
-// fetched once the app is idle after its start, so the first visit of the tab does not compile code
-// while the tab transition plays; until then (or if the visit comes first) it loads on demand.
+// Recharts lives in the analysis chunk: never part of the start (the month view stays light). Once
+// the app is idle after its start the chunk is fetched and the Analyse tab is built – hidden, like a
+// tab visited before – so its first visit only shows it. If the visit comes first it loads on demand.
 const loadAnalyse = () => import('./screens/AnalyseScreen');
 const AnalyseScreen = lazy(loadAnalyse);
 const PREFETCH_AFTER_MS = 1200;
 
-/** Time the off-screen warm-up render stays mounted (its charts mount one per frame). */
+/** Time the hidden Analyse tab gets to mount its charts (one per frame) before it counts as ready. */
 const WARM_MS = 1000;
 
 /**
- * Idle after the start: fetch the analysis chunk and render the screen once, off screen and invisible. The browser compiles Recharts and the analysis code there,
- * not during the first visit's tab transition.
+ * Idle after the start (not before the start screen has come in): fetch the analysis chunk, then
+ * `build` adds the Analyse tab, hidden. Safari has no requestIdleCallback: right then.
  */
-function prefetchAnalyse(ds: Dataset, context: { start: MonthStart; active: Period }): () => void {
-  const done = () => {
-    document.documentElement.dataset.analyseReady = '';
-  };
-  const run = () =>
-    void loadAnalyse().then(({ default: Screen }) => {
-      // off screen, invisible, in a closed shadow root: it has a size (the charts measure it) but
-      // nothing outside – no query, no assistive technology, no blur budget – ever sees it
-      const host = document.createElement('div');
-      host.setAttribute('aria-hidden', 'true');
-      host.inert = true;
-      host.style.cssText = 'position:fixed;left:-10000px;top:0;width:390px;height:900px;overflow:hidden;visibility:hidden;pointer-events:none';
-      const mount = document.createElement('div');
-      host.attachShadow({ mode: 'closed' }).appendChild(mount);
-      document.body.appendChild(host);
-      const root = createRoot(mount);
-      root.render(
-        <ActiveMonthContext.Provider value={context}>
-          <Screen ds={ds} />
-        </ActiveMonthContext.Provider>,
-      );
-      window.setTimeout(() => {
-        root.unmount();
-        host.remove();
-        done();
-      }, WARM_MS);
-    }, () => {});
-  // not before the start screen has come in, then when the browser is idle (Safari has no
-  // requestIdleCallback: right then)
+function prefetchAnalyse(build: () => void): () => void {
   let idle = 0;
+  let ready = 0;
+  const run = () =>
+    void loadAnalyse().then(() => {
+      build();
+      ready = window.setTimeout(() => (document.documentElement.dataset.analyseReady = ''), WARM_MS);
+    }, () => {});
   const timer = setTimeout(() => {
     if (typeof window.requestIdleCallback === 'function') idle = window.requestIdleCallback(run, { timeout: 2000 });
     else run();
   }, PREFETCH_AFTER_MS);
   return () => {
     clearTimeout(timer);
+    clearTimeout(ready);
     if (idle) window.cancelIdleCallback(idle);
   };
 }
@@ -97,12 +75,12 @@ const TabScreen = memo(function TabScreen({ tab, ds, period, onPeriodChange }: {
 /** Manual month navigation keeps the shown month this long before the app returns to the active one. */
 const NAV_HOLD_MS = 30 * 60_000;
 
-/** The route from the URL; a tab change plays the tab transition, every tab keeps its scroll position. */
+/** The route from the URL; a tab change fades the old tab out first (src/lib/tabTransition.ts), every tab keeps its scroll position. */
 function useHashRoute(): Route {
   const [route, setRoute] = useState<Route>(readRoute);
   const current = useRef(route);
   const scroll = useRef(new Map<Route, number>());
-  // resolves the tab transition's update once the new tab is committed
+  // resolves the tab switch once the new tab is committed
   const committed = useRef<(() => void) | null>(null);
   useLayoutEffect(() => {
     committed.current?.();
@@ -116,8 +94,6 @@ function useHashRoute(): Route {
       scroll.current.set(prev, window.scrollY);
       current.current = next;
       switchTab(
-        prev,
-        next,
         () =>
           new Promise<void>((resolve) => {
             const finish = () => {
@@ -125,9 +101,9 @@ function useHashRoute(): Route {
               resolve();
             };
             committed.current = finish;
-            // rendered in slices: no long task while the transition captures the old picture
+            // rendered in slices: no long task while the old screen fades out and the new one comes in
             startTransition(() => setRoute(next));
-            // never leave the transition waiting (e.g. a newer tab change took over)
+            // never leave the switch waiting
             window.setTimeout(() => {
               if (committed.current === finish) committed.current = null;
               resolve();
@@ -144,9 +120,10 @@ function useHashRoute(): Route {
 export function App() {
   const route = useHashRoute();
   // tabs stay built once visited (hidden while another is shown): going back to one only shows it,
-  // React does not build it anew in the frame the tab transition captures
+  // React does not build it anew while the tab switch plays. Analyse is built ahead, when idle.
   const visited = useRef(new Set<Route>());
   visited.current.add(route);
+  const [, setPrebuilt] = useState(false);
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
   const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
@@ -191,14 +168,15 @@ export function App() {
 
   // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
   useEffect(() => startGlassBudget(), []);
-  // once per app start (the warm-up renders with the data of the moment it runs)
-  const latest = useRef({ ds, start, active });
-  latest.current = { ds, start, active };
+  // once per app start: the Analyse tab, built hidden
   useEffect(() => {
     if (!loaded) return;
-    const { ds: data, start: s, active: a } = latest.current;
-    if (!data || s === undefined || !a) return;
-    return prefetchAnalyse(data, { start: s, active: a });
+    return prefetchAnalyse(() =>
+      startTransition(() => {
+        visited.current.add('analyse');
+        setPrebuilt(true);
+      }),
+    );
   }, [loaded]);
 
   // one object per value: a tab switch does not render the screens that read it again

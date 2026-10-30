@@ -50,7 +50,8 @@ export async function setToday(page: Page, date: Date) {
  * work with single rows call it; collapse by status itself is tested in aktiver-monat.spec.ts.
  */
 export async function expandAll(page: Page) {
-  const collapsed = page.locator('[data-testid="category-group"][data-collapsed="true"] [data-testid="group-toggle"]');
+  // the shown tab only (tabs visited before stay in main, hidden)
+  const collapsed = page.locator('main > :not([data-tab-hidden]) [data-testid="category-group"][data-collapsed="true"] [data-testid="group-toggle"]');
   // one card per attempt; a click lost during the entrance animation is simply repeated
   await expect(async () => {
     if ((await collapsed.count()) > 0) await collapsed.first().click({ timeout: 2000 });

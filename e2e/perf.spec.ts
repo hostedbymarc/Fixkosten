@@ -2,7 +2,7 @@
 // all other projects so no other test competes for the CPU).
 //   Ø Frame-Zeit  = mean of the browser's „AnimationFrame“ spans (main thread, per frame) in the Chrome
 //                   trace, while scrolling Monat and Analyse and while switching tabs
-//   Long Tasks    = PerformanceObserver „longtask“ from the tap until the tab transition, the
+//   Long Tasks    = PerformanceObserver „longtask“ from the tap until the fade out, the
 //                   entrance and the bar growth are over
 //   CLS           = sum of all layout shifts (also those right after an input)
 // The numbers are written to docs/perf/liquid-glass.json for the PR.
@@ -18,12 +18,17 @@ const results: Record<string, unknown> = {};
 
 async function observe(page: Page) {
   await page.evaluate(() => {
-    const w = window as unknown as { perf: { longtasks: { start: number; duration: number }[]; shifts: number[] } };
+    const w = window as unknown as { perf: { longtasks: { start: number; duration: number }[]; shifts: number[] }; observers?: PerformanceObserver[] };
+    // one pair of observers at a time (each task / shift counted once)
+    w.observers?.forEach((o) => o.disconnect());
     w.perf = { longtasks: [], shifts: [] };
-    new PerformanceObserver((l) => l.getEntries().forEach((e) => w.perf.longtasks.push({ start: e.startTime, duration: e.duration }))).observe({ type: 'longtask' });
-    new PerformanceObserver((l) =>
+    const tasks = new PerformanceObserver((l) => l.getEntries().forEach((e) => w.perf.longtasks.push({ start: e.startTime, duration: e.duration })));
+    const shifts = new PerformanceObserver((l) =>
       l.getEntries().forEach((e) => w.perf.shifts.push((e as PerformanceEntry & { value: number }).value)),
-    ).observe({ type: 'layout-shift' });
+    );
+    tasks.observe({ type: 'longtask' });
+    shifts.observe({ type: 'layout-shift' });
+    w.observers = [tasks, shifts];
   });
 }
 const collected = (page: Page) =>
@@ -107,7 +112,7 @@ test('Tabwechsel (inkl. erster Besuch Analyse): Ø Frame-Zeit < 16 ms, kein Long
       await observe(page);
       const t0 = await page.evaluate(() => performance.now());
       await bar.getByRole('link', { name: tab }).tap();
-      // tab transition (280 ms) + entrance (≤ 865 ms) + bars (Analyse) are over after 1.6 s
+      // fade out (120 ms) + entrance (≤ 865 ms) + bars (Analyse) are over after 1.6 s
       await page.waitForTimeout(1600);
       const p = await collected(page);
       const during = p.longtasks.filter((t) => t.start >= t0 - 5);

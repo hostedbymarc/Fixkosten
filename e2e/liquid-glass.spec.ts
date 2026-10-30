@@ -322,74 +322,106 @@ test.describe('Tab-Leiste und Sidebar', () => {
   });
 });
 
-/** Records the tab transition: who animates, how long, from where. */
-async function watchTransition(page: Page) {
-  await page.evaluate(() => {
-    const w = window as unknown as { vt: unknown[] };
-    w.vt = [];
+/**
+ * Records a tab switch frame by frame: the animations of the old and the new screen, the position of
+ * the new screen's first card and the position of the tab bar / sidebar.
+ */
+async function recordSwitch(page: Page, route: string, click: () => Promise<void>) {
+  await page.evaluate((route) => {
+    const w = window as unknown as { rec: unknown };
+    const nav = () => document.querySelector('[data-testid="tabbar"], [data-testid="sidebar"]') as HTMLElement | null;
+    const navBox = () => {
+      const all = [...document.querySelectorAll<HTMLElement>('[data-testid="tabbar"], [data-testid="sidebar"]')].filter((e) => e.getClientRects().length);
+      return all.map((e) => `${Math.round(e.getBoundingClientRect().left)},${Math.round(e.getBoundingClientRect().top)}`).join('|');
+    };
+    void nav;
+    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[] }[], card: [] as { x: number; y: number }[], nav: new Set<string>() };
+    w.rec = rec;
     const seen = new Set<Animation>();
+    const end = performance.now() + 1400;
     const poll = () => {
       for (const a of document.getAnimations()) {
         if (seen.has(a)) continue;
         seen.add(a);
-        const e = a.effect as KeyframeEffect | null;
-        if (!e) continue;
-        const name = (a as CSSAnimation).animationName ?? '';
-        if (!/tab-(in|out)/.test(name)) continue;
-        w.vt.push({
-          name,
-          pseudo: e.pseudoElement ?? '',
-          duration: e.getComputedTiming().duration,
-          from: (e.getKeyframes()[0] as Record<string, string>).transform ?? 'none',
-          dir: document.documentElement.dataset.tabDir,
+        const e = a.effect as KeyframeEffect;
+        const t = e.target as HTMLElement;
+        const root = t.closest('[data-screen-root]')?.getAttribute('data-screen-root') ?? '';
+        rec.anims.push({
+          id: a.id,
+          target: t.hasAttribute('data-screen-root') ? `screen:${root}` : `in:${root}`,
+          duration: Number(e.getTiming().duration),
+          delay: Number(e.getTiming().delay),
+          keys: [...new Set(e.getKeyframes().flatMap((k) => Object.keys(k).filter((n) => !['offset', 'easing', 'composite', 'computedOffset'].includes(n))))],
         });
       }
-      requestAnimationFrame(poll);
+      const card = document.querySelector(`[data-screen-root="${route}"]:not([data-tab-hidden]) .glass`);
+      if (card) {
+        const r = card.getBoundingClientRect();
+        rec.card.push({ x: r.left, y: r.top + scrollY });
+      }
+      rec.nav.add(navBox());
+      if (performance.now() < end) requestAnimationFrame(poll);
     };
     poll();
+  }, route);
+  await click();
+  await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
+  await page.waitForTimeout(1500);
+  return page.evaluate(() => {
+    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[] }[]; card: { x: number; y: number }[]; nav: Set<string> } }).rec;
+    return { anims: rec.anims, card: rec.card, nav: [...rec.nav] };
   });
 }
-const transitions = (page: Page) => page.evaluate(() => (window as unknown as { vt: { name: string; pseudo: string; duration: number; from: string; dir: string }[] }).vt.splice(0));
 
 test.describe('Tabwechsel-Animation', () => {
-  test('neuer Inhalt kommt 12 px aus der Richtung des Tabs, alter blendet aus, 280 ms; Tab-Leiste und Hintergrund bleiben', async ({ page }) => {
+  test('jeder Tab kommt wie die Startseite herein: von unten nach oben, Karten gestaffelt; alter Inhalt blendet nur aus (≤ 120 ms); Tab-Leiste/Sidebar stehen still', async ({ page }) => {
     await importLive(page, OKT_TODAY);
-    await watchTransition(page);
+    // the start screen's own entrance, as reference (app start)
+    await page.reload();
+    const start = await page.evaluate(
+      () =>
+        new Promise<{ duration: number; delay: number; keys: string }[]>((resolve) => {
+          const poll = () => {
+            const a = document.getAnimations().filter((x) => x.id === 'entrance');
+            if (a.length > 1) resolve(a.map((x) => ({ duration: Number(x.effect!.getTiming().duration), delay: Number(x.effect!.getTiming().delay), keys: JSON.stringify((x.effect as KeyframeEffect).getKeyframes().map((k) => [k.opacity, k.transform])) })));
+            else requestAnimationFrame(poll);
+          };
+          poll();
+        }),
+    );
+    await appSettled(page);
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
-    for (const [route, dir] of [['analyse', 'right'], ['positionen', 'left'], ['einstellungen', 'right'], ['monat', 'left']] as const) {
-      await nav.getByRole('link', { name: TAB[route] }).click();
-      await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
-      await expect.poll(async () => (await page.evaluate(() => (window as unknown as { vt: unknown[] }).vt.length)) >= 2).toBe(true);
-      await page.waitForTimeout(350);
-      const t = await transitions(page);
-      const into = t.find((a) => a.name === 'tab-in')!;
-      const out = t.find((a) => a.name === 'tab-out')!;
-      expect(into.duration).toBe(280);
-      expect(out.duration).toBe(280);
-      expect(into.dir).toBe(dir);
-      // the screen only: tab bar, sidebar and root have no transition animation of their own
-      expect(t.every((a) => !a.pseudo || /\(screen\)/.test(a.pseudo))).toBe(true);
-      const offset = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--tab-from').trim());
-      void offset;
-      expect(into.from).toBe(dir === 'right' ? 'translateX(12px)' : 'translateX(-12px)');
+    for (const route of ['analyse', 'positionen', 'einstellungen', 'monat', 'positionen'] as const) {
+      const from = await page.evaluate(() => document.querySelector('main[data-screen]')!.getAttribute('data-screen'));
+      const r = await recordSwitch(page, route, () => nav.getByRole('link', { name: TAB[route] }).click());
+      // old content: one fade out, opacity only, at most 120 ms
+      const out = r.anims.filter((a) => a.target === `screen:${from}`);
+      expect(out.map((a) => [a.id, a.keys.join()]), `${route}: old screen`).toEqual([['tab-out', 'opacity']]);
+      expect(out[0]!.duration).toBeLessThanOrEqual(120);
+      expect(r.anims.filter((a) => a.target === `in:${from}`), `${route}: nothing moves in the old screen`).toEqual([]);
+      // new content: the same entrance as the start screen (same keyframes, durations, staggering)
+      const into = r.anims.filter((a) => a.id === 'entrance');
+      expect(into.length, `${route}: cards`).toBeGreaterThan(1);
+      const cards = into.filter((a) => a.keys.includes('transform'));
+      const ref = start.filter((a) => a.keys.includes('translateY'));
+      expect(cards.every((c) => c.duration === ref[0]!.duration)).toBe(true);
+      expect(cards.map((c) => c.delay)).toEqual(ref.map((c) => c.delay).slice(0, cards.length));
+      expect(into.find((a) => a.target === `screen:${route}`)?.duration, `${route}: screen fades in like the start screen`).toBe(start.find((a) => !a.keys.includes('translateY'))!.duration);
+      // direction: the first card's Y moves up (start > end), X stays
+      const ys = r.card.map((c) => c.y);
+      expect(Math.max(...ys) - ys[ys.length - 1]!, `${route}: rises`).toBeGreaterThan(4);
+      expect(ys[0]! >= ys[ys.length - 1]!).toBe(true);
+      expect(new Set(r.card.map((c) => Math.round(c.x))).size, `${route}: X unchanged`).toBe(1);
+      // tab bar / sidebar never move
+      expect(r.nav, `${route}: navigation still`).toHaveLength(1);
     }
   });
 
-  test('Fallback ohne View Transitions: gleiches Ergebnis über CSS-Animationen', async ({ page }) => {
-    await page.addInitScript(() => {
-      delete (Document.prototype as unknown as { startViewTransition?: unknown }).startViewTransition;
-    });
+  test('keine View Transition, keine seitliche Animation mehr', async ({ page }) => {
     await importLive(page, OKT_TODAY);
-    await watchTransition(page);
-    const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
-    await nav.getByRole('link', { name: 'Positionen' }).click();
-    await expect(page.locator('[data-tab-ghost]')).toHaveCount(1); // the old screen fades out above
-    await expect.poll(async () => (await page.evaluate(() => (window as unknown as { vt: unknown[] }).vt.length)) >= 2).toBe(true);
-    const t = await transitions(page);
-    expect(t.find((a) => a.name === 'tab-in')).toMatchObject({ duration: 280, from: 'translateX(12px)', pseudo: '' });
-    expect(t.find((a) => a.name === 'tab-out')).toMatchObject({ duration: 280, pseudo: '' });
-    await expect(page.locator('[data-tab-ghost]')).toHaveCount(0);
-    await expect(page.getByTestId('positions-group').first()).toBeVisible();
+    const css = await page.evaluate(() => [...document.styleSheets].flatMap((sh) => [...sh.cssRules]).map((r) => r.cssText).join('\n'));
+    expect(css).not.toMatch(/view-transition|translateX\(var\(--tab-from/);
+    expect(css).not.toMatch(/@keyframes tab-(in|out)/);
   });
 
   test('Scrollposition pro Tab bleibt erhalten', async ({ page }) => {
@@ -411,14 +443,15 @@ test.describe('Tabwechsel-Animation', () => {
     test.use({ contextOptions: { reducedMotion: 'reduce' } });
     test('nur Überblendung, 120 ms, kein Versatz', async ({ page }) => {
       await importLive(page, OKT_TODAY);
-      await watchTransition(page);
       const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
-      await nav.getByRole('link', { name: 'Analyse' }).click();
-      await expect.poll(async () => (await page.evaluate(() => (window as unknown as { vt: unknown[] }).vt.length)) >= 2).toBe(true);
-      const t = await transitions(page);
-      const into = t.find((a) => a.name === 'tab-in')!;
-      expect(into.duration).toBe(120);
-      expect(into.from).toMatch(/^(translateX\(0px\)|none)$/);
+      for (const route of ['analyse', 'monat'] as const) {
+        const r = await recordSwitch(page, route, () => nav.getByRole('link', { name: TAB[route] }).click());
+        expect(r.anims.map((a) => [a.target.split(':')[0], a.keys.join(), a.duration])).toEqual([
+          ['screen', 'opacity', 120],
+          ['screen', 'opacity', 120],
+        ]);
+        expect(new Set(r.card.map((c) => `${Math.round(c.x)},${Math.round(c.y)}`)).size, `${route}: no motion`).toBe(1);
+      }
     });
   });
 });
@@ -525,7 +558,10 @@ test.describe('Einheitliche Ladeanimation', () => {
       await importLive(page, OKT_TODAY);
       await goTo(page, 'analyse');
       await expect(page.locator('[data-testid="forecast"] .recharts-bar-rectangle').first()).toBeVisible();
-      const moving = await page.evaluate(() => document.getAnimations().filter((a) => ['entrance', 'bar-grow'].includes(a.id)).length);
+      // only the screen's fade: nothing moves or grows
+      const moving = await page.evaluate(() =>
+        document.getAnimations().filter((a) => a.id === 'bar-grow' || (a.effect as KeyframeEffect).getKeyframes().some((k) => k.transform && k.transform !== 'none')).length,
+      );
       expect(moving).toBe(0);
     });
   });
@@ -566,12 +602,12 @@ test.describe('Einheitliche Ladeanimation', () => {
 });
 
 test.describe('Touch', () => {
-  test('Tab antippen wechselt (View Transition lässt Taps durch)', async ({ page }) => {
+  test('Tab antippen wechselt, auch ein zweiter Tap während des Wechsels', async ({ page }) => {
     test.skip(!isTouchProject() || isSidebarLayout(page), 'touch tab bar');
     await importLive(page, OKT_TODAY);
     const bar = page.getByTestId('tabbar');
     await bar.getByRole('link', { name: 'Positionen' }).tap();
-    // a second tap while the first transition still runs
+    // a second tap while the old screen still fades out
     await bar.getByRole('link', { name: 'Analyse' }).tap();
     await expect(page).toHaveURL(/#\/analyse$/);
     await expect(page.locator('main[data-screen="analyse"]')).toHaveCount(1);

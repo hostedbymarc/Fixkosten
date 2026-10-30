@@ -3,7 +3,7 @@
 //
 // Both only animate opacity and transform with fill „backwards“: when they end nothing is left on
 // the elements (no transform that would become a containing block for fixed children). With
-// „Bewegung reduzieren“ the splash only fades and the screens appear without motion.
+// „Bewegung reduzieren“ the splash and the screens only fade.
 
 /** The splash stays at least this long after navigation start, so its intro plays once. */
 export const SPLASH_MIN_MS = 700;
@@ -51,23 +51,27 @@ export const CARD_MS = 420;
 const CARD_DELAY = 40;
 const CARD_STAGGER = 45;
 const MAX_CARDS = 10;
+/** „Bewegung reduzieren“: the screen only fades in. */
+export const REDUCED_FADE_MS = 120;
 
 /**
  * THE screen entrance – the one of the Monat screen, used by every tab (src/components/Screen.tsx):
  * the screen fades in (220 ms), its cards (glass surfaces in view, at most 10, top to bottom) rise by
  * 14 px one after another (420 ms each, 45 ms apart). Runs after the splash has started to fade.
  * Resolves with the time (ms from now) when the last card has arrived, so a screen can follow up
- * (Analyse: the bars grow). „Bewegung reduzieren“: no motion, resolves with 0.
+ * (Analyse: the bars grow). „Bewegung reduzieren“: only a fade (120 ms), resolves with 0.
  */
 export async function playEntrance(main: HTMLElement, name: string, screen = main.firstElementChild as HTMLElement | null): Promise<number> {
   await splashFading();
   // marks which screen has come in (tests wait for it before measuring)
   main.dataset.screen = name;
-  if (reducedMotion() || !screen) return 0;
-  // the screen fades in – unless a tab transition already fades it in (src/lib/tabTransition.ts)
-  if (!document.documentElement.hasAttribute('data-tab-switching')) {
-    screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
+  if (!screen) return 0;
+  // „Bewegung reduzieren“: only a fade (also on a tab switch), no cards rising
+  if (reducedMotion()) {
+    screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: REDUCED_FADE_MS, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
+    return 0;
   }
+  screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
   const fold = window.innerHeight;
   const cards = [...screen.querySelectorAll<HTMLElement>('.glass')]
     .filter((el) => {

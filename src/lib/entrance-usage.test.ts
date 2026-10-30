@@ -32,6 +32,19 @@ describe('Einheitliche Ladeanimation (grep)', () => {
     expect(users.sort()).toEqual(['src/components/Screen.tsx', 'src/lib/entrance.ts']);
   });
 
+  it('Tabwechsel: keine eigene Einflug-Animation – nur Ausblenden des alten Inhalts, der neue kommt über Screen/playEntrance', () => {
+    const t = readFileSync('src/lib/tabTransition.ts', 'utf8');
+    // exactly one animation there: the old screen's fade (opacity only)
+    expect(t.match(/\.animate\(/g)).toHaveLength(1);
+    expect(t).toMatch(/\.animate\(\[\{ opacity: 1 \}, \{ opacity: 0 \}\]/);
+    expect(t).not.toMatch(/transform|translate|startViewTransition/);
+    const css = readFileSync('src/index.css', 'utf8');
+    expect(css).not.toMatch(/view-transition|@keyframes tab-(in|out)|--tab-from/);
+    // the card keyframes exist once, in entrance.ts
+    const rising = source.filter((f) => /translateY\(14px\)/.test(readFileSync(f, 'utf8')));
+    expect(rising).toEqual(['src/lib/entrance.ts']);
+  });
+
   it('kein Spinner: keine Lade-Erbsen mehr in der App', () => {
     expect(source.filter((f) => /anim-pea|<Loader\b/.test(readFileSync(f, 'utf8')))).toEqual([]);
     expect(readFileSync('src/index.css', 'utf8')).not.toMatch(/\.anim-pea|pea-pulse/);

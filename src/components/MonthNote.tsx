@@ -22,7 +22,11 @@ export const MonthNoteCard = forwardRef<HTMLButtonElement, { period: Period; not
     useLayoutEffect(() => {
       const el = text.current;
       if (!el) return setClamped(false);
-      const measure = () => setClamped(el.scrollHeight > el.clientHeight + 1);
+      const measure = () => {
+        // the tab is hidden (kept for the next visit): the last state holds when shown again
+        if (!el.getClientRects().length) return;
+        setClamped(el.scrollHeight > el.clientHeight + 1);
+      };
       measure();
       const ro = new ResizeObserver(measure);
       ro.observe(el);

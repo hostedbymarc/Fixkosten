@@ -662,6 +662,8 @@ function useSlotPosition(wrapper: React.RefObject<HTMLDivElement>, slot: React.R
     if (!active) return setPos(null);
     const update = () => {
       if (!wrapper.current || !slot.current) return;
+      // the tab is hidden (kept for the next visit): keep the last position, it holds when shown again
+      if (!wrapper.current.getClientRects().length) return;
       // layout position (offset chain up to the wrapper): the tile may still be rising in its
       // entrance (transform), the button must not follow that and jump afterwards
       let x = 0;
@@ -973,6 +975,8 @@ function UpcomingList({ items }: { items: DueItem[] }) {
     const ul = list.current;
     if (!ul) return;
     const measure = () => {
+      // the tab is hidden (kept for the next visit): the last layout holds when shown again
+      if (!ul.getClientRects().length) return;
       const rows = [...ul.querySelectorAll<HTMLElement>('[data-testid="upcoming-meta"]')].filter((m) => m.offsetParent !== null);
       const need = rows.some((meta) => {
         const chip = meta.querySelector<HTMLElement>('[data-testid="upcoming-month"]')!;

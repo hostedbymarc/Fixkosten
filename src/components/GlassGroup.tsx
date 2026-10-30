@@ -14,6 +14,8 @@ export function GlassGroup({ className = '', children }: { className?: string; c
     const blur = layer.current;
     if (!el || !blur) return;
     const update = () => {
+      // the tab is hidden (kept for the next visit): the last mask holds when shown again
+      if (!el.getClientRects().length) return;
       const box = { width: el.offsetWidth, height: el.offsetHeight };
       const tiles = [...el.querySelectorAll<HTMLElement>('.glass')];
       const rects = tiles
