@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, startTransition, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Sidebar, TabBar } from './components/Navigation';
 import { Skeleton } from './components/Skeleton';
@@ -81,6 +81,12 @@ function useHashRoute(): Route {
   const [route, setRoute] = useState<Route>(readRoute);
   const current = useRef(route);
   const scroll = useRef(new Map<Route, number>());
+  // resolves the tab transition's update once the new tab is committed
+  const committed = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => {
+    committed.current?.();
+    committed.current = null;
+  }, [route]);
   useEffect(() => {
     const onHash = () => {
       const next = readRoute();
@@ -88,10 +94,25 @@ function useHashRoute(): Route {
       if (next === prev) return;
       scroll.current.set(prev, window.scrollY);
       current.current = next;
-      switchTab(prev, next, () => {
-        setRoute(next);
-        window.scrollTo(0, scroll.current.get(next) ?? 0);
-      });
+      switchTab(
+        prev,
+        next,
+        () =>
+          new Promise<void>((resolve) => {
+            const finish = () => {
+              window.scrollTo(0, scroll.current.get(next) ?? 0);
+              resolve();
+            };
+            committed.current = finish;
+            // rendered in slices: no long task while the transition captures the old picture
+            startTransition(() => setRoute(next));
+            // never leave the transition waiting (e.g. a newer tab change took over)
+            window.setTimeout(() => {
+              if (committed.current === finish) committed.current = null;
+              resolve();
+            }, 1500);
+          }),
+      );
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);

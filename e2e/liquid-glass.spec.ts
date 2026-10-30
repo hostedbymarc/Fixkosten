@@ -435,7 +435,7 @@ test.describe('Einheitliche Ladeanimation', () => {
   test('Analyse: Karten wie auf der Startseite, danach wachsen die Balken (400 ms, 20 ms Versatz)', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await page.evaluate(() => {
-      const w = window as unknown as { anims: { id: string; delay: number; duration: number; tag: string }[] };
+      const w = window as unknown as { anims: { id: string; delay: number; raw: number; duration: number; tag: string }[] };
       w.anims = [];
       const seen = new Set<Animation>();
       const poll = () => {
@@ -443,7 +443,9 @@ test.describe('Einheitliche Ladeanimation', () => {
           if (seen.has(a) || !['entrance', 'bar-grow'].includes(a.id)) continue;
           seen.add(a);
           const t = (a.effect as KeyframeEffect).getTiming();
-          w.anims.push({ id: a.id, delay: Number(t.delay), duration: Number(t.duration), tag: ((a.effect as KeyframeEffect).target as Element).tagName });
+          // absolute (document timeline): when the animation started + its delay
+          const started = Number(document.timeline.currentTime) - Number(a.currentTime ?? 0);
+          w.anims.push({ id: a.id, delay: started + Number(t.delay), raw: Number(t.delay), duration: Number(t.duration), tag: ((a.effect as KeyframeEffect).target as Element).tagName });
         }
         requestAnimationFrame(poll);
       };
@@ -452,7 +454,7 @@ test.describe('Einheitliche Ladeanimation', () => {
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
     await nav.getByRole('link', { name: 'Analyse' }).click();
     await appSettled(page);
-    const anims = await page.evaluate(() => (window as unknown as { anims: { id: string; delay: number; duration: number; tag: string }[] }).anims);
+    const anims = await page.evaluate(() => (window as unknown as { anims: { id: string; delay: number; raw: number; duration: number; tag: string }[] }).anims);
     const cards = anims.filter((a) => a.id === 'entrance' && a.duration === 420);
     const bars = anims.filter((a) => a.id === 'bar-grow');
     expect(cards.length).toBeGreaterThan(1);
@@ -460,10 +462,20 @@ test.describe('Einheitliche Ladeanimation', () => {
     expect(bars.filter((b) => b.tag === 'SPAN').length, 'distribution bars').toBeGreaterThan(0);
     expect(bars.every((b) => b.duration === 400)).toBe(true);
     const lastCard = Math.max(...cards.map((c) => c.delay + c.duration));
-    // the bars start when the cards have arrived (scheduled a few ms later at most)
-    expect(Math.min(...bars.map((b) => b.delay))).toBeGreaterThanOrEqual(lastCard - 40);
-    const delays = [...new Set(bars.filter((b) => b.tag === 'path').map((b) => Math.round(b.delay)))].sort((a, b) => a - b);
-    expect(delays[1]! - delays[0]!).toBe(20);
+    // the bars start when the cards have arrived (a frame of tolerance)
+    expect(Math.min(...bars.map((b) => b.delay))).toBeGreaterThanOrEqual(lastCard - 20);
+    // forecast bars 20 ms apart: the columns' start times (absolute, bars drawn anew join in sync)
+    const starts = bars
+      .filter((b) => b.tag === 'path')
+      .map((b) => b.delay)
+      .sort((a, b) => a - b)
+      .reduce<number[]>((cols, t) => (cols.length && t - cols[cols.length - 1]! < 3 ? cols : [...cols, t]), []);
+    expect(starts.length).toBe(12);
+    for (let i = 1; i < starts.length; i++) expect(Math.abs(starts[i]! - starts[i - 1]! - 20)).toBeLessThanOrEqual(3);
+    const own = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="forecast"] .recharts-bar-rectangle path')].length,
+    );
+    expect(own).toBeGreaterThanOrEqual(12);
     // nothing left on the bars
     const left = await page.evaluate(() => [...document.querySelectorAll('[data-testid="forecast"] .recharts-bar-rectangle path')].filter((p) => p.getAnimations().length).length);
     expect(left).toBe(0);

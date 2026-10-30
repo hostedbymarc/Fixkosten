@@ -4,13 +4,16 @@
 // the same keyframes on the elements themselves: the old screen as a frozen copy that fades out above
 // the new one. Keyframes and timing: src/index.css („Tabwechsel“).
 
-import { flushSync } from 'react-dom';
 import { routeIndex, type Route } from './routes';
 
-type StartViewTransition = (update: () => void) => { finished: Promise<void> };
+type StartViewTransition = (update: () => Promise<void>) => { finished: Promise<void> };
 
-/** Plays the switch from → to; `apply` renders the new tab (synchronously) and restores its scroll position. */
-export function switchTab(from: Route, to: Route, apply: () => void) {
+/**
+ * Plays the switch from → to. `apply` renders the new tab and restores its scroll position; it
+ * resolves once the new tab is committed (React renders it in slices meanwhile, the transition waits
+ * with the old picture – no long task in the frame that captures it).
+ */
+export function switchTab(from: Route, to: Route, apply: () => Promise<void>) {
   const root = document.documentElement;
   root.dataset.tabDir = routeIndex(to) > routeIndex(from) ? 'right' : 'left';
   // the new screen's entrance leaves its fade to this transition
@@ -24,8 +27,8 @@ export function switchTab(from: Route, to: Route, apply: () => void) {
   };
   if (start) {
     root.dataset.tabSwitch = '';
-    const t = start(() => {
-      flushSync(apply);
+    const t = start(async () => {
+      await apply();
       // the old screen keeps its place on screen although the new tab has its own scroll position
       root.style.setProperty('--tab-old-shift', `${window.scrollY - oldScroll}px`);
     });
@@ -48,15 +51,16 @@ export function switchTab(from: Route, to: Route, apply: () => void) {
     ghost.dataset.tabGhost = '';
     document.body.appendChild(ghost);
   }
-  flushSync(apply);
-  const fresh = main?.firstElementChild as HTMLElement | null;
-  fresh?.classList.add('tab-anim-in');
-  const finish = () => {
-    ghost?.remove();
-    fresh?.classList.remove('tab-anim-in');
-    done();
-  };
-  const anim = fresh?.getAnimations().find((a) => (a as CSSAnimation).animationName === 'tab-in');
-  if (anim) void anim.finished.then(finish, finish);
-  else window.setTimeout(finish, 300);
+  void apply().then(() => {
+    const fresh = main?.firstElementChild as HTMLElement | null;
+    fresh?.classList.add('tab-anim-in');
+    const finish = () => {
+      ghost?.remove();
+      fresh?.classList.remove('tab-anim-in');
+      done();
+    };
+    const anim = fresh?.getAnimations().find((a) => (a as CSSAnimation).animationName === 'tab-in');
+    if (anim) void anim.finished.then(finish, finish);
+    else window.setTimeout(finish, 300);
+  });
 }
