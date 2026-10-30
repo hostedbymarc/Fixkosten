@@ -190,8 +190,15 @@ test.describe('Navigation: Monatsraster, Pill, Wischen', () => {
     await page.waitForTimeout(300);
     await expect(title(page)).toHaveText('November 2026');
 
-    // an open sheet switches swiping off
+    // an open sheet switches swiping off (the touch scroll above may still coast: tap once it rests at the top)
     await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForFunction(() => {
+      const w = window as unknown as { lastY?: number; still?: number };
+      w.still = w.lastY === window.scrollY ? (w.still ?? 0) + 1 : 0;
+      w.lastY = window.scrollY;
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      return window.scrollY === 0 && w.still >= 5;
+    }, null, { polling: 'raf' });
     await tap(page.getByTestId('month-title'));
     await expect(page.getByRole('dialog', { name: 'Monat wählen' })).toBeVisible();
     await touchSwipe(page, screen, -160);
