@@ -1,4 +1,4 @@
-import { eur, expandAll, expect, goTo, isSidebarLayout, isTouchProject, row, test, touchSwipe, NOV_5, setToday } from './fixtures';
+import { eur, expandAll, expect, goTo, isSidebarLayout, isTouchProject, row, test, touchSwipe, NOV_5, setToday, shown } from './fixtures';
 import type { Page } from '@playwright/test';
 
 const listRow = (page: Page, name: string) =>
@@ -69,10 +69,10 @@ test.describe('Positionen verwalten', () => {
 
     await goTo(app, 'monat');
     await expect(row(app, 'pos-handy')).toContainText(eur('€ 10'));
-    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
+    await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.952,17'));
     await nextMonth(app);
     await expect(row(app, 'pos-handy')).toContainText(eur('€ 8'));
-    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.950,17'));
+    await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.950,17'));
   });
 
   test('typo correction: plan overwritten, ticked October keeps € 10', async ({ app }) => {
@@ -91,7 +91,7 @@ test.describe('Positionen verwalten', () => {
 
     await goTo(app, 'monat');
     await expect(row(app, 'pos-handy')).toContainText(eur('€ 10')); // ticked: snapshot
-    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.950,17'));
+    await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.950,17'));
   });
 
   test('name and note change without asking', async ({ app }) => {

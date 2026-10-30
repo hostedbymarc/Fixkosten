@@ -2,7 +2,7 @@ import { existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Page } from '@playwright/test';
 import { openAnalyse } from './analyse-helpers';
-import { eur, expandAll, expect, FIXTURE, goTo, row, test, TODAY } from './fixtures';
+import { eur, expandAll, expect, FIXTURE, goTo, row, test, TODAY, shown } from './fixtures';
 
 // The live app runs aad3d27 (phase 3, schema v3) with real data. This test uses
 // that build in one browser profile, enters data there, then serves the current
@@ -59,7 +59,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await page.getByLabel('Notiz').fill('Abschlag erhöht');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await page.getByTestId('free-tile').click();
-  await page.getByLabel('Netto-Gehalt').fill('5000');
+  await shown(page.getByLabel('Netto-Gehalt')).fill('5000');
   await page.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await goTo(page, 'positionen');
@@ -95,7 +95,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await expect(page.getByTestId('hero-paid')).toHaveText(eur('€ 3.375,40'));
   await expandAll(page); // fully paid categories open collapsed
   await expect(row(page, 'pos-strom')).toContainText('Abschlag erhöht');
-  await expect(page.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
+  await expect(shown(page.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.952,17'));
   await expect(row(page, 'pos-handy').getByTestId('next-change')).toHaveText(eur('ab 01.11.2026 · € 8'));
 
   // the migrated change appears in the new timeline and as a planned optimisation

@@ -202,7 +202,7 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(r.scheme, 'colour scheme = active theme').toBe(scheme);
       expect([r.before, r.after, r.scrim], 'Nebel, grain and the top scrim off in print').toEqual(['none', 'none', 'none']);
       expect(r.adjust).toBe('exact');
-      expect(r.glass, 'every glass surface opaque, no blur').toEqual([scheme === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 35, 31, 0.94)|none']);
+      expect(r.glass, 'every glass surface opaque, no blur').toEqual([scheme === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 34, 30, 0.92)|none']);
       expect(!!r.tabbar !== !!r.sidebar, 'exactly one navigation').toBe(true);
       if (r.tabbar) {
         expect(r.tabbar.position).toBe('static');

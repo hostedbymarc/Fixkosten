@@ -19,6 +19,8 @@ export const COLORS = {
   /** Ø line: neutral grey */
   avg: 'var(--chart-avg)',
   surface: 'var(--chart-surface)',
+  /** x-axis label of the active month: brand colour (as links, 4.5:1 on glass) */
+  activeTick: 'rgb(var(--c-accent-ink))',
 };
 
 export const AXIS_TICK = { fill: COLORS.axis, fontSize: 11 };

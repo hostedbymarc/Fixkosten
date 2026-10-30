@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { openAnalyse } from './analyse-helpers';
-import { animationsDone, eur, expect, goTo, isTouchProject, row, test, setToday } from './fixtures';
+import { animationsDone, eur, expect, goTo, isTouchProject, row, test, setToday, shown } from './fixtures';
 import { expectClean } from './measure';
 
 async function tap(_page: Page, locator: ReturnType<Page['locator']>) {
@@ -61,7 +61,7 @@ test.describe('Einmalig', () => {
     await createRepair(app);
     // the Positionen tab is for fixed costs only
     await goTo(app, 'positionen');
-    await expect(app.getByText('Reparatur')).toHaveCount(0);
+    await expect(shown(app.getByText('Reparatur'))).toHaveCount(0);
     await expect(app.getByTestId('once-section')).toHaveCount(0);
 
     // month screen: not in October, only in November
@@ -82,7 +82,7 @@ test.describe('Einmalig', () => {
     await expect(app.getByTestId('position-row').filter({ hasText: 'Reparatur' })).toHaveAttribute('data-paid', 'true');
 
     await goTo(app, 'positionen');
-    await expect(app.getByText('Reparatur')).toHaveCount(0);
+    await expect(shown(app.getByText('Reparatur'))).toHaveCount(0);
     await expectClean(app, 'main');
 
     // analysis: own part in the forecast, never part of Ø pro Monat
@@ -133,7 +133,7 @@ test.describe('Betrag ändern', () => {
     await expect(row(app, 'pos-miete').getByTestId('next-change')).toHaveText(eur('ab 01.04.2027 · € 1.050'));
     await expect(row(app, 'pos-miete')).toContainText(eur('€ 1.008'));
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.403'));
-    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
+    await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.952,17'));
 
     await openAnalyse(app);
     expect(await forecastDue(app, 'Mär 2027')).toBe('€ 2.664');

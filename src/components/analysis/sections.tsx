@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DeferredChart } from './DeferredChart';
 import { categoryColor } from '../../lib/categoryColors';
 import {
   Area,
@@ -198,6 +199,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
       }}
     >
       <div className="h-[230px] w-full" role="img" aria-label="Gestapeltes Flächendiagramm: Ø pro Monat nach Kategorie">
+        <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <AreaChart data={rows} margin={{ ...CHART_MARGIN, right: 8 }} accessibilityLayer>
             <CartesianGrid vertical={false} stroke={COLORS.grid} />
@@ -241,6 +243,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
             <ChangeMarkers categories={rows.map((r) => r.label)} marked={rows.filter((r) => t.changes[r.period]).map((r) => r.label)} />
           </AreaChart>
         </ResponsiveContainer>
+        </DeferredChart>
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-soft" aria-label="Kategorien">
         {[...t.categories].reverse().map((c) => (
@@ -307,6 +310,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
       }}
     >
       <div className="h-[230px] w-full" role="img" aria-label="Balkendiagramm: Plan und Ist pro Monat">
+        <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={CHART_MARGIN} accessibilityLayer barGap={2} barCategoryGap="24%">
             <CartesianGrid vertical={false} stroke={COLORS.grid} />
@@ -350,6 +354,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
             />
           </BarChart>
         </ResponsiveContainer>
+        </DeferredChart>
       </div>
       <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ink-mute">
         <span className="flex items-center gap-1.5">

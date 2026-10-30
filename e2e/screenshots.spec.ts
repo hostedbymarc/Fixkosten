@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { HISTORY, importHistory, openAnalyse } from './analyse-helpers';
-import { animationsDone, expect, goTo, test, NOV_5, setToday } from './fixtures';
+import { animationsDone, expect, goTo, test, NOV_5, setToday, shown } from './fixtures';
 
 const DIR = 'docs/screenshots/phase-2';
 
@@ -106,7 +106,7 @@ test.describe('Screenshots Phase 3 – Analyse', () => {
 
   test('1 Monat Daten (Seed + Monatsabschluss Oktober)', async ({ app }) => {
     await app.getByTestId('free-tile').click();
-    await app.getByLabel('Netto-Gehalt').fill('5000');
+    await shown(app.getByLabel('Netto-Gehalt')).fill('5000');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await openAnalyse(app);
     await shoot(app, '1m');

@@ -190,8 +190,15 @@ test.describe('Navigation: Monatsraster, Pill, Wischen', () => {
     await page.waitForTimeout(300);
     await expect(title(page)).toHaveText('November 2026');
 
-    // an open sheet switches swiping off
+    // an open sheet switches swiping off (the touch scroll above may still coast: tap once it rests at the top)
     await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForFunction(() => {
+      const w = window as unknown as { lastY?: number; still?: number };
+      w.still = w.lastY === window.scrollY ? (w.still ?? 0) + 1 : 0;
+      w.lastY = window.scrollY;
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      return window.scrollY === 0 && w.still >= 5;
+    }, null, { polling: 'raf' });
     await tap(page.getByTestId('month-title'));
     await expect(page.getByRole('dialog', { name: 'Monat wählen' })).toBeVisible();
     await touchSwipe(page, screen, -160);
@@ -317,31 +324,103 @@ test.describe('Monat-Screen einfacher', () => {
 });
 
 test.describe('Analyse: Achse, aktiver Balken, Tooltip, Details', () => {
-  test('x-Achse: unter 430 px einbuchstabig, sonst dreibuchstabig, keine Überlappung; aktiver Balken mit Kontur', async ({ page }) => {
+  test('x-Achse: iPhone (auch Pro Max) einbuchstabig, ab iPad dreibuchstabig, Label-Boxen mindestens 6 px auseinander; aktiver Monat nur am Label (Brand-Farbe, fett)', async ({ page }) => {
     await importLive29(page, { start: { monthStartDay: 25 } });
     await goTo(page, 'analyse');
     const card = page.getByTestId('forecast');
     await expect(card.locator('.recharts-bar-rectangle').first()).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     const m = await card.evaluate((root) => {
-      const ticks = Array.from(root.querySelectorAll('.recharts-xAxis-tick-labels text')).map((t) => ({ t: t.textContent, r: t.getBoundingClientRect() }));
-      const overlaps: string[] = [];
-      ticks.forEach((a, i) => ticks.slice(i + 1).forEach((b) => {
-        if (a.r.left < b.r.right && b.r.left < a.r.right && a.r.top < b.r.bottom && b.r.top < a.r.bottom) overlaps.push(`${a.t}/${b.t}`);
+      const ticks = Array.from(root.querySelectorAll<SVGTextElement>('[data-testid="forecast-tick"]')).map((t) => ({
+        t: t.textContent,
+        r: t.getBoundingClientRect(),
+        active: t.hasAttribute('data-active'),
+        fill: getComputedStyle(t).fill,
+        weight: Number(getComputedStyle(t).fontWeight),
       }));
-      const strokes = (sel: string) => Array.from(root.querySelectorAll(`${sel} .recharts-bar-rectangle path`)).map((p) => p.getAttribute('stroke'));
-      return { ticks: ticks.map((t) => t.t), overlaps, recurring: strokes('.bar-recurring'), once: strokes('.bar-once') };
+      // horizontal gap between neighbouring label boxes
+      const gaps = ticks.slice(1).map((b, i) => b.r.left - ticks[i]!.r.right);
+      const probe = document.createElement('span');
+      probe.style.color = 'rgb(var(--c-accent-ink))';
+      document.body.appendChild(probe);
+      const brand = getComputedStyle(probe).color;
+      probe.remove();
+      return { ticks: ticks.map((t) => t.t), gaps, active: ticks.filter((t) => t.active).map((t) => ({ t: t.t, fill: t.fill, weight: t.weight })), others: ticks.filter((t) => !t.active).map((t) => ({ fill: t.fill, weight: t.weight })), brand };
     });
-    const narrow = (page.viewportSize()?.width ?? 0) < 430;
+    const narrow = (page.viewportSize()?.width ?? 0) < 768;
     expect(m.ticks).toEqual(
       narrow ? ['N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O'] : ['Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'],
     );
-    expect(m.overlaps).toEqual([]);
-    // November (first bar) outlined, regular and one-time part; no other bar
-    expect(m.recurring[0]).toBe('var(--chart-ink)');
-    expect(m.recurring.slice(1).filter((s) => s === 'var(--chart-ink)')).toEqual([]);
-    expect(m.once[0]).toBe('var(--chart-ink)');
-    expect(m.once.slice(1).filter((s) => s === 'var(--chart-ink)')).toEqual([]);
+    expect(Math.min(...m.gaps), `gaps ${m.gaps.map((g) => g.toFixed(1)).join(' ')}`).toBeGreaterThanOrEqual(6);
+    // November (the active month): brand colour, bold; all other labels plain
+    expect(m.active).toEqual([{ t: narrow ? 'N' : 'Nov', fill: m.brand, weight: 700 }]);
+    expect(m.others.every((o) => o.fill !== m.brand && o.weight < 600)).toBe(true);
+  });
+
+  test('kein Rand an Balken (Jahresvorschau, Verteilung, Sparquote): kein stroke/outline/border, im Ruhezustand und nach Antippen', async ({ page }) => {
+    await importLive29(page, { start: { monthStartDay: 25 } });
+    await goTo(page, 'analyse');
+    const forecast = page.getByTestId('forecast');
+    await expect(forecast.locator('.recharts-bar-rectangle').first()).toBeVisible();
+    const edges = () =>
+      page.evaluate(() => {
+        const bars = [
+          ...document.querySelectorAll('[data-testid="forecast"] .recharts-bar-rectangle path, [data-testid="forecast"] .recharts-active-bar path'),
+          ...document.querySelectorAll('[data-testid="share-bar"]'),
+          ...document.querySelectorAll('[data-testid="savings-column-bar"]'),
+        ];
+        const found: string[] = [];
+        for (const b of bars) {
+          const cs = getComputedStyle(b);
+          const stroke = b.getAttribute('stroke');
+          if ((stroke && stroke !== 'none') || (cs.stroke !== 'none' && Number.parseFloat(cs.strokeWidth) > 0 && b instanceof SVGElement)) found.push(`${b.getAttribute('data-testid') ?? 'forecast'} stroke ${stroke ?? cs.stroke}`);
+          if (cs.outlineStyle !== 'none' && Number.parseFloat(cs.outlineWidth) > 0) found.push(`${b.getAttribute('data-testid') ?? 'forecast'} outline`);
+          if (['Top', 'Right', 'Bottom', 'Left'].some((side) => cs.getPropertyValue(`border-${side.toLowerCase()}-style`) !== 'none' && Number.parseFloat(cs.getPropertyValue(`border-${side.toLowerCase()}-width`)) > 0)) found.push(`${b.getAttribute('data-testid') ?? 'forecast'} border`);
+          if (cs.boxShadow !== 'none') found.push(`${b.getAttribute('data-testid') ?? 'forecast'} ring`);
+        }
+        return { count: bars.length, found };
+      });
+    const rest = await edges();
+    expect(rest.count).toBeGreaterThan(12);
+    expect(rest.found).toEqual([]);
+    // tap the active month's bar and a Sparquote column: still no edge, no focus ring (only for the keyboard)
+    const bar = forecast.locator('.bar-recurring .recharts-bar-rectangle').first();
+    const box = (await bar.boundingBox())!;
+    if (isTouchProject()) await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    else await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(forecast.getByTestId('chart-tooltip')).toBeVisible();
+    const column = page.getByTestId('savings-column').last();
+    if (await column.count()) await tap(column);
+    const tapped = await edges();
+    expect(tapped.found).toEqual([]);
+    const focusRings = await page.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="analyse"] *')].filter((e) => {
+        const cs = getComputedStyle(e);
+        // the ring (.focus-ring) only exists under :focus-visible – never after touch or mouse
+        return e.matches(':focus-visible') || (e.matches(':focus') && cs.outlineStyle !== 'none' && Number.parseFloat(cs.outlineWidth) > 0);
+      }).map((e) => `${e.tagName}.${e.getAttribute('class')}`),
+    );
+    expect(focusRings, 'no focus ring after touch or mouse').toEqual([]);
+  });
+
+  test('Tastatur (Desktop): die Jahresvorschau bekommt einen Fokusring (nur :focus-visible)', async ({ page }) => {
+    test.skip(isTouchProject(), 'keyboard');
+    await importLive29(page, { start: { monthStartDay: 25 } });
+    await goTo(page, 'analyse');
+    const chart = page.getByTestId('forecast').locator('[tabindex="0"]').first();
+    await expect(chart).toBeAttached();
+    // keyboard focus: Tab from the element before the chart
+    await chart.evaluate((el) => {
+      const all = [...document.querySelectorAll<HTMLElement>('a[href], button, [tabindex="0"]')].filter((e) => e.getClientRects().length && !e.closest('[data-tab-hidden]'));
+      all[all.indexOf(el as HTMLElement) - 1]?.focus();
+    });
+    await page.keyboard.press('Tab');
+    const ring = await page.evaluate(() => {
+      const f = document.activeElement as Element;
+      const cs = getComputedStyle(f);
+      return { inChart: !!f.closest('[data-testid="forecast"]'), visible: f.matches(':focus-visible'), outline: cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) >= 2 };
+    });
+    expect(ring).toEqual({ inChart: true, visible: true, outline: true });
   });
 
   test('Tippen auf einen Balken: Tooltip (Monat, Summe, davon einmalig, „aktiv“) und Zeile in „Details“ hervorgehoben', async ({ page }) => {

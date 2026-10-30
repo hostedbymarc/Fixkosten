@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { animationsDone, eur, expect, importFixture, isTouchProject, test, TODAY } from './fixtures';
+import { animationsDone, eur, expect, importFixture, isTouchProject, test, TODAY, shown } from './fixtures';
 import { expectClean } from './measure';
 
 const DIR = 'docs/screenshots/tooltip-oe-monat';
@@ -8,7 +8,7 @@ const FORMULA = 'Netto € 4.788 − Ø Fixkosten € 2.952,17 − Ø Vermögens
 async function enterSalary(page: Page, amount = '4.788') {
   await page.getByTestId('free-tile').click();
   await animationsDone(page, 'bottom-sheet');
-  await page.getByLabel('Netto-Gehalt').fill(amount);
+  await shown(page.getByLabel('Netto-Gehalt')).fill(amount);
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.035,83'));
@@ -66,7 +66,7 @@ test.describe('Tooltip „im Ø-Monat“', () => {
     // another salary → other numbers (live from calc.ts)
     await app.getByTestId('free-tile').click();
     await animationsDone(app, 'bottom-sheet');
-    await app.getByLabel('Netto-Gehalt').fill('5.000');
+    await shown(app.getByLabel('Netto-Gehalt')).fill('5.000');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByRole('dialog')).toHaveCount(0);
     await (isTouchProject() ? icon.tap() : icon.hover());

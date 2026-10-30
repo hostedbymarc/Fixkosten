@@ -1,7 +1,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Page } from '@playwright/test';
-import { eur, expandAll, expect, goTo, row, test, TODAY } from './fixtures';
+import { eur, expandAll, expect, goTo, row, test, TODAY, shown } from './fixtures';
 
 // Simulates the real publish: the browser profile ran 2776e95 (live, schema v1),
 // then the same origin serves the current build. Both are served through
@@ -59,7 +59,7 @@ test('live upgrade 2776e95 (v1) → main (v4) in the same browser profile', asyn
   await expect(page.getByTestId('category-group').first()).toHaveAttribute('aria-label', 'Meine Immos');
   await expect(immos).toContainText(eur('€ 991'));
   await expect(immos.getByTestId('group-spread')).toHaveText(eur('Ø € 1.034,67'));
-  await expect(page.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17'));
+  await expect(shown(page.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.952,17'));
   await expect(page.getByText('variabel', { exact: true })).toHaveCount(0);
 
   const latest = await page.evaluate(

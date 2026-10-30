@@ -1,7 +1,7 @@
 // No unwanted breaks: category headers and amounts on iPhone SE 375, iPhone 15, iPad portrait and
 // landscape, Desktop 1440 and 2560 – with a long category name that must end in an ellipsis.
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, SHOWN, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 const SIZES = [
@@ -16,7 +16,7 @@ const LONG = 'Versicherungen & Vorsorge';
 
 /** Lines of an element's text: its height over its line-height. */
 async function lines(page: Page, selector: string) {
-  return page.locator(selector).evaluateAll((els) =>
+  return page.locator(`:is(${selector})${SHOWN}`).evaluateAll((els) =>
     els.map((el) => {
       const cs = getComputedStyle(el);
       const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;

@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Locator, type Page } from '@playwright/test';
 
 /** Seed state is October 2026; freeze "today" to 05.10.2026. */
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
@@ -6,14 +6,14 @@ export const FIXTURE = 'tests/fixtures/seed.json';
 
 /**
  * Lade-Animation over: the splash is gone and the entrance of the current screen has finished
- * (a lazy screen first replaces its loader). Nothing is moving or fading any more afterwards.
+ * (a lazy screen first replaces its skeleton). Nothing is moving or fading any more afterwards.
  */
 export async function appSettled(page: Page) {
   await expect(page.locator('#splash')).toHaveCount(0);
-  // the current screen has come in (a lazy screen only after its loader)
+  // the current screen has come in (a lazy screen only after its skeleton)
   const [route, supported] = await page.evaluate(() => [location.hash.replace(/^#\/?/, '') || 'monat', document.documentElement.hasAttribute('data-entrance')] as const);
   if (supported) await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
-  await expect(page.locator('main [data-testid="loader"]')).toHaveCount(0);
+  await expect(page.locator('main [data-testid="skeleton"]')).toHaveCount(0);
   await page.evaluate(
     () =>
       new Promise<void>((resolve) =>
@@ -24,7 +24,10 @@ export async function appSettled(page: Page) {
                 .getAnimations()
                 .filter((a) => a.id === 'entrance')
                 .map((a) => a.finished),
-            ).then(() => resolve()),
+            )
+              // Analyse: the bars grow once the cards have arrived
+              .then(() => Promise.all(document.getAnimations().filter((a) => a.id === 'bar-grow').map((a) => a.finished)))
+              .then(() => resolve()),
           ),
         ),
       ),
@@ -47,7 +50,8 @@ export async function setToday(page: Page, date: Date) {
  * work with single rows call it; collapse by status itself is tested in aktiver-monat.spec.ts.
  */
 export async function expandAll(page: Page) {
-  const collapsed = page.locator('[data-testid="category-group"][data-collapsed="true"] [data-testid="group-toggle"]');
+  // the shown tab only (tabs visited before stay in main, hidden)
+  const collapsed = page.locator('main > :not([data-tab-hidden]) [data-testid="category-group"][data-collapsed="true"] [data-testid="group-toggle"]');
   // one card per attempt; a click lost during the entrance animation is simply repeated
   await expect(async () => {
     if ((await collapsed.count()) > 0) await collapsed.first().click({ timeout: 2000 });
@@ -98,8 +102,16 @@ export function isSidebarLayout(page: Page): boolean {
   return (page.viewportSize()?.width ?? 0) >= 1024;
 }
 
+/** Outside the tabs visited before (they stay in main, hidden); sheets and toasts sit outside main and count. */
+export const SHOWN = ':not([data-tab-hidden] *)';
+
+/** Narrows a page-wide locator to what the shown tab (plus sheets, toasts, navigation) contains. */
+export function shown(locator: Locator): Locator {
+  return locator.and(locator.page().locator(SHOWN));
+}
+
 export function row(page: Page, positionId: string) {
-  return page.locator(`[data-position="${positionId}"]`);
+  return page.locator(`[data-position="${positionId}"]${SHOWN}`);
 }
 
 /** Resolves once all CSS animations inside the element have finished. */

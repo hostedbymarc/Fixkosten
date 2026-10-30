@@ -1,0 +1,53 @@
+{
+  "Scrollen Monat": {
+    "frames": 292,
+    "avgFrameMs": 13.2,
+    "maxFrameMs": 17.3,
+    "longtasks": [],
+    "cls": 0
+  },
+  "Scrollen Analyse": {
+    "frames": 375,
+    "avgFrameMs": 12.9,
+    "maxFrameMs": 30.8,
+    "longtasks": [],
+    "cls": 0
+  },
+  "Tabwechsel": {
+    "frames": 337,
+    "avgFrameMs": 14.6,
+    "maxFrameMs": 24,
+    "switches": [
+      {
+        "tab": "Analyse",
+        "longtasks": [],
+        "cls": 0
+      },
+      {
+        "tab": "Positionen",
+        "longtasks": [],
+        "cls": 0
+      },
+      {
+        "tab": "Einstellungen",
+        "longtasks": [],
+        "cls": 0
+      },
+      {
+        "tab": "Monat",
+        "longtasks": [],
+        "cls": 0
+      },
+      {
+        "tab": "Analyse",
+        "longtasks": [],
+        "cls": 0
+      },
+      {
+        "tab": "Monat",
+        "longtasks": [],
+        "cls": 0
+      }
+    ]
+  }
+}

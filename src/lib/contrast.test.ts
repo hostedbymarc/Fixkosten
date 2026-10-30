@@ -1,6 +1,7 @@
 // Contrast of every text/background pair in src/styles/tokens.css, light and dark.
-// Backgrounds are checked at their darkest and lightest point: the Nebel blob centre
-// (incl. 3 % grain) and the plain base, each with the glass layers on top.
+// Backgrounds are checked at their darkest and lightest point: the Nebel blob centre with the
+// darkest grain and the plain base with the lightest grain (soft-light), each with the glass layers
+// on top; the lightest glass point includes the specular highlight.
 // CONTRAST_REPORT=<file> writes the measured table as Markdown (used for the PR).
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -96,22 +97,44 @@ export function deltaE(c1: RGB, c2: RGB): number {
   return Math.sqrt(((L2 - L1) / Sl) ** 2 + ((C2 - C1) / Sc) ** 2 + (dH / Sh) ** 2 + Rt * ((C2 - C1) / Sc) * (dH / Sh));
 }
 
-const GRAIN: RGBA = [0, 0, 0, 0.5 * 0.06]; // noise alpha .5 × layer opacity .06
+/** Körnung: monochrome noise in soft-light at --grain-opacity; s = 0 darkens most, s = 1 lightens most. */
+function grain(p: RGB, s: 0 | 1, opacity: number): RGB {
+  const D = (b: number) => (b <= 0.25 ? ((16 * b - 12) * b + 4) * b : Math.sqrt(b));
+  return p.map((c) => {
+    const b = c / 255;
+    const blended = s === 0 ? b - b * (1 - b) : b + (D(b) - b);
+    return 255 * (b * (1 - opacity) + blended * opacity);
+  }) as RGB;
+}
 
 /** The places a token can sit on, at their darkest and lightest point. */
 function surfaces(v: Record<string, string>) {
   const base = color(v, '--nebel-base').slice(0, 3) as RGB;
   const blob = over(color(v, '--nebel-1'), base);
-  const points: [RGB, RGB] = [over(GRAIN, blob), base]; // darkest (green centre + grain), lightest
+  const g = Number(resolve(v, '--grain-opacity'));
+  // darkest: green centre with the darkest grain; lightest: plain base with the lightest grain
+  const points: [RGB, RGB] = [grain(blob, 0, g), grain(base, 1, g)];
   const on = (layer: string) => points.map((p) => over(color(v, layer), p)) as [RGB, RGB];
+  // glass: fill over the background; the lightest point also carries the specular highlight (top left)
+  const glass = (layer: string, under: [RGB, RGB] = points) =>
+    [over(color(v, layer), under[0]), over(color(v, '--glass-specular'), over(color(v, layer), under[1]))] as [RGB, RGB];
+  const card = glass('--glass-bg');
+  // tab bar / sidebar: over the background or over a card scrolling below it
+  const clearUnder: [RGB, RGB] = [over(color(v, '--glass-bg'), points[0]), card[1]];
+  const clear = glass('--glass-clear-bg', [points[0], clearUnder[1]]);
+  const clearDark = glass('--glass-clear-bg', clearUnder);
+  const clearAll: [RGB, RGB] = [clear[0], clear[1]].concat([clearDark[0], clearDark[1]]).sort((x, y) => lum(x) - lum(y)).filter((_, i, a) => i === 0 || i === a.length - 1) as [RGB, RGB];
+  const pill = clearAll.map((p) => over(color(v, '--glass-pill-bg'), p)) as [RGB, RGB];
   const solid = (name: string) => {
     const c = color(v, name).slice(0, 3) as RGB;
     return [c, c] as [RGB, RGB];
   };
   return {
     Nebel: points,
-    Glas: on('--glass-bg'),
-    'Glas strong': on('--glass-strong-bg'),
+    Glas: card,
+    'Glas strong': glass('--glass-strong-bg'),
+    'Glas clear (Tab-Leiste, Sidebar)': clearAll,
+    'Indikator (Glas-Pille)': pill,
     Eingabefeld: on('--field'),
     Tooltip: solid('--c-surface'),
     'brand-100 (Chip)': solid('--c-accent-soft'),
@@ -155,6 +178,11 @@ const PAIRS: Pair[] = [
   { fg: '--c-check-open', on: GLASSY, min: 3 },
   { fg: '--c-warn-icon', on: [...GLASSY, 'warn-soft'], min: 3 },
   { fg: '--chart-accent', on: GLASSY, min: 3 },
+  // tab bar and sidebar: labels on the clear glass, the active one on the indicator pill
+  { fg: '--c-ink-mute', on: ['Glas clear (Tab-Leiste, Sidebar)'], min: 4.5 },
+  { fg: '--c-ink-soft', on: ['Glas clear (Tab-Leiste, Sidebar)'], min: 4.5 },
+  { fg: '--c-ink', on: ['Glas clear (Tab-Leiste, Sidebar)'], min: 4.5 },
+  { fg: '--c-accent-ink', on: ['Indikator (Glas-Pille)', 'Glas clear (Tab-Leiste, Sidebar)'], min: 4.5 },
 ];
 
 function measure(name: 'Hell' | 'Dunkel', v: Record<string, string>) {

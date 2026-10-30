@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, eur, expect, goTo, isTouchProject, test } from './fixtures';
+import { animationsDone, eur, expect, goTo, isTouchProject, SHOWN, test } from './fixtures';
 import { expectClean } from './measure';
 import { importSprint } from './sprint-data';
 
@@ -208,7 +208,7 @@ test.describe('Analyse', () => {
     // „Details anzeigen“ everywhere, never „Als Tabelle anzeigen“
     await expect(page.getByText('Als Tabelle anzeigen')).toHaveCount(0);
     // empty states: all dashed, same padding and size
-    const empties = await page.locator('[data-testid$="-empty"]').evaluateAll((els) =>
+    const empties = await page.locator(`[data-testid$="-empty"]${SHOWN}`).evaluateAll((els) =>
       els.map((e) => {
         const s = getComputedStyle(e);
         return [s.borderStyle, s.paddingTop, s.paddingLeft, s.fontSize].join(' ');

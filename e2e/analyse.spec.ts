@@ -344,13 +344,16 @@ test.describe('Tooltips', () => {
 });
 
 test.describe('Lazy loading', () => {
-  test('the month screen does not load the analysis chunk', async ({ app, page }) => {
+  test('the month screen starts without the analysis chunk; it is fetched once when the app is idle', async ({ app, page }) => {
     const requests: string[] = [];
     page.on('request', (r) => requests.push(r.url()));
     await page.reload();
     await expect(page.getByTestId('hero')).toBeVisible();
     await expect(page.getByTestId('category-group').first()).toBeVisible();
     expect(requests.filter((u) => /AnalyseScreen/.test(u))).toEqual([]);
+    // idle after the start: fetched (and compiled) once, so the first visit of the tab is smooth
+    await page.waitForFunction(() => document.documentElement.hasAttribute('data-analyse-ready'));
+    expect(requests.filter((u) => /AnalyseScreen/.test(u))).toHaveLength(1);
     await openAnalyse(app);
     expect(requests.filter((u) => /AnalyseScreen/.test(u))).toHaveLength(1);
   });

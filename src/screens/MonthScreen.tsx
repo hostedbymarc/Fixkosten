@@ -3,6 +3,8 @@ import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
+import { GlassGroup } from '../components/GlassGroup';
+import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
 import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
@@ -182,7 +184,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   }
 
   return (
-    <div
+    <Screen
+      name="monat"
       className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8"
       style={{ touchAction: 'pan-y' }}
       data-testid="month-screen"
@@ -202,7 +205,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       <div className="grid gap-3 md:gap-4">
         <HeroCard figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         {/* iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
             ref={salaryTile}
             period={period}
@@ -223,7 +226,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             onOpen={() => openClose(closeTile.current)}
           />
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
-        </div>
+        </GlassGroup>
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
@@ -419,7 +422,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           onDelete={(o) => void removeOneOff(o)}
         />
       )}
-    </div>
+    </Screen>
   );
 }
 
@@ -597,7 +600,7 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
  * number directly below, at most one short subline. Content is top-aligned; the
  * grid stretches tiles of a row to the same height, so the numbers share a baseline.
  */
-const tileClass = 'glass flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
+const tileClass = 'glass glass-tile flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
 const tileLabel = 'block truncate text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
 const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 lg:text-[20px] lg:leading-7';
 const tileSub = 'mt-1 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:tracking-normal';
@@ -659,11 +662,20 @@ function useSlotPosition(wrapper: React.RefObject<HTMLDivElement>, slot: React.R
     if (!active) return setPos(null);
     const update = () => {
       if (!wrapper.current || !slot.current) return;
-      const w = wrapper.current.getBoundingClientRect();
-      const s = slot.current.getBoundingClientRect();
+      // the tab is hidden (kept for the next visit): keep the last position, it holds when shown again
+      if (!wrapper.current.getClientRects().length) return;
+      // layout position (offset chain up to the wrapper): the tile may still be rising in its
+      // entrance (transform), the button must not follow that and jump afterwards
+      let x = 0;
+      let y = 0;
+      for (let n: HTMLElement | null = slot.current; n && n !== wrapper.current; n = n.offsetParent as HTMLElement | null) {
+        x += n.offsetLeft;
+        y += n.offsetTop;
+      }
+      const s = { width: slot.current.offsetWidth, height: slot.current.offsetHeight };
       // 44 px hit area centred on the icon, kept inside the tile
-      const left = Math.min(Math.max(s.left + s.width / 2 - w.left - 22, 0), Math.max(w.width - 44, 0));
-      setPos({ left, top: s.top + s.height / 2 - w.top - 22 });
+      const left = Math.min(Math.max(x + s.width / 2 - 22, 0), Math.max(wrapper.current.offsetWidth - 44, 0));
+      setPos({ left, top: y + s.height / 2 - 22 });
     };
     update();
     const observer = new ResizeObserver(update);
@@ -963,6 +975,8 @@ function UpcomingList({ items }: { items: DueItem[] }) {
     const ul = list.current;
     if (!ul) return;
     const measure = () => {
+      // the tab is hidden (kept for the next visit): the last layout holds when shown again
+      if (!ul.getClientRects().length) return;
       const rows = [...ul.querySelectorAll<HTMLElement>('[data-testid="upcoming-meta"]')].filter((m) => m.offsetParent !== null);
       const need = rows.some((meta) => {
         const chip = meta.querySelector<HTMLElement>('[data-testid="upcoming-month"]')!;

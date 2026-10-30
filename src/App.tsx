@@ -1,7 +1,7 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType } from 'react';
-import { CalendarIcon, ChartIcon, ListIcon, SettingsIcon } from './components/Icons';
-import { Brand } from './components/Logo';
-import { Loader } from './components/Loader';
+import { lazy, memo, startTransition, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Sidebar, TabBar } from './components/Navigation';
+import { TabVisibleContext } from './components/Screen';
+import { Skeleton } from './components/Skeleton';
 import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -9,39 +9,107 @@ import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
-import { hideSplash, playEntrance } from './lib/entrance';
+import { hideSplash } from './lib/entrance';
+import { startGlassBudget } from './lib/glassBudget';
+import { NAV, readRoute, type Route } from './lib/routes';
+import { switchTab } from './lib/tabTransition';
 import { ActiveMonthContext } from './lib/useToday';
-import type { Period } from './lib/types';
+import type { Dataset, Period } from './lib/types';
 import { MonthScreen } from './screens/MonthScreen';
 import { PositionsScreen } from './screens/PositionsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
-// Recharts is only loaded with the analysis tab, the month view stays light
-const AnalyseScreen = lazy(() => import('./screens/AnalyseScreen'));
+// Recharts lives in the analysis chunk: never part of the start (the month view stays light). Once
+// the app is idle after its start the chunk is fetched and the Analyse tab is built – hidden, like a
+// tab visited before – so its first visit only shows it. If the visit comes first it loads on demand.
+const loadAnalyse = () => import('./screens/AnalyseScreen');
+const AnalyseScreen = lazy(loadAnalyse);
+const PREFETCH_AFTER_MS = 1200;
+
+/** Time the hidden Analyse tab gets to mount its charts (one per frame) before it counts as ready. */
+const WARM_MS = 1000;
+
+/**
+ * Idle after the start (not before the start screen has come in): fetch the analysis chunk, then
+ * `build` adds the Analyse tab, hidden. Safari has no requestIdleCallback: right then.
+ */
+function prefetchAnalyse(build: () => void): () => void {
+  let idle = 0;
+  let ready = 0;
+  const run = () =>
+    void loadAnalyse().then(() => {
+      build();
+      ready = window.setTimeout(() => (document.documentElement.dataset.analyseReady = ''), WARM_MS);
+    }, () => {});
+  const timer = setTimeout(() => {
+    if (typeof window.requestIdleCallback === 'function') idle = window.requestIdleCallback(run, { timeout: 2000 });
+    else run();
+  }, PREFETCH_AFTER_MS);
+  return () => {
+    clearTimeout(timer);
+    clearTimeout(ready);
+    if (idle) window.cancelIdleCallback(idle);
+  };
+}
+
+/** The skeleton of a lazy tab while its code loads – only for the tab that is shown. */
+function TabSkeleton() {
+  return useContext(TabVisibleContext) ? <Skeleton /> : null;
+}
+
+/**
+ * The screen of one tab. Memoised and without a say in whether it is shown (that comes through
+ * TabVisibleContext to its Screen): a tab switch does not render the screens again.
+ */
+const TabScreen = memo(function TabScreen({ tab, ds, period, onPeriodChange }: { tab: Route; ds: Dataset; period: Period; onPeriodChange: (p: Period) => void }) {
+  if (tab === 'monat') return <MonthScreen ds={ds} period={period} onPeriodChange={onPeriodChange} />;
+  if (tab === 'positionen') return <PositionsScreen ds={ds} />;
+  if (tab === 'einstellungen') return <SettingsScreen ds={ds} />;
+  return (
+    <Suspense fallback={<TabSkeleton />}>
+      <AnalyseScreen ds={ds} />
+    </Suspense>
+  );
+});
 
 /** Manual month navigation keeps the shown month this long before the app returns to the active one. */
 const NAV_HOLD_MS = 30 * 60_000;
 
-type Route = 'monat' | 'positionen' | 'analyse' | 'einstellungen';
-
-const NAV: { route: Route; label: string; icon: ComponentType<{ size?: number }> }[] = [
-  { route: 'monat', label: 'Monat', icon: CalendarIcon },
-  { route: 'positionen', label: 'Positionen', icon: ListIcon },
-  { route: 'analyse', label: 'Analyse', icon: ChartIcon },
-  { route: 'einstellungen', label: 'Einstellungen', icon: SettingsIcon },
-];
-
-function readRoute(): Route {
-  const hash = window.location.hash.replace(/^#\/?/, '');
-  return NAV.some((n) => n.route === hash) ? (hash as Route) : 'monat';
-}
-
+/** The route from the URL; a tab change fades the old tab out first (src/lib/tabTransition.ts), every tab keeps its scroll position. */
 function useHashRoute(): Route {
   const [route, setRoute] = useState<Route>(readRoute);
+  const current = useRef(route);
+  const scroll = useRef(new Map<Route, number>());
+  // resolves the tab switch once the new tab is committed
+  const committed = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => {
+    committed.current?.();
+    committed.current = null;
+  }, [route]);
   useEffect(() => {
     const onHash = () => {
-      setRoute(readRoute());
-      window.scrollTo(0, 0);
+      const next = readRoute();
+      const prev = current.current;
+      if (next === prev) return;
+      scroll.current.set(prev, window.scrollY);
+      current.current = next;
+      switchTab(
+        () =>
+          new Promise<void>((resolve) => {
+            const finish = () => {
+              window.scrollTo(0, scroll.current.get(next) ?? 0);
+              resolve();
+            };
+            committed.current = finish;
+            // rendered in slices: no long task while the old screen fades out and the new one comes in
+            startTransition(() => setRoute(next));
+            // never leave the switch waiting
+            window.setTimeout(() => {
+              if (committed.current === finish) committed.current = null;
+              resolve();
+            }, 1500);
+          }),
+      );
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
@@ -51,6 +119,11 @@ function useHashRoute(): Route {
 
 export function App() {
   const route = useHashRoute();
+  // tabs stay built once visited (hidden while another is shown): going back to one only shows it,
+  // React does not build it anew while the tab switch plays. Analyse is built ahead, when idle.
+  const visited = useRef(new Set<Route>());
+  visited.current.add(route);
+  const [, setPrebuilt] = useState(false);
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
   const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
@@ -60,10 +133,10 @@ export function App() {
   const period = shown ?? active;
   // manual navigation (arrows, swipe, month grid, „Zum aktiven Monat“) holds the shown month for 30 min
   const navigatedAt = useRef(0);
-  const setPeriod = (p: Period) => {
+  const setPeriod = useCallback((p: Period) => {
     navigatedAt.current = Date.now();
     setShown(p);
-  };
+  }, []);
   const followActive = useRef<() => void>(() => {});
   followActive.current = () => {
     if (active && Date.now() - navigatedAt.current > NAV_HOLD_MS) setShown(active);
@@ -85,7 +158,6 @@ export function App() {
   }, []);
   // a new active month (new day, changed setting) is shown unless the user just navigated
   useEffect(() => followActive.current(), [active]);
-  const mainRef = useRef<HTMLElement>(null);
   // data and the setting „Neuer Monat beginnt am“: only then is there a screen to show
   const loaded = !!ds && start !== undefined;
 
@@ -94,133 +166,48 @@ export function App() {
     if (setup === true || (setup === false && loaded)) void hideSplash();
   }, [setup, loaded]);
 
-  // every screen comes in (tab change, first screen after the splash); a lazy screen once its loader is gone
-  useLayoutEffect(() => {
-    const main = mainRef.current;
-    if (!main || !loaded) return;
-    const loading = () => !!main.querySelector('[data-testid="loader"]');
-    if (!loading()) {
-      void playEntrance(main, route);
-      return;
-    }
-    const observer = new MutationObserver(() => {
-      if (loading()) return;
-      observer.disconnect();
-      void playEntrance(main, route);
-    });
-    observer.observe(main, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [route, loaded, setup]);
+  // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
+  useEffect(() => startGlassBudget(), []);
+  // once per app start: the Analyse tab, built hidden
+  useEffect(() => {
+    if (!loaded) return;
+    return prefetchAnalyse(() =>
+      startTransition(() => {
+        visited.current.add('analyse');
+        setPrebuilt(true);
+      }),
+    );
+  }, [loaded]);
 
-  if (setup === undefined || start === undefined || !active || !period) return <Loader />;
+  // one object per value: a tab switch does not render the screens that read it again
+  const month = useMemo(() => (start === undefined || !active ? null : { start, active }), [start, active]);
+
+  // behind the splash: nothing to show yet
+  if (setup === undefined || start === undefined || !active || !period) return null;
   if (setup) return <SetupDialog />;
 
   return (
-    <ActiveMonthContext.Provider value={{ start, active }}>
+    <ActiveMonthContext.Provider value={month!}>
       <ToastProvider>
         <div className="relative min-h-dvh lg:pl-[240px]">
           <Sidebar route={route} />
           <main
-            ref={mainRef}
             className="pt-safe px-safe"
             style={{ paddingBottom: 'calc(var(--tabbar-space) + 16px)' }}
           >
             {!ds ? (
-              <Loader />
-            ) : route === 'monat' ? (
-              <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
-            ) : route === 'positionen' ? (
-              <PositionsScreen ds={ds} />
-            ) : route === 'analyse' ? (
-              <Suspense
-                fallback={
-                  <Loader />
-                }
-              >
-                <AnalyseScreen ds={ds} />
-              </Suspense>
+              <Skeleton />
             ) : (
-              <SettingsScreen ds={ds} />
+              NAV.filter(({ route: r }) => visited.current.has(r)).map(({ route: r }) => (
+                <TabVisibleContext.Provider key={r} value={r === route}>
+                  <TabScreen tab={r} ds={ds} period={period} onPeriodChange={setPeriod} />
+                </TabVisibleContext.Provider>
+              ))
             )}
           </main>
           <TabBar route={route} />
         </div>
       </ToastProvider>
     </ActiveMonthContext.Provider>
-  );
-}
-
-function TabBar({ route }: { route: Route }) {
-  return (
-    <nav
-      aria-label="Hauptnavigation"
-      className="glass-strong fixed z-30 mx-auto max-w-lg rounded-[22px] px-1 lg:hidden"
-      style={{
-        // floating: 12 px from the edges, above the home indicator
-        left: 'calc(12px + var(--safe-left))',
-        right: 'calc(12px + var(--safe-right))',
-        bottom: 'var(--tabbar-gap)',
-      }}
-      data-testid="tabbar"
-    >
-      <ul className="flex h-[var(--tabbar-h)]">
-        {NAV.map(({ route: r, label, icon: Icon }) => {
-          const active = r === route;
-          return (
-            <li key={r} className="flex-1">
-              <a
-                href={`#/${r}`}
-                aria-current={active ? 'page' : undefined}
-                className={`focus-ring flex h-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] ${
-                  active ? 'font-semibold text-accent-ink' : 'font-medium text-ink-mute'
-                }`}
-              >
-                <span
-                  className={`flex h-[30px] w-[54px] items-center justify-center rounded-full transition-colors ${
-                    active ? 'bg-accent-soft' : ''
-                  }`}
-                >
-                  <Icon size={22} />
-                </span>
-                {label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
-}
-
-function Sidebar({ route }: { route: Route }) {
-  return (
-    <nav
-      aria-label="Hauptnavigation"
-      className="glass fixed bottom-3 left-3 top-3 z-30 hidden w-[228px] flex-col px-3 py-6 lg:flex"
-      data-testid="sidebar"
-    >
-      <div className="mb-6 flex items-center gap-2.5 px-3">
-        <Brand />
-      </div>
-      <ul className="flex flex-col gap-1">
-        {NAV.map(({ route: r, label, icon: Icon }) => {
-          const active = r === route;
-          return (
-            <li key={r}>
-              <a
-                href={`#/${r}`}
-                aria-current={active ? 'page' : undefined}
-                className={`focus-ring flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium ${
-                  active ? 'bg-accent-soft text-accent-strong' : 'text-ink-soft hover:bg-zinc-100/70'
-                }`}
-              >
-                <Icon size={20} />
-                {label}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
   );
 }

@@ -62,14 +62,18 @@ test.describe('Layout (gemessen, nicht geraten)', () => {
     const tabLinks = await tabbar.locator('a').evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom));
     for (const bottom of tabLinks) expect(bottom).toBeLessThanOrEqual(viewport.height - 34);
 
-    // last content is reachable above the tab bar after scrolling to the end
-    await app.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    // last content is reachable above the tab bar after scrolling to the end (again while the page
+    // still grows, e.g. a category that is just opening)
     const tabbarTop = await tabbar.evaluate((el) => el.getBoundingClientRect().top);
-    const lastContentBottom = await app
-      .locator('main section, main aside')
-      .last()
-      .evaluate((el) => el.getBoundingClientRect().bottom);
-    expect(lastContentBottom).toBeLessThanOrEqual(tabbarTop);
+    await expect
+      .poll(async () => {
+        await app.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        return app
+          .locator('main section, main aside')
+          .last()
+          .evaluate((el) => el.getBoundingClientRect().bottom);
+      })
+      .toBeLessThanOrEqual(tabbarTop);
   });
 
   test('bottom sheet fits the viewport and keeps its buttons visible', async ({ app }) => {

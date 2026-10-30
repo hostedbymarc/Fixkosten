@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Download, Page } from '@playwright/test';
-import { eur, expandAll, expect, goTo, importFixture, row, test } from './fixtures';
+import { eur, expandAll, expect, goTo, importFixture, row, test, shown } from './fixtures';
 
 const BOOKMARKLET = readFileSync('docs/export-bookmarklet.txt', 'utf8').trim();
 
@@ -69,7 +69,7 @@ test.describe('Sicherung', () => {
     // "live": other device with its own month close
     await freshDevice(app);
     await app.getByTestId('free-tile').click();
-    await app.getByLabel('Netto-Gehalt').fill('4700');
+    await shown(app.getByLabel('Netto-Gehalt')).fill('4700');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'false');
 
