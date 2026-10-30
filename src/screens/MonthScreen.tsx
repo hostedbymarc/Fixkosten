@@ -662,11 +662,18 @@ function useSlotPosition(wrapper: React.RefObject<HTMLDivElement>, slot: React.R
     if (!active) return setPos(null);
     const update = () => {
       if (!wrapper.current || !slot.current) return;
-      const w = wrapper.current.getBoundingClientRect();
-      const s = slot.current.getBoundingClientRect();
+      // layout position (offset chain up to the wrapper): the tile may still be rising in its
+      // entrance (transform), the button must not follow that and jump afterwards
+      let x = 0;
+      let y = 0;
+      for (let n: HTMLElement | null = slot.current; n && n !== wrapper.current; n = n.offsetParent as HTMLElement | null) {
+        x += n.offsetLeft;
+        y += n.offsetTop;
+      }
+      const s = { width: slot.current.offsetWidth, height: slot.current.offsetHeight };
       // 44 px hit area centred on the icon, kept inside the tile
-      const left = Math.min(Math.max(s.left + s.width / 2 - w.left - 22, 0), Math.max(w.width - 44, 0));
-      setPos({ left, top: s.top + s.height / 2 - w.top - 22 });
+      const left = Math.min(Math.max(x + s.width / 2 - 22, 0), Math.max(wrapper.current.offsetWidth - 44, 0));
+      setPos({ left, top: y + s.height / 2 - 22 });
     };
     update();
     const observer = new ResizeObserver(update);
