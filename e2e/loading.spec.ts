@@ -76,7 +76,7 @@ test.describe('Lade-Animation', () => {
       await appSettled(page);
       // nothing left: no transform or opacity on the screen or its cards, fixed children stay fixed
       const left = await page.evaluate(() =>
-        [document.querySelector('main')!.firstElementChild!, ...document.querySelectorAll('main .glass')]
+        [document.querySelector('main > :not([data-tab-hidden])')!, ...document.querySelectorAll('main .glass')]
           .map((el) => getComputedStyle(el))
           .filter((cs) => cs.transform !== 'none' || cs.opacity !== '1').length,
       );
@@ -103,7 +103,7 @@ test.describe('Lade-Animation', () => {
   test.describe('Bewegung reduzieren', () => {
     test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
-    test('Splash ohne Bewegung und schnell weg, Tabs ohne Einflug', async ({ page }) => {
+    test('Splash ohne Bewegung und schnell weg, Tabs nur mit Überblendung', async ({ page }) => {
       await importLive(page, OKT_TODAY);
       await watchSplash(page);
       await page.reload({ waitUntil: 'commit' });
@@ -118,8 +118,12 @@ test.describe('Lade-Animation', () => {
       await expect(page.getByTestId('hero')).toBeVisible();
       for (const tab of TABS) {
         await page.getByRole('link', { name: tab }).first().click();
-        await page.waitForTimeout(100);
-        expect(await entrance(page), `${tab}: no entrance`).toHaveLength(0);
+        await page.waitForTimeout(160);
+        // only the screen's fade (120 ms), no card rising
+        const moving = await page.evaluate(() =>
+          document.getAnimations().filter((a) => a.id === 'entrance' && (a.effect as KeyframeEffect).getKeyframes().some((k) => k.transform && k.transform !== 'none')).length,
+        );
+        expect(moving, `${tab}: no motion`).toBe(0);
       }
     });
   });

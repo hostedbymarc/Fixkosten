@@ -22,7 +22,11 @@ export const MonthNoteCard = forwardRef<HTMLButtonElement, { period: Period; not
     useLayoutEffect(() => {
       const el = text.current;
       if (!el) return setClamped(false);
-      const measure = () => setClamped(el.scrollHeight > el.clientHeight + 1);
+      const measure = () => {
+        // the tab is hidden (kept for the next visit): the last state holds when shown again
+        if (!el.getClientRects().length) return;
+        setClamped(el.scrollHeight > el.clientHeight + 1);
+      };
       measure();
       const ro = new ResizeObserver(measure);
       ro.observe(el);
@@ -35,7 +39,7 @@ export const MonthNoteCard = forwardRef<HTMLButtonElement, { period: Period; not
         type="button"
         onClick={onOpen}
         aria-label={note ? `Notiz ${periodLabel(period)} bearbeiten` : `Notiz für ${monthName(period)} hinzufügen`}
-        className="glass focus-ring flex min-h-11 w-full items-start gap-3 rounded-tile px-4 py-3 text-left hover:bg-zinc-50/40"
+        className="glass glass-tile focus-ring flex min-h-11 w-full items-start gap-3 rounded-tile px-4 py-3 text-left hover:bg-zinc-50/40"
         data-testid="note-card"
       >
         {note ? (

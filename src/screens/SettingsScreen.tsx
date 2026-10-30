@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Screen } from '../components/Screen';
 import { FEATURE_REMINDERS } from '../lib/features';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
@@ -46,7 +47,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
   const categoryName = (id: string) => ds.categories.find((c) => c.id === id)?.name ?? '';
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8">
+    <Screen name="einstellungen" className="mx-auto w-full max-w-[1100px] px-4 pb-8 lg:px-8">
       <header className="py-3 lg:py-6">
         <h1 className="flex h-11 items-center text-[20px] font-semibold tracking-tight text-ink lg:text-[24px]">Einstellungen</h1>
       </header>
@@ -142,7 +143,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
           </p>
         </ConfirmSheet>
       )}
-    </div>
+    </Screen>
   );
 }
 

@@ -76,9 +76,9 @@ test.describe('Jahresvorschau', () => {
         legendClipped: legend.scrollWidth > legend.clientWidth + 1,
       };
     });
-    // current month + 11; below 430 px one letter per month
+    // current month + 11; phones one letter per month, from the iPad three
     const months = ['Okt', 'Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep'];
-    expect(m.ticks).toEqual((page.viewportSize()?.width ?? 0) < 430 ? months.map((t) => t[0]) : months);
+    expect(m.ticks).toEqual((page.viewportSize()?.width ?? 0) < 768 ? months.map((t) => t[0]) : months);
     expect(m.overlaps).toEqual([]);
     expect(m.onBar, 'Ø chip covers no bar').toBe(0);
     expect(m.chipInside).toBe(true);

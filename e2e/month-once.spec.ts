@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { animationsDone, eur, expect, goTo, test } from './fixtures';
+import { animationsDone, eur, expect, goTo, test, shown } from './fixtures';
 import { expectClean } from './measure';
 
 async function addOnce(page: Page, name: string, amount: string, category: string, date?: string) {
@@ -31,7 +31,7 @@ test.describe('Einmalige Zahlung im Monat', () => {
     await expect(hotel).toContainText('Einmalig · 1.11.');
     await expect(hotel).toContainText(eur('€ 620'));
     await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.284'));
-    await expect(app.getByText('Ø pro Monat').locator('..')).toContainText(eur('€ 2.952,17')); // not a fixed cost
+    await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.952,17')); // not a fixed cost
     await expectClean(app, 'main');
 
     await app.getByRole('button', { name: 'Vorheriger Monat' }).click();
@@ -39,7 +39,7 @@ test.describe('Einmalige Zahlung im Monat', () => {
 
     // not in the Positionen tab: that tab is for fixed costs only
     await goTo(app, 'positionen');
-    await expect(app.getByText('Hotel Copenhagen')).toHaveCount(0);
+    await expect(shown(app.getByText('Hotel Copenhagen'))).toHaveCount(0);
     await app.getByRole('button', { name: 'Position hinzufügen' }).click();
     await expect(app.getByTestId('position-form').getByRole('radio', { name: 'Einmalig' })).toHaveCount(0);
   });
@@ -92,7 +92,7 @@ test.describe('Frei verfügbar: dieser Monat und Ø-Monat', () => {
   test('Netto-Gehalt eigene Kachel; Einmalige senken nur „diesen Monat“, Ø und Quote bleiben', async ({ app }) => {
     await expect(app.getByTestId('salary-value')).toHaveText('–');
     await app.getByTestId('salary-tile').click();
-    await app.getByLabel('Netto-Gehalt').fill('5000');
+    await shown(app.getByLabel('Netto-Gehalt')).fill('5000');
     await expect(app.getByTestId('close-average')).toHaveText(
       eur('Rechnerisch frei diesen Monat € 797 · im Ø-Monat € 1.247,83'),
     );

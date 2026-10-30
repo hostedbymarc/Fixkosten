@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DeferredChart } from './DeferredChart';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { forecastRange, forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
 import { formatCompactEUR, formatEUR } from '../../lib/format';
@@ -16,9 +17,9 @@ interface TipProps<T> {
 /** Room right of the plot for the Ø chip at the end of the line (never on a bar). */
 const CHIP_ROOM = 48;
 
-const NARROW = '(max-width: 429px)';
+const NARROW = '(max-width: 767px)';
 
-/** Phones narrower than 430 px: every pixel of plot width goes to the 12 month labels (one letter each). */
+/** Phones (every width below the iPad, Pro Max included): every pixel of plot width goes to the 12 month labels (one letter each). */
 function useNarrow(): boolean {
   const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia(NARROW).matches);
   useEffect(() => {
@@ -274,8 +275,31 @@ function AvgChip({ viewBox, text }: { viewBox?: { x?: number; y?: number; width?
   );
 }
 
-/** The active month's bar (the first one): outlined, regular and one-time part alike. */
-const ACTIVE_OUTLINE = { stroke: COLORS.ink, strokeWidth: 1.5 };
+/**
+ * Month label of the x axis. The active month (the first one) is marked here only – brand colour,
+ * bold – its bars look like all others (no outline on any bar).
+ */
+function MonthTick({ x, y, payload, narrow, active }: { x?: number | string; y?: number | string; payload?: { value: Period }; narrow: boolean; active?: Period }) {
+  if (!payload) return null;
+  const name = shortMonthName(monthOf(payload.value));
+  const isActive = payload.value === active;
+  return (
+    <text
+      x={x}
+      y={y}
+      dy="0.71em"
+      textAnchor="middle"
+      fontSize={AXIS_TICK.fontSize}
+      fill={isActive ? COLORS.activeTick : AXIS_TICK.fill}
+      fontWeight={isActive ? 700 : undefined}
+      data-testid="forecast-tick"
+      data-active={isActive || undefined}
+    >
+      {/* phones one letter (O N D J …), from the iPad three letters (Okt Nov Dez …) */}
+      {narrow ? name.charAt(0) : name}
+    </text>
+  );
+}
 
 export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
   const f = yearForecast(ds, today);
@@ -318,11 +342,12 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
       }
     >
       <div
-        // narrow phones: the chart uses half of the card padding, the month labels need it
-        className="h-[230px] max-[429px]:-mx-2"
+        // phones: the chart uses half of the card padding, the month labels need it
+        className="h-[230px] max-md:-mx-2"
         role="img"
         aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
       >
+        <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart
             data={rows}
@@ -335,9 +360,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
               dataKey="period"
               {...xAxisProps}
               interval={0}
-              // below 430 px one letter (O N D J …), from there three letters (Okt Nov Dez …)
-              tickFormatter={(p: Period) => (narrow ? shortMonthName(monthOf(p)).charAt(0) : shortMonthName(monthOf(p)))}
-              tick={AXIS_TICK}
+              tick={(props: { x?: number | string; y?: number | string; payload?: { value: Period } }) => <MonthTick {...props} narrow={narrow} active={active} />}
             />
             <YAxis
               {...yAxisProps}
@@ -371,7 +394,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             >
               {/* regular part: one colour; the Ø line shows which months lie above */}
               {rows.map((m) => (
-                <Cell key={m.period} fill={COLORS.accent} {...(m.period === active ? ACTIVE_OUTLINE : {})} />
+                <Cell key={m.period} fill={COLORS.accent} />
               ))}
             </Bar>
             {hasOnce && (
@@ -383,15 +406,9 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
                 isAnimationActive={false}
                 name="Einmalig"
                 fill={COLORS.accentLight}
-                stroke={COLORS.surface}
-                strokeWidth={1}
                 className="bar-once"
                 onClick={selectBar}
-              >
-                {rows.map((m) => (
-                  <Cell key={m.period} {...(m.period === active ? ACTIVE_OUTLINE : {})} />
-                ))}
-              </Bar>
+              />
             )}
             <ReferenceLine
               y={f.average}
@@ -402,6 +419,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             />
           </BarChart>
         </ResponsiveContainer>
+        </DeferredChart>
       </div>
       <p
         className="mt-2 flex items-center justify-center gap-x-3 whitespace-nowrap text-[12px] text-ink-mute"

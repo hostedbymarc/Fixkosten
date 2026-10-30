@@ -1,4 +1,4 @@
-import { animationsDone, eur, expect, test } from './fixtures';
+import { animationsDone, eur, expect, test, shown } from './fixtures';
 
 test.describe('Monatsabschluss', () => {
   test('enter salary → reload → values; no „Frei verfügbar (tatsächlich)“ any more', async ({ app }) => {
@@ -28,12 +28,12 @@ test.describe('Monatsabschluss', () => {
     await check();
 
     await app.getByTestId('free-tile').click();
-    await expect(app.getByLabel('Netto-Gehalt')).toHaveValue('5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5000');
   });
 
   test('comma decimals, decimal keyboard, invalid input blocks saving', async ({ app }) => {
     await app.getByTestId('free-tile').click();
-    const salary = app.getByLabel('Netto-Gehalt');
+    const salary = shown(app.getByLabel('Netto-Gehalt'));
     await expect(salary).toHaveAttribute('inputmode', 'decimal');
     await salary.fill('4.850,50');
     await expect(app.getByTestId('close-average')).toContainText(eur('Rechnerisch frei diesen Monat € 647,50'));
@@ -44,17 +44,17 @@ test.describe('Monatsabschluss', () => {
   test('"Wie Vormonat" copies previous values; nothing is saved automatically', async ({ app }) => {
     await app.getByTestId('free-tile').click();
     await animationsDone(app, 'bottom-sheet');
-    await app.getByLabel('Netto-Gehalt').fill('5000');
+    await shown(app.getByLabel('Netto-Gehalt')).fill('5000');
     await app.getByRole('button', { name: 'Speichern' }).click();
 
     await app.getByRole('button', { name: 'Nächster Monat' }).click();
     await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
     await app.getByTestId('free-tile').click();
     await animationsDone(app, 'bottom-sheet');
-    await expect(app.getByLabel('Netto-Gehalt')).toHaveValue('');
-    await expect(app.getByLabel('Netto-Gehalt')).toHaveAttribute('placeholder', '5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveAttribute('placeholder', '5000');
     await app.getByRole('button', { name: 'Wie Vormonat' }).click();
-    await expect(app.getByLabel('Netto-Gehalt')).toHaveValue('5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5000');
     await app.keyboard.press('Escape');
 
     await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
@@ -75,7 +75,7 @@ test.describe('Monatsabschluss', () => {
 
   test('tile with sub line and savings rate is never clipped', async ({ app }) => {
     await app.getByTestId('free-tile').click();
-    await app.getByLabel('Netto-Gehalt').fill('12.345,67');
+    await shown(app.getByLabel('Netto-Gehalt')).fill('12.345,67');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByTestId('wealth-sub')).toBeVisible();
 
