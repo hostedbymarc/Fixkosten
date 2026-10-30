@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BackupError, importIntoEmpty, readBackupFile, startEmpty } from '../db/backup';
 import { db } from '../db/db';
+import { traceImport } from '../lib/importTrace';
 import { Brand } from './Logo';
 
 /** First start on an empty database: import a JSON backup or start empty. */
@@ -8,9 +9,11 @@ export function SetupDialog() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => () => traceImport('setup-dialog-closed'), []);
 
   async function onFile(file: File | undefined) {
     if (!file) return;
+    traceImport('file-chosen', { bytes: file.size });
     setBusy(true);
     setError(null);
     try {

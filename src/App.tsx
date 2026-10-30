@@ -11,6 +11,7 @@ import { useDataset } from './db/useDataset';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
 import { hideSplash } from './lib/entrance';
 import { startGlassBudget } from './lib/glassBudget';
+import { traceImport } from './lib/importTrace';
 import { NAV, readRoute, type Route } from './lib/routes';
 import { switchTab } from './lib/tabTransition';
 import { ActiveMonthContext } from './lib/useToday';
@@ -126,6 +127,9 @@ export function App() {
   const [, setPrebuilt] = useState(false);
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
+  // import-hang harness only (src/lib/importTrace.ts)
+  useEffect(() => traceImport('livequery-setup', { setup }), [setup]);
+  useEffect(() => traceImport('livequery-dataset', { loaded: !!ds }), [ds]);
   const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
   const [now, setNow] = useState(localToday);
   const active = start === undefined ? null : activeMonth(now, start);

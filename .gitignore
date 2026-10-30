@@ -9,3 +9,5 @@ playwright-report
 seed.local.json
 *.tsbuildinfo
 .legacy
+dist-harness
+harness-results

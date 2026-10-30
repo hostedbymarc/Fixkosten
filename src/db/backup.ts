@@ -8,6 +8,8 @@ import type {
   Position,
   Reminder,
 } from '../lib/types';
+import type { Table } from 'dexie';
+import { traceImport } from '../lib/importTrace';
 import { SCHEMA_VERSION, type FixkostenDB } from './db';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4 } from './migrations';
 
@@ -127,20 +129,21 @@ async function markSetupDone(db: FixkostenDB, extra: { key: string; value: unkno
 
 /** First-start import. Refuses to touch a database that already holds data. */
 export async function importIntoEmpty(db: FixkostenDB, backup: BackupFile): Promise<void> {
-  await db.transaction('rw', db.tables, async () => {
-    if (!(await needsSetup(db))) {
-      throw new BackupError('Es sind bereits Daten vorhanden – es wird nichts überschrieben.');
-    }
-    await db.categories.bulkAdd(backup.data.categories);
-    await db.positions.bulkAdd(backup.data.positions);
-    await db.payments.bulkAdd(backup.data.payments);
-    await db.oneOffs.bulkAdd(backup.data.oneOffs);
-    await db.monthClose.bulkAdd(backup.data.monthClose);
-    await db.changeLog.bulkAdd(backup.data.changeLog);
-    await db.reminders.bulkAdd(backup.data.reminders);
-    await importSettings(db, backup, false);
-    await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
-  });
+  try {
+    await db.transaction('rw', db.tables, async () => {
+      traceImport('tx-start', { mode: 'first' });
+      if (!(await needsSetup(db))) {
+        throw new BackupError('Es sind bereits Daten vorhanden – es wird nichts überschrieben.');
+      }
+      await writeAll(db, backup.data);
+      await importSettings(db, backup, false);
+      await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
+    });
+  } catch (err) {
+    traceImport('tx-failed', { error: String(err) });
+    throw err;
+  }
+  traceImport('committed');
 }
 
 export async function startEmpty(db: FixkostenDB): Promise<void> {
@@ -150,11 +153,16 @@ export async function startEmpty(db: FixkostenDB): Promise<void> {
 export async function readBackupFile(file: File): Promise<BackupFile> {
   let raw: unknown;
   try {
-    raw = JSON.parse(await file.text());
+    const text = await file.text();
+    traceImport('file-read', { bytes: text.length });
+    raw = JSON.parse(text);
   } catch {
     throw new BackupError('Die Datei ist kein gültiges JSON.');
   }
-  return parseBackup(raw);
+  traceImport('json-parsed');
+  const backup = parseBackup(raw);
+  traceImport('validated');
+  return backup;
 }
 
 // ---------------------------------------------------------------------------
@@ -223,13 +231,10 @@ export function summarize(data: BackupFile['data']): BackupSummary {
 }
 
 async function writeAll(db: FixkostenDB, data: BackupFile['data']) {
-  await db.categories.bulkAdd(data.categories);
-  await db.positions.bulkAdd(data.positions);
-  await db.payments.bulkAdd(data.payments);
-  await db.oneOffs.bulkAdd(data.oneOffs);
-  await db.monthClose.bulkAdd(data.monthClose);
-  await db.changeLog.bulkAdd(data.changeLog);
-  await db.reminders.bulkAdd(data.reminders);
+  for (const table of TABLES) {
+    await (db[table] as Table<unknown>).bulkAdd(data[table]);
+    traceImport('table-written', { table, rows: data[table].length });
+  }
 }
 
 async function clearAll(db: FixkostenDB) {
@@ -255,28 +260,37 @@ export type ImportMode = 'merge' | 'replace';
  */
 export async function importBackup(db: FixkostenDB, backup: BackupFile, mode: ImportMode): Promise<void> {
   const snapshot = await exportBackup(db);
-  await db.transaction('rw', db.tables, async () => {
-    await db.meta.put({ key: UNDO_KEY, value: { snapshot, mode, at: new Date().toISOString() } });
-    if (mode === 'replace') {
-      await clearAll(db);
-      await writeAll(db, backup.data);
-    } else {
-      const d = backup.data;
-      await db.categories.bulkPut(d.categories);
-      await db.positions.bulkPut(d.positions);
-      // one tick per position and month: the file's entry replaces the local one
-      for (const p of d.payments) {
-        await db.payments.where({ positionId: p.positionId, period: p.period }).filter((x) => x.id !== p.id).delete();
+  traceImport('snapshot-taken');
+  try {
+    await db.transaction('rw', db.tables, async () => {
+      traceImport('tx-start', { mode });
+      await db.meta.put({ key: UNDO_KEY, value: { snapshot, mode, at: new Date().toISOString() } });
+      if (mode === 'replace') {
+        await clearAll(db);
+        await writeAll(db, backup.data);
+      } else {
+        const d = backup.data;
+        await db.categories.bulkPut(d.categories);
+        await db.positions.bulkPut(d.positions);
+        // one tick per position and month: the file's entry replaces the local one
+        for (const p of d.payments) {
+          await db.payments.where({ positionId: p.positionId, period: p.period }).filter((x) => x.id !== p.id).delete();
+        }
+        await db.payments.bulkPut(d.payments);
+        await db.oneOffs.bulkPut(d.oneOffs);
+        await db.monthClose.bulkPut(d.monthClose);
+        await db.changeLog.bulkPut(d.changeLog);
+        await db.reminders.bulkPut(d.reminders);
+        traceImport('tables-merged');
       }
-      await db.payments.bulkPut(d.payments);
-      await db.oneOffs.bulkPut(d.oneOffs);
-      await db.monthClose.bulkPut(d.monthClose);
-      await db.changeLog.bulkPut(d.changeLog);
-      await db.reminders.bulkPut(d.reminders);
-    }
-    await importSettings(db, backup, mode === 'merge');
-    await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
-  });
+      await importSettings(db, backup, mode === 'merge');
+      await markSetupDone(db, [{ key: 'importedAt', value: new Date().toISOString() }]);
+    });
+  } catch (err) {
+    traceImport('tx-failed', { error: String(err) });
+    throw err;
+  }
+  traceImport('committed');
 }
 
 export async function lastImport(db: FixkostenDB): Promise<{ mode: ImportMode; at: string } | null> {
