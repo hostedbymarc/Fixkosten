@@ -17,9 +17,9 @@ interface TipProps<T> {
 /** Room right of the plot for the Ø chip at the end of the line (never on a bar). */
 const CHIP_ROOM = 48;
 
-const NARROW = '(max-width: 429px)';
+const NARROW = '(max-width: 767px)';
 
-/** Phones narrower than 430 px: every pixel of plot width goes to the 12 month labels (one letter each). */
+/** Phones (every width below the iPad, Pro Max included): every pixel of plot width goes to the 12 month labels (one letter each). */
 function useNarrow(): boolean {
   const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia(NARROW).matches);
   useEffect(() => {
@@ -295,7 +295,7 @@ function MonthTick({ x, y, payload, narrow, active }: { x?: number | string; y?:
       data-testid="forecast-tick"
       data-active={isActive || undefined}
     >
-      {/* below 430 px one letter (O N D J …), from there three letters (Okt Nov Dez …) */}
+      {/* phones one letter (O N D J …), from the iPad three letters (Okt Nov Dez …) */}
       {narrow ? name.charAt(0) : name}
     </text>
   );
@@ -342,8 +342,8 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
       }
     >
       <div
-        // narrow phones: the chart uses half of the card padding, the month labels need it
-        className="h-[230px] max-[429px]:-mx-2"
+        // phones: the chart uses half of the card padding, the month labels need it
+        className="h-[230px] max-md:-mx-2"
         role="img"
         aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
       >

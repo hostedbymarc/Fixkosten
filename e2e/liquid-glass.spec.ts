@@ -16,13 +16,13 @@ async function reducedTransparency(page: Page): Promise<CDPSession> {
 /** Elements with a backdrop-filter and whether one sits inside another. */
 const blurState = (page: Page) =>
   page.evaluate(() => {
-    // rendered surfaces only (the tab bar exists but is display: none in the sidebar layout)
-    const blurred = [...document.querySelectorAll('*')].filter((e) => getComputedStyle(e).backdropFilter !== 'none' && e.getClientRects().length > 0);
+    // rendered surfaces only (the tab bar exists but is display: none in the sidebar layout; tabs visited before stay hidden in main)
+    const blurred = [...document.querySelectorAll('*')].filter((e) => getComputedStyle(e).backdropFilter !== 'none' && e.getClientRects().length > 0 && !e.closest('[data-tab-hidden]'));
     return {
       count: blurred.length,
       nested: blurred.filter((e) => blurred.some((o) => o !== e && o.contains(e))).length,
       visibleWithout: [...document.querySelectorAll('.glass')]
-        .filter((e) => !e.parentElement?.closest('.glass, .glass-strong, .glass-clear, .glass-group'))
+        .filter((e) => !e.parentElement?.closest('.glass, .glass-strong, .glass-clear, .glass-group') && !e.closest('[data-tab-hidden]'))
         .filter((e) => {
           const r = e.getBoundingClientRect();
           return r.height > 0 && r.bottom > 0 && r.top < innerHeight && getComputedStyle(e).backdropFilter === 'none';
@@ -474,7 +474,7 @@ test.describe('Einheitliche Ladeanimation', () => {
     for (const route of ['positionen', 'analyse', 'monat', 'analyse'] as const) {
       await goTo(page, route);
       // exactly one screen is shown, the others visited before stay in main, hidden
-      const shown = await page.evaluate(() => [...document.querySelectorAll('main > [data-screen-root]')].filter((e) => e.getClientRects().length).map((e) => e.getAttribute('data-screen-root')));
+      const shown = await page.evaluate(() => [...document.querySelectorAll('main > [data-screen-root]')].filter((e) => !e.hasAttribute('data-tab-hidden') && getComputedStyle(e).visibility === 'visible').map((e) => e.getAttribute('data-screen-root')));
       expect(shown).toEqual([route]);
     }
     const kept = await page.evaluate(() => ({

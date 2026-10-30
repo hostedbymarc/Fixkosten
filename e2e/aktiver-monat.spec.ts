@@ -317,7 +317,7 @@ test.describe('Monat-Screen einfacher', () => {
 });
 
 test.describe('Analyse: Achse, aktiver Balken, Tooltip, Details', () => {
-  test('x-Achse: unter 430 px einbuchstabig, sonst dreibuchstabig, Label-Boxen mindestens 6 px auseinander; aktiver Monat nur am Label (Brand-Farbe, fett)', async ({ page }) => {
+  test('x-Achse: iPhone (auch Pro Max) einbuchstabig, ab iPad dreibuchstabig, Label-Boxen mindestens 6 px auseinander; aktiver Monat nur am Label (Brand-Farbe, fett)', async ({ page }) => {
     await importLive29(page, { start: { monthStartDay: 25 } });
     await goTo(page, 'analyse');
     const card = page.getByTestId('forecast');
@@ -340,7 +340,7 @@ test.describe('Analyse: Achse, aktiver Balken, Tooltip, Details', () => {
       probe.remove();
       return { ticks: ticks.map((t) => t.t), gaps, active: ticks.filter((t) => t.active).map((t) => ({ t: t.t, fill: t.fill, weight: t.weight })), others: ticks.filter((t) => !t.active).map((t) => ({ fill: t.fill, weight: t.weight })), brand };
     });
-    const narrow = (page.viewportSize()?.width ?? 0) < 430;
+    const narrow = (page.viewportSize()?.width ?? 0) < 768;
     expect(m.ticks).toEqual(
       narrow ? ['N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O'] : ['Nov', 'Dez', 'Jän', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'],
     );
@@ -404,7 +404,7 @@ test.describe('Analyse: Achse, aktiver Balken, Tooltip, Details', () => {
     await expect(chart).toBeAttached();
     // keyboard focus: Tab from the element before the chart
     await chart.evaluate((el) => {
-      const all = [...document.querySelectorAll<HTMLElement>('a[href], button, [tabindex="0"]')].filter((e) => e.getClientRects().length);
+      const all = [...document.querySelectorAll<HTMLElement>('a[href], button, [tabindex="0"]')].filter((e) => e.getClientRects().length && !e.closest('[data-tab-hidden]'));
       all[all.indexOf(el as HTMLElement) - 1]?.focus();
     });
     await page.keyboard.press('Tab');

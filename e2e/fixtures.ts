@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Locator, type Page } from '@playwright/test';
 
 /** Seed state is October 2026; freeze "today" to 05.10.2026. */
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
@@ -102,8 +102,16 @@ export function isSidebarLayout(page: Page): boolean {
   return (page.viewportSize()?.width ?? 0) >= 1024;
 }
 
+/** Outside the tabs visited before (they stay in main, hidden); sheets and toasts sit outside main and count. */
+export const SHOWN = ':not([data-tab-hidden] *)';
+
+/** Narrows a page-wide locator to what the shown tab (plus sheets, toasts, navigation) contains. */
+export function shown(locator: Locator): Locator {
+  return locator.and(locator.page().locator(SHOWN));
+}
+
 export function row(page: Page, positionId: string) {
-  return page.locator(`[data-position="${positionId}"]`);
+  return page.locator(`[data-position="${positionId}"]${SHOWN}`);
 }
 
 /** Resolves once all CSS animations inside the element have finished. */
