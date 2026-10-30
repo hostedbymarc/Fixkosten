@@ -432,6 +432,44 @@ test.describe('Einheitliche Ladeanimation', () => {
     }
   });
 
+  test('besuchte Tabs bleiben aufgebaut (nur ausgeblendet), die Einstiegsanimation spielt bei jedem Besuch', async ({ page }) => {
+    await importLive(page, OKT_TODAY);
+    await page.evaluate(() => {
+      // the Monat screen's root node: the same node after a round trip means it was not built anew
+      (window as unknown as { monthRoot: Element }).monthRoot = document.querySelector('[data-screen-root="monat"]')!;
+    });
+    for (const route of ['positionen', 'analyse', 'monat', 'analyse'] as const) {
+      await goTo(page, route);
+      // exactly one screen is shown, the others visited before stay in main, hidden
+      const shown = await page.evaluate(() => [...document.querySelectorAll('main > [data-screen-root]')].filter((e) => e.getClientRects().length).map((e) => e.getAttribute('data-screen-root')));
+      expect(shown).toEqual([route]);
+    }
+    const kept = await page.evaluate(() => ({
+      same: document.querySelector('[data-screen-root="monat"]') === (window as unknown as { monthRoot: Element }).monthRoot,
+      roots: [...document.querySelectorAll('main > [data-screen-root]')].map((e) => e.getAttribute('data-screen-root')),
+    }));
+    expect(kept.same, 'Monat kept, not built anew').toBe(true);
+    expect(kept.roots).toEqual(['monat', 'positionen', 'analyse']);
+    // a hidden tab is out of reach: no element of it in the accessibility tree
+    await expect(page.getByTestId('hero')).toBeHidden();
+    // back on a kept tab: its cards come in again (once per visit)
+    const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
+    await nav.getByRole('link', { name: 'Monat' }).click();
+    await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.id === 'entrance').length)).toBeGreaterThan(1);
+    await appSettled(page);
+    await expect(page.getByTestId('hero')).toBeVisible();
+  });
+
+  test('Analyse erneut besucht (Tab blieb aufgebaut): die Balken wachsen wieder', async ({ page }) => {
+    await importLive(page, OKT_TODAY);
+    await goTo(page, 'analyse');
+    await goTo(page, 'monat');
+    const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
+    await nav.getByRole('link', { name: 'Analyse' }).click();
+    await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.id === 'bar-grow' && ((a.effect as KeyframeEffect).target as Element).tagName === 'path').length)).toBeGreaterThanOrEqual(12);
+    await appSettled(page);
+  });
+
   test('Analyse: Karten wie auf der Startseite, danach wachsen die Balken (400 ms, 20 ms Versatz)', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await page.evaluate(() => {

@@ -384,6 +384,12 @@ body::after {
   }
 }
 
+/* a tab kept from an earlier visit while another one is shown (src/App.tsx); stronger than the
+   screen's own display class */
+[data-screen-root][data-tab-hidden] {
+  display: none;
+}
+
 /* nothing blurs while it moves: the cards during their entrance and the screen during a tab switch
    (the blur comes on when they rest) */
 :is(.glass, .glass-group-blur)[data-entering],

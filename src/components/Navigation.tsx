@@ -15,39 +15,56 @@ export const COMPACT_AFTER = 24;
 type Axis = 'x' | 'y';
 
 /**
- * Places the indicator on the active link: size by layout (only on resize), position by transform.
- * On a tab change it starts where the previous tab was and glides over SLIDE_MS.
+ * Places the indicator on the active link: size by layout, position by transform. On a tab change it
+ * starts where the previous tab was and glides over SLIDE_MS. The links are measured only when the
+ * list changes size: a tab change reads no layout (the new screen is laid out once, in its frame).
  */
 function useSlidingIndicator(list: React.RefObject<HTMLElement>, pill: React.RefObject<HTMLElement>, route: Route, axis: Axis, inset: number) {
   const last = useRef<number | null>(null);
+  const boxes = useRef(new Map<string, { pos: number; size: number }>());
+  const place = useRef<(animate: boolean) => void>(() => {});
+  place.current = (animate: boolean) => {
+    const el = pill.current;
+    const box = boxes.current.get(route);
+    if (!el || !box) return;
+    const { pos, size } = box;
+    if (axis === 'x') el.style.width = `${size}px`;
+    else el.style.height = `${size}px`;
+    const to = axis === 'x' ? `translateX(${pos}px)` : `translateY(${pos}px)`;
+    const from = last.current;
+    el.style.transform = to;
+    if (animate && from !== null && from !== pos && !reducedMotion()) {
+      el.getAnimations().forEach((a) => a.cancel());
+      el.animate([{ transform: axis === 'x' ? `translateX(${from}px)` : `translateY(${from}px)` }, { transform: to }], {
+        duration: SLIDE_MS,
+        easing: SLIDE_EASE,
+      });
+    }
+    last.current = pos;
+    el.dataset.activeRoute = route;
+  };
+  // measure the links: now and whenever the list changes size
   useLayoutEffect(() => {
     const ul = list.current;
-    const el = pill.current;
-    if (!ul || !el) return;
-    const place = (animate: boolean) => {
-      const link = ul.querySelector<HTMLElement>(`[data-route="${route}"]`);
-      if (!link) return;
-      const pos = axis === 'x' ? link.offsetLeft + inset : link.offsetTop;
-      if (axis === 'x') el.style.width = `${link.offsetWidth - 2 * inset}px`;
-      else el.style.height = `${link.offsetHeight}px`;
-      const to = axis === 'x' ? `translateX(${pos}px)` : `translateY(${pos}px)`;
-      const from = last.current;
-      el.style.transform = to;
-      if (animate && from !== null && from !== pos && !reducedMotion()) {
-        el.getAnimations().forEach((a) => a.cancel());
-        el.animate([{ transform: axis === 'x' ? `translateX(${from}px)` : `translateY(${from}px)` }, { transform: to }], {
-          duration: SLIDE_MS,
-          easing: SLIDE_EASE,
+    if (!ul) return;
+    const measure = () => {
+      for (const link of ul.querySelectorAll<HTMLElement>('[data-route]')) {
+        boxes.current.set(link.dataset.route!, {
+          pos: axis === 'x' ? link.offsetLeft + inset : link.offsetTop,
+          size: axis === 'x' ? link.offsetWidth - 2 * inset : link.offsetHeight,
         });
       }
-      last.current = pos;
-      el.dataset.activeRoute = route;
     };
-    place(true);
-    const observer = new ResizeObserver(() => place(false));
+    measure();
+    place.current(false);
+    const observer = new ResizeObserver(() => {
+      measure();
+      place.current(false);
+    });
     observer.observe(ul);
     return () => observer.disconnect();
-  }, [list, pill, route, axis, inset]);
+  }, [list, axis, inset]);
+  useLayoutEffect(() => place.current(true), [route]);
 }
 
 /** Tab bar compact while scrolling down (beyond 24 px), full again when scrolling up and at the page end. */

@@ -1,22 +1,22 @@
 {
   "Scrollen Monat": {
-    "frames": 294,
-    "avgFrameMs": 14.2,
-    "maxFrameMs": 17.6,
+    "frames": 292,
+    "avgFrameMs": 14.5,
+    "maxFrameMs": 44.3,
     "longtasks": [],
     "cls": 0
   },
   "Scrollen Analyse": {
-    "frames": 372,
-    "avgFrameMs": 13.8,
-    "maxFrameMs": 19.2,
+    "frames": 373,
+    "avgFrameMs": 13.3,
+    "maxFrameMs": 34.4,
     "longtasks": [],
     "cls": 0
   },
   "Tabwechsel": {
-    "frames": 302,
-    "avgFrameMs": 16.3,
-    "maxFrameMs": 100.5,
+    "frames": 313,
+    "avgFrameMs": 15.9,
+    "maxFrameMs": 77.1,
     "switches": [
       {
         "tab": "Analyse",
@@ -36,7 +36,7 @@
       {
         "tab": "Monat",
         "longtasks": [],
-        "cls": 0
+        "cls": 0.011800605686466816
       },
       {
         "tab": "Analyse",
@@ -46,7 +46,7 @@
       {
         "tab": "Monat",
         "longtasks": [],
-        "cls": 0.0011789669073226348
+        "cls": 0.016520847961053544
       }
     ]
   }

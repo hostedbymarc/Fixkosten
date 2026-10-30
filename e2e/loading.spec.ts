@@ -76,7 +76,7 @@ test.describe('Lade-Animation', () => {
       await appSettled(page);
       // nothing left: no transform or opacity on the screen or its cards, fixed children stay fixed
       const left = await page.evaluate(() =>
-        [document.querySelector('main')!.firstElementChild!, ...document.querySelectorAll('main .glass')]
+        [document.querySelector('main > :not([data-tab-hidden])')!, ...document.querySelectorAll('main .glass')]
           .map((el) => getComputedStyle(el))
           .filter((cs) => cs.transform !== 'none' || cs.opacity !== '1').length,
       );

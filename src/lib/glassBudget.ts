@@ -20,6 +20,8 @@ function rendered(el: Element): DOMRect | null {
 
 /** Surfaces that may blur at all: not nested in another surface, not a tile inside a group. */
 function eligible(el: Element): boolean {
+  // a kept tab that is not shown
+  if (el.closest('[data-tab-hidden]')) return false;
   if (el.parentElement?.closest(SURFACE)) return false;
   if (el.classList.contains('glass') && el.closest('.glass-group')) return false;
   return true;
@@ -59,11 +61,12 @@ export function startGlassBudget(root: HTMLElement = document.body): () => void 
       updateGlassBudget(root);
     });
   };
-  // only surfaces appearing or disappearing matter, not the attribute this module writes
+  // only surfaces appearing or disappearing matter (also a kept tab shown or hidden), not the
+  // attribute this module writes
   const observer = new MutationObserver((records) => {
-    if (records.some((r) => r.type === 'childList')) schedule();
+    if (records.some((r) => r.type === 'childList' || r.attributeName === 'data-tab-hidden')) schedule();
   });
-  observer.observe(root, { childList: true, subtree: true });
+  observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-tab-hidden'] });
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', schedule);
   schedule();

@@ -37,7 +37,9 @@ export function switchTab(from: Route, to: Route, apply: () => Promise<void>) {
   }
   // fallback: a frozen copy of the old screen fades out, the new screen comes in
   const main = document.querySelector('main');
-  const old = main?.firstElementChild as HTMLElement | null;
+  // the shown screen (tabs visited before stay in main, hidden)
+  const shown = () => main?.querySelector<HTMLElement>(':scope > :not([data-tab-hidden])') ?? null;
+  const old = shown();
   let ghost: HTMLElement | null = null;
   if (old) {
     const r = old.getBoundingClientRect();
@@ -52,7 +54,7 @@ export function switchTab(from: Route, to: Route, apply: () => Promise<void>) {
     document.body.appendChild(ghost);
   }
   void apply().then(() => {
-    const fresh = main?.firstElementChild as HTMLElement | null;
+    const fresh = shown();
     fresh?.classList.add('tab-anim-in');
     const finish = () => {
       ghost?.remove();

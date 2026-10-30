@@ -73,6 +73,8 @@ function growDistribution(root: ParentNode, delay: number) {
 /** Starts the growth `delay` ms from now (when the cards have arrived). */
 export function growBars(delay: number, root: ParentNode = document) {
   if (reducedMotion()) return;
+  // a tab kept from an earlier visit: its bars grow again
+  root.querySelectorAll<SVGGraphicsElement>('[data-testid="forecast"] .recharts-bar-rectangle path').forEach((b) => delete b.dataset.grow);
   const start = performance.now() + delay;
   growDistribution(root, delay);
   // the chart mounts a few frames after the screen (src/components/analysis/DeferredChart.tsx) and

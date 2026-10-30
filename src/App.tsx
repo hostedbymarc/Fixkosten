@@ -1,6 +1,7 @@
-import { lazy, startTransition, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, memo, startTransition, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Sidebar, TabBar } from './components/Navigation';
+import { TabVisibleContext } from './components/Screen';
 import { Skeleton } from './components/Skeleton';
 import { SetupDialog } from './components/SetupDialog';
 import { ToastProvider } from './components/Toast';
@@ -11,7 +12,7 @@ import { useDataset } from './db/useDataset';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart, type MonthStart } from './lib/activeMonth';
 import { hideSplash } from './lib/entrance';
 import { startGlassBudget } from './lib/glassBudget';
-import { readRoute, type Route } from './lib/routes';
+import { NAV, readRoute, type Route } from './lib/routes';
 import { switchTab } from './lib/tabTransition';
 import { ActiveMonthContext } from './lib/useToday';
 import type { Dataset, Period } from './lib/types';
@@ -73,6 +74,26 @@ function prefetchAnalyse(ds: Dataset, context: { start: MonthStart; active: Peri
   };
 }
 
+/** The skeleton of a lazy tab while its code loads – only for the tab that is shown. */
+function TabSkeleton() {
+  return useContext(TabVisibleContext) ? <Skeleton /> : null;
+}
+
+/**
+ * The screen of one tab. Memoised and without a say in whether it is shown (that comes through
+ * TabVisibleContext to its Screen): a tab switch does not render the screens again.
+ */
+const TabScreen = memo(function TabScreen({ tab, ds, period, onPeriodChange }: { tab: Route; ds: Dataset; period: Period; onPeriodChange: (p: Period) => void }) {
+  if (tab === 'monat') return <MonthScreen ds={ds} period={period} onPeriodChange={onPeriodChange} />;
+  if (tab === 'positionen') return <PositionsScreen ds={ds} />;
+  if (tab === 'einstellungen') return <SettingsScreen ds={ds} />;
+  return (
+    <Suspense fallback={<TabSkeleton />}>
+      <AnalyseScreen ds={ds} />
+    </Suspense>
+  );
+});
+
 /** Manual month navigation keeps the shown month this long before the app returns to the active one. */
 const NAV_HOLD_MS = 30 * 60_000;
 
@@ -122,6 +143,10 @@ function useHashRoute(): Route {
 
 export function App() {
   const route = useHashRoute();
+  // tabs stay built once visited (hidden while another is shown): going back to one only shows it,
+  // React does not build it anew in the frame the tab transition captures
+  const visited = useRef(new Set<Route>());
+  visited.current.add(route);
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
   const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
@@ -131,10 +156,10 @@ export function App() {
   const period = shown ?? active;
   // manual navigation (arrows, swipe, month grid, „Zum aktiven Monat“) holds the shown month for 30 min
   const navigatedAt = useRef(0);
-  const setPeriod = (p: Period) => {
+  const setPeriod = useCallback((p: Period) => {
     navigatedAt.current = Date.now();
     setShown(p);
-  };
+  }, []);
   const followActive = useRef<() => void>(() => {});
   followActive.current = () => {
     if (active && Date.now() - navigatedAt.current > NAV_HOLD_MS) setShown(active);
@@ -176,12 +201,15 @@ export function App() {
     return prefetchAnalyse(data, { start: s, active: a });
   }, [loaded]);
 
+  // one object per value: a tab switch does not render the screens that read it again
+  const month = useMemo(() => (start === undefined || !active ? null : { start, active }), [start, active]);
+
   // behind the splash: nothing to show yet
   if (setup === undefined || start === undefined || !active || !period) return null;
   if (setup) return <SetupDialog />;
 
   return (
-    <ActiveMonthContext.Provider value={{ start, active }}>
+    <ActiveMonthContext.Provider value={month!}>
       <ToastProvider>
         <div className="relative min-h-dvh lg:pl-[240px]">
           <Sidebar route={route} />
@@ -191,16 +219,12 @@ export function App() {
           >
             {!ds ? (
               <Skeleton />
-            ) : route === 'monat' ? (
-              <MonthScreen ds={ds} period={period} onPeriodChange={setPeriod} />
-            ) : route === 'positionen' ? (
-              <PositionsScreen ds={ds} />
-            ) : route === 'analyse' ? (
-              <Suspense fallback={<Skeleton />}>
-                <AnalyseScreen ds={ds} />
-              </Suspense>
             ) : (
-              <SettingsScreen ds={ds} />
+              NAV.filter(({ route: r }) => visited.current.has(r)).map(({ route: r }) => (
+                <TabVisibleContext.Provider key={r} value={r === route}>
+                  <TabScreen tab={r} ds={ds} period={period} onPeriodChange={setPeriod} />
+                </TabVisibleContext.Provider>
+              ))
             )}
           </main>
           <TabBar route={route} />
