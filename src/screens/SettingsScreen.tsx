@@ -244,7 +244,14 @@ function BackupSection({ ds }: { ds: Dataset }) {
           onImport={async (mode) => {
             const backup = pending.backup;
             setPending(null);
-            await importBackup(db, backup, mode);
+            setError(null);
+            try {
+              await importBackup(db, backup, mode);
+            } catch (err) {
+              setError(err instanceof BackupError ? err.message : 'Import fehlgeschlagen. Es wurde nichts geändert.');
+              console.error(err);
+              return;
+            }
             toast({ message: 'Sicherung importiert', actionLabel: 'Rückgängig', onAction: () => void undo(), durationMs: 8000 });
           }}
         />

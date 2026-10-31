@@ -8,7 +8,7 @@ import type {
   Position,
   Reminder,
 } from '../lib/types';
-import type { Table } from 'dexie';
+import type { Table, Transaction } from 'dexie';
 import { traceImport } from '../lib/importTrace';
 import { SCHEMA_VERSION, type FixkostenDB } from './db';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4 } from './migrations';
@@ -39,6 +39,59 @@ export interface BackupFile {
 }
 
 export class BackupError extends Error {}
+
+/** A normal import takes well under a second; far beyond that something waits that will not come. */
+export const IMPORT_TIMEOUT_MS = 20_000;
+
+export class ImportTimeoutError extends BackupError {
+  constructor() {
+    super('Der Import hat zu lange gedauert und wurde abgebrochen. Es wurde nichts geändert – bitte erneut versuchen.');
+  }
+}
+
+export interface ImportOptions {
+  timeoutMs?: number;
+}
+
+/**
+ * Runs the whole import in ONE transaction over every table, so it lands completely or not at
+ * all. Past the timeout the transaction is aborted (IndexedDB rolls it back) or, if it has not
+ * started yet (database still opening), never runs.
+ */
+async function importTransaction(db: FixkostenDB, timeoutMs: number, body: () => Promise<void>): Promise<void> {
+  let timedOut = false;
+  let finished = false;
+  let tx: Transaction | null = null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      if (finished) return;
+      timedOut = true;
+      try {
+        tx?.abort();
+      } catch {
+        // already over
+      }
+      traceImport('timeout', { timeoutMs });
+      reject(new ImportTimeoutError());
+    }, timeoutMs);
+  });
+  const run = db.transaction('rw', db.tables, async (t) => {
+    tx = t;
+    if (timedOut) throw new ImportTimeoutError();
+    t.on('complete', () => {
+      finished = true;
+    });
+    await body();
+    if (timedOut) throw new ImportTimeoutError();
+  });
+  run.catch(() => {}); // after a timeout nobody waits for it any more
+  try {
+    await Promise.race([run, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const TABLES = ['categories', 'positions', 'payments', 'oneOffs', 'monthClose', 'changeLog', 'reminders'] as const;
 
@@ -128,9 +181,9 @@ async function markSetupDone(db: FixkostenDB, extra: { key: string; value: unkno
 }
 
 /** First-start import. Refuses to touch a database that already holds data. */
-export async function importIntoEmpty(db: FixkostenDB, backup: BackupFile): Promise<void> {
+export async function importIntoEmpty(db: FixkostenDB, backup: BackupFile, options: ImportOptions = {}): Promise<void> {
   try {
-    await db.transaction('rw', db.tables, async () => {
+    await importTransaction(db, options.timeoutMs ?? IMPORT_TIMEOUT_MS, async () => {
       traceImport('tx-start', { mode: 'first' });
       if (!(await needsSetup(db))) {
         throw new BackupError('Es sind bereits Daten vorhanden – es wird nichts überschrieben.');
@@ -258,11 +311,11 @@ export type ImportMode = 'merge' | 'replace';
  *   position and month); everything that only exists on this device stays.
  * - 'replace': this device afterwards holds exactly the file's data.
  */
-export async function importBackup(db: FixkostenDB, backup: BackupFile, mode: ImportMode): Promise<void> {
+export async function importBackup(db: FixkostenDB, backup: BackupFile, mode: ImportMode, options: ImportOptions = {}): Promise<void> {
   const snapshot = await exportBackup(db);
   traceImport('snapshot-taken');
   try {
-    await db.transaction('rw', db.tables, async () => {
+    await importTransaction(db, options.timeoutMs ?? IMPORT_TIMEOUT_MS, async () => {
       traceImport('tx-start', { mode });
       await db.meta.put({ key: UNDO_KEY, value: { snapshot, mode, at: new Date().toISOString() } });
       if (mode === 'replace') {
