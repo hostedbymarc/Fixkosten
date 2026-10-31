@@ -1,6 +1,60 @@
-import { join } from 'node:path';
-import { test as base, expect, type Locator, type Page } from '@playwright/test';
+import { join, resolve } from 'node:path';
+import { test as base, expect, type Browser, type BrowserType, type Locator, type Page } from '@playwright/test';
 import { ImportWatchdog, instrumentIndexedDB, WATCHDOG_MS } from './import-watchdog';
+
+/**
+ * A fresh browser process for every spec file (not only a fresh context): the worker's `browser`
+ * is a stand-in that launches a new browser the first time a test of another file asks for a
+ * context, and closes the one before. Launch options, tracing and the context options of the
+ * config apply as with Playwright's own `browser` fixture (same `playwright` instance).
+ */
+class BrowserPerFile {
+  private current: Browser | null = null;
+  private file: string | null = null;
+  readonly launches: string[] = [];
+  readonly proxy: Browser;
+
+  constructor(private readonly type: BrowserType) {
+    const forFile = async () => {
+      const file = base.info().file;
+      if (!this.current || this.file !== file) {
+        const old = this.current;
+        this.current = null;
+        if (old) await old.close({ reason: 'next spec file: fresh browser' });
+        this.current = await this.type.launch();
+        this.file = file;
+        this.launches.push(file);
+      }
+      return this.current;
+    };
+    this.proxy = new Proxy({} as Browser, {
+      get: (_, prop) => {
+        if (prop === 'newContext' || prop === 'newPage') {
+          return async (...args: unknown[]) => {
+            const b = await forFile();
+            return (b[prop] as (...a: unknown[]) => unknown).apply(b, args);
+          };
+        }
+        if (!this.current) {
+          // before the first context of a test (e.g. browserType(), version()): launch for this file
+          if (prop === 'browserType') return () => this.type;
+          if (prop === 'then') return undefined;
+          // Playwright's context fixture looks for connect headers first (none: launched locally)
+          if (prop === '_connection') return { headers: undefined };
+        }
+        const target = this.current as unknown as Record<string | symbol, unknown> | null;
+        if (!target) throw new Error(`browser.${String(prop)} before the first context of this spec file`);
+        const value = target[prop];
+        return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value;
+      },
+    });
+  }
+
+  async close() {
+    await this.current?.close({ reason: 'Test ended.' });
+    this.current = null;
+  }
+}
 
 /** Seed state is October 2026; freeze "today" to 05.10.2026. */
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
@@ -75,21 +129,47 @@ export async function importFixture(page: Page) {
   await appSettled(page);
 }
 
-export const test = base.extend<{ app: Page; fresh: Page; importWatchdog: ImportWatchdog; importWatchdogEnabled: boolean }>({
+export const test = base.extend<
+  { app: Page; fresh: Page; importWatchdog: ImportWatchdog; importWatchdogEnabled: boolean; importWatchdogDocsDir: string | null },
+  { freshBrowserPerFile: boolean }
+>({
+  /** playwright.config.ts: a fresh browser process per spec file (FRESH_BROWSER=0 switches it off for measuring) */
+  freshBrowserPerFile: [process.env.FRESH_BROWSER !== '0', { option: true, scope: 'worker' }],
+  browser: [
+    async ({ playwright, browserName, freshBrowserPerFile }, use) => {
+      const type = playwright[browserName];
+      if (!freshBrowserPerFile) {
+        const browser = await type.launch();
+        await use(browser);
+        await browser.close({ reason: 'Test ended.' });
+        return;
+      }
+      const perFile = new BrowserPerFile(type);
+      await use(perFile.proxy);
+      await perFile.close();
+    },
+    { scope: 'worker', timeout: 0 },
+  ],
   /** The harness switches the watchdog off: it records each iteration itself. */
   importWatchdogEnabled: [true, { option: true }],
+  /** where a real hang is copied to (the watchdog test points it into its own output folder) */
+  importWatchdogDocsDir: [resolve('docs/diagnose/import-hang'), { option: true }],
   /**
    * Every import in every test (e2e/import-watchdog.ts): hero not there WATCHDOG_MS after the start
    * → dumps under `import-hang/` in the test's output folder, then the test fails.
    */
   importWatchdog: [
-    async ({ page, context, browser, importWatchdogEnabled }, use, testInfo) => {
+    async ({ page, context, browser, importWatchdogEnabled, importWatchdogDocsDir }, use, testInfo) => {
       if (!importWatchdogEnabled) {
         await use(null as unknown as ImportWatchdog);
         return;
       }
       await context.addInitScript(instrumentIndexedDB);
-      const watchdog = new ImportWatchdog(page, context, browser, testInfo.outputPath('import-hang'), 'dist-e2e');
+      const watchdog = new ImportWatchdog(page, context, browser, testInfo.outputPath('import-hang'), {
+        mapsDir: 'dist-e2e',
+        docsDir: importWatchdogDocsDir,
+        project: testInfo.project.name,
+      });
       await watchdog.start();
       await use(watchdog);
       const hangs = await watchdog.finish();
@@ -103,8 +183,9 @@ export const test = base.extend<{ app: Page; fresh: Page; importWatchdog: Import
         );
       }
     },
-    // the dumps take up to ~25 s, on top of the 10 s an unfinished import still gets
-    { auto: true, timeout: 90_000 },
+    // the dumps take up to ~25 s (CDP, trace) plus up to 35 s (CPU sample, gdb), on top of the
+    // 10 s an unfinished import still gets
+    { auto: true, timeout: 120_000 },
   ],
   /** App with the fixture imported (October 2026). */
   app: async ({ page }, use) => {

@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Browser, BrowserContext, CDPSession, Page } from '@playwright/test';
 import { SourceMapConsumer, type RawSourceMap } from 'source-map-js';
+import { copyToDocs, nativeDump } from './native-dump';
 
 /**
  * Import watchdog (PR #34): every import in every e2e test is watched through the app's step log
@@ -220,7 +221,10 @@ export async function capture(page: Page, context: BrowserContext, dir: string, 
       await browser.startTracing(page, { categories: TRACE_CATEGORIES });
       await new Promise((r) => setTimeout(r, CHROMIUM_TRACE_MS));
       const buffer = await within(browser.stopTracing(), 15_000);
-      if (buffer !== 'timeout') writeFileSync(join(dir, 'chromium-trace.json'), buffer);
+      if (buffer !== 'timeout') {
+        writeFileSync(join(dir, 'chromium-trace.json'), buffer);
+        report.chromiumTraceSummary = traceSummary(buffer);
+      }
       report.chromiumTrace = buffer !== 'timeout' ? 'chromium-trace.json' : 'timeout';
     } catch (e) {
       report.chromiumTrace = `error: ${String(e)}`;
@@ -231,6 +235,45 @@ export async function capture(page: Page, context: BrowserContext, dir: string, 
   report.console = consoleLog.slice(-CONSOLE_LINES);
   report.importTrace = consoleLog.filter((l) => l.includes('[import-trace]'));
   return report;
+}
+
+/** Events in a Chromium trace, and how many of them come from a renderer process. */
+export function traceSummary(buffer: Buffer | string): { events: number; rendererEvents: number; rendererPids: number[] } | 'unreadable' {
+  try {
+    const parsed = JSON.parse(buffer.toString()) as { traceEvents?: { pid: number; ph: string; name: string; args?: { name?: string } }[] };
+    const events = parsed.traceEvents ?? [];
+    const renderers = new Set(events.filter((e) => e.ph === 'M' && e.name === 'process_name' && e.args?.name === 'Renderer').map((e) => e.pid));
+    return {
+      events: events.length,
+      rendererEvents: events.filter((e) => e.ph !== 'M' && renderers.has(e.pid)).length,
+      rendererPids: [...renderers],
+    };
+  } catch {
+    return 'unreadable';
+  }
+}
+
+/**
+ * The signature of the hang of 31.10.2026, checked by machine: the import committed, then
+ * `Debugger.pause` timed out and the renderer wrote no trace event at all. Only a hang with exactly
+ * this signature may be retried (playwright.config.ts, e2e/fixtures.ts); anything else stays red.
+ */
+export function environmentHangSignature(report: Record<string, unknown>): { committed: boolean; debuggerPauseTimeout: boolean; rendererTraceEvents: number | null; matches: boolean } {
+  const steps = (report.steps as string[] | undefined) ?? [];
+  const committed = steps.some((s) => s === 'committed' || s.startsWith('committed '));
+  const dbg = report.debugger as { pauseCommand?: string; paused?: unknown } | undefined;
+  const debuggerPauseTimeout = !!dbg && dbg.pauseCommand === 'timeout' && !dbg.paused;
+  const summary = report.chromiumTraceSummary as { rendererEvents: number } | 'unreadable' | undefined;
+  const rendererTraceEvents = summary && summary !== 'unreadable' ? summary.rendererEvents : null;
+  return { committed, debuggerPauseTimeout, rendererTraceEvents, matches: committed && debuggerPauseTimeout && rendererTraceEvents === 0 };
+}
+
+export interface WatchdogOptions {
+  /** build folder with the source maps (dist-e2e, dist-harness) */
+  mapsDir?: string;
+  /** each hang is copied to `<docsDir>/<date>-<project>/`; null: not copied */
+  docsDir?: string | null;
+  project?: string;
 }
 
 interface Watch {
@@ -268,7 +311,7 @@ export class ImportWatchdog {
     private readonly context: BrowserContext,
     private readonly browser: Browser,
     private readonly outDir: string,
-    private readonly mapsDir?: string,
+    private readonly options: WatchdogOptions = {},
   ) {
     const t = () => new Date().toISOString().slice(11, 23);
     page.on('console', (m) => this.onLine(`${t()} ${m.type()} ${m.text()}`, m.text()));
@@ -340,12 +383,18 @@ export class ImportWatchdog {
       if (hero === true && dialog === 0) return;
     }
     const dir = join(this.outDir, `hang-${Date.now()}`);
+    // the operating-system view first: process state before gdb or CDP touch the processes
+    const native = await nativeDump(dir).catch((e) => ({ error: String(e) }));
     const report = await capture(this.page, this.context, dir, this.consoleLog, {
-      chromiumTrace: this.browser,
+      chromiumTrace: this.browser.browserType().name() === 'chromium' ? this.browser : null,
       debugger: this.session,
       scriptUrls: this.scriptUrls,
-      mapsDir: this.mapsDir,
+      mapsDir: this.options.mapsDir,
     });
+    report.browser = `${this.browser.browserType().name()} ${this.browser.version()}`;
+    report.native = Array.isArray(native)
+      ? native.map(({ dir: d, ...r }) => ({ ...r, files: `native/${d.split('/native/')[1]}` }))
+      : native;
     Object.assign(report, {
       kind: w.kind,
       msSinceImportStart: Date.now() - w.since,
@@ -353,7 +402,13 @@ export class ImportWatchdog {
       steps: w.steps,
       playwrightTrace: 'trace.zip im Ordner des Tests (trace: retain-on-failure)',
     });
+    report.signature = environmentHangSignature(report);
     writeFileSync(join(dir, 'report.json'), JSON.stringify(report, null, 2));
+    if (this.options.docsDir) {
+      report.docsCopy = copyToDocs(dir, this.options.docsDir, this.options.project ?? 'unknown');
+      writeFileSync(join(dir, 'report.json'), JSON.stringify(report, null, 2));
+      writeFileSync(join(report.docsCopy as string, 'report.json'), JSON.stringify(report, null, 2));
+    }
     const hang = { dir, report };
     this.hangs.push(hang);
     for (const listener of this.hangListeners.splice(0)) listener(hang);

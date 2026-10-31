@@ -419,6 +419,17 @@ main {
   backdrop-filter: none;
 }
 
+/* nothing blurs while the splash is there (and fades out): no opacity transition over a surface with
+   a backdrop-filter. index.html starts with [data-splash], src/lib/entrance.ts removes it together
+   with the splash (import hang of 31.10.2026: the renderer froze while the splash faded out over the
+   blurred setup dialog). */
+:root[data-splash] *,
+:root[data-splash] *::before,
+:root[data-splash] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 /* while a sheet is open, the app behind the scrim is static: no blur to recompute */
 body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear, .glass-group-blur) {
   -webkit-backdrop-filter: none;

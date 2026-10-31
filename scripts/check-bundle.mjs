@@ -32,7 +32,21 @@ for (const file of files('dist').filter((f) => /\.(js|css|html|json|webmanifest|
 }
 
 // the import step log and the e2e watchdog exist only in the e2e/harness builds (ERBSE_IMPORT_TRACE=1)
-const testOnly = ['[import-trace]', '__importTrace', '__erbseDb', '__idb', 'import-hang', 'ImportWatchdog', 'instrumentIndexedDB'];
+const testOnly = [
+  '[import-trace]',
+  '__importTrace',
+  '__erbseDb',
+  '__idb',
+  'import-hang',
+  'ImportWatchdog',
+  'instrumentIndexedDB',
+  // native dumps of the watchdog (e2e/native-dump.ts)
+  'thread apply all bt',
+  'nativeDump',
+  'browserProcesses',
+  'SIGSTOP',
+  '/wchan',
+];
 for (const file of files('dist').filter((f) => /\.(js|html)$/.test(f))) {
   const text = readFileSync(file, 'utf8');
   for (const marker of testOnly) if (text.includes(marker)) leaks.push(`${file}: test-only code "${marker}"`);
