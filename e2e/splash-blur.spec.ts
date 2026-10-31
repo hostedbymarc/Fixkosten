@@ -15,7 +15,7 @@ const MAIN = resolve('.legacy/6e618fd/dist');
 /** Page side, before any app code: every frame while #splash exists, the visible elements with a backdrop-filter. */
 function watchSplash() {
   const w = window as unknown as Record<string, unknown>;
-  const log = { frames: 0, violations: [] as string[], splashRemovedAt: -1, dialogAt: -1 };
+  const log = { frames: 0, violations: [] as string[], splashRemovedAt: -1, dialogAt: -1, splashRemovedSeq: 0, dialogSeq: 0, dialogWithSplash: false };
   w.__splashWatch = log;
   const blurOf = (s: CSSStyleDeclaration) => {
     const v = s.backdropFilter || (s as unknown as Record<string, string>).webkitBackdropFilter || 'none';
@@ -26,9 +26,16 @@ function watchSplash() {
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
   };
+  // runs until the splash has been there and is gone (the first frames may come before it is parsed)
+  let seen = false;
   const tick = () => {
     const splash = document.getElementById('splash');
+    if (!splash && !seen && log.splashRemovedAt < 0) {
+      requestAnimationFrame(tick);
+      return;
+    }
     if (splash) {
+      seen = true;
       log.frames++;
       for (const el of document.body.querySelectorAll('*')) {
         if (el === splash || splash.contains(el)) continue;
@@ -44,9 +51,26 @@ function watchSplash() {
     }
   };
   requestAnimationFrame(tick);
-  new MutationObserver(() => {
-    if (log.splashRemovedAt < 0 && document.readyState !== 'loading' && !document.getElementById('splash')) log.splashRemovedAt = performance.now();
-    if (log.dialogAt < 0 && document.querySelector('[data-testid="setup-dialog"]')) log.dialogAt = performance.now();
+  // the order as the DOM sees it (a running number, not the time: page.clock fakes performance.now
+  // in these tests); the records of one callback come in DOM order
+  let seq = 0;
+  new MutationObserver((records) => {
+    const now = performance.now();
+    for (const r of records) {
+      for (const n of r.removedNodes) {
+        if (log.splashRemovedAt < 0 && (n as Element).id === 'splash') {
+          log.splashRemovedAt = now;
+          log.splashRemovedSeq = ++seq;
+        }
+      }
+      for (const n of r.addedNodes) {
+        if (log.dialogAt < 0 && n instanceof Element && (n.matches('[data-testid="setup-dialog"]') || n.querySelector('[data-testid="setup-dialog"]'))) {
+          log.dialogAt = now;
+          log.dialogSeq = ++seq;
+          if (document.getElementById('splash')) log.dialogWithSplash = true;
+        }
+      }
+    }
   }).observe(document, { childList: true, subtree: true });
 }
 
@@ -55,6 +79,9 @@ interface SplashWatch {
   violations: string[];
   splashRemovedAt: number;
   dialogAt: number;
+  splashRemovedSeq: number;
+  dialogSeq: number;
+  dialogWithSplash: boolean;
 }
 
 const readWatch = (page: Page) => page.evaluate(() => (window as unknown as { __splashWatch: SplashWatch }).__splashWatch);
@@ -70,7 +97,8 @@ test.describe('Splash und Blur entzerrt', () => {
     expect(w.frames, 'frames sampled under the splash').toBeGreaterThan(5);
     expect(w.violations, 'visible elements with backdrop-filter while the splash is there').toEqual([]);
     expect(w.splashRemovedAt).toBeGreaterThan(0);
-    expect(w.dialogAt, 'setup dialog only after the splash is gone').toBeGreaterThanOrEqual(w.splashRemovedAt);
+    expect(w.dialogWithSplash, 'setup dialog in the DOM while the splash is still there').toBe(false);
+    expect(w.dialogSeq, 'setup dialog only after the splash is gone').toBeGreaterThan(w.splashRemovedSeq);
     // afterwards the dialog blurs as before
     expect(await page.getByTestId('setup-dialog').evaluate((el) => getComputedStyle(el).backdropFilter || getComputedStyle(el).getPropertyValue('-webkit-backdrop-filter'))).toMatch(/blur\(24px\)/);
     await expect(page.locator('html')).not.toHaveAttribute('data-splash');
@@ -100,7 +128,9 @@ test.describe('Splash und Blur entzerrt', () => {
     await expect(page.getByTestId('setup-dialog')).toBeVisible();
     const w = await readWatch(page);
     expect(w.violations).toEqual([]);
-    expect(w.dialogAt).toBeGreaterThanOrEqual(w.splashRemovedAt);
+    expect(w.dialogWithSplash).toBe(false);
+    expect(w.dialogSeq).toBeGreaterThan(w.splashRemovedSeq);
+    expect(w.splashRemovedSeq).toBeGreaterThan(0);
   });
 });
 
