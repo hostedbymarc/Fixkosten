@@ -1,0 +1,6 @@
+iphone-se exit 0
+iphone-15 exit 0
+iphone-pro-max exit 0
+ipad-portrait exit 0
+ipad-landscape exit 0
+desktop exit 0
