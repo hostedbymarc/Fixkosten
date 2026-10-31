@@ -77,6 +77,8 @@ async function scrollTo(page: Page, y: number) {
 }
 
 test.describe('Liquid-Glass-Material', () => {
+  // the material values below are the light ones (the dark ones: „dunkel“); the WebKit profiles also run dark
+  test.use({ colorScheme: 'light' });
   test('Karten, Kacheln, Sheets, Tab-Leiste: Fläche, Lichtkante, Glanzpunkt, Schatten, Radien', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     const hero = page.getByTestId('hero');
@@ -214,6 +216,8 @@ const grainLayer = (page: Page) =>
   });
 
 test.describe('Körnung', () => {
+  // the material values below are the light ones (the dark ones: „dunkel“); the WebKit profiles also run dark
+  test.use({ colorScheme: 'light' });
   test('256 px Kachel (für 2× erzeugt), fractalNoise .85 / 3 Oktaven / fester Seed, monochrom, soft-light .045, nur Hintergrund', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     const g = await grainLayer(page);
@@ -456,7 +460,8 @@ test.describe('Tabwechsel-Animation', () => {
       // direction: the first card's Y moves up (start > end), X stays
       const ys = r.card.map((c) => c.y);
       expect(Math.max(...ys) - ys[ys.length - 1]!, `${route}: rises`).toBeGreaterThan(4);
-      expect(ys[0]! >= ys[ys.length - 1]!).toBe(true);
+      // (WebKit reports the resting card with subpixel noise: 116.0 → 116.1)
+      expect(ys[0]! >= ys[ys.length - 1]! - 0.5).toBe(true);
       expect(new Set(r.card.map((c) => Math.round(c.x))).size, `${route}: X unchanged`).toBe(1);
       // tab bar / sidebar never move
       expect(r.nav, `${route}: navigation still`).toHaveLength(1);
