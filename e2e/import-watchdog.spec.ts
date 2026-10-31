@@ -16,7 +16,7 @@ import { browserProcesses } from './native-dump';
 const DOCS = resolve('test-results/import-watchdog-docs');
 
 // keep the Playwright trace of the expected failures too (retain-on-failure would drop them)
-test.use({ trace: 'on', importWatchdogDocsDir: DOCS });
+test.use({ trace: 'on', importWatchdogDocsDir: DOCS, envHangRetry: false });
 test.describe.configure({ mode: 'serial' });
 // one device per engine is enough: desktop (Chromium); WebKit only the SIGSTOP case (its processes differ)
 const WEBKIT_PROJECT = 'webkit-iphone-15-light';

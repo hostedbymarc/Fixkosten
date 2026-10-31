@@ -1,3 +1,4 @@
+import { closeSync, openSync, readFileSync, writeSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { test as base, expect, type Browser, type BrowserType, type Locator, type Page } from '@playwright/test';
 import { ImportWatchdog, instrumentIndexedDB, WATCHDOG_MS } from './import-watchdog';
@@ -129,8 +130,48 @@ export async function importFixture(page: Page) {
   await appSettled(page);
 }
 
+interface RetryClaim {
+  testId: string;
+  title: string;
+  project: string;
+  signature: unknown;
+  docsCopy: string | null;
+  at: string;
+}
+
+/** One file per run (Playwright empties the output folder at the start of a run). */
+const claimFile = (outputDir: string) => join(outputDir, 'env-hang-retry.json');
+
+/** Claims the run's one retry (atomic across workers: the file is created exclusively). */
+function claimRetry(outputDir: string, claim: RetryClaim): boolean {
+  try {
+    const fd = openSync(claimFile(outputDir), 'wx');
+    writeSync(fd, JSON.stringify(claim, null, 2));
+    closeSync(fd);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readClaim(outputDir: string): RetryClaim | null {
+  try {
+    return JSON.parse(readFileSync(claimFile(outputDir), 'utf8')) as RetryClaim;
+  } catch {
+    return null;
+  }
+}
+
 export const test = base.extend<
-  { app: Page; fresh: Page; importWatchdog: ImportWatchdog; importWatchdogEnabled: boolean; importWatchdogDocsDir: string | null },
+  {
+    app: Page;
+    fresh: Page;
+    importWatchdog: ImportWatchdog;
+    importWatchdogEnabled: boolean;
+    importWatchdogDocsDir: string | null;
+    envHangRetry: boolean;
+    envHangRetryGate: void;
+  },
   { freshBrowserPerFile: boolean }
 >({
   /** playwright.config.ts: a fresh browser process per spec file (FRESH_BROWSER=0 switches it off for measuring) */
@@ -154,12 +195,35 @@ export const test = base.extend<
   importWatchdogEnabled: [true, { option: true }],
   /** where a real hang is copied to (the watchdog test points it into its own output folder) */
   importWatchdogDocsDir: [resolve('docs/diagnose/import-hang'), { option: true }],
+  /** The watchdog's own tests provoke hangs with the signature on purpose: they never claim the retry. */
+  envHangRetry: [true, { option: true }],
+  /**
+   * The one retry of a run (playwright.config.ts: retries 1) is only for the hang whose signature
+   * environmentHangSignature() confirmed by machine (Chromium stuck inside itself, not our code):
+   * any other retry fails at once, so every other failure stays red. The retry runs in a new
+   * worker, i.e. a fresh browser process.
+   */
+  envHangRetryGate: [
+    async ({}, use, testInfo) => {
+      if (testInfo.retry > 0) {
+        const claim = readClaim(testInfo.project.outputDir);
+        if (claim?.testId !== testInfo.testId) {
+          throw new Error(
+            `kein Retry: nur ein Import-Hänger mit der Umgebungs-Signatur (committed, Debugger.pause-Timeout, 0 Renderer-Trace-Events) wird einmal je Lauf wiederholt${claim ? ` (das Kontingent dieses Laufs hat ${claim.title} [${claim.project}])` : ''}`,
+          );
+        }
+        console.log(`[env-hang-retry] Wiederholung im frischen Browser: ${claim.title} [${claim.project}]`);
+      }
+      await use();
+    },
+    { auto: true },
+  ],
   /**
    * Every import in every test (e2e/import-watchdog.ts): hero not there WATCHDOG_MS after the start
    * → dumps under `import-hang/` in the test's output folder, then the test fails.
    */
   importWatchdog: [
-    async ({ page, context, browser, importWatchdogEnabled, importWatchdogDocsDir }, use, testInfo) => {
+    async ({ page, context, browser, importWatchdogEnabled, importWatchdogDocsDir, envHangRetry }, use, testInfo) => {
       if (!importWatchdogEnabled) {
         await use(null as unknown as ImportWatchdog);
         return;
@@ -177,9 +241,18 @@ export const test = base.extend<
         await testInfo.attach('import-hang', { path: join(hang.dir, 'report.json'), contentType: 'application/json' });
       }
       if (hangs.length) {
-        const r = (hangs[0]?.report ?? {}) as { lastStep?: string; mainThread?: { answered: boolean } };
+        const r = (hangs[0]?.report ?? {}) as { lastStep?: string; mainThread?: { answered: boolean }; signature?: { matches: boolean }; docsCopy?: string };
+        let retry = '';
+        if (r.signature?.matches) {
+          if (!envHangRetry) retry = ' [Umgebungs-Signatur; Watchdog-Test: kein Retry]';
+          else if (testInfo.retry > 0) retry = ' [Umgebungs-Signatur, schon die Wiederholung: rot]';
+          else if (claimRetry(testInfo.project.outputDir, { testId: testInfo.testId, title: testInfo.titlePath.join(' › '), project: testInfo.project.name, signature: r.signature, docsCopy: r.docsCopy ?? null, at: new Date().toISOString() })) {
+            retry = ' [Umgebungs-Signatur maschinell bestätigt: einmaliger Retry im frischen Browser freigegeben]';
+            console.log(`[env-hang-retry] Signatur bestätigt, Retry freigegeben: ${testInfo.titlePath.join(' › ')} [${testInfo.project.name}] ${JSON.stringify(r.signature)}`);
+          } else retry = ' [Umgebungs-Signatur, aber das Retry-Kontingent dieses Laufs ist verbraucht: rot]';
+        }
         throw new Error(
-          `Import-Hänger: Hero ${WATCHDOG_MS / 1000} s nach dem Import nicht sichtbar (letzter Schritt: ${r.lastStep}, Haupt-Thread antwortet: ${r.mainThread?.answered ?? 'unbekannt'}). Dumps: ${hangs.map((h) => h.dir).join(', ')}`,
+          `Import-Hänger: Hero ${WATCHDOG_MS / 1000} s nach dem Import nicht sichtbar (letzter Schritt: ${r.lastStep}, Haupt-Thread antwortet: ${r.mainThread?.answered ?? 'unbekannt'}).${retry} Dumps: ${hangs.map((h) => h.dir).join(', ')}`,
         );
       }
     },

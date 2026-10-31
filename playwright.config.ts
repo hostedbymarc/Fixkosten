@@ -40,7 +40,9 @@ export default defineConfig({
   globalSetup: './e2e/global-setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  // one retry, but only for the import hang with the machine-checked environment signature, at most
+  // one per run (e2e/fixtures.ts, envHangRetryGate); every other retry fails at once
+  retries: 1,
   reporter: [['list']],
   use: {
     baseURL: `http://localhost:${PORT}`,

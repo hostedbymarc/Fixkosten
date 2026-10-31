@@ -1,0 +1,256 @@
+[New LWP 17269]
+[New LWP 17268]
+[New LWP 17267]
+[New LWP 17266]
+[New LWP 17265]
+[New LWP 17264]
+[New LWP 17263]
+[New LWP 17262]
+[New LWP 17261]
+[New LWP 17260]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x00007f53bea98e51 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7ffe1770fa68) at ./nptl/futex-internal.c:57
+
+Thread 11 (Thread 0x7f53bd1ff6c0 (LWP 17260) "PerfettoTrace"):
+#0  0x00007f53beb2a2d2 in epoll_wait (epfd=3, events=0x7f53bd1fe390, maxevents=16, timeout=10637554) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x000056458fadb1f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x0000564591f3724a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000564591f36931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x0000564591f36758 in base::Thread::Run(base::RunLoop*) ()
+#5  0x0000564591984913 in base::Thread::ThreadMain() ()
+#6  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#7  0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#8  0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 10 (Thread 0x7f53bc9fe6c0 (LWP 17261) "ThreadPoolServi"):
+#0  0x00007f53beb2a2d2 in epoll_wait (epfd=14, events=0x7f53bc9fd390, maxevents=16, timeout=10637555) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x000056458fadb1f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x0000564591f3724a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000564591f36931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x0000564591f366f8 in base::internal::ServiceThread::Run(base::RunLoop*) ()
+#5  0x0000564591984913 in base::Thread::ThreadMain() ()
+#6  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#7  0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#8  0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 9 (Thread 0x7f53bc1fd6c0 (LWP 17262) "ThreadPoolForeg"):
+#0  syscall () at ../sysdeps/unix/sysv/linux/x86_64/syscall.S:38
+#1  0x00005645904f7b4d in AbslInternalPerThreadSemWait ()
+#2  0x00005645904f7d61 in absl::CondVar::WaitCommon(absl::Mutex*, absl::synchronization_internal::KernelTimeout) ()
+#3  0x00005645938575fe in void heap::base::Stack::SetMarkerForBackgroundThreadAndCallbackImpl<v8::internal::LocalHeap::ExecuteWhileParked<v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*)::$_1>(v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*)::$_1)::{lambda()#1}>(heap::base::Stack*, void*, void const*) [clone .697e8f392f813734412644633a8feace] ()
+#4  0x0000564590055277 in PushAllRegistersAndIterateStack ()
+#5  0x000056459385708f in v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*) ()
+#6  0x000056459388e1d4 in std::__Cr::__invoke_result<v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&>::type v8::internal::HeapAllocator::CollectGarbageAndRetryAllocation<v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&>(v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&, v8::internal::AllocationType) ()
+#7  0x000056458fc9bf63 in v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint) ()
+#8  0x000056458fc9929d in v8::internal::Factory::CodeBuilder::TryBuild() ()
+#9  0x000056458fc98e82 in v8::internal::baseline::BaselineCompiler::Build() ()
+#10 0x0000564590904418 in v8::internal::baseline::ConcurrentBaselineCompiler::JobDispatcher::Run(v8::JobDelegate*) ()
+#11 0x0000564596652f49 in base::internal::Invoker<base::internal::FunctorTraits<gin::V8Platform::CreateJobImpl(v8::TaskPriority, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> >, v8::SourceLocation const&)::$_0 const&, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> > const&>, base::internal::BindState<false, false, false, gin::V8Platform::CreateJobImpl(v8::TaskPriority, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> >, v8::SourceLocation const&)::$_0, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> > >, void (base::JobDelegate*)>::Run(base::internal::BindStateBase*, base::JobDelegate*) [clone .1a8d48ae148cd7a200c7717ee7eb6e29] [clone .cfi] ()
+#12 0x000056459541c517 in base::internal::Invoker<base::internal::FunctorTraits<base::internal::JobTaskSource::JobTaskSource(base::Location const&, base::TaskTraits const&, base::RepeatingCallback<void (base::JobDelegate*)>, base::RepeatingCallback<unsigned long (unsigned long)>, base::internal::PooledTaskRunnerDelegate*)::$_0 const&, base::internal::JobTaskSource*>, base::internal::BindState<false, false, false, base::internal::JobTaskSource::JobTaskSource(base::Location const&, base::TaskTraits const&, base::RepeatingCallback<void (base::JobDelegate*)>, base::RepeatingCallback<unsigned long (unsigned long)>, base::internal::PooledTaskRunnerDelegate*)::$_0, base::internal::UnretainedWrapper<base::internal::JobTaskSource, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, void ()>::Run(base::internal::BindStateBase*) [clone .4b9ea92b6ee783741d0efde1210c2b21] [clone .cfi] ()
+#13 0x000056458fad4b98 in base::internal::TaskTracker::RunSkipOnShutdown(base::internal::Task&, base::TaskTraits const&, base::internal::TaskSource*, base::internal::SequenceToken const&) ()
+#14 0x000056458facdb8b in base::internal::TaskTracker::RunAndPopNextTask(base::internal::RegisteredTaskSource) ()
+#15 0x000056458facf2f3 in base::internal::WorkerThread::RunWorker() ()
+#16 0x000056458faceddd in base::internal::WorkerThread::RunPooledWorker() ()
+#17 0x000056459204882a in base::internal::WorkerThread::ThreadMain() ()
+#18 0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#19 0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#20 0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 8 (Thread 0x7f53bb9fc6c0 (LWP 17263) "Chrome_ChildIOT"):
+#0  0x00007f53beb2a2d2 in epoll_wait (epfd=16, events=0x7f53bb9fb370, maxevents=16, timeout=10637555) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x000056458fadb1f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x0000564591f3724a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000564591f36931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x0000564591f33cec in content::(anonymous namespace)::ChildIOThread::Run(base::RunLoop*) [clone .cca073f9827671ca4624c245bbd47757] ()
+#5  0x0000564591984913 in base::Thread::ThreadMain() ()
+#6  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#7  0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#8  0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 7 (Thread 0x7f53bb1fb6c0 (LWP 17264) "ThreadPoolForeg"):
+#0  syscall () at ../sysdeps/unix/sysv/linux/x86_64/syscall.S:38
+#1  0x00005645904f7b4d in AbslInternalPerThreadSemWait ()
+#2  0x00005645904f7d61 in absl::CondVar::WaitCommon(absl::Mutex*, absl::synchronization_internal::KernelTimeout) ()
+#3  0x00005645938575fe in void heap::base::Stack::SetMarkerForBackgroundThreadAndCallbackImpl<v8::internal::LocalHeap::ExecuteWhileParked<v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*)::$_1>(v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*)::$_1)::{lambda()#1}>(heap::base::Stack*, void*, void const*) [clone .697e8f392f813734412644633a8feace] ()
+#4  0x0000564590055277 in PushAllRegistersAndIterateStack ()
+#5  0x000056459385708f in v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*) ()
+#6  0x0000564591babfd4 in std::__Cr::__invoke_result<v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&>::type v8::internal::HeapAllocator::CollectGarbageAndRetryAllocation<v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&>(v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&, v8::internal::AllocationType) ()
+#7  0x000056458fc07f5b in v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint) ()
+#8  0x000056458fc08f2d in v8::internal::LocalFactory::AllocateRaw(int, v8::internal::AllocationType, v8::internal::AllocationAlignment, v8::internal::AllocationHint) ()
+#9  0x000056458fc9b229 in v8::internal::FactoryBase<v8::internal::LocalFactory>::NewTrustedByteArray(int, v8::internal::AllocationType) ()
+#10 0x000056458ffa0535 in v8::internal::maglev::MaglevCodeGenerator::Assemble() ()
+#11 0x000056459090f6a7 in v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ()
+#12 0x0000564590905015 in v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ()
+#13 0x0000564596652f49 in base::internal::Invoker<base::internal::FunctorTraits<gin::V8Platform::CreateJobImpl(v8::TaskPriority, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> >, v8::SourceLocation const&)::$_0 const&, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> > const&>, base::internal::BindState<false, false, false, gin::V8Platform::CreateJobImpl(v8::TaskPriority, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> >, v8::SourceLocation const&)::$_0, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> > >, void (base::JobDelegate*)>::Run(base::internal::BindStateBase*, base::JobDelegate*) [clone .1a8d48ae148cd7a200c7717ee7eb6e29] [clone .cfi] ()
+#14 0x000056459541c517 in base::internal::Invoker<base::internal::FunctorTraits<base::internal::JobTaskSource::JobTaskSource(base::Location const&, base::TaskTraits const&, base::RepeatingCallback<void (base::JobDelegate*)>, base::RepeatingCallback<unsigned long (unsigned long)>, base::internal::PooledTaskRunnerDelegate*)::$_0 const&, base::internal::JobTaskSource*>, base::internal::BindState<false, false, false, base::internal::JobTaskSource::JobTaskSource(base::Location const&, base::TaskTraits const&, base::RepeatingCallback<void (base::JobDelegate*)>, base::RepeatingCallback<unsigned long (unsigned long)>, base::internal::PooledTaskRunnerDelegate*)::$_0, base::internal::UnretainedWrapper<base::internal::JobTaskSource, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, void ()>::Run(base::internal::BindStateBase*) [clone .4b9ea92b6ee783741d0efde1210c2b21] [clone .cfi] ()
+#15 0x000056458fad4b98 in base::internal::TaskTracker::RunSkipOnShutdown(base::internal::Task&, base::TaskTraits const&, base::internal::TaskSource*, base::internal::SequenceToken const&) ()
+#16 0x000056458facdb8b in base::internal::TaskTracker::RunAndPopNextTask(base::internal::RegisteredTaskSource) ()
+#17 0x000056458facf2f3 in base::internal::WorkerThread::RunWorker() ()
+#18 0x000056458faceddd in base::internal::WorkerThread::RunPooledWorker() ()
+#19 0x000056459204882a in base::internal::WorkerThread::ThreadMain() ()
+#20 0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#21 0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#22 0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 6 (Thread 0x7f53329f76c0 (LWP 17265) "Compositor"):
+#0  0x00007f53beb2a2d2 in epoll_wait (epfd=23, events=0x7f53329f63a0, maxevents=16, timeout=10637569) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x000056458fadb1f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x0000564591f3724a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000564591f36931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x0000564591f362f6 in blink::scheduler::NonMainThreadImpl::SimpleThreadImpl::Run() ()
+#5  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#6  0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 5 (Thread 0x7f53321f66c0 (LWP 17266) "ThreadPoolSingl"):
+#0  0x00007f53bea98e51 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x7f53321f55b0, op=137, expected=0, futex_word=0x7f53321f5548) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x7f53321f55b0, clockid=32595, expected=0, futex_word=0x7f53321f5548) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7f53321f5548, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7f53321f55b0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007f53bea9bd6e in __pthread_cond_wait_common (abstime=0x7f53321f55b0, clockid=1, mutex=0x7f53321f54f8, cond=0x7f53321f5520) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_timedwait64 (cond=0x7f53321f5520, mutex=0x7f53321f54f8, abstime=0x7f53321f55b0) at ./nptl/pthread_cond_wait.c:652
+#5  0x000056458fae4b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#6  0x000056458facf19e in base::internal::WorkerThread::RunWorker() ()
+#7  0x00005645920488fd in base::internal::WorkerThread::RunSharedWorker() ()
+#8  0x0000564592048866 in base::internal::WorkerThread::ThreadMain() ()
+#9  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#10 0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#11 0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 4 (Thread 0x7f53315ff6c0 (LWP 17267) "ThreadPoolForeg"):
+#0  syscall () at ../sysdeps/unix/sysv/linux/x86_64/syscall.S:38
+#1  0x00005645904f7b4d in AbslInternalPerThreadSemWait ()
+#2  0x00005645904f7d61 in absl::CondVar::WaitCommon(absl::Mutex*, absl::synchronization_internal::KernelTimeout) ()
+#3  0x00005645938575fe in void heap::base::Stack::SetMarkerForBackgroundThreadAndCallbackImpl<v8::internal::LocalHeap::ExecuteWhileParked<v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*)::$_1>(v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*)::$_1)::{lambda()#1}>(heap::base::Stack*, void*, void const*) [clone .697e8f392f813734412644633a8feace] ()
+#4  0x0000564590055277 in PushAllRegistersAndIterateStack ()
+#5  0x000056459385708f in v8::internal::CollectionBarrier::AwaitCollectionBackground(v8::internal::LocalHeap*) ()
+#6  0x0000564591babfd4 in std::__Cr::__invoke_result<v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&>::type v8::internal::HeapAllocator::CollectGarbageAndRetryAllocation<v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&>(v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint)::$_0&, v8::internal::AllocationType) ()
+#7  0x000056458fc07f5b in v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment, v8::internal::AllocationHint) ()
+#8  0x000056458fc08f2d in v8::internal::LocalFactory::AllocateRaw(int, v8::internal::AllocationType, v8::internal::AllocationAlignment, v8::internal::AllocationHint) ()
+#9  0x000056458fc9b229 in v8::internal::FactoryBase<v8::internal::LocalFactory>::NewTrustedByteArray(int, v8::internal::AllocationType) ()
+#10 0x000056458ffa0535 in v8::internal::maglev::MaglevCodeGenerator::Assemble() ()
+#11 0x000056459090f6a7 in v8::internal::maglev::MaglevCompiler::Compile(v8::internal::LocalIsolate*, v8::internal::maglev::MaglevCompilationInfo*) ()
+#12 0x0000564590905015 in v8::internal::maglev::MaglevConcurrentDispatcher::JobTask::Run(v8::JobDelegate*) ()
+#13 0x0000564596652f49 in base::internal::Invoker<base::internal::FunctorTraits<gin::V8Platform::CreateJobImpl(v8::TaskPriority, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> >, v8::SourceLocation const&)::$_0 const&, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> > const&>, base::internal::BindState<false, false, false, gin::V8Platform::CreateJobImpl(v8::TaskPriority, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> >, v8::SourceLocation const&)::$_0, std::__Cr::unique_ptr<v8::JobTask, std::__Cr::default_delete<v8::JobTask> > >, void (base::JobDelegate*)>::Run(base::internal::BindStateBase*, base::JobDelegate*) [clone .1a8d48ae148cd7a200c7717ee7eb6e29] [clone .cfi] ()
+#14 0x000056459541c517 in base::internal::Invoker<base::internal::FunctorTraits<base::internal::JobTaskSource::JobTaskSource(base::Location const&, base::TaskTraits const&, base::RepeatingCallback<void (base::JobDelegate*)>, base::RepeatingCallback<unsigned long (unsigned long)>, base::internal::PooledTaskRunnerDelegate*)::$_0 const&, base::internal::JobTaskSource*>, base::internal::BindState<false, false, false, base::internal::JobTaskSource::JobTaskSource(base::Location const&, base::TaskTraits const&, base::RepeatingCallback<void (base::JobDelegate*)>, base::RepeatingCallback<unsigned long (unsigned long)>, base::internal::PooledTaskRunnerDelegate*)::$_0, base::internal::UnretainedWrapper<base::internal::JobTaskSource, base::unretained_traits::MayNotDangle, (partition_alloc::internal::RawPtrTraits)0> >, void ()>::Run(base::internal::BindStateBase*) [clone .4b9ea92b6ee783741d0efde1210c2b21] [clone .cfi] ()
+#15 0x000056458fad4b98 in base::internal::TaskTracker::RunSkipOnShutdown(base::internal::Task&, base::TaskTraits const&, base::internal::TaskSource*, base::internal::SequenceToken const&) ()
+#16 0x000056458facdb8b in base::internal::TaskTracker::RunAndPopNextTask(base::internal::RegisteredTaskSource) ()
+#17 0x000056458facf2f3 in base::internal::WorkerThread::RunWorker() ()
+#18 0x000056458faceddd in base::internal::WorkerThread::RunPooledWorker() ()
+#19 0x000056459204882a in base::internal::WorkerThread::ThreadMain() ()
+#20 0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#21 0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#22 0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 3 (Thread 0x7f53309ff6c0 (LWP 17268) "ThreadPoolForeg"):
+#0  0x00007f53bea98e51 in __futex_abstimed_wait_common64 (private=22085, cancel=true, abstime=0x7f53309fe5b0, op=137, expected=0, futex_word=0x7f53309fe548) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=22085, abstime=0x7f53309fe5b0, clockid=12476, expected=0, futex_word=0x7f53309fe548) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7f53309fe548, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7f53309fe5b0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007f53bea9bd6e in __pthread_cond_wait_common (abstime=0x7f53309fe5b0, clockid=1, mutex=0x7f53309fe4f8, cond=0x7f53309fe520) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_timedwait64 (cond=0x7f53309fe520, mutex=0x7f53309fe4f8, abstime=0x7f53309fe5b0) at ./nptl/pthread_cond_wait.c:652
+#5  0x000056458fae4b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#6  0x000056458facf19e in base::internal::WorkerThread::RunWorker() ()
+#7  0x000056458faceddd in base::internal::WorkerThread::RunPooledWorker() ()
+#8  0x000056459204882a in base::internal::WorkerThread::ThreadMain() ()
+#9  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#10 0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#11 0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 2 (Thread 0x7f532fcbe6c0 (LWP 17269) "ThreadPoolForeg"):
+#0  0x00007f53bea98e51 in __futex_abstimed_wait_common64 (private=22085, cancel=true, abstime=0x7f532fcbd5b0, op=137, expected=0, futex_word=0x7f532fcbd548) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=22085, abstime=0x7f532fcbd5b0, clockid=32595, expected=0, futex_word=0x7f532fcbd548) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7f532fcbd548, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7f532fcbd5b0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007f53bea9bd6e in __pthread_cond_wait_common (abstime=0x7f532fcbd5b0, clockid=1, mutex=0x7f532fcbd4f8, cond=0x7f532fcbd520) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_timedwait64 (cond=0x7f532fcbd520, mutex=0x7f532fcbd4f8, abstime=0x7f532fcbd5b0) at ./nptl/pthread_cond_wait.c:652
+#5  0x000056458fae4b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#6  0x000056458facf19e in base::internal::WorkerThread::RunWorker() ()
+#7  0x000056458faceddd in base::internal::WorkerThread::RunPooledWorker() ()
+#8  0x000056459204882a in base::internal::WorkerThread::ThreadMain() ()
+#9  0x00005645919833f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#10 0x00007f53bea9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#11 0x00007f53beb29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 1 (Thread 0x7f53be5d2280 (LWP 17259) "headless_shell"):
+#0  0x00007f53bea98e51 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7ffe1770fa68) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7ffe1770fa68) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7ffe1770fa68, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007f53bea9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7ffe1770fa18, cond=0x7ffe1770fa40) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x7ffe1770fa40, mutex=0x7ffe1770fa18) at ./nptl/pthread_cond_wait.c:627
+#5  0x000056458fadfd40 in base::ConditionVariable::Wait() ()
+#6  0x000056458fae4c45 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#7  0x000056458fae44d7 in base::WaitableEvent::Wait() ()
+#8  0x00005645926b31b1 in font_service::internal::FontServiceThread::FontRenderStyleForStrike(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> >, unsigned int, bool, bool, float, mojo::StructPtr<font_service::mojom::FontRenderStyle>*) ()
+#9  0x00005645926b2dc6 in content::WebSandboxSupportLinux::GetWebFontRenderStyleForStrike(char const*, int, bool, bool, float, blink::WebFontRenderStyle*) ()
+#10 0x00005645926b2b6e in blink::FontPlatformData::FontPlatformData(sk_sp<SkTypeface>, std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > const&, float, bool, bool, blink::TextRenderingMode, blink::Vector<blink::FontFeatureValue, 0u, blink::PartitionAllocator>, blink::FontOrientation) ()
+#11 0x0000564590986a14 in blink::FontCache::CreateFontPlatformData(blink::FontDescription const&, blink::FontFaceCreationParams const&, float, blink::AlternateFontName) ()
+#12 0x0000564591482201 in blink::FontPlatformDataCache::GetOrCreateFontPlatformData(blink::FontCache*, blink::FontDescription const&, blink::FontFaceCreationParams const&, blink::AlternateFontName) ()
+#13 0x0000564591481f61 in blink::FontCache::GetFontPlatformData(blink::FontDescription const&, blink::FontFaceCreationParams const&, blink::AlternateFontName) ()
+#14 0x000056459147aa0a in blink::FontCache::GetLastResortFallbackFont(blink::FontDescription const&) ()
+#15 0x00005645926b1449 in blink::RemoteFontFaceSource::CreateFontData(blink::FontDescription const&, blink::FontSelectionCapabilities const&) ()
+#16 0x00005645924e779e in blink::CSSFontFaceSource::GetFontData(blink::FontDescription const&, blink::FontSelectionCapabilities const&) ()
+#17 0x00005645924e99dd in blink::CSSFontFace::GetFontData(blink::FontDescription const&) ()
+#18 0x00005645924e91ea in void absl::functional_internal::InvokeObject<blink::CSSSegmentedFontFace::GetFontData(blink::FontDescription const&)::$_0, void, cppgc::internal::BasicMember<blink::FontFace, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> const&>(absl::functional_internal::VoidPtr, absl::functional_internal::ForwardT<cppgc::internal::BasicMember<blink::FontFace, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer> const&>::type) [clone .a11c8383560c9d23dd4897c9f3bf4b7e] [clone .cfi] ()
+#19 0x00005645924e8056 in blink::CSSSegmentedFontFace::GetFontData(blink::FontDescription const&) ()
+#20 0x000056458fecf0d7 in blink::CSSFontSelector::GetFontData(blink::FontDescription const&, blink::FontFamily const&) ()
+#21 0x0000564591481b0d in blink::FontFallbackList::GetFontData(blink::FontDescription const&) ()
+#22 0x0000564591481913 in blink::FontFallbackList::FontDataAt(blink::FontDescription const&, unsigned int) ()
+#23 0x00005645914809cf in blink::FontFallbackList::DeterminePrimarySimpleFontData(blink::FontDescription const&, int) ()
+#24 0x0000564591061f83 in blink::InlineNode::PrepareLayout(blink::InlineNodeData*) const ()
+#25 0x00005645904a8bd6 in blink::BlockNode::FirstChild() const ()
+#26 0x00005645904a7413 in blink::BlockLayoutAlgorithm::ComputeMinMaxSizes(blink::MinMaxSizesFloatInput const&) ()
+#27 0x00005645904a72f3 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::ComputeMinMaxSizesWithAlgorithm(blink::LayoutAlgorithmParams const&, blink::MinMaxSizesFloatInput const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::ComputeMinMaxSizesWithAlgorithm(blink::LayoutAlgorithmParams const&, blink::MinMaxSizesFloatInput const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#28 0x0000564590b972a9 in blink::BlockNode::ComputeMinMaxSizes(blink::WritingMode, blink::SizeType, blink::ConstraintSpace const&, blink::MinMaxSizesFloatInput) const ()
+#29 0x0000564590b902f9 in blink::ComputeMinAndMaxContentContributionInternal(blink::WritingMode, blink::BlockNode const&, blink::ConstraintSpace const&, base::FunctionRef<blink::MinMaxSizesResult (blink::SizeType)>) ()
+#30 0x0000564590b8ff70 in blink::ComputeMinAndMaxContentContribution(blink::ComputedStyle const&, blink::BlockNode const&, blink::ConstraintSpace const&, blink::MinMaxSizesFloatInput) ()
+#31 0x0000564590347e60 in blink::LineBreaker::ComputeMinMaxContentSizeForBlockChild(blink::InlineItem const&, blink::InlineItemResult*, blink::LineBreaker const*) ()
+#32 0x000056459034a247 in blink::LineBreaker::HandleAtomicInline(blink::InlineItem const&, blink::LineInfo*) ()
+#33 0x000056459034f931 in blink::LineBreaker::NextLine(blink::LineInfo*) ()
+#34 0x00005645904de293 in blink::InlineNode::ComputeMinMaxSizes(blink::WritingMode, blink::ConstraintSpace const&, blink::MinMaxSizesFloatInput const&) const ()
+#35 0x00005645904a7835 in blink::BlockLayoutAlgorithm::ComputeMinMaxSizes(blink::MinMaxSizesFloatInput const&) ()
+#36 0x00005645904a72f3 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::ComputeMinMaxSizesWithAlgorithm(blink::LayoutAlgorithmParams const&, blink::MinMaxSizesFloatInput const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::ComputeMinMaxSizesWithAlgorithm(blink::LayoutAlgorithmParams const&, blink::MinMaxSizesFloatInput const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#37 0x0000564590b972a9 in blink::BlockNode::ComputeMinMaxSizes(blink::WritingMode, blink::SizeType, blink::ConstraintSpace const&, blink::MinMaxSizesFloatInput) const ()
+#38 0x0000564590b96edd in blink::MinMaxSizesResult absl::functional_internal::InvokeObject<blink::FlexLayoutAlgorithm::ConstructAndAppendFlexItems(blink::FlexLayoutAlgorithm::Phase, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::LayoutBox, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u>*)::$_1::operator()(blink::Length const&, blink::Length const*) const::{lambda(blink::SizeType)#1}, blink::MinMaxSizesResult, blink::SizeType>(absl::functional_internal::VoidPtr, absl::functional_internal::ForwardT<blink::SizeType>::type) [clone .e9a6285b7edcf91910dc4f3bbb5ff9d7] [clone .cfi] ()
+#39 0x0000564590bc7108 in blink::ResolveInlineLengthInternal(blink::ConstraintSpace const&, blink::ComputedStyle const&, blink::BoxStrut const&, base::FunctionRef<blink::MinMaxSizesResult (blink::SizeType)>, blink::Length const&, blink::Length const*, blink::LengthTypeInternal, blink::FitContentMode, blink::FixedPoint<6u, int>, blink::CalcSizeKeywordBehavior) ()
+#40 0x0000564590bc296d in blink::FlexLayoutAlgorithm::ConstructAndAppendFlexItems(blink::FlexLayoutAlgorithm::Phase, blink::BasicHeapVector<(blink::internal::HeapCollectionType)1, cppgc::internal::BasicMember<blink::LayoutBox, cppgc::internal::StrongMemberTag, cppgc::internal::DijkstraWriteBarrierPolicy, cppgc::internal::DisabledCheckingPolicy, cppgc::internal::CompressedPointer>, 0u>*) ()
+#41 0x0000564590486ce5 in blink::FlexLayoutAlgorithm::LayoutInternal() ()
+#42 0x00005645904852c1 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::FlexLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#43 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#44 0x0000564591d3c252 in blink::BlockLayoutAlgorithm::LayoutNewFormattingContext(blink::LayoutInputNode, blink::BlockBreakToken const*, blink::InflowChildData const&, blink::BfcOffset, bool, blink::BfcOffset*, blink::BoxStrut*) ()
+#45 0x00005645904b520b in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#46 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#47 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#48 0x00005645904b336a in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#49 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#50 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#51 0x00005645904b336a in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#52 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#53 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#54 0x00005645904b336a in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#55 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#56 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#57 0x00005645904b336a in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#58 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#59 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#60 0x00005645904b336a in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#61 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#62 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#63 0x0000564591d3c252 in blink::BlockLayoutAlgorithm::LayoutNewFormattingContext(blink::LayoutInputNode, blink::BlockBreakToken const*, blink::InflowChildData const&, blink::BfcOffset, bool, blink::BfcOffset*, blink::BoxStrut*) ()
+#64 0x00005645904b520b in blink::BlockLayoutAlgorithm::Layout(blink::InlineChildLayoutContext*) ()
+#65 0x00005645904a1ba9 in void blink::(anonymous namespace)::CreateAlgorithmAndRun<blink::BlockLayoutAlgorithm, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1}>(blink::LayoutAlgorithmParams const&, blink::(anonymous namespace)::LayoutWithAlgorithm(blink::LayoutAlgorithmParams const&)::{lambda<typename $T0>($T0*)#1} const&) ()
+#66 0x000056458fa37cba in blink::BlockNode::Layout(blink::ConstraintSpace const&, blink::BlockBreakToken const*, blink::EarlyBreak const*, blink::ColumnSpannerPath const*) const ()
+#67 0x0000564590f93c4f in blink::LayoutView::LayoutRoot() ()
+#68 0x0000564590f953a0 in blink::LocalFrameView::UpdateLayout() ()
+#69 0x0000564590f8db0e in blink::LocalFrameView::UpdateStyleAndLayout() ()
+#70 0x0000564590f8a9e1 in blink::Document::UpdateStyleAndLayout(blink::DocumentUpdateReason) ()
+#71 0x0000564590f8a682 in blink::Document::EnsurePaintLocationDataValidForNode(blink::Node const*, blink::DocumentUpdateReason) ()
+#72 0x0000564591e3d8ec in blink::HTMLElement::OffsetTopOrLeft(bool) ()
+#73 0x0000564591e3d8a1 in blink::(anonymous namespace)::v8_html_element::OffsetTopAttributeGetCallback(v8::FunctionCallbackInfo<v8::Value> const&) [clone .89b89716203c3f99af509d688607e3d7] [clone .cfi] ()
+#74 0x00005645932558b4 in Builtins_CallApiCallbackGeneric ()
+#75 0x00007ffe1771d5c8 in ??? ()
+#76 0x00007ffe1771d600 in ??? ()
+#77 0x0000000000000000 in ??? ()
+[Inferior 1 (process 17259) detached]
+
+--- stderr ---
+
+warning: 57	./nptl/futex-internal.c: No such file or directory
