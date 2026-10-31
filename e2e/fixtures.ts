@@ -115,7 +115,14 @@ export async function expandAll(page: Page) {
     if ((await collapsed.count()) > 0) await collapsed.first().click({ timeout: 2000 });
     await expect(collapsed).toHaveCount(0, { timeout: 500 });
   }).toPass({ intervals: [100, 250], timeout: 20000 });
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // the blur budget (src/lib/glassBudget.ts) follows the scroll in the frame after the scroll event,
+  // which WebKit dispatches later than Chromium (or not at all when the page already was at the top):
+  // a scroll event of our own makes the budget catch up now, then two frames
+  await page.evaluate(async () => {
+    window.scrollTo(0, 0);
+    window.dispatchEvent(new Event('scroll'));
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
   // leave no hover behind (it would show up in later screenshots)
   await page.mouse.move(0, 0);
 }

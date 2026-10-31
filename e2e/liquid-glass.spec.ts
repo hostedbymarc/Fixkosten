@@ -7,10 +7,51 @@ import { importLive, OKT_TODAY } from './live';
 const ROUTES = ['monat', 'positionen', 'analyse', 'einstellungen'] as const;
 const TAB = { monat: 'Monat', positionen: 'Positionen', analyse: 'Analyse', einstellungen: 'Einstellungen' } as const;
 
-async function reducedTransparency(page: Page): Promise<CDPSession> {
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
-  return cdp;
+/**
+ * „Transparenz reduzieren“. Chromium: emulated through CDP. WebKit knows the media feature, but
+ * Playwright cannot emulate it there: the app's own `@media (prefers-reduced-transparency: reduce)`
+ * rules are switched on unchanged (copied into `@media all` at the end of their style sheet), so
+ * WebKit renders exactly what a device with the setting gets.
+ */
+async function reducedTransparency(page: Page): Promise<CDPSession | null> {
+  if (page.context().browser()?.browserType().name() === 'chromium') {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
+    return cdp;
+  }
+  const copied = await page.evaluate(() => {
+    let n = 0;
+    for (const sheet of [...document.styleSheets]) {
+      const rules = [...sheet.cssRules];
+      for (const rule of rules) {
+        if (rule instanceof CSSMediaRule && /^\(prefers-reduced-transparency: ?reduce\)$/.test(rule.conditionText.trim())) {
+          sheet.insertRule(`@media all { ${[...rule.cssRules].map((r) => r.cssText).join('\n')} }`, sheet.cssRules.length);
+          n++;
+        }
+      }
+    }
+    return n;
+  });
+  expect(copied, 'reduced-transparency blocks in the app CSS').toBeGreaterThan(0);
+  return null;
+}
+
+/**
+ * Scrolls by `dy` like a wheel. Mobile WebKit has no wheel in Playwright: there the page scrolls by
+ * script (the tab bar reacts to the scroll event, whatever moved the page), then waits for that event.
+ */
+async function wheel(page: Page, dy: number) {
+  const mobileWebKit = page.context().browser()?.browserType().name() === 'webkit' && isTouchProject();
+  if (!mobileWebKit) return page.mouse.wheel(0, dy);
+  await page.evaluate(
+    (d) =>
+      new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 300);
+        addEventListener('scroll', () => (clearTimeout(timer), resolve()), { once: true });
+        window.scrollBy(0, d);
+      }),
+    dy,
+  );
 }
 
 /** Elements with a backdrop-filter and whether one sits inside another. */
@@ -268,24 +309,24 @@ test.describe('Tab-Leiste und Sidebar', () => {
     const navBox = (await bar.boundingBox())!;
     expect(navBox.height).toBe(64);
     await page.mouse.move(200, 300);
-    await page.mouse.wheel(0, 10);
+    await wheel(page, 10);
     await page.waitForTimeout(150);
     await expect(bar).not.toHaveAttribute('data-compact'); // ≤ 24 px
-    await page.mouse.wheel(0, 300);
+    await wheel(page, 300);
     await expect(bar).toHaveAttribute('data-compact', 'true');
     await expect.poll(async () => Math.round((await surface.boundingBox())!.height)).toBe(52);
     // bottom edge stays where it was, the labels are gone
     await expect.poll(async () => Math.round((await surface.boundingBox())!.y + (await surface.boundingBox())!.height)).toBe(Math.round(navBox.y + navBox.height));
     await expect(bar.locator('.tab-label').first()).toHaveCSS('opacity', '0');
-    await page.mouse.wheel(0, -120);
+    await wheel(page, -120);
     await expect(bar).not.toHaveAttribute('data-compact');
     await expect.poll(async () => Math.round((await surface.boundingBox())!.height)).toBe(64);
     // page end: full
     await page.evaluate(() => window.scrollTo(0, 300));
-    await page.mouse.wheel(0, 200);
+    await wheel(page, 200);
     await expect(bar).toHaveAttribute('data-compact', 'true');
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    await page.mouse.wheel(0, 50);
+    await wheel(page, 50);
     await expect(bar).not.toHaveAttribute('data-compact');
   });
 
@@ -310,7 +351,7 @@ test.describe('Tab-Leiste und Sidebar', () => {
       const nav = page.getByTestId(sidebar ? 'sidebar' : 'tabbar');
       if (!sidebar) {
         await page.mouse.move(200, 300);
-        await page.mouse.wheel(0, 400);
+        await wheel(page, 400);
         await page.waitForTimeout(300);
         await expect(nav).not.toHaveAttribute('data-compact');
       }
@@ -337,12 +378,17 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
     void nav;
     const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[] }[], card: [] as { x: number; y: number }[], nav: new Set<string>() };
     w.rec = rec;
-    const seen = new Set<Animation>();
-    const end = performance.now() + 1400;
+    // what already runs is not part of the switch
+    const seen = new Set<Animation>(document.getAnimations());
+    // 1400 ms from the first animation of the switch (a click can take longer than that to land in
+    // WebKit), at most 10 s
+    const begin = performance.now();
+    let end = begin + 10_000;
     const poll = () => {
       for (const a of document.getAnimations()) {
         if (seen.has(a)) continue;
         seen.add(a);
+        if (end === begin + 10_000) end = Math.min(end, performance.now() + 1400);
         const e = a.effect as KeyframeEffect;
         const t = e.target as HTMLElement;
         const root = t.closest('[data-screen-root]')?.getAttribute('data-screen-root') ?? '';
