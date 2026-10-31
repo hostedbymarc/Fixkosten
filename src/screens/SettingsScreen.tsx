@@ -7,6 +7,7 @@ import { Segmented, SelectField } from '../components/form';
 import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
+import { traceImport } from '../lib/importTrace';
 import {
   BackupError,
   backupFileName,
@@ -244,7 +245,15 @@ function BackupSection({ ds }: { ds: Dataset }) {
           onImport={async (mode) => {
             const backup = pending.backup;
             setPending(null);
-            await importBackup(db, backup, mode);
+            setError(null);
+            try {
+              await importBackup(db, backup, mode);
+            } catch (err) {
+              traceImport('import-failed', { error: String(err) });
+              setError(err instanceof BackupError ? err.message : 'Import fehlgeschlagen. Es wurde nichts geändert.');
+              console.error(err);
+              return;
+            }
             toast({ message: 'Sicherung importiert', actionLabel: 'Rückgängig', onAction: () => void undo(), durationMs: 8000 });
           }}
         />

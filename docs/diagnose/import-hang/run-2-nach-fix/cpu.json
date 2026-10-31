@@ -1,0 +1,8 @@
+{
+"desktop":{"seconds":2062,"meanBusy":0.891,"p50":0.906,"p90":0.955},
+"ipad-landscape":{"seconds":2022,"meanBusy":0.881,"p50":0.894,"p90":0.949},
+"ipad-portrait":{"seconds":1933,"meanBusy":0.863,"p50":0.877,"p90":0.934},
+"iphone-15":{"seconds":1657,"meanBusy":0.793,"p50":0.793,"p90":0.875},
+"iphone-pro-max":{"seconds":1744,"meanBusy":0.809,"p50":0.813,"p90":0.891},
+"iphone-se":{"seconds":1576,"meanBusy":0.767,"p50":0.764,"p90":0.846}
+}

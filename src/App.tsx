@@ -9,8 +9,9 @@ import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
-import { hideSplash } from './lib/entrance';
+import { hideSplash, splashRemoved } from './lib/entrance';
 import { startGlassBudget } from './lib/glassBudget';
+import { traceImport } from './lib/importTrace';
 import { NAV, readRoute, type Route } from './lib/routes';
 import { switchTab } from './lib/tabTransition';
 import { ActiveMonthContext } from './lib/useToday';
@@ -126,6 +127,9 @@ export function App() {
   const [, setPrebuilt] = useState(false);
   const ds = useDataset();
   const setup = useLiveQuery(() => needsSetup(db), []);
+  // import-hang harness only (src/lib/importTrace.ts)
+  useEffect(() => traceImport('livequery-setup', { setup }), [setup]);
+  useEffect(() => traceImport('livequery-dataset', { loaded: !!ds }), [ds]);
   const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
   const [now, setNow] = useState(localToday);
   const active = start === undefined ? null : activeMonth(now, start);
@@ -165,6 +169,15 @@ export function App() {
   useEffect(() => {
     if (setup === true || (setup === false && loaded)) void hideSplash();
   }, [setup, loaded]);
+  // the setup dialog (a blurred surface) only once the splash is completely gone (src/lib/entrance.ts)
+  const [splashGone, setSplashGone] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void splashRemoved().then(() => live && setSplashGone(true));
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
   useEffect(() => startGlassBudget(), []);
@@ -184,7 +197,7 @@ export function App() {
 
   // behind the splash: nothing to show yet
   if (setup === undefined || start === undefined || !active || !period) return null;
-  if (setup) return <SetupDialog />;
+  if (setup) return splashGone ? <SetupDialog /> : null;
 
   return (
     <ActiveMonthContext.Provider value={month!}>
