@@ -312,6 +312,7 @@ export type ImportMode = 'merge' | 'replace';
  * - 'replace': this device afterwards holds exactly the file's data.
  */
 export async function importBackup(db: FixkostenDB, backup: BackupFile, mode: ImportMode, options: ImportOptions = {}): Promise<void> {
+  traceImport('import-start', { mode });
   const snapshot = await exportBackup(db);
   traceImport('snapshot-taken');
   try {

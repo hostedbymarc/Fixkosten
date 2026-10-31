@@ -19,6 +19,7 @@ export function SetupDialog() {
     try {
       await importIntoEmpty(db, await readBackupFile(file));
     } catch (err) {
+      traceImport('import-failed', { error: String(err) });
       setError(err instanceof BackupError ? err.message : 'Import fehlgeschlagen. Bitte erneut versuchen.');
       console.error(err);
     } finally {

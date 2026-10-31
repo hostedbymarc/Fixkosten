@@ -7,6 +7,7 @@ import { Segmented, SelectField } from '../components/form';
 import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
+import { traceImport } from '../lib/importTrace';
 import {
   BackupError,
   backupFileName,
@@ -248,6 +249,7 @@ function BackupSection({ ds }: { ds: Dataset }) {
             try {
               await importBackup(db, backup, mode);
             } catch (err) {
+              traceImport('import-failed', { error: String(err) });
               setError(err instanceof BackupError ? err.message : 'Import fehlgeschlagen. Es wurde nichts geändert.');
               console.error(err);
               return;

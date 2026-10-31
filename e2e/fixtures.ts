@@ -1,4 +1,6 @@
+import { join } from 'node:path';
 import { test as base, expect, type Locator, type Page } from '@playwright/test';
+import { ImportWatchdog, instrumentIndexedDB, WATCHDOG_MS } from './import-watchdog';
 
 /** Seed state is October 2026; freeze "today" to 05.10.2026. */
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
@@ -73,7 +75,37 @@ export async function importFixture(page: Page) {
   await appSettled(page);
 }
 
-export const test = base.extend<{ app: Page; fresh: Page }>({
+export const test = base.extend<{ app: Page; fresh: Page; importWatchdog: ImportWatchdog; importWatchdogEnabled: boolean }>({
+  /** The harness switches the watchdog off: it records each iteration itself. */
+  importWatchdogEnabled: [true, { option: true }],
+  /**
+   * Every import in every test (e2e/import-watchdog.ts): hero not there WATCHDOG_MS after the start
+   * → dumps under `import-hang/` in the test's output folder, then the test fails.
+   */
+  importWatchdog: [
+    async ({ page, context, browser, importWatchdogEnabled }, use, testInfo) => {
+      if (!importWatchdogEnabled) {
+        await use(null as unknown as ImportWatchdog);
+        return;
+      }
+      await context.addInitScript(instrumentIndexedDB);
+      const watchdog = new ImportWatchdog(page, context, browser, testInfo.outputPath('import-hang'), 'dist-e2e');
+      await watchdog.start();
+      await use(watchdog);
+      const hangs = await watchdog.finish();
+      for (const hang of hangs) {
+        await testInfo.attach('import-hang', { path: join(hang.dir, 'report.json'), contentType: 'application/json' });
+      }
+      if (hangs.length) {
+        const r = (hangs[0]?.report ?? {}) as { lastStep?: string; mainThread?: { answered: boolean } };
+        throw new Error(
+          `Import-Hänger: Hero ${WATCHDOG_MS / 1000} s nach dem Import nicht sichtbar (letzter Schritt: ${r.lastStep}, Haupt-Thread antwortet: ${r.mainThread?.answered ?? 'unbekannt'}). Dumps: ${hangs.map((h) => h.dir).join(', ')}`,
+        );
+      }
+    },
+    // the dumps take up to ~25 s, on top of the 10 s an unfinished import still gets
+    { auto: true, timeout: 90_000 },
+  ],
   /** App with the fixture imported (October 2026). */
   app: async ({ page }, use) => {
     await page.clock.setFixedTime(TODAY);

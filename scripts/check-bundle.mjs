@@ -31,8 +31,15 @@ for (const file of files('dist').filter((f) => /\.(js|css|html|json|webmanifest|
   for (const term of terms) if (text.includes(term.toLowerCase())) leaks.push(`${file}: "${term}"`);
 }
 
+// the import step log and the e2e watchdog exist only in the e2e/harness builds (ERBSE_IMPORT_TRACE=1)
+const testOnly = ['[import-trace]', '__importTrace', '__erbseDb', '__idb', 'import-hang', 'ImportWatchdog', 'instrumentIndexedDB'];
+for (const file of files('dist').filter((f) => /\.(js|html)$/.test(f))) {
+  const text = readFileSync(file, 'utf8');
+  for (const marker of testOnly) if (text.includes(marker)) leaks.push(`${file}: test-only code "${marker}"`);
+}
+
 if (leaks.length) {
-  console.error(`Private data found in bundle:\n${leaks.join('\n')}`);
+  console.error(`Private data or test-only code found in bundle:\n${leaks.join('\n')}`);
   process.exit(1);
 }
-console.log(`check-bundle: ${terms.size} private terms, none found in dist/`);
+console.log(`check-bundle: ${terms.size} private terms and ${testOnly.length} test-only markers, none found in dist/`);

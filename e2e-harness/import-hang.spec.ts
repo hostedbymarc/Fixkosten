@@ -1,7 +1,8 @@
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Browser, BrowserContext, CDPSession, Page } from '@playwright/test';
+import type { Browser, Page } from '@playwright/test';
 import { expect, FIXTURE, TODAY, test } from '../e2e/fixtures';
+import { capture, instrumentIndexedDB, TRACE_CATEGORIES, WATCHDOG_MS, within } from '../e2e/import-watchdog';
 import { sprintBackup } from '../e2e/sprint-data';
 
 /**
@@ -13,105 +14,13 @@ import { sprintBackup } from '../e2e/sprint-data';
  */
 
 const OUT = 'harness-results';
-const WATCHDOG_MS = 10_000;
 /** after the dumps: does the page still get there (slow) or not (stuck)? */
 const RECOVERY_MS = 20_000;
-const CONSOLE_LINES = 50;
-
-const TRACE_CATEGORIES = [
-  'toplevel',
-  'blink',
-  'cc',
-  'gpu',
-  'viz',
-  'v8',
-  'ipc',
-  'mojom',
-  'renderer.scheduler',
-  'IndexedDB',
-  'disabled-by-default-devtools.timeline',
-  'devtools.timeline',
-];
 
 type Way = 'fixture' | 'sprint' | 'ui';
 
-/** Page side, before any app code: every IndexedDB transaction and connection event. */
-function instrumentIndexedDB() {
-  const w = window as unknown as Record<string, unknown>;
-  const open = new Map<number, { id: number; stores: string[]; mode: string; t: number }>();
-  let created = 0;
-  const events: { t: number; what: string }[] = [];
-  const note = (what: string) => {
-    events.push({ t: Math.round(performance.now()), what });
-    if (events.length > 100) events.shift();
-  };
-  const transaction = IDBDatabase.prototype.transaction;
-  IDBDatabase.prototype.transaction = function (this: IDBDatabase, ...args: Parameters<IDBDatabase['transaction']>) {
-    const tx = transaction.apply(this, args);
-    const id = ++created;
-    const stores = typeof args[0] === 'string' ? [args[0]] : Array.from(args[0]);
-    open.set(id, { id, stores, mode: args[1] ?? 'readonly', t: performance.now() });
-    const end = (how: string) => () => {
-      open.delete(id);
-      if (how !== 'complete') note(`tx ${id} ${how}`);
-    };
-    tx.addEventListener('complete', end('complete'));
-    tx.addEventListener('abort', end('abort'));
-    tx.addEventListener('error', end('error'));
-    return tx;
-  };
-  const openDb = IDBFactory.prototype.open;
-  IDBFactory.prototype.open = function (this: IDBFactory, ...args: Parameters<IDBFactory['open']>) {
-    const req = openDb.apply(this, args);
-    note(`open ${args[0]} v${String(args[1])}`);
-    req.addEventListener('blocked', () => note('open blocked'));
-    req.addEventListener('upgradeneeded', () => note('upgradeneeded'));
-    req.addEventListener('error', () => note(`open error ${String(req.error)}`));
-    req.addEventListener('success', () => {
-      note('open success');
-      req.result.addEventListener('versionchange', () => note('versionchange'));
-      req.result.addEventListener('close', () => note('close (forced)'));
-    });
-    return req;
-  };
-  w.__idb = {
-    open: () => [...open.values()].map((r) => ({ ...r, t: undefined, ageMs: Math.round(performance.now() - r.t) })),
-    created: () => created,
-    events: () => events,
-  };
-}
-
-/** Page side: the state dump (only when the main thread answers). */
-const DUMP = `(async () => {
-  const db = window.__erbseDb;
-  const out = {};
-  out.trace = window.__importTrace ?? [];
-  out.idbOpenTransactions = window.__idb?.open();
-  out.idbTransactionsCreated = window.__idb?.created();
-  out.idbEvents = window.__idb?.events();
-  out.dexie = db ? { isOpen: db.isOpen(), hasFailed: db.hasFailed(), hasBeenClosed: db.hasBeenClosed(), verno: db.verno } : null;
-  out.serviceWorker = 'serviceWorker' in navigator ? { controller: navigator.serviceWorker.controller ? navigator.serviceWorker.controller.scriptURL : null } : 'unsupported';
-  const dialog = document.querySelector('[data-testid="setup-dialog"]');
-  out.dom = {
-    setupDialog: !!dialog,
-    busyLabel: dialog ? dialog.querySelector('button')?.textContent : null,
-    alert: document.querySelector('[role="alert"]')?.textContent ?? null,
-    hero: !!document.querySelector('[data-testid="hero"]'),
-    importSheet: !!document.querySelector('[data-testid="import-sheet"]'),
-    splash: !!document.getElementById('splash'),
-    hash: location.hash,
-  };
-  out.document = { visibility: document.visibilityState, focus: document.hasFocus(), readyState: document.readyState };
-  out.animations = document.getAnimations().map((a) => ({ id: a.id, state: a.playState, t: a.currentTime }));
-  const timeout = (ms) => new Promise((r) => setTimeout(() => r('timeout'), ms));
-  out.probeIndexedDB = db ? await Promise.race([db.meta.count().then((n) => ({ ok: true, metaRows: n }), (e) => ({ ok: false, error: String(e) })), timeout(2000)]) : null;
-  out.probeRaf = await Promise.race([new Promise((r) => requestAnimationFrame(() => r('raf ok'))), timeout(1000)]);
-  return out;
-})()`;
-
-function within<T>(promise: Promise<T>, ms: number): Promise<T | 'timeout'> {
-  return Promise.race([promise, new Promise<'timeout'>((r) => setTimeout(() => r('timeout'), ms))]);
-}
+// the suite's watchdog would capture a second time; here every iteration records itself
+test.use({ importWatchdogEnabled: false });
 
 async function reached(page: Page, way: Way, ms: number): Promise<boolean> {
   const hero = page.getByTestId('hero');
@@ -123,59 +32,6 @@ async function reached(page: Page, way: Way, ms: number): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-async function capture(page: Page, context: BrowserContext, dir: string, consoleLog: string[]) {
-  const report: Record<string, unknown> = { at: new Date().toISOString(), url: page.url() };
-  let cdp: CDPSession | null = null;
-  try {
-    cdp = await within(context.newCDPSession(page), 2000).then((s) => (s === 'timeout' ? null : s));
-  } catch (e) {
-    report.cdpError = String(e);
-  }
-  report.cdpSession = !!cdp;
-  if (cdp) {
-    // (1) does the main thread answer?
-    const t0 = Date.now();
-    const evaluated = await within(cdp.send('Runtime.evaluate', { expression: '1', returnByValue: true }), 2000).catch((e) => ({ error: String(e) }));
-    report.mainThread = {
-      answered: evaluated !== 'timeout' && !('error' in evaluated) && (evaluated as { result: { value: unknown } }).result.value === 1,
-      ms: Date.now() - t0,
-      raw: evaluated === 'timeout' ? 'timeout' : undefined,
-    };
-    // (2) where is it? Debugger.pause stops at the next JS statement (none while the thread idles)
-    const paused = new Promise<unknown>((resolve) => cdp!.once('Debugger.paused', resolve));
-    const enabled = await within(cdp.send('Debugger.enable'), 2000).catch((e) => ({ error: String(e) }));
-    const pauseAck = await within(cdp.send('Debugger.pause'), 2000).catch((e) => ({ error: String(e) }));
-    const event = (await within(paused, 3000)) as
-      | 'timeout'
-      | { reason: string; callFrames: { functionName: string; url: string; location: { lineNumber: number; columnNumber: number } }[]; asyncStackTrace?: unknown };
-    report.debugger = {
-      enable: enabled === 'timeout' ? 'timeout' : 'ok',
-      pauseCommand: pauseAck === 'timeout' ? 'timeout' : 'ok',
-      paused:
-        event === 'timeout'
-          ? null
-          : {
-              reason: event.reason,
-              callFrames: event.callFrames.map((f) => `${f.functionName || '(anonymous)'} ${f.url}:${f.location.lineNumber + 1}:${f.location.columnNumber + 1}`),
-              asyncStackTrace: event.asyncStackTrace,
-            },
-    };
-    if (event !== 'timeout') await within(cdp.send('Debugger.resume'), 2000).catch(() => {});
-    else await within(cdp.send('Debugger.disable'), 1000).catch(() => {});
-    // (3) the state, if it answers
-    if ((report.mainThread as { answered: boolean }).answered) {
-      const dump = await within(cdp.send('Runtime.evaluate', { expression: DUMP, awaitPromise: true, returnByValue: true }), 6000).catch((e) => ({ error: String(e) }));
-      report.state = dump === 'timeout' ? 'timeout' : 'error' in dump ? dump : (dump as { result: { value: unknown } }).result.value;
-    }
-    // heap and process view from the browser side
-    const metrics = await within(cdp.send('Performance.getMetrics'), 2000).catch(() => 'error');
-    report.metrics = metrics;
-  }
-  report.console = consoleLog.slice(-CONSOLE_LINES);
-  report.importTrace = consoleLog.filter((l) => l.includes('[import-trace]'));
-  return report;
 }
 
 async function runWay(page: Page, way: Way) {
@@ -237,7 +93,7 @@ for (const way of ['fixture', 'sprint', 'ui'] as const) {
     } else {
       const dir = join(OUT, 'hangs', `${project}-${way}-${iteration}-${Date.now()}`);
       mkdirSync(dir, { recursive: true });
-      const report = await capture(page, context, dir, consoleLog);
+      const report = await capture(page, context, dir, consoleLog, { mapsDir: 'dist-harness' });
       report.recovered = await reached(page, way, RECOVERY_MS);
       report.msSinceImport = Date.now() - started;
       report.chromiumTrace = await stopChromiumTrace(browser, join(dir, 'chromium-trace.json'));

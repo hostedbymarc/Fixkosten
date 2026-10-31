@@ -66,8 +66,10 @@ export default defineConfig({
       },
     },
   ],
+  // the production build with all its checks, then the e2e build with the import step log for the
+  // import watchdog (e2e/import-watchdog.ts) in its own folder: dist/ stays exactly what ships
   webServer: {
-    command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
+    command: `pnpm build && ERBSE_IMPORT_TRACE=1 pnpm exec vite build --outDir dist-e2e && pnpm exec vite preview --outDir dist-e2e --port ${PORT} --strictPort`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
