@@ -1,5 +1,6 @@
-import { closeSync, openSync, readFileSync, writeSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { test as base, expect, type Browser, type BrowserType, type Locator, type Page } from '@playwright/test';
 import { ImportWatchdog, instrumentIndexedDB, WATCHDOG_MS } from './import-watchdog';
 
@@ -205,16 +206,22 @@ export const test = base.extend<
    */
   envHangRetryGate: [
     async ({}, use, testInfo) => {
+      const passedMark = join(testInfo.project.outputDir, 'env-hang-passed', createHash('sha1').update(testInfo.testId).digest('hex'));
       if (testInfo.retry > 0) {
         const claim = readClaim(testInfo.project.outputDir);
-        if (claim?.testId !== testInfo.testId) {
+        // a serial group is retried as a whole: a test that already passed may run again (it hides nothing)
+        if (claim?.testId !== testInfo.testId && !existsSync(passedMark)) {
           throw new Error(
             `kein Retry: nur ein Import-Hänger mit der Umgebungs-Signatur (committed, Debugger.pause-Timeout, 0 Renderer-Trace-Events) wird einmal je Lauf wiederholt${claim ? ` (das Kontingent dieses Laufs hat ${claim.title} [${claim.project}])` : ''}`,
           );
         }
-        console.log(`[env-hang-retry] Wiederholung im frischen Browser: ${claim.title} [${claim.project}]`);
+        if (claim?.testId === testInfo.testId) console.log(`[env-hang-retry] Wiederholung im frischen Browser: ${claim.title} [${claim.project}]`);
       }
       await use();
+      if (testInfo.retry === 0 && testInfo.status === 'passed') {
+        mkdirSync(dirname(passedMark), { recursive: true });
+        writeFileSync(passedMark, testInfo.titlePath.join(' › '));
+      }
     },
     { auto: true },
   ],
