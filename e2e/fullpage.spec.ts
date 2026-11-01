@@ -196,13 +196,16 @@ for (const scheme of ['light', 'dark'] as const) {
           sidebar: shown(side) ? { position: cs(side!).position, right: side!.getBoundingClientRect().right, mainLeft: main.left } : null,
         };
       });
-      const rgb = `rgb(${BASE[scheme].join(', ')})`;
+      // WebKit (Safari) prints with the light appearance: prefers-color-scheme is light while printing,
+      // so the theme „System“ prints light there
+      const printed = page.context().browser()?.browserType().name() === 'webkit' ? 'light' : scheme;
+      const rgb = `rgb(${BASE[printed].join(', ')})`;
       expect(r.html).toBe(rgb);
       expect(r.body).toBe(rgb);
-      expect(r.scheme, 'colour scheme = active theme').toBe(scheme);
+      expect(r.scheme, 'colour scheme = active theme').toBe(printed);
       expect([r.before, r.after, r.scrim], 'Nebel, grain and the top scrim off in print').toEqual(['none', 'none', 'none']);
       expect(r.adjust).toBe('exact');
-      expect(r.glass, 'every glass surface opaque, no blur').toEqual([scheme === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 34, 30, 0.92)|none']);
+      expect(r.glass, 'every glass surface opaque, no blur').toEqual([printed === 'light' ? 'rgba(255, 255, 255, 0.92)|none' : 'rgba(28, 34, 30, 0.92)|none']);
       expect(!!r.tabbar !== !!r.sidebar, 'exactly one navigation').toBe(true);
       if (r.tabbar) {
         expect(r.tabbar.position).toBe('static');
@@ -215,7 +218,7 @@ for (const scheme of ['light', 'dark'] as const) {
       // background only, full page: base colour ± 3 everywhere
       await page.addStyleTag({ content: HIDE_CONTENT });
       const png = await page.screenshot({ fullPage: true, scale: 'css' });
-      const st = await pixelStats(page, png, { base: BASE[scheme] as unknown as [number, number, number], from: 0, scale: 1 });
+      const st = await pixelStats(page, png, { base: BASE[printed] as unknown as [number, number, number], from: 0, scale: 1 });
       expect(st.maxDevBelow).toBeLessThanOrEqual(3);
       expect(st.transparent).toBe(0);
     });

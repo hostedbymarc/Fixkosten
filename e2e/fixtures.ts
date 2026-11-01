@@ -1,4 +1,62 @@
-import { test as base, expect, type Locator, type Page } from '@playwright/test';
+import { createHash } from 'node:crypto';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { test as base, expect, type Browser, type BrowserType, type Locator, type Page } from '@playwright/test';
+import { ImportWatchdog, instrumentIndexedDB, WATCHDOG_MS } from './import-watchdog';
+
+/**
+ * A fresh browser process for every spec file (not only a fresh context): the worker's `browser`
+ * is a stand-in that launches a new browser the first time a test of another file asks for a
+ * context, and closes the one before. Launch options, tracing and the context options of the
+ * config apply as with Playwright's own `browser` fixture (same `playwright` instance).
+ */
+class BrowserPerFile {
+  private current: Browser | null = null;
+  private file: string | null = null;
+  readonly launches: string[] = [];
+  readonly proxy: Browser;
+
+  constructor(private readonly type: BrowserType) {
+    const forFile = async () => {
+      const file = base.info().file;
+      if (!this.current || this.file !== file) {
+        const old = this.current;
+        this.current = null;
+        if (old) await old.close({ reason: 'next spec file: fresh browser' });
+        this.current = await this.type.launch();
+        this.file = file;
+        this.launches.push(file);
+      }
+      return this.current;
+    };
+    this.proxy = new Proxy({} as Browser, {
+      get: (_, prop) => {
+        if (prop === 'newContext' || prop === 'newPage') {
+          return async (...args: unknown[]) => {
+            const b = await forFile();
+            return (b[prop] as (...a: unknown[]) => unknown).apply(b, args);
+          };
+        }
+        if (!this.current) {
+          // before the first context of a test (e.g. browserType(), version()): launch for this file
+          if (prop === 'browserType') return () => this.type;
+          if (prop === 'then') return undefined;
+          // Playwright's context fixture looks for connect headers first (none: launched locally)
+          if (prop === '_connection') return { headers: undefined };
+        }
+        const target = this.current as unknown as Record<string | symbol, unknown> | null;
+        if (!target) throw new Error(`browser.${String(prop)} before the first context of this spec file`);
+        const value = target[prop];
+        return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value;
+      },
+    });
+  }
+
+  async close() {
+    await this.current?.close({ reason: 'Test ended.' });
+    this.current = null;
+  }
+}
 
 /** Seed state is October 2026; freeze "today" to 05.10.2026. */
 export const TODAY = new Date('2026-10-05T10:00:00+02:00');
@@ -57,7 +115,14 @@ export async function expandAll(page: Page) {
     if ((await collapsed.count()) > 0) await collapsed.first().click({ timeout: 2000 });
     await expect(collapsed).toHaveCount(0, { timeout: 500 });
   }).toPass({ intervals: [100, 250], timeout: 20000 });
-  await page.evaluate(() => window.scrollTo(0, 0));
+  // the blur budget (src/lib/glassBudget.ts) follows the scroll in the frame after the scroll event,
+  // which WebKit dispatches later than Chromium (or not at all when the page already was at the top):
+  // a scroll event of our own makes the budget catch up now, then two frames
+  await page.evaluate(async () => {
+    window.scrollTo(0, 0);
+    window.dispatchEvent(new Event('scroll'));
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
   // leave no hover behind (it would show up in later screenshots)
   await page.mouse.move(0, 0);
 }
@@ -73,7 +138,142 @@ export async function importFixture(page: Page) {
   await appSettled(page);
 }
 
-export const test = base.extend<{ app: Page; fresh: Page }>({
+interface RetryClaim {
+  testId: string;
+  title: string;
+  project: string;
+  signature: unknown;
+  docsCopy: string | null;
+  at: string;
+}
+
+/** One file per run (Playwright empties the output folder at the start of a run). */
+const claimFile = (outputDir: string) => join(outputDir, 'env-hang-retry.json');
+
+/** Claims the run's one retry (atomic across workers: the file is created exclusively). */
+function claimRetry(outputDir: string, claim: RetryClaim): boolean {
+  try {
+    const fd = openSync(claimFile(outputDir), 'wx');
+    writeSync(fd, JSON.stringify(claim, null, 2));
+    closeSync(fd);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function readClaim(outputDir: string): RetryClaim | null {
+  try {
+    return JSON.parse(readFileSync(claimFile(outputDir), 'utf8')) as RetryClaim;
+  } catch {
+    return null;
+  }
+}
+
+export const test = base.extend<
+  {
+    app: Page;
+    fresh: Page;
+    importWatchdog: ImportWatchdog;
+    importWatchdogEnabled: boolean;
+    importWatchdogDocsDir: string | null;
+    envHangRetry: boolean;
+    envHangRetryGate: void;
+  },
+  { freshBrowserPerFile: boolean }
+>({
+  /** playwright.config.ts: a fresh browser process per spec file (FRESH_BROWSER=0 switches it off for measuring) */
+  freshBrowserPerFile: [process.env.FRESH_BROWSER !== '0', { option: true, scope: 'worker' }],
+  browser: [
+    async ({ playwright, browserName, freshBrowserPerFile }, use) => {
+      const type = playwright[browserName];
+      if (!freshBrowserPerFile) {
+        const browser = await type.launch();
+        await use(browser);
+        await browser.close({ reason: 'Test ended.' });
+        return;
+      }
+      const perFile = new BrowserPerFile(type);
+      await use(perFile.proxy);
+      await perFile.close();
+    },
+    { scope: 'worker', timeout: 0 },
+  ],
+  /** The harness switches the watchdog off: it records each iteration itself. */
+  importWatchdogEnabled: [true, { option: true }],
+  /** where a real hang is copied to (the watchdog test points it into its own output folder) */
+  importWatchdogDocsDir: [resolve('docs/diagnose/import-hang'), { option: true }],
+  /** The watchdog's own tests provoke hangs with the signature on purpose: they never claim the retry. */
+  envHangRetry: [true, { option: true }],
+  /**
+   * The one retry of a run (playwright.config.ts: retries 1) is only for the hang whose signature
+   * environmentHangSignature() confirmed by machine (Chromium stuck inside itself, not our code):
+   * any other retry fails at once, so every other failure stays red. The retry runs in a new
+   * worker, i.e. a fresh browser process.
+   */
+  envHangRetryGate: [
+    async ({}, use, testInfo) => {
+      const passedMark = join(testInfo.project.outputDir, 'env-hang-passed', createHash('sha1').update(testInfo.testId).digest('hex'));
+      if (testInfo.retry > 0) {
+        const claim = readClaim(testInfo.project.outputDir);
+        // a serial group is retried as a whole: a test that already passed may run again (it hides nothing)
+        if (claim?.testId !== testInfo.testId && !existsSync(passedMark)) {
+          throw new Error(
+            `kein Retry: nur ein Import-Hänger mit der Umgebungs-Signatur (committed, Debugger.pause-Timeout, 0 Renderer-Trace-Events) wird einmal je Lauf wiederholt${claim ? ` (das Kontingent dieses Laufs hat ${claim.title} [${claim.project}])` : ''}`,
+          );
+        }
+        if (claim?.testId === testInfo.testId) console.log(`[env-hang-retry] Wiederholung im frischen Browser: ${claim.title} [${claim.project}]`);
+      }
+      await use();
+      if (testInfo.retry === 0 && testInfo.status === 'passed') {
+        mkdirSync(dirname(passedMark), { recursive: true });
+        writeFileSync(passedMark, testInfo.titlePath.join(' › '));
+      }
+    },
+    { auto: true },
+  ],
+  /**
+   * Every import in every test (e2e/import-watchdog.ts): hero not there WATCHDOG_MS after the start
+   * → dumps under `import-hang/` in the test's output folder, then the test fails.
+   */
+  importWatchdog: [
+    async ({ page, context, browser, importWatchdogEnabled, importWatchdogDocsDir, envHangRetry }, use, testInfo) => {
+      if (!importWatchdogEnabled) {
+        await use(null as unknown as ImportWatchdog);
+        return;
+      }
+      await context.addInitScript(instrumentIndexedDB);
+      const watchdog = new ImportWatchdog(page, context, browser, testInfo.outputPath('import-hang'), {
+        mapsDir: 'dist-e2e',
+        docsDir: importWatchdogDocsDir,
+        project: testInfo.project.name,
+      });
+      await watchdog.start();
+      await use(watchdog);
+      const hangs = await watchdog.finish();
+      for (const hang of hangs) {
+        await testInfo.attach('import-hang', { path: join(hang.dir, 'report.json'), contentType: 'application/json' });
+      }
+      if (hangs.length) {
+        const r = (hangs[0]?.report ?? {}) as { lastStep?: string; mainThread?: { answered: boolean }; signature?: { matches: boolean }; docsCopy?: string };
+        let retry = '';
+        if (r.signature?.matches) {
+          if (!envHangRetry) retry = ' [Umgebungs-Signatur; Watchdog-Test: kein Retry]';
+          else if (testInfo.retry > 0) retry = ' [Umgebungs-Signatur, schon die Wiederholung: rot]';
+          else if (claimRetry(testInfo.project.outputDir, { testId: testInfo.testId, title: testInfo.titlePath.join(' › '), project: testInfo.project.name, signature: r.signature, docsCopy: r.docsCopy ?? null, at: new Date().toISOString() })) {
+            retry = ' [Umgebungs-Signatur maschinell bestätigt: einmaliger Retry im frischen Browser freigegeben]';
+            console.log(`[env-hang-retry] Signatur bestätigt, Retry freigegeben: ${testInfo.titlePath.join(' › ')} [${testInfo.project.name}] ${JSON.stringify(r.signature)}`);
+          } else retry = ' [Umgebungs-Signatur, aber das Retry-Kontingent dieses Laufs ist verbraucht: rot]';
+        }
+        throw new Error(
+          `Import-Hänger: Hero ${WATCHDOG_MS / 1000} s nach dem Import nicht sichtbar (letzter Schritt: ${r.lastStep}, Haupt-Thread antwortet: ${r.mainThread?.answered ?? 'unbekannt'}).${retry} Dumps: ${hangs.map((h) => h.dir).join(', ')}`,
+        );
+      }
+    },
+    // the dumps take up to ~25 s (CDP, trace) plus up to 35 s (CPU sample, gdb), on top of the
+    // 10 s an unfinished import still gets
+    { auto: true, timeout: 120_000 },
+  ],
   /** App with the fixture imported (October 2026). */
   app: async ({ page }, use) => {
     await page.clock.setFixedTime(TODAY);
@@ -143,4 +343,15 @@ export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>
 /** Touch projects (iPhone, iPad) archive by swiping; desktop uses the ⋯ menu. */
 export function isTouchProject(): boolean {
   return base.info().project.name !== 'desktop';
+}
+
+/**
+ * Checks a radio by tapping it. WebKit on mobile now and then drops a synthesized tap
+ * (“did not change its state”): tap again until it is checked – a radio that never checks still fails.
+ */
+export async function checkRadio(radio: Locator) {
+  await expect(async () => {
+    if (!(await radio.isChecked())) await radio.click();
+    await expect(radio).toBeChecked({ timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
 }

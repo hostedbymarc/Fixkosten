@@ -1,0 +1,180 @@
+[New LWP 17255]
+[New LWP 17254]
+[New LWP 17253]
+[New LWP 17252]
+[New LWP 17251]
+[New LWP 17242]
+[New LWP 17241]
+[New LWP 17240]
+[New LWP 17239]
+[New LWP 17238]
+[New LWP 17237]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x7ffe33361020, op=137, expected=0, futex_word=0x7ffe33360fb8) at ./nptl/futex-internal.c:57
+
+Thread 12 (Thread 0x7fd9c3bff6c0 (LWP 17237) "Thread<00>"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x39a40004d550) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x0, clockid=0, expected=0, futex_word=0x39a40004d550) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x39a40004d550, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x39a40004d558, cond=0x39a40004d528) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x39a40004d528, mutex=0x39a40004d558) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fd9c3ff6882 in std::__Cr::condition_variable::wait(std::__Cr::unique_lock<std::__Cr::mutex>&) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#6  0x00007fd9c3cf41d0 in marl::Scheduler::Worker::run() () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#7  0x00007fd9c3cf5e90 in void std::__Cr::__function::__policy_func<void ()>::__call_func<marl::Scheduler::Worker::start()::$_0>(std::__Cr::__function::__policy_storage const*) [clone .b48ce2736ebaa671f12f84b35ce26997] () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#8  0x00007fd9c3cf7a2a in void* std::__Cr::__thread_proxy<std::__Cr::tuple<std::__Cr::unique_ptr<std::__Cr::__thread_struct, std::__Cr::default_delete<std::__Cr::__thread_struct> >, marl::Thread::Impl::Impl(marl::Thread::Affinity&&, std::__Cr::function<void ()>&&)::{lambda()#1}> >(void*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#9  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#10 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 11 (Thread 0x7fd9c33fe6c0 (LWP 17238) "Thread<01>"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x39a40004d950) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x0, clockid=0, expected=0, futex_word=0x39a40004d950) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x39a40004d950, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x39a40004d958, cond=0x39a40004d928) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x39a40004d928, mutex=0x39a40004d958) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fd9c3ff6882 in std::__Cr::condition_variable::wait(std::__Cr::unique_lock<std::__Cr::mutex>&) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#6  0x00007fd9c3cf41d0 in marl::Scheduler::Worker::run() () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#7  0x00007fd9c3cf5e90 in void std::__Cr::__function::__policy_func<void ()>::__call_func<marl::Scheduler::Worker::start()::$_0>(std::__Cr::__function::__policy_storage const*) [clone .b48ce2736ebaa671f12f84b35ce26997] () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#8  0x00007fd9c3cf7a2a in void* std::__Cr::__thread_proxy<std::__Cr::tuple<std::__Cr::unique_ptr<std::__Cr::__thread_struct, std::__Cr::default_delete<std::__Cr::__thread_struct> >, marl::Thread::Impl::Impl(marl::Thread::Affinity&&, std::__Cr::function<void ()>&&)::{lambda()#1}> >(void*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#9  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#10 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 10 (Thread 0x7fd9c2bfd6c0 (LWP 17239) "Thread<02>"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x39a40004dd50) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x0, clockid=0, expected=0, futex_word=0x39a40004dd50) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x39a40004dd50, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x39a40004dd58, cond=0x39a40004dd28) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x39a40004dd28, mutex=0x39a40004dd58) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fd9c3ff6882 in std::__Cr::condition_variable::wait(std::__Cr::unique_lock<std::__Cr::mutex>&) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#6  0x00007fd9c3cf41d0 in marl::Scheduler::Worker::run() () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#7  0x00007fd9c3cf5e90 in void std::__Cr::__function::__policy_func<void ()>::__call_func<marl::Scheduler::Worker::start()::$_0>(std::__Cr::__function::__policy_storage const*) [clone .b48ce2736ebaa671f12f84b35ce26997] () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#8  0x00007fd9c3cf7a2a in void* std::__Cr::__thread_proxy<std::__Cr::tuple<std::__Cr::unique_ptr<std::__Cr::__thread_struct, std::__Cr::default_delete<std::__Cr::__thread_struct> >, marl::Thread::Impl::Impl(marl::Thread::Affinity&&, std::__Cr::function<void ()>&&)::{lambda()#1}> >(void*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#9  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#10 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 9 (Thread 0x7fd9c23fc6c0 (LWP 17240) "Thread<03>"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x39a40004e150) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x0, clockid=0, expected=0, futex_word=0x39a40004e150) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x39a40004e150, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x39a40004e158, cond=0x39a40004e128) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x39a40004e128, mutex=0x39a40004e158) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fd9c3ff6882 in std::__Cr::condition_variable::wait(std::__Cr::unique_lock<std::__Cr::mutex>&) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#6  0x00007fd9c3cf41d0 in marl::Scheduler::Worker::run() () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#7  0x00007fd9c3cf5e90 in void std::__Cr::__function::__policy_func<void ()>::__call_func<marl::Scheduler::Worker::start()::$_0>(std::__Cr::__function::__policy_storage const*) [clone .b48ce2736ebaa671f12f84b35ce26997] () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#8  0x00007fd9c3cf7a2a in void* std::__Cr::__thread_proxy<std::__Cr::tuple<std::__Cr::unique_ptr<std::__Cr::__thread_struct, std::__Cr::default_delete<std::__Cr::__thread_struct> >, marl::Thread::Impl::Impl(marl::Thread::Affinity&&, std::__Cr::function<void ()>&&)::{lambda()#1}> >(void*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#9  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#10 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 8 (Thread 0x7fd9c1bfb6c0 (LWP 17241) "headless_shell"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x39a4000b80a8) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x39a4000b80a8) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x39a4000b80a8, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x39a4000b8028, cond=0x39a4000b8080) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x39a4000b8080, mutex=0x39a4000b8028) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fd9c3ff6882 in std::__Cr::condition_variable::wait(std::__Cr::unique_lock<std::__Cr::mutex>&) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#6  0x00007fd9c3ce06f3 in sw::Chan<vk::Queue::Task>::take() () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#7  0x00007fd9c3cdff43 in vk::Queue::taskLoop(marl::Scheduler*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#8  0x00007fd9c3ce0e44 in void* std::__Cr::__thread_proxy<std::__Cr::tuple<std::__Cr::unique_ptr<std::__Cr::__thread_struct, std::__Cr::default_delete<std::__Cr::__thread_struct> >, void (vk::Queue::*)(marl::Scheduler*), vk::Queue*, marl::Scheduler*> >(void*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/././libvk_swiftshader.so
+#9  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#10 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 7 (Thread 0x7fd9c13fa6c0 (LWP 17242) "ANGLE-GC"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=32729, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x39a40010ee08) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=32729, abstime=0x0, clockid=0, expected=0, futex_word=0x39a40010ee08) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x39a40010ee08, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x39a40010edb8, cond=0x39a40010ede0) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x39a40010ede0, mutex=0x39a40010edb8) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007fd9c47bdfc2 in std::__Cr::condition_variable::wait(std::__Cr::unique_lock<std::__Cr::mutex>&) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/libGLESv2.so
+#6  0x00007fd9c4391641 in rx::vk::CleanUpThread::processTasksImpl(bool*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/libGLESv2.so
+#7  0x00007fd9c43914cd in rx::vk::CleanUpThread::processTasks() () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/libGLESv2.so
+#8  0x00007fd9c43961da in void* std::__Cr::__thread_proxy<std::__Cr::tuple<std::__Cr::unique_ptr<std::__Cr::__thread_struct, std::__Cr::default_delete<std::__Cr::__thread_struct> >, void (angle::AsyncWorkerPool::*)(), angle::AsyncWorkerPool*> >(void*) () at /opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/libGLESv2.so
+#9  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#10 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 6 (Thread 0x7fd9c51ff6c0 (LWP 17251) "PerfettoTrace"):
+#0  0x00007fd9c6b2a2d2 in epoll_wait (epfd=3, events=0x7fd9c51fe390, maxevents=16, timeout=10637526) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x00005573714071f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x000055737386324a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000557373862931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x0000557373862758 in base::Thread::Run(base::RunLoop*) ()
+#5  0x00005573732b0913 in base::Thread::ThreadMain() ()
+#6  0x00005573732af3f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#7  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#8  0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 5 (Thread 0x7fd9c0bf96c0 (LWP 17252) "ThreadPoolServi"):
+#0  0x00007fd9c6b2a2d2 in epoll_wait (epfd=14, events=0x7fd9c0bf8390, maxevents=16, timeout=10637524) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x00005573714071f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x000055737386324a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000557373862931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x00005573738626f8 in base::internal::ServiceThread::Run(base::RunLoop*) ()
+#5  0x00005573732b0913 in base::Thread::ThreadMain() ()
+#6  0x00005573732af3f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#7  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#8  0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 4 (Thread 0x7fd9c03f86c0 (LWP 17253) "ThreadPoolForeg"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=21875, cancel=true, abstime=0x7fd9c03f75b0, op=137, expected=0, futex_word=0x7fd9c03f7548) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=21875, abstime=0x7fd9c03f75b0, clockid=14756, expected=0, futex_word=0x7fd9c03f7548) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7fd9c03f7548, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7fd9c03f75b0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9bd6e in __pthread_cond_wait_common (abstime=0x7fd9c03f75b0, clockid=1, mutex=0x7fd9c03f74f8, cond=0x7fd9c03f7520) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_timedwait64 (cond=0x7fd9c03f7520, mutex=0x7fd9c03f74f8, abstime=0x7fd9c03f75b0) at ./nptl/pthread_cond_wait.c:652
+#5  0x0000557371410b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#6  0x00005573713fb19e in base::internal::WorkerThread::RunWorker() ()
+#7  0x00005573713faddd in base::internal::WorkerThread::RunPooledWorker() ()
+#8  0x000055737397482a in base::internal::WorkerThread::ThreadMain() ()
+#9  0x00005573732af3f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#10 0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#11 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 3 (Thread 0x7fd9bfbf76c0 (LWP 17254) "Chrome_ChildIOT"):
+#0  0x00007fd9c6b2a2d2 in epoll_wait (epfd=17, events=0x7fd9bfbf6370, maxevents=16, timeout=10637529) at ../sysdeps/unix/sysv/linux/epoll_wait.c:30
+#1  0x00005573714071f6 in base::MessagePumpEpoll::Run(base::MessagePump::Delegate*) ()
+#2  0x000055737386324a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#3  0x0000557373862931 in base::RunLoop::Run(base::Location const&) ()
+#4  0x000055737385fcec in content::(anonymous namespace)::ChildIOThread::Run(base::RunLoop*) [clone .cca073f9827671ca4624c245bbd47757] ()
+#5  0x00005573732b0913 in base::Thread::ThreadMain() ()
+#6  0x00005573732af3f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#7  0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#8  0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 2 (Thread 0x7fd9bf3f66c0 (LWP 17255) "VizCompositorTh"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x7fd9bf3f5440, op=137, expected=0, futex_word=0x7fd9bf3f53d8) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x7fd9bf3f5440, clockid=-1431655766, expected=0, futex_word=0x7fd9bf3f53d8) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7fd9bf3f53d8, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7fd9bf3f5440, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9bd6e in __pthread_cond_wait_common (abstime=0x7fd9bf3f5440, clockid=1, mutex=0x7fd9bf3f5388, cond=0x7fd9bf3f53b0) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_timedwait64 (cond=0x7fd9bf3f53b0, mutex=0x7fd9bf3f5388, abstime=0x7fd9bf3f5440) at ./nptl/pthread_cond_wait.c:652
+#5  0x0000557371410b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#6  0x000055737141063f in base::WaitableEvent::TimedWait(base::TimeDelta) ()
+#7  0x000055737140b676 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) ()
+#8  0x000055737386324a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#9  0x0000557373862931 in base::RunLoop::Run(base::Location const&) ()
+#10 0x0000557373862758 in base::Thread::Run(base::RunLoop*) ()
+#11 0x00005573732b0913 in base::Thread::ThreadMain() ()
+#12 0x00005573732af3f6 in base::(anonymous namespace)::ThreadFunc(void*) [clone .a67435033112019129ad5c28ddc47327] [clone .cfi] ()
+#13 0x00007fd9c6a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#14 0x00007fd9c6b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 1 (Thread 0x7fd9c65fd280 (LWP 17233) "headless_shell"):
+#0  0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x7ffe33361020, op=137, expected=0, futex_word=0x7ffe33360fb8) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x7ffe33361020, clockid=-1431655766, expected=0, futex_word=0x7ffe33360fb8) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7ffe33360fb8, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7ffe33361020, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007fd9c6a9bd6e in __pthread_cond_wait_common (abstime=0x7ffe33361020, clockid=1, mutex=0x7ffe33360f68, cond=0x7ffe33360f90) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_timedwait64 (cond=0x7ffe33360f90, mutex=0x7ffe33360f68, abstime=0x7ffe33361020) at ./nptl/pthread_cond_wait.c:652
+#5  0x0000557371410b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()
+#6  0x000055737141063f in base::WaitableEvent::TimedWait(base::TimeDelta) ()
+#7  0x000055737140b676 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) ()
+#8  0x000055737386324a in base::sequence_manager::internal::ThreadControllerWithMessagePumpImpl::Run(bool, base::TimeDelta) ()
+#9  0x0000557373862931 in base::RunLoop::Run(base::Location const&) ()
+#10 0x000055737385ae81 in content::GpuMain(content::MainFunctionParams) [clone .cfi] ()
+#11 0x0000557371805686 in content::RunOtherNamedProcessTypeMain(std::__Cr::basic_string<char, std::__Cr::char_traits<char>, std::__Cr::allocator<char> > const&, content::MainFunctionParams, content::ContentMainDelegate*) ()
+#12 0x0000557371804ec2 in content::ContentMainRunnerImpl::Run() ()
+#13 0x0000557371804419 in content::ContentMain(content::ContentMainParams) ()
+#14 0x0000557376d0ed7d in headless::(anonymous namespace)::HeadlessChildMain(content::ContentMainParams) ()
+#15 0x0000557376d0ec71 in headless::HeadlessShellMain(content::ContentMainParams) ()
+#16 0x0000557374deab80 in main ()
+[Inferior 1 (process 17233) detached]
+
+--- stderr ---
+
+warning: 57	./nptl/futex-internal.c: No such file or directory
