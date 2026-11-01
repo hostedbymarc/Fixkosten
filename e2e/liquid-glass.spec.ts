@@ -384,15 +384,16 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
     w.rec = rec;
     // what already runs is not part of the switch
     const seen = new Set<Animation>(document.getAnimations());
-    // 1400 ms from the first animation of the switch (a click can take longer than that to land in
-    // WebKit), at most 10 s
+    // until 1400 ms after the latest animation of the switch (a click, and a lazy screen after it, can
+    // take longer to land in WebKit), at most 10 s
     const begin = performance.now();
-    let end = begin + 10_000;
+    const cap = begin + 10_000;
+    let end = cap;
     const poll = () => {
       for (const a of document.getAnimations()) {
         if (seen.has(a)) continue;
         seen.add(a);
-        if (end === begin + 10_000) end = Math.min(end, performance.now() + 1400);
+        end = Math.min(cap, performance.now() + 1400);
         const e = a.effect as KeyframeEffect;
         const t = e.target as HTMLElement;
         const root = t.closest('[data-screen-root]')?.getAttribute('data-screen-root') ?? '';
