@@ -25,6 +25,7 @@ const WEBKIT_SPECS = [
   /aktiver-monat\.spec\.ts/,
   /splash-blur\.spec\.ts/,
   /import-watchdog\.spec\.ts/,
+  /print-glass\.spec\.ts/,
 ];
 const WEBKIT_DEVICES = {
   'iphone-se': { viewport: { width: 375, height: 667 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
