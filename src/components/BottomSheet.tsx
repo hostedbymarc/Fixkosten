@@ -138,7 +138,7 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="glass-strong anim-sheet relative flex w-full max-w-lg flex-col overflow-hidden !rounded-b-none !rounded-t-[22px] !shadow-sheet outline-none lg:!rounded-[22px]"
+          className="glass-strong anim-sheet relative flex w-full max-w-lg flex-col overflow-hidden !rounded-b-none !rounded-t-[22px] [--glass-shadow:var(--shadow-sheet)] outline-none lg:!rounded-[22px]"
           // the sheet slides in via transform: no blur while it moves (see .glass[data-animating])
           data-animating={moving ? '' : undefined}
           onAnimationEnd={(e) => e.target === e.currentTarget && setMoving(false)}

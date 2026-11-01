@@ -84,30 +84,32 @@ test.describe('Liquid-Glass-Material', () => {
     const hero = page.getByTestId('hero');
     const m = await hero.evaluate((el) => {
       const cs = getComputedStyle(el);
-      const rim = getComputedStyle(el, '::before');
-      const spec = getComputedStyle(el, '::after');
       return {
         bg: cs.backgroundColor,
+        image: cs.backgroundImage,
+        origin: cs.backgroundOrigin,
+        border: `${cs.borderTopWidth} ${cs.borderTopStyle} ${cs.borderTopColor}`,
         radius: cs.borderTopLeftRadius,
         shadow: cs.boxShadow,
         blur: cs.backdropFilter,
-        rimImage: rim.backgroundImage,
-        rimMask: rim.getPropertyValue('-webkit-mask-composite') || rim.getPropertyValue('mask-composite'),
-        rimPadding: rim.paddingTop,
-        specImage: spec.backgroundImage,
-        specZ: spec.zIndex,
+        // no effect layers: iOS „Ganze Seite“ captured their transparent parts as black
+        before: getComputedStyle(el, '::before').content,
+        after: getComputedStyle(el, '::after').content,
       };
     });
     expect(m.bg).toBe('rgba(255, 255, 255, 0.52)');
     expect(m.radius).toBe('24px');
+    // rim: 1 px semi-transparent white border + inset highlight top and bottom, then the outer shadow
+    expect(m.border).toBe('1px solid rgba(255, 255, 255, 0.5)');
+    expect(m.shadow).toContain('rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset');
+    expect(m.shadow).toContain('rgba(255, 255, 255, 0.25) 0px -1px 0px 0px inset');
     expect(m.shadow).toContain('rgba(31, 39, 36, 0.04) 0px 1px 1px 0px');
     expect(m.shadow).toContain('rgba(31, 39, 36, 0.14) 0px 12px 32px -12px');
     expect(m.blur).toBe('blur(24px) saturate(1.8)');
-    expect(m.rimImage).toBe('linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.45))');
-    expect(m.rimMask).toMatch(/xor|exclude/);
-    expect(m.rimPadding).toBe('1px');
-    expect(m.specImage).toBe('radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 70%)');
-    expect(m.specZ).toBe('-1'); // below the content, above the fill
+    // specular: a background layer of the surface over its fill, top left, over the border box
+    expect(m.image).toBe('radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 70%)');
+    expect(m.origin).toBe('border-box');
+    expect([m.before, m.after]).toEqual(['none', 'none']);
     // tiles: radius 20; their blur comes from the group layer, masked to the tiles
     await expect(page.getByTestId('salary-tile')).toHaveCSS('border-top-left-radius', '20px');
     await expect(page.getByTestId('salary-tile')).toHaveCSS('backdrop-filter', 'none');
@@ -136,10 +138,11 @@ test.describe('Liquid-Glass-Material', () => {
       await importLive(page, OKT_TODAY);
       const hero = page.getByTestId('hero');
       await expect(hero).toHaveCSS('background-color', 'rgba(28, 34, 30, 0.48)');
-      expect(await hero.evaluate((el) => getComputedStyle(el, '::before').backgroundImage)).toMatch(
-        // .225 is stored with 8 bits: 0.224
-        /^linear-gradient\(135deg, rgba\(255, 255, 255, 0\.45\), rgba\(255, 255, 255, 0\.075\) 50%, rgba\(255, 255, 255, 0\.22[45]\)\)$/,
-      );
+      await expect(hero).toHaveCSS('border-top-color', 'rgba(255, 255, 255, 0.25)');
+      const shadow = await hero.evaluate((el) => getComputedStyle(el).boxShadow);
+      expect(shadow).toContain('rgba(255, 255, 255, 0.4) 0px 1px 0px 0px inset');
+      // .125 is stored with 8 bits: 0.125 or 0.13
+      expect(shadow).toMatch(/rgba\(255, 255, 255, 0\.1[23]5?\) 0px -1px 0px 0px inset/);
     });
   });
 
@@ -165,14 +168,14 @@ test.describe('Liquid-Glass-Material', () => {
     await expect(hero).toHaveCSS('backdrop-filter', 'none');
     await expect(hero).toHaveCSS('background-color', 'rgb(255, 255, 255)');
     const m = await hero.evaluate((el) => ({
-      rim: getComputedStyle(el, '::before').backgroundColor,
-      rimImage: getComputedStyle(el, '::before').backgroundImage,
-      spec: getComputedStyle(el, '::after').display,
+      rim: getComputedStyle(el).borderTopColor,
+      shadow: getComputedStyle(el).boxShadow,
+      spec: getComputedStyle(el).backgroundImage,
       grain: getComputedStyle(document.body, '::after').display,
       blurred: [...document.querySelectorAll('*')].filter((e) => getComputedStyle(e).backdropFilter !== 'none').length,
     }));
-    expect(m.rimImage).toBe('none');
     expect(m.rim).toBe('rgba(31, 39, 36, 0.12)');
+    expect(m.shadow, 'no highlight').not.toContain('inset');
     expect(m.spec).toBe('none');
     expect(m.grain).toBe('none');
     expect(m.blurred).toBe(0);
@@ -186,7 +189,7 @@ test.describe('Liquid-Glass-Material', () => {
     const rules = await page.evaluate(() =>
       [...document.styleSheets].flatMap((s) => [...s.cssRules]).filter((r) => r instanceof CSSSupportsRule && /backdrop-filter/.test(r.conditionText)).map((r) => r.cssText),
     );
-    expect(rules.join('\n')).toMatch(/\.glass-clear[^{]*\{[^}]*background: var\(--glass-fallback\)/);
+    expect(rules.join('\n')).toMatch(/\.glass-clear[^{]*\{[^}]*background-color: var\(--glass-fallback\)/);
     const fallback = await page.evaluate(() => {
       const probe = document.createElement('div');
       probe.style.background = 'var(--glass-fallback)';
