@@ -19,16 +19,28 @@ async function watchSplash(page: Page) {
   });
 }
 
-const entrance = (page: Page) =>
-  page.evaluate(() =>
-    document
-      .getAnimations()
-      .filter((a) => a.id === 'entrance')
-      .map((a) => {
+/**
+ * Records every entrance animation from now on, frame by frame (an animation is seen as soon as it
+ * exists, also when the tab took long to build and the cards are already done when a poll would ask).
+ */
+const recordEntrance = (page: Page) =>
+  page.evaluate(() => {
+    const w = window as unknown as { entranceRec: { end: number; iterations: number; target: string }[] };
+    w.entranceRec = [];
+    const seen = new Set<Animation>();
+    const until = performance.now() + 3000;
+    const tick = () => {
+      for (const a of document.getAnimations()) {
+        if (a.id !== 'entrance' || seen.has(a)) continue;
+        seen.add(a);
         const t = a.effect!.getComputedTiming();
-        return { end: Number(t.endTime), iterations: t.iterations, target: (a.effect as KeyframeEffect).target?.tagName ?? '' };
-      }),
-  );
+        w.entranceRec.push({ end: Number(t.endTime), iterations: t.iterations ?? 1, target: (a.effect as KeyframeEffect).target?.tagName ?? '' });
+      }
+      if (performance.now() < until) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+const entrance = (page: Page) => page.evaluate(() => (window as unknown as { entranceRec: { end: number; iterations: number; target: string }[] }).entranceRec);
 
 test.describe('Lade-Animation', () => {
   test('Start: Splash mit den drei Erbsen, sofort sichtbar, endlich, blockiert nichts, nach ≥ 700 ms weg', async ({ page }) => {
@@ -65,6 +77,7 @@ test.describe('Lade-Animation', () => {
   test('jeder Tab kommt herein: Screen blendet ein, Karten steigen gestaffelt auf, danach bleibt nichts zurück', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     for (const tab of TABS) {
+      await recordEntrance(page);
       await page.getByRole('link', { name: tab }).first().click();
       await expect(page.locator('main [data-testid="loader"]')).toHaveCount(0);
       await expect.poll(async () => (await entrance(page)).length, { message: `${tab}: entrance` }).toBeGreaterThanOrEqual(2);

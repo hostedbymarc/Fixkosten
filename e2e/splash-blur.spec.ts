@@ -7,7 +7,9 @@ import { appSettled, expect, FIXTURE, test, TODAY } from './fixtures';
  * Splash and blur apart (import hang of 31.10.2026): while the splash is there – also while it fades –
  * no visible element has a backdrop-filter, and the setup dialog only appears once the splash is
  * gone. The end image is the same as on main before the change (6e618fd, built by global-setup),
- * at most 1 % of the pixels differ.
+ * at most 1 % of the pixels visibly differ (more than 8 levels in a channel: since glass-layers.spec.ts
+ * the specular is blended in the surface itself, which rounds a level or two differently over whole
+ * surfaces; the rim is a border now).
  */
 
 const MAIN = resolve('.legacy/6e618fd/dist');
@@ -188,7 +190,7 @@ async function endImages(browser: Browser, testInfo: TestInfo, dir: string | nul
   return [setup, month];
 }
 
-/** Share of pixels that differ at all (decoded in the browser: no image library needed). */
+/** Share of pixels that differ by more than 8 levels in a channel (decoded in the browser: no image library needed). */
 async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<number> {
   return page.evaluate(
     async ([a64, b64]) => {
@@ -204,7 +206,7 @@ async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<number> {
       const [da, db] = [px(ia), px(ib)];
       let diff = 0;
       for (let i = 0; i < da.length; i += 4) {
-        if (da[i] !== db[i] || da[i + 1] !== db[i + 1] || da[i + 2] !== db[i + 2]) diff++;
+        if (Math.max(Math.abs(da[i]! - db[i]!), Math.abs(da[i + 1]! - db[i + 1]!), Math.abs(da[i + 2]! - db[i + 2]!)) > 8) diff++;
       }
       return diff / (da.length / 4);
     },
@@ -212,7 +214,7 @@ async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<number> {
   );
 }
 
-test('Endbild nach dem Übergang wie auf main (6e618fd): Setup-Dialog und Monat, höchstens 1 % Pixel anders', async ({ browser, page }, testInfo) => {
+test('Endbild nach dem Übergang wie auf main (6e618fd): Setup-Dialog und Monat, höchstens 1 % Pixel sichtbar anders', async ({ browser, page }, testInfo) => {
   test.setTimeout(120_000);
   expect(existsSync(join(MAIN, 'index.html')), 'build of main missing – run node scripts/build-legacy.mjs 6e618fd').toBe(true);
   const before = await endImages(browser, testInfo, MAIN);
