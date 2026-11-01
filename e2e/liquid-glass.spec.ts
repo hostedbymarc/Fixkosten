@@ -380,7 +380,7 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
       return all.map((e) => `${Math.round(e.getBoundingClientRect().left)},${Math.round(e.getBoundingClientRect().top)}`).join('|');
     };
     void nav;
-    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[] }[], card: [] as { x: number; y: number }[], nav: new Set<string>() };
+    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[] }[], card: [] as { x: number; y: number; ty: number }[], nav: new Set<string>() };
     w.rec = rec;
     // what already runs is not part of the switch
     const seen = new Set<Animation>(document.getAnimations());
@@ -408,7 +408,9 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
       const card = document.querySelector(`[data-screen-root="${route}"]:not([data-tab-hidden]) .glass`);
       if (card) {
         const r = card.getBoundingClientRect();
-        rec.card.push({ x: r.left, y: r.top + scrollY });
+        // the animated offset itself (WebKit updates the rect of a composited animation only now and then)
+        const ty = new DOMMatrixReadOnly(getComputedStyle(card).transform === 'none' ? undefined : getComputedStyle(card).transform).m42;
+        rec.card.push({ x: r.left, y: r.top + scrollY, ty });
       }
       rec.nav.add(navBox());
       if (performance.now() < end) requestAnimationFrame(poll);
@@ -419,7 +421,7 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
   await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
   await page.waitForTimeout(1500);
   return page.evaluate(() => {
-    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[] }[]; card: { x: number; y: number }[]; nav: Set<string> } }).rec;
+    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[] }[]; card: { x: number; y: number; ty: number }[]; nav: Set<string> } }).rec;
     return { anims: rec.anims, card: rec.card, nav: [...rec.nav] };
   });
 }
@@ -460,7 +462,9 @@ test.describe('Tabwechsel-Animation', () => {
       expect(into.find((a) => a.target === `screen:${route}`)?.duration, `${route}: screen fades in like the start screen`).toBe(start.find((a) => !a.keys.includes('translateY'))!.duration);
       // direction: the first card's Y moves up (start > end), X stays
       const ys = r.card.map((c) => c.y);
-      expect(Math.max(...ys) - ys[ys.length - 1]!, `${route}: rises`).toBeGreaterThan(4);
+      const tys = r.card.map((c) => c.ty);
+      expect(Math.max(...tys) - tys[tys.length - 1]!, `${route}: rises`).toBeGreaterThan(4);
+      expect(tys[tys.length - 1], `${route}: comes to rest`).toBe(0);
       // (WebKit reports the resting card with subpixel noise: 116.0 → 116.1)
       expect(ys[0]! >= ys[ys.length - 1]! - 0.5).toBe(true);
       expect(new Set(r.card.map((c) => Math.round(c.x))).size, `${route}: X unchanged`).toBe(1);
