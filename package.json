@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && node scripts/check-colors.mjs && vite build && node scripts/check-bundle.mjs",
+    "build": "tsc -b && node scripts/check-colors.mjs && node scripts/check-print-glass.mjs && vite build && node scripts/check-bundle.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -13,7 +13,8 @@
     "typecheck": "tsc -b",
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:colors": "node scripts/check-colors.mjs",
-    "check:icons": "node scripts/check-icons.mjs"
+    "check:icons": "node scripts/check-icons.mjs",
+    "check:print-glass": "node scripts/check-print-glass.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

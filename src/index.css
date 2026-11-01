@@ -175,12 +175,21 @@ body::after {
   #splash {
     display: none !important;
   }
+  /* Liquid Glass in print: every effect layer gone (rim ring with mask-composite, specular, the
+     group blur, the sliding indicator's rim), surfaces opaque without blur or mask, a plain 1 px line
+     instead of the rim. Every material class of this file is listed here: scripts/check-print-glass.mjs
+     fails the build otherwise. */
   .glass,
   .glass-strong,
-  .glass-clear {
+  .glass-clear,
+  .glass-tile,
+  .glass-pill {
     background: var(--glass-fallback) !important;
+    border: 1px solid var(--line) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    -webkit-mask: none !important;
+    mask: none !important;
   }
   .glass-group-blur,
   .glass::before,
@@ -188,7 +197,14 @@ body::after {
   .glass-strong::before,
   .glass-strong::after,
   .glass-clear::before,
-  .glass-clear::after {
+  .glass-clear::after,
+  .glass-tile::before,
+  .glass-tile::after,
+  .glass-pill::before,
+  .glass-pill::after,
+  .glass-group-blur::before,
+  .glass-group-blur::after {
+    content: none !important;
     display: none !important;
   }
   /* tab bar: once, at the end of the page instead of floating over the content */
