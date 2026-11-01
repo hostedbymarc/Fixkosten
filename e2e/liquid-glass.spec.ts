@@ -380,7 +380,7 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
       return all.map((e) => `${Math.round(e.getBoundingClientRect().left)},${Math.round(e.getBoundingClientRect().top)}`).join('|');
     };
     void nav;
-    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[] }[], card: [] as { x: number; y: number; ty: number }[], nav: new Set<string>() };
+    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[]; ty: number[] }[], card: [] as { x: number; y: number; ty: number }[], nav: new Set<string>() };
     w.rec = rec;
     // what already runs is not part of the switch
     const seen = new Set<Animation>(document.getAnimations());
@@ -389,9 +389,9 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
     const begin = performance.now();
     const cap = begin + 10_000;
     let end = cap;
-    const poll = () => {
-      for (const a of document.getAnimations()) {
-        if (seen.has(a)) continue;
+    const record = (a: Animation) => {
+      {
+        if (seen.has(a)) return;
         seen.add(a);
         end = Math.min(cap, performance.now() + 1400);
         const e = a.effect as KeyframeEffect;
@@ -403,8 +403,21 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
           duration: Number(e.getTiming().duration),
           delay: Number(e.getTiming().delay),
           keys: [...new Set(e.getKeyframes().flatMap((k) => Object.keys(k).filter((n) => !['offset', 'easing', 'composite', 'computedOffset'].includes(n))))],
+          // vertical offset at the first and the last keyframe (translateY in px)
+          ty: [e.getKeyframes()[0], e.getKeyframes().at(-1)].map((k) => Number(/translateY\((-?[\d.]+)px\)/.exec(String(k?.transform ?? ''))?.[1] ?? 0)),
         });
       }
+    };
+    // every Web Animation as it is created: a short one (the 220 ms fade) can start and end between
+    // two frames of a slow renderer and would never show up in getAnimations()
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...args: Parameters<Element['animate']>) {
+      const a = animate.apply(this, args);
+      record(a);
+      return a;
+    };
+    const poll = () => {
+      for (const a of document.getAnimations()) record(a);
       const card = document.querySelector(`[data-screen-root="${route}"]:not([data-tab-hidden]) .glass`);
       if (card) {
         const r = card.getBoundingClientRect();
@@ -414,6 +427,7 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
       }
       rec.nav.add(navBox());
       if (performance.now() < end) requestAnimationFrame(poll);
+      else Element.prototype.animate = animate;
     };
     poll();
   }, route);
@@ -421,7 +435,7 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
   await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
   await page.waitForTimeout(1500);
   return page.evaluate(() => {
-    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[] }[]; card: { x: number; y: number; ty: number }[]; nav: Set<string> } }).rec;
+    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[]; ty: number[] }[]; card: { x: number; y: number; ty: number }[]; nav: Set<string> } }).rec;
     return { anims: rec.anims, card: rec.card, nav: [...rec.nav] };
   });
 }
@@ -462,9 +476,12 @@ test.describe('Tabwechsel-Animation', () => {
       expect(into.find((a) => a.target === `screen:${route}`)?.duration, `${route}: screen fades in like the start screen`).toBe(start.find((a) => !a.keys.includes('translateY'))!.duration);
       // direction: the first card's Y moves up (start > end), X stays
       const ys = r.card.map((c) => c.y);
-      const tys = r.card.map((c) => c.ty);
-      expect(Math.max(...tys) - tys[tys.length - 1]!, `${route}: rises`).toBeGreaterThan(4);
-      expect(tys[tys.length - 1], `${route}: comes to rest`).toBe(0);
+      // every card animation starts below (> 4 px) and ends at its place: from bottom to top (read from
+      // the keyframes – WebKit samples a composited animation too rarely to see it reliably); the
+      // first card has come to rest
+      expect(cards.map((c) => c.ty), `${route}: rises`).toEqual(cards.map(() => [expect.any(Number), 0]));
+      expect(cards.every((c) => c.ty[0]! > 4), `${route}: starts below`).toBe(true);
+      expect(r.card.at(-1)?.ty, `${route}: comes to rest`).toBe(0);
       // (WebKit reports the resting card with subpixel noise: 116.0 → 116.1)
       expect(ys[0]! >= ys[ys.length - 1]! - 0.5).toBe(true);
       expect(new Set(r.card.map((c) => Math.round(c.x))).size, `${route}: X unchanged`).toBe(1);
