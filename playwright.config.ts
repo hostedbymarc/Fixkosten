@@ -2,6 +2,11 @@ import { defineConfig, type Project } from '@playwright/test';
 
 const PORT = 4173;
 
+// WebKit (WPE) composites through OpenGL; without a GPU that is Mesa's llvmpipe on every core, and a
+// DPR-3 frame with backdrop blur then takes seconds (rAF, Playwright's stability check and evaluate
+// wait for it). Skia's CPU rendering paints the same picture without llvmpipe. Chromium ignores it.
+process.env.WEBKIT_SKIA_ENABLE_CPU_RENDERING ??= '1';
+
 /**
  * WebKit (Safari's engine on iPhone and iPad), light and dark: the parts of the suite that matter
  * on the devices. Run with `--project='webkit-*'`; the Chromium suite with `--project='!webkit-*'`
@@ -31,6 +36,8 @@ const webkitProjects: Project[] = Object.entries(WEBKIT_DEVICES).flatMap(([devic
   (['light', 'dark'] as const).map((scheme) => ({
     name: `webkit-${device}-${scheme}`,
     testMatch: WEBKIT_SPECS,
+    // software rendering: twice the time of a Chromium test; run with --workers=1 (README)
+    timeout: 60_000,
     use: { ...use, browserName: 'webkit' as const, colorScheme: scheme },
   })),
 );
