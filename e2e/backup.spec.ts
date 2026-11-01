@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Download, Page } from '@playwright/test';
-import { eur, expandAll, expect, goTo, importFixture, row, test, shown } from './fixtures';
+import { checkRadio, eur, expandAll, expect, goTo, importFixture, row, test, shown } from './fixtures';
 
 const BOOKMARKLET = readFileSync('docs/export-bookmarklet.txt', 'utf8').trim();
 
@@ -49,7 +49,7 @@ async function importFile(page: Page, json: unknown, mode: 'Zusammenführen' | '
   });
   const sheet = page.getByTestId('import-sheet');
   await expect(sheet).toBeVisible();
-  if (mode === 'Ersetzen') await sheet.getByRole('radio', { name: /Ersetzen/ }).check();
+  if (mode === 'Ersetzen') await checkRadio(sheet.getByRole('radio', { name: /Ersetzen/ }));
   await sheet.getByRole('button', { name: mode, exact: true }).click();
   await expect(sheet).toBeHidden();
 }

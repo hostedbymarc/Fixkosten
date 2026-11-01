@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import type { Download, Locator, Page } from '@playwright/test';
 import type { BackupFile } from '../src/db/backup';
 import { LIVE_FILE, live29Backup } from '../tests/fixtures/live';
-import { appSettled, eur, expect, goTo, isTouchProject, test, touchSwipe } from './fixtures';
+import { appSettled, checkRadio, eur, expect, goTo, isTouchProject, test, touchSwipe } from './fixtures';
 import { expectClean } from './measure';
 
 /** 26.10.2026: with „Neuer Monat beginnt am 25.“ the app is already in November. */
@@ -179,16 +179,19 @@ test.describe('Navigation: Monatsraster, Pill, Wischen', () => {
     }
     await expect(title(page)).toHaveText('November 2026');
 
-    // real vertical scrolling by touch never switches the month
-    await page.evaluate(() => window.scrollTo(0, 0));
-    const box = (await screen.boundingBox())!;
-    const client = await page.context().newCDPSession(page);
-    const x = box.x + box.width / 2;
-    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: 600 }] });
-    for (let i = 1; i <= 10; i++) await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - i * 2, y: 600 - i * 40 }] });
-    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-    await page.waitForTimeout(300);
-    await expect(title(page)).toHaveText('November 2026');
+    // real vertical scrolling by touch never switches the month (a browser-generated touch scroll
+    // needs CDP: Chromium only; in WebKit the synthetic vertical gestures above cover it)
+    if (page.context().browser()?.browserType().name() === 'chromium') {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const box = (await screen.boundingBox())!;
+      const client = await page.context().newCDPSession(page);
+      const x = box.x + box.width / 2;
+      await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: 600 }] });
+      for (let i = 1; i <= 10; i++) await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - i * 2, y: 600 - i * 40 }] });
+      await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.waitForTimeout(300);
+      await expect(title(page)).toHaveText('November 2026');
+    }
 
     // an open sheet switches swiping off (the touch scroll above may still coast: tap once it rests at the top)
     await page.evaluate(() => window.scrollTo(0, 0));
@@ -508,7 +511,7 @@ test.describe('Export und Import mit und ohne Einstellung', () => {
       await page.getByTestId('backup-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(json)) });
       const sheet = page.getByTestId('import-sheet');
       await expect(sheet).toBeVisible();
-      await sheet.getByRole('radio', { name: /Ersetzen/ }).check();
+      await checkRadio(sheet.getByRole('radio', { name: /Ersetzen/ }));
       await sheet.getByRole('button', { name: 'Ersetzen', exact: true }).click();
       await expect(sheet).toBeHidden();
     };

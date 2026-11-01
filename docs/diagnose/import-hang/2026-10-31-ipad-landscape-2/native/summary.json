@@ -1,0 +1,44 @@
+[
+  {
+    "pid": 17233,
+    "role": "gpu",
+    "comm": "headless_shell",
+    "dir": "/home/user/Fixkosten/test-results/layout-phase2-Layout-Phase-2-gemessen-Positionen-screen-ipad-landscape/import-hang/hang-1793469200143/native/gpu-17233",
+    "state": "S (sleeping)",
+    "wchan": "futex_do_wait",
+    "threads": 12,
+    "cpuPercent": 1.6,
+    "gdb": "ok",
+    "mainThreadTop": [
+      "#0 0x00007fd9c6a98e51 in __futex_abstimed_wait_common64 (private=-1431655766, cancel=true, abstime=0x7ffe33361020, op=137, expected=0, futex_word=0x7ffe33360fb8) at ./nptl/futex-internal.c:57",
+      "#1 __futex_abstimed_wait_common (cancel=true, private=-1431655766, abstime=0x7ffe33361020, clockid=-1431655766, expected=0, futex_word=0x7ffe33360fb8) at ./nptl/futex-internal.c:87",
+      "#2 __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7ffe33360fb8, expected=expected@entry=0, clockid=clockid@entry=1, abstime=abstime@entry=0x7ffe33361020, private=private@entry=0) at ./nptl/futex-internal.c:139",
+      "#3 0x00007fd9c6a9bd6e in __pthread_cond_wait_common (abstime=0x7ffe33361020, clockid=1, mutex=0x7ffe33360f68, cond=0x7ffe33360f90) at ./nptl/pthread_cond_wait.c:503",
+      "#4 ___pthread_cond_timedwait64 (cond=0x7ffe33360f90, mutex=0x7ffe33360f68, abstime=0x7ffe33361020) at ./nptl/pthread_cond_wait.c:652",
+      "#5 0x0000557371410b23 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()",
+      "#6 0x000055737141063f in base::WaitableEvent::TimedWait(base::TimeDelta) ()",
+      "#7 0x000055737140b676 in base::MessagePumpDefault::Run(base::MessagePump::Delegate*) ()"
+    ]
+  },
+  {
+    "pid": 17259,
+    "role": "renderer",
+    "comm": "headless_shell",
+    "dir": "/home/user/Fixkosten/test-results/layout-phase2-Layout-Phase-2-gemessen-Positionen-screen-ipad-landscape/import-hang/hang-1793469200143/native/renderer-17259",
+    "state": "S (sleeping)",
+    "wchan": "futex_do_wait",
+    "threads": 11,
+    "cpuPercent": 1.4,
+    "gdb": "ok",
+    "mainThreadTop": [
+      "#0 0x00007f53bea98e51 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x7ffe1770fa68) at ./nptl/futex-internal.c:57",
+      "#1 __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x7ffe1770fa68) at ./nptl/futex-internal.c:87",
+      "#2 __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x7ffe1770fa68, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139",
+      "#3 0x00007f53bea9b8cd in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x7ffe1770fa18, cond=0x7ffe1770fa40) at ./nptl/pthread_cond_wait.c:503",
+      "#4 ___pthread_cond_wait (cond=0x7ffe1770fa40, mutex=0x7ffe1770fa18) at ./nptl/pthread_cond_wait.c:627",
+      "#5 0x000056458fadfd40 in base::ConditionVariable::Wait() ()",
+      "#6 0x000056458fae4c45 in base::WaitableEvent::TimedWaitImpl(base::TimeDelta) ()",
+      "#7 0x000056458fae44d7 in base::WaitableEvent::Wait() ()"
+    ]
+  }
+]

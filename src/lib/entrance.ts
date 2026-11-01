@@ -7,7 +7,6 @@
 
 /** The splash stays at least this long after navigation start, so its intro plays once. */
 export const SPLASH_MIN_MS = 700;
-const SPLASH_FADE_MS = 260;
 /** Web Animations created here carry this id (tests wait for them). */
 export const ENTRANCE_ID = 'entrance';
 
@@ -17,22 +16,50 @@ let started = false;
 let markFading: () => void = () => {};
 /** Resolves when the splash starts to fade (at once if there is none). */
 const fading = new Promise<void>((resolve) => (markFading = resolve));
+let markRemoved: () => void = () => {};
+/** Resolves when the splash is gone from the DOM (at once if there is none). */
+const removed = new Promise<void>((resolve) => (markRemoved = resolve));
+/** Fallback when no `transitionend` arrives (tab in the background, transition skipped). */
+export const SPLASH_REMOVE_FALLBACK_MS = 400;
 
-/** Fades the splash out (once): not before SPLASH_MIN_MS, removed when the fade has ended. */
+/** The splash is gone: what it covered may blur now ([data-splash] in index.html, index.css). */
+function splashGone() {
+  document.getElementById('splash')?.remove();
+  delete document.documentElement.dataset.splash;
+  markRemoved();
+}
+
+/**
+ * Fades the splash out (once): not before SPLASH_MIN_MS, removed when its fade has ended
+ * (`transitionend`, at the latest SPLASH_REMOVE_FALLBACK_MS after the fade started).
+ */
 export function hideSplash(): Promise<void> {
   if (started) return fading;
   started = true;
   const splash = document.getElementById('splash');
   if (!splash) {
+    splashGone();
     markFading();
     return fading;
   }
   const reduced = reducedMotion();
   window.setTimeout(
     () => {
+      let done = false;
+      const remove = () => {
+        if (done) return;
+        done = true;
+        window.clearTimeout(fallback);
+        splash.removeEventListener('transitionend', onEnd);
+        splashGone();
+      };
+      const onEnd = (e: TransitionEvent) => {
+        if (e.target === splash && e.propertyName === 'opacity') remove();
+      };
+      splash.addEventListener('transitionend', onEnd);
+      const fallback = window.setTimeout(remove, SPLASH_REMOVE_FALLBACK_MS);
       splash.classList.add('splash-out');
       markFading();
-      window.setTimeout(() => splash.remove(), (reduced ? 120 : SPLASH_FADE_MS) + 40);
     },
     reduced ? 0 : Math.max(0, SPLASH_MIN_MS - performance.now()),
   );
@@ -43,6 +70,15 @@ export function hideSplash(): Promise<void> {
 export function splashFading(): Promise<void> {
   if (!document.getElementById('splash')) markFading();
   return fading;
+}
+
+/**
+ * Resolves when the splash is completely gone. Whatever blurs (the setup dialog) only appears then:
+ * never an opacity transition over a surface with a backdrop-filter.
+ */
+export function splashRemoved(): Promise<void> {
+  if (!document.getElementById('splash')) splashGone();
+  return removed;
 }
 
 const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';

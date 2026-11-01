@@ -7,10 +7,51 @@ import { importLive, OKT_TODAY } from './live';
 const ROUTES = ['monat', 'positionen', 'analyse', 'einstellungen'] as const;
 const TAB = { monat: 'Monat', positionen: 'Positionen', analyse: 'Analyse', einstellungen: 'Einstellungen' } as const;
 
-async function reducedTransparency(page: Page): Promise<CDPSession> {
-  const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
-  return cdp;
+/**
+ * „Transparenz reduzieren“. Chromium: emulated through CDP. WebKit knows the media feature, but
+ * Playwright cannot emulate it there: the app's own `@media (prefers-reduced-transparency: reduce)`
+ * rules are switched on unchanged (copied into `@media all` at the end of their style sheet), so
+ * WebKit renders exactly what a device with the setting gets.
+ */
+async function reducedTransparency(page: Page): Promise<CDPSession | null> {
+  if (page.context().browser()?.browserType().name() === 'chromium') {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
+    return cdp;
+  }
+  const copied = await page.evaluate(() => {
+    let n = 0;
+    for (const sheet of [...document.styleSheets]) {
+      const rules = [...sheet.cssRules];
+      for (const rule of rules) {
+        if (rule instanceof CSSMediaRule && /^\(prefers-reduced-transparency: ?reduce\)$/.test(rule.conditionText.trim())) {
+          sheet.insertRule(`@media all { ${[...rule.cssRules].map((r) => r.cssText).join('\n')} }`, sheet.cssRules.length);
+          n++;
+        }
+      }
+    }
+    return n;
+  });
+  expect(copied, 'reduced-transparency blocks in the app CSS').toBeGreaterThan(0);
+  return null;
+}
+
+/**
+ * Scrolls by `dy` like a wheel. Mobile WebKit has no wheel in Playwright: there the page scrolls by
+ * script (the tab bar reacts to the scroll event, whatever moved the page), then waits for that event.
+ */
+async function wheel(page: Page, dy: number) {
+  const mobileWebKit = page.context().browser()?.browserType().name() === 'webkit' && isTouchProject();
+  if (!mobileWebKit) return page.mouse.wheel(0, dy);
+  await page.evaluate(
+    (d) =>
+      new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, 300);
+        addEventListener('scroll', () => (clearTimeout(timer), resolve()), { once: true });
+        window.scrollBy(0, d);
+      }),
+    dy,
+  );
 }
 
 /** Elements with a backdrop-filter and whether one sits inside another. */
@@ -36,6 +77,8 @@ async function scrollTo(page: Page, y: number) {
 }
 
 test.describe('Liquid-Glass-Material', () => {
+  // the material values below are the light ones (the dark ones: „dunkel“); the WebKit profiles also run dark
+  test.use({ colorScheme: 'light' });
   test('Karten, Kacheln, Sheets, Tab-Leiste: Fläche, Lichtkante, Glanzpunkt, Schatten, Radien', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     const hero = page.getByTestId('hero');
@@ -173,6 +216,8 @@ const grainLayer = (page: Page) =>
   });
 
 test.describe('Körnung', () => {
+  // the material values below are the light ones (the dark ones: „dunkel“); the WebKit profiles also run dark
+  test.use({ colorScheme: 'light' });
   test('256 px Kachel (für 2× erzeugt), fractalNoise .85 / 3 Oktaven / fester Seed, monochrom, soft-light .045, nur Hintergrund', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     const g = await grainLayer(page);
@@ -268,24 +313,24 @@ test.describe('Tab-Leiste und Sidebar', () => {
     const navBox = (await bar.boundingBox())!;
     expect(navBox.height).toBe(64);
     await page.mouse.move(200, 300);
-    await page.mouse.wheel(0, 10);
+    await wheel(page, 10);
     await page.waitForTimeout(150);
     await expect(bar).not.toHaveAttribute('data-compact'); // ≤ 24 px
-    await page.mouse.wheel(0, 300);
+    await wheel(page, 300);
     await expect(bar).toHaveAttribute('data-compact', 'true');
     await expect.poll(async () => Math.round((await surface.boundingBox())!.height)).toBe(52);
     // bottom edge stays where it was, the labels are gone
     await expect.poll(async () => Math.round((await surface.boundingBox())!.y + (await surface.boundingBox())!.height)).toBe(Math.round(navBox.y + navBox.height));
     await expect(bar.locator('.tab-label').first()).toHaveCSS('opacity', '0');
-    await page.mouse.wheel(0, -120);
+    await wheel(page, -120);
     await expect(bar).not.toHaveAttribute('data-compact');
     await expect.poll(async () => Math.round((await surface.boundingBox())!.height)).toBe(64);
     // page end: full
     await page.evaluate(() => window.scrollTo(0, 300));
-    await page.mouse.wheel(0, 200);
+    await wheel(page, 200);
     await expect(bar).toHaveAttribute('data-compact', 'true');
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    await page.mouse.wheel(0, 50);
+    await wheel(page, 50);
     await expect(bar).not.toHaveAttribute('data-compact');
   });
 
@@ -310,7 +355,7 @@ test.describe('Tab-Leiste und Sidebar', () => {
       const nav = page.getByTestId(sidebar ? 'sidebar' : 'tabbar');
       if (!sidebar) {
         await page.mouse.move(200, 300);
-        await page.mouse.wheel(0, 400);
+        await wheel(page, 400);
         await page.waitForTimeout(300);
         await expect(nav).not.toHaveAttribute('data-compact');
       }
@@ -335,14 +380,20 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
       return all.map((e) => `${Math.round(e.getBoundingClientRect().left)},${Math.round(e.getBoundingClientRect().top)}`).join('|');
     };
     void nav;
-    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[] }[], card: [] as { x: number; y: number }[], nav: new Set<string>() };
+    const rec = { anims: [] as { id: string; target: string; duration: number; delay: number; keys: string[]; ty: number[] }[], card: [] as { x: number; y: number; ty: number }[], nav: new Set<string>() };
     w.rec = rec;
-    const seen = new Set<Animation>();
-    const end = performance.now() + 1400;
-    const poll = () => {
-      for (const a of document.getAnimations()) {
-        if (seen.has(a)) continue;
+    // what already runs is not part of the switch
+    const seen = new Set<Animation>(document.getAnimations());
+    // until 1400 ms after the latest animation of the switch (a click, and a lazy screen after it, can
+    // take longer to land in WebKit), at most 10 s
+    const begin = performance.now();
+    const cap = begin + 10_000;
+    let end = cap;
+    const record = (a: Animation) => {
+      {
+        if (seen.has(a)) return;
         seen.add(a);
+        end = Math.min(cap, performance.now() + 1400);
         const e = a.effect as KeyframeEffect;
         const t = e.target as HTMLElement;
         const root = t.closest('[data-screen-root]')?.getAttribute('data-screen-root') ?? '';
@@ -352,15 +403,31 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
           duration: Number(e.getTiming().duration),
           delay: Number(e.getTiming().delay),
           keys: [...new Set(e.getKeyframes().flatMap((k) => Object.keys(k).filter((n) => !['offset', 'easing', 'composite', 'computedOffset'].includes(n))))],
+          // vertical offset at the first and the last keyframe (translateY in px)
+          ty: [e.getKeyframes()[0], e.getKeyframes().at(-1)].map((k) => Number(/translateY\((-?[\d.]+)px\)/.exec(String(k?.transform ?? ''))?.[1] ?? 0)),
         });
       }
+    };
+    // every Web Animation as it is created: a short one (the 220 ms fade) can start and end between
+    // two frames of a slow renderer and would never show up in getAnimations()
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (...args: Parameters<Element['animate']>) {
+      const a = animate.apply(this, args);
+      record(a);
+      return a;
+    };
+    const poll = () => {
+      for (const a of document.getAnimations()) record(a);
       const card = document.querySelector(`[data-screen-root="${route}"]:not([data-tab-hidden]) .glass`);
       if (card) {
         const r = card.getBoundingClientRect();
-        rec.card.push({ x: r.left, y: r.top + scrollY });
+        // the animated offset itself (WebKit updates the rect of a composited animation only now and then)
+        const ty = new DOMMatrixReadOnly(getComputedStyle(card).transform === 'none' ? undefined : getComputedStyle(card).transform).m42;
+        rec.card.push({ x: r.left, y: r.top + scrollY, ty });
       }
       rec.nav.add(navBox());
       if (performance.now() < end) requestAnimationFrame(poll);
+      else Element.prototype.animate = animate;
     };
     poll();
   }, route);
@@ -368,7 +435,7 @@ async function recordSwitch(page: Page, route: string, click: () => Promise<void
   await expect(page.locator(`main[data-screen="${route}"]`)).toHaveCount(1);
   await page.waitForTimeout(1500);
   return page.evaluate(() => {
-    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[] }[]; card: { x: number; y: number }[]; nav: Set<string> } }).rec;
+    const rec = (window as unknown as { rec: { anims: { id: string; target: string; duration: number; delay: number; keys: string[]; ty: number[] }[]; card: { x: number; y: number; ty: number }[]; nav: Set<string> } }).rec;
     return { anims: rec.anims, card: rec.card, nav: [...rec.nav] };
   });
 }
@@ -409,8 +476,14 @@ test.describe('Tabwechsel-Animation', () => {
       expect(into.find((a) => a.target === `screen:${route}`)?.duration, `${route}: screen fades in like the start screen`).toBe(start.find((a) => !a.keys.includes('translateY'))!.duration);
       // direction: the first card's Y moves up (start > end), X stays
       const ys = r.card.map((c) => c.y);
-      expect(Math.max(...ys) - ys[ys.length - 1]!, `${route}: rises`).toBeGreaterThan(4);
-      expect(ys[0]! >= ys[ys.length - 1]!).toBe(true);
+      // every card animation starts below (> 4 px) and ends at its place: from bottom to top (read from
+      // the keyframes – WebKit samples a composited animation too rarely to see it reliably); the
+      // first card has come to rest
+      expect(cards.map((c) => c.ty), `${route}: rises`).toEqual(cards.map(() => [expect.any(Number), 0]));
+      expect(cards.every((c) => c.ty[0]! > 4), `${route}: starts below`).toBe(true);
+      expect(r.card.at(-1)?.ty, `${route}: comes to rest`).toBe(0);
+      // (WebKit reports the resting card with subpixel noise: 116.0 → 116.1)
+      expect(ys[0]! >= ys[ys.length - 1]! - 0.5).toBe(true);
       expect(new Set(r.card.map((c) => Math.round(c.x))).size, `${route}: X unchanged`).toBe(1);
       // tab bar / sidebar never move
       expect(r.nav, `${route}: navigation still`).toHaveLength(1);

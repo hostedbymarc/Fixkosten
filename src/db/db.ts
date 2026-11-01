@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie';
 import { IMMOS_COLOR_KEY } from '../lib/categoryColors';
 import { calendarMonth } from '../lib/activeMonth';
+import { exposeForTrace } from '../lib/importTrace';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, type PositionV2 } from './migrations';
 import type {
   Category,
@@ -176,3 +177,4 @@ export class FixkostenDB extends Dexie {
 }
 
 export const db = new FixkostenDB();
+exposeForTrace('__erbseDb', db);
