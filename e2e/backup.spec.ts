@@ -49,7 +49,15 @@ async function importFile(page: Page, json: unknown, mode: 'Zusammenführen' | '
   });
   const sheet = page.getByTestId('import-sheet');
   await expect(sheet).toBeVisible();
-  if (mode === 'Ersetzen') await sheet.getByRole('radio', { name: /Ersetzen/ }).check();
+  // WebKit on mobile now and then drops a synthesized tap on the radio (“did not change its state”):
+  // tap again until it is checked – a radio that never checks still fails here
+  if (mode === 'Ersetzen') {
+    const radio = sheet.getByRole('radio', { name: /Ersetzen/ });
+    await expect(async () => {
+      if (!(await radio.isChecked())) await radio.click();
+      await expect(radio).toBeChecked({ timeout: 1000 });
+    }).toPass({ timeout: 10_000 });
+  }
   await sheet.getByRole('button', { name: mode, exact: true }).click();
   await expect(sheet).toBeHidden();
 }
