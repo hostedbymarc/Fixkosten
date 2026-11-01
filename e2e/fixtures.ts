@@ -344,3 +344,14 @@ export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>
 export function isTouchProject(): boolean {
   return base.info().project.name !== 'desktop';
 }
+
+/**
+ * Checks a radio by tapping it. WebKit on mobile now and then drops a synthesized tap
+ * (“did not change its state”): tap again until it is checked – a radio that never checks still fails.
+ */
+export async function checkRadio(radio: Locator) {
+  await expect(async () => {
+    if (!(await radio.isChecked())) await radio.click();
+    await expect(radio).toBeChecked({ timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
+}

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import type { Download, Page } from '@playwright/test';
-import { eur, expandAll, expect, goTo, importFixture, row, test, shown } from './fixtures';
+import { checkRadio, eur, expandAll, expect, goTo, importFixture, row, test, shown } from './fixtures';
 
 const BOOKMARKLET = readFileSync('docs/export-bookmarklet.txt', 'utf8').trim();
 
@@ -49,15 +49,7 @@ async function importFile(page: Page, json: unknown, mode: 'Zusammenführen' | '
   });
   const sheet = page.getByTestId('import-sheet');
   await expect(sheet).toBeVisible();
-  // WebKit on mobile now and then drops a synthesized tap on the radio (“did not change its state”):
-  // tap again until it is checked – a radio that never checks still fails here
-  if (mode === 'Ersetzen') {
-    const radio = sheet.getByRole('radio', { name: /Ersetzen/ });
-    await expect(async () => {
-      if (!(await radio.isChecked())) await radio.click();
-      await expect(radio).toBeChecked({ timeout: 1000 });
-    }).toPass({ timeout: 10_000 });
-  }
+  if (mode === 'Ersetzen') await checkRadio(sheet.getByRole('radio', { name: /Ersetzen/ }));
   await sheet.getByRole('button', { name: mode, exact: true }).click();
   await expect(sheet).toBeHidden();
 }

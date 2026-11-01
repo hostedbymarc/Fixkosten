@@ -25,9 +25,13 @@ export async function measure(page: Page, scope = 'body') {
 export async function expectClean(page: Page, scope?: string) {
   // measured on a page at rest: mid-entrance a transformed box can read 43.99 px instead of 44
   await appSettled(page);
-  const m = await measure(page, scope);
-  expect(m.overflow, 'horizontal overflow').toBeLessThanOrEqual(0);
-  expect(m.clipped, 'clipped text').toEqual([]);
-  expect(m.small, 'tap targets < 44 px').toEqual([]);
+  // a lasting state, not one frame: WebKit may lay out a figure once more after the fonts settle
+  // (seen once on iPad: an amount a frame too wide); real clipping stays and still fails
+  await expect(async () => {
+    const m = await measure(page, scope);
+    expect(m.overflow, 'horizontal overflow').toBeLessThanOrEqual(0);
+    expect(m.clipped, 'clipped text').toEqual([]);
+    expect(m.small, 'tap targets < 44 px').toEqual([]);
+  }).toPass({ timeout: 3000, intervals: [100, 250, 500] });
 }
 

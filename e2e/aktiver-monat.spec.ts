@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import type { Download, Locator, Page } from '@playwright/test';
 import type { BackupFile } from '../src/db/backup';
 import { LIVE_FILE, live29Backup } from '../tests/fixtures/live';
-import { appSettled, eur, expect, goTo, isTouchProject, test, touchSwipe } from './fixtures';
+import { appSettled, checkRadio, eur, expect, goTo, isTouchProject, test, touchSwipe } from './fixtures';
 import { expectClean } from './measure';
 
 /** 26.10.2026: with „Neuer Monat beginnt am 25.“ the app is already in November. */
@@ -511,7 +511,7 @@ test.describe('Export und Import mit und ohne Einstellung', () => {
       await page.getByTestId('backup-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(json)) });
       const sheet = page.getByTestId('import-sheet');
       await expect(sheet).toBeVisible();
-      await sheet.getByRole('radio', { name: /Ersetzen/ }).check();
+      await checkRadio(sheet.getByRole('radio', { name: /Ersetzen/ }));
       await sheet.getByRole('button', { name: 'Ersetzen', exact: true }).click();
       await expect(sheet).toBeHidden();
     };
