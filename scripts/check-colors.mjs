@@ -1,7 +1,7 @@
 // Fails when a colour value or the old app name shows up outside the allowed places,
 // or when a German quote („…“, ‚…‘) is closed with a straight " or '.
 //   node scripts/check-colors.mjs
-// Colours: only src/styles/tokens.css. Exceptions: icon files (public/, scripts/brand/),
+// Colours: only src/styles/tokens.css. Exceptions: icon files (public/),
 // src/lib/categoryColors.ts (hex strings there are database keys, never painted),
 // tests, and the theme-color meta tag in index.html (HTML cannot read CSS variables).
 import { readFileSync, readdirSync, statSync } from 'node:fs';
