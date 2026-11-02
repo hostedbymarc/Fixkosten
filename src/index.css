@@ -826,7 +826,8 @@ button:active > .pea[data-pressable] {
   position: absolute;
 }
 
-/* Hero, Luxe 2: two soft colour fields (brand-300, butter) drift slowly inside the tile – box-shadow
+/* Hero, Luxe 2: two soft colour fields (brand-300, butter) drift slowly inside the tile for 20 s after
+   the screen comes in, then rest (src/screens/MonthScreen.tsx, Web Animations with id „ambient“) – box-shadow
    glows of zero-size elements, clipped to the tile (no gradient into transparency); a diagonal light
    shimmer crosses it once per month change (600 ms). The content lies above. */
 .hero > :not(.hero-lights) {
@@ -850,23 +851,11 @@ button:active > .pea[data-pressable] {
   left: 14%;
   top: 30%;
   box-shadow: 0 0 120px 80px color-mix(in oklab, rgb(var(--brand-300)) 24%, transparent);
-  animation: hero-drift-a 28s ease-in-out infinite alternate;
 }
 .hero-light-b {
   right: 6%;
   top: -4%;
   box-shadow: 0 0 110px 70px color-mix(in oklab, rgb(var(--butter)) 16%, transparent);
-  animation: hero-drift-b 34s ease-in-out infinite alternate;
-}
-@keyframes hero-drift-a {
-  to {
-    transform: translate(70px, -26px);
-  }
-}
-@keyframes hero-drift-b {
-  to {
-    transform: translate(-80px, 30px);
-  }
 }
 .hero-shimmer-track {
   position: absolute;
@@ -909,7 +898,6 @@ button:active > .pea[data-pressable] {
   animation-play-state: paused !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-light,
   .hero-shimmer-track {
     animation: none;
   }
