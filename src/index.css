@@ -175,10 +175,10 @@ body::after {
   #splash {
     display: none !important;
   }
-  /* Liquid Glass in print: every effect layer gone (rim ring with mask-composite, specular, the
-     group blur, the sliding indicator's rim), surfaces opaque without blur or mask, a plain 1 px line
-     instead of the rim. Every material class of this file is listed here: scripts/check-print-glass.mjs
-     fails the build otherwise. */
+  /* Liquid Glass in print: surfaces opaque without specular, highlight, blur or mask, a plain 1 px
+     line instead of the rim, the group blur gone; no pseudo-element of the material ever prints.
+     Every material class of this file is listed here: scripts/check-print-glass.mjs fails the build
+     otherwise. */
   .glass,
   .glass-strong,
   .glass-clear,
@@ -186,6 +186,7 @@ body::after {
   .glass-pill {
     background: var(--glass-fallback) !important;
     border: 1px solid var(--line) !important;
+    box-shadow: var(--glass-shadow) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
     -webkit-mask: none !important;
@@ -241,10 +242,15 @@ body::after {
      .glass        cards, hero, tiles, banner, toasts' content cards (radius 24, tiles 20 via .glass-tile)
      .glass-strong sheets, dialogs, menus, toasts (fill .72)
      .glass-clear  tab bar and sidebar (fill .40, stronger rim)
-     Fill + 1 px rim (::before, 135° gradient through a mask-composite ring) + static specular
-     (::after, radial, top left) + two-step shadow. Both pseudos sit at z-index −1 inside the surface's
-     own stacking context: above its fill, below its content. No refraction (SVG displacement in
-     backdrop-filter): Safari does not support it.
+     Everything is painted by the surface itself: no effect layers (::before/::after), no mask and no
+     gradient. iOS Safari „Ganze Seite“ captures every gradient that runs into transparency as black,
+     whether a background layer or a pseudo-element (Diagnose-Seite on PR #36: a specular ellipse
+     fading to alpha 0 broke the capture, the same surface without it was clean, with or without
+     blur). So there is no specular highlight. scripts/check-glass-layers.mjs keeps it that way.
+       fill      flat background colour (--glass-fill)
+       rim       1 px semi-transparent white border + inset highlight top/bottom (--glass-highlight)
+       shadow    the two-step outer shadow (--glass-shadow)
+     No refraction (SVG displacement in backdrop-filter): Safari does not support it.
      Blur: always on .glass-strong / .glass-clear; on cards only with [data-blur], which
      src/lib/glassBudget.ts grants to at most 8 surfaces per screen (the visible ones first). */
   .glass,
@@ -252,59 +258,21 @@ body::after {
   .glass-clear {
     --glass-r: 24px;
     --glass-fill: var(--glass-bg);
-    --rim-1: var(--glass-rim-1);
-    --rim-2: var(--glass-rim-2);
-    --rim-3: var(--glass-rim-3);
     position: relative;
-    isolation: isolate;
-    /* the rim is drawn in this 1 px: the box keeps its size */
-    border: 1px solid var(--glass-fallback-clear);
+    border: 1px solid var(--glass-edge);
     border-radius: var(--glass-r);
     background: var(--glass-fill);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--glass-highlight), var(--glass-shadow);
   }
   .glass-strong {
     --glass-fill: var(--glass-strong-bg);
   }
   .glass-clear {
     --glass-fill: var(--glass-clear-bg);
-    --rim-1: var(--glass-rim-clear-1);
-    --rim-2: var(--glass-rim-clear-2);
-    --rim-3: var(--glass-rim-clear-3);
+    border-color: var(--glass-edge-clear);
   }
   .glass-tile {
     --glass-r: 20px;
-  }
-  .glass::before,
-  .glass-strong::before,
-  .glass-clear::before,
-  .glass-pill::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    z-index: -1;
-    padding: 1px;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(135deg, var(--rim-1), var(--rim-2) 50%, var(--rim-3));
-    -webkit-mask:
-      linear-gradient(var(--mask-solid), var(--mask-solid)) content-box,
-      linear-gradient(var(--mask-solid), var(--mask-solid));
-    -webkit-mask-composite: xor;
-    mask:
-      linear-gradient(var(--mask-solid), var(--mask-solid)) content-box exclude,
-      linear-gradient(var(--mask-solid), var(--mask-solid));
-  }
-  .glass::after,
-  .glass-strong::after,
-  .glass-clear::after {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    z-index: -1;
-    border-radius: inherit;
-    pointer-events: none;
-    background: radial-gradient(120% 60% at 20% 0%, var(--glass-specular), var(--glass-specular-end) 70%);
   }
   .glass-strong,
   .glass-clear,
@@ -318,16 +286,13 @@ body::after {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  /* Selection indicator of tab bar and sidebar: the same rim, a brighter fill, never blurred
+  /* Selection indicator of tab bar and sidebar: the same rim (no specular), a brighter fill, never blurred
      (it moves; the blur stays on the resting container). */
   .glass-pill {
-    --rim-1: var(--glass-rim-clear-1);
-    --rim-2: var(--glass-rim-clear-2);
-    --rim-3: var(--glass-rim-clear-3);
     position: absolute;
-    isolation: isolate;
+    border: 1px solid var(--glass-edge-clear);
     background: var(--glass-pill-bg);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--glass-highlight), var(--glass-shadow);
   }
   /* one blur surface behind a group of tiles (src/components/GlassGroup.tsx): masked to the tiles */
   .glass-group-blur {
@@ -390,7 +355,7 @@ body::after {
   .glass-strong[data-animating] {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    background: var(--glass-fallback);
+    background-color: var(--glass-fallback);
   }
   .focus-ring {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-transparent;
@@ -452,14 +417,14 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear, .glass-group-bl
   backdrop-filter: none;
 }
 body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
-  background: var(--glass-fallback);
+  background-color: var(--glass-fallback);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
   .glass-strong,
   .glass-clear {
-    background: var(--glass-fallback);
+    background-color: var(--glass-fallback);
   }
 }
 
@@ -477,16 +442,12 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
   .glass-clear {
     background: var(--glass-opaque);
   }
-  .glass::before,
-  .glass-strong::before,
-  .glass-clear::before,
-  .glass-pill::before {
-    background: var(--glass-rim-solid);
-  }
-  .glass::after,
-  .glass-strong::after,
-  .glass-clear::after {
-    display: none;
+  .glass,
+  .glass-strong,
+  .glass-clear,
+  .glass-pill {
+    border-color: var(--glass-rim-solid);
+    box-shadow: var(--glass-shadow);
   }
   body::after {
     display: none;

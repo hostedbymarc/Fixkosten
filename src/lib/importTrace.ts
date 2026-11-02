@@ -27,3 +27,14 @@ export function exposeForTrace(name: string, value: unknown): void {
   if (!IMPORT_TRACE) return;
   (window as unknown as Record<string, unknown>)[name] = value;
 }
+
+/**
+ * Test build only (same switch): flags the e2e tests set before any app code runs
+ * (`window.__erbseTestFlags`). In every other build this is constant false.
+ *   noSplash  start without the splash (reference image of e2e/splash-blur.spec.ts)
+ *   lateBlur  blur only comes back 15 s after the splash is gone (counter-check of that test)
+ */
+export function testFlag(name: 'noSplash' | 'lateBlur'): boolean {
+  if (!IMPORT_TRACE) return false;
+  return !!(window as unknown as { __erbseTestFlags?: Record<string, boolean> }).__erbseTestFlags?.[name];
+}
