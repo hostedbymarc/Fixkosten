@@ -96,7 +96,7 @@ async function barColour(page: Page): Promise<number[]> {
 
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
   await page.waitForTimeout(150);
 }
 

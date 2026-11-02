@@ -79,15 +79,17 @@ async function scrollTo(page: Page, y: number) {
 test.describe('Liquid-Glass-Material', () => {
   // the material values below are the light ones (the dark ones: „dunkel“); the WebKit profiles also run dark
   test.use({ colorScheme: 'light' });
+  // Luxe 2: Glass 2.0 – the cards are the glass sample (the hero is an opaque gradient tile now)
   test('Karten, Kacheln, Sheets, Tab-Leiste: Fläche, Lichtkante, kein Verlauf, Schatten, Radien', async ({ page }) => {
     await importLive(page, OKT_TODAY);
-    const hero = page.getByTestId('hero');
+    const hero = page.locator('[data-testid="category-group"]').first();
     const m = await hero.evaluate((el) => {
       const cs = getComputedStyle(el);
       return {
         bg: cs.backgroundColor,
         image: cs.backgroundImage,
         border: `${cs.borderTopWidth} ${cs.borderTopStyle} ${cs.borderTopColor}`,
+        borderBottom: cs.borderBottomColor,
         radius: cs.borderTopLeftRadius,
         shadow: cs.boxShadow,
         blur: cs.backdropFilter,
@@ -96,29 +98,35 @@ test.describe('Liquid-Glass-Material', () => {
         after: getComputedStyle(el, '::after').content,
       };
     });
-    expect(m.bg).toBe('rgba(255, 255, 255, 0.52)');
-    expect(m.radius).toBe('24px');
-    // rim: 1 px semi-transparent white border + inset highlight top and bottom, then the outer shadow
-    expect(m.border).toBe('1px solid rgba(255, 255, 255, 0.5)');
-    expect(m.shadow).toContain('rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset');
-    expect(m.shadow).toContain('rgba(255, 255, 255, 0.25) 0px -1px 0px 0px inset');
-    expect(m.shadow).toContain('rgba(31, 39, 36, 0.04) 0px 1px 1px 0px');
-    expect(m.shadow).toContain('rgba(31, 39, 36, 0.14) 0px 12px 32px -12px');
-    expect(m.blur).toBe('blur(24px) saturate(1.8)');
+    expect(m.bg).toBe('rgba(255, 255, 255, 0.56)');
+    expect(m.radius).toBe('28px');
+    // rim: 1 px border, bright top/left .9, dim bottom/right .15; inner light; coloured shadow
+    expect(m.border).toBe('1px solid rgba(255, 255, 255, 0.9)');
+    expect(m.borderBottom).toBe('rgba(255, 255, 255, 0.15)');
+    expect(m.shadow).toContain('rgba(255, 255, 255, 0.7) 0px 1px 0px 0px inset');
+    expect(m.shadow).toContain('rgba(255, 255, 255, 0.4) 26px 26px 52px -30px inset');
+    expect(m.shadow).toContain('0px 10px 40px -12px');
+    expect(m.blur).toBe('blur(24px) saturate(1.8) brightness(1.05)');
     // no specular: iOS „Ganze Seite“ captures a gradient into transparency as black (PR #36)
     expect(m.image).toBe('none');
     expect([m.before, m.after]).toEqual(['none', 'none']);
-    // tiles: radius 20; their blur comes from the group layer, masked to the tiles
-    await expect(page.getByTestId('salary-tile')).toHaveCSS('border-top-left-radius', '20px');
+    // tiles: tinted glass (sky at .80), radius 22; their blur comes from the group layer, masked to the tiles
+    await expect(page.getByTestId('salary-tile')).toHaveCSS('border-top-left-radius', '22px');
+    await expect(page.getByTestId('salary-tile')).toHaveCSS('background-color', 'rgba(220, 235, 255, 0.8)');
     await expect(page.getByTestId('salary-tile')).toHaveCSS('backdrop-filter', 'none');
-    await expect(page.getByTestId('glass-group-blur')).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.8)');
+    await expect(page.getByTestId('glass-group-blur')).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.8) brightness(1.05)');
+    // hero: opaque gradient (two opaque stops), light edge, no backdrop blur
+    const h = page.getByTestId('hero');
+    await expect(h).toHaveCSS('backdrop-filter', 'none');
+    expect(await h.evaluate((el) => getComputedStyle(el).backgroundImage)).toMatch(/^linear-gradient\(135deg, rgb\(47, 67, 24\), rgb\(90, 122, 46\)\)$/);
+    await expect(h).toHaveCSS('border-top-color', 'rgba(255, 255, 255, 0.42)');
     expect(await page.getByTestId('glass-group-blur').evaluate((el) => el.style.maskImage)).toContain('data:image/svg+xml');
     // rows inside cards stay transparent, fields .85
     const row = page.locator('[data-testid="position-row"]').first();
     await expect(row).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
     if (!isSidebarLayout(page)) {
       await expect(page.getByTestId('tabbar-surface')).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.4)');
-      await expect(page.getByTestId('tabbar-surface')).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.8)');
+      await expect(page.getByTestId('tabbar-surface')).toHaveCSS('backdrop-filter', 'blur(24px) saturate(1.8) brightness(1.05)');
     } else {
       await expect(page.getByTestId('sidebar')).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.4)');
     }
@@ -132,15 +140,14 @@ test.describe('Liquid-Glass-Material', () => {
 
   test.describe('dunkel', () => {
     test.use({ colorScheme: 'dark' });
-    test('Fläche .48, Lichtkante mit halber Deckkraft', async ({ page }) => {
+    test('Fläche .76, Lichtkante .35 → .05', async ({ page }) => {
       await importLive(page, OKT_TODAY);
-      const hero = page.getByTestId('hero');
-      await expect(hero).toHaveCSS('background-color', 'rgba(28, 34, 30, 0.48)');
-      await expect(hero).toHaveCSS('border-top-color', 'rgba(255, 255, 255, 0.25)');
+      const hero = page.locator('[data-testid="category-group"]').first();
+      await expect(hero).toHaveCSS('background-color', 'rgba(28, 32, 28, 0.76)');
+      await expect(hero).toHaveCSS('border-top-color', 'rgba(255, 255, 255, 0.35)');
+      await expect(hero).toHaveCSS('border-bottom-color', 'rgba(255, 255, 255, 0.05)');
       const shadow = await hero.evaluate((el) => getComputedStyle(el).boxShadow);
-      expect(shadow).toContain('rgba(255, 255, 255, 0.4) 0px 1px 0px 0px inset');
-      // .125 is stored with 8 bits: 0.125 or 0.13
-      expect(shadow).toMatch(/rgba\(255, 255, 255, 0\.1[23]5?\) 0px -1px 0px 0px inset/);
+      expect(shadow).toContain('rgba(255, 255, 255, 0.18) 0px 1px 0px 0px inset');
     });
   });
 
@@ -162,7 +169,7 @@ test.describe('Liquid-Glass-Material', () => {
   test('Transparenz reduzieren: deckende Flächen, Lichtkante als feine Linie, kein Glanzpunkt, keine Körnung', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await reducedTransparency(page);
-    const hero = page.getByTestId('hero');
+    const hero = page.locator('[data-testid="category-group"]').first();
     await expect(hero).toHaveCSS('backdrop-filter', 'none');
     await expect(hero).toHaveCSS('background-color', 'rgb(255, 255, 255)');
     const m = await hero.evaluate((el) => ({
@@ -170,12 +177,15 @@ test.describe('Liquid-Glass-Material', () => {
       shadow: getComputedStyle(el).boxShadow,
       spec: getComputedStyle(el).backgroundImage,
       grain: getComputedStyle(document.body, '::after').display,
+      // Luxe 2: the grain is a background layer of the Aurora layers – gone with reduced transparency
+      meshGrain: [...document.querySelectorAll('.aurora-layer')].some((l) => getComputedStyle(l).backgroundImage.includes('svg')),
       blurred: [...document.querySelectorAll('*')].filter((e) => getComputedStyle(e).backdropFilter !== 'none').length,
     }));
     expect(m.rim).toBe('rgba(31, 39, 36, 0.12)');
     expect(m.shadow, 'no highlight').not.toContain('inset');
     expect(m.spec).toBe('none');
     expect(m.grain).toBe('none');
+    expect(m.meshGrain).toBe(false);
     expect(m.blurred).toBe(0);
     const nav = isSidebarLayout(page) ? page.getByTestId('sidebar') : page.getByTestId('tabbar-surface');
     await expect(nav).toHaveCSS('background-color', 'rgb(255, 255, 255)');

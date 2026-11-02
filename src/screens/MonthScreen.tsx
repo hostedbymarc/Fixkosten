@@ -1,4 +1,4 @@
-import { forwardRef, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
@@ -17,7 +17,7 @@ import { PositionFormSheet } from '../components/PositionFormSheet';
 import { PositionRow } from '../components/PositionRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
-import { fitStyle } from '../components/fitText';
+import { fitEm, fitStyle } from '../components/fitText';
 import { CountUp } from '../components/CountUp';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
@@ -65,6 +65,8 @@ import {
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import { calendarMonth, localToday } from '../lib/activeMonth';
+import { AMBIENT_ID, AMBIENT_MS } from '../lib/aurora';
+import { reducedMotion } from '../lib/entrance';
 import { MonthPicker } from '../components/MonthPicker';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
@@ -208,7 +210,18 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       <div className="grid gap-3 md:gap-4">
         <HeroCard period={period} figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
-        {/* getöntes Glas: the four tiles share one blur surface (GlassGroup) */}
+        {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
+            size – the one that fits the longest of them – so a row keeps one baseline */}
+        <TileFit.Provider
+          value={fitStyle(
+            longest([
+              netSalaryForPeriod(ds, period) === null ? '–' : formatEUR(netSalaryForPeriod(ds, period)!),
+              formatAvg(fixedCostsAvg(ds, period)),
+              figures.free === null ? '–' : formatEUR(figures.free),
+              formatEUR(figures.wealth),
+            ]),
+          )}
+        >
         <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
             ref={salaryTile}
@@ -231,6 +244,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           />
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
         </GlassGroup>
+        </TileFit.Provider>
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
@@ -509,6 +523,16 @@ function MonthHeader({
   );
 }
 
+/** The hero's colour fields drift for AMBIENT_MS after the screen comes in, then rest (Ruhe-Regel). */
+function driftHeroLights(host: HTMLElement | null) {
+  if (!host || reducedMotion()) return;
+  const moves = ['translate(70px, -26px)', 'translate(-80px, 30px)'];
+  const anims = [...host.querySelectorAll<HTMLElement>('.hero-light')].map((el, i) =>
+    el.animate([{ transform: 'translate(0, 0)' }, { transform: moves[i] ?? 'none' }], { duration: AMBIENT_MS, easing: 'cubic-bezier(0.3, 0.1, 0.2, 1)', fill: 'forwards', id: AMBIENT_ID }),
+  );
+  return () => anims.forEach((a) => a.cancel());
+}
+
 /** The month the hero showed last (module level: a swipe re-creates the hero). */
 const heroShown: { period: Period | null } = { period: null };
 
@@ -529,10 +553,12 @@ function HeroCard({
   useLayoutEffect(() => {
     heroShown.period = period;
   }, [period]);
+  const lights = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => driftHeroLights(lights.current), []);
   return (
     <div className="hero surface flex flex-col gap-5 p-6 md:flex-row md:items-center md:gap-8 md:p-7 lg:p-8" data-testid="hero">
       {/* two soft colour fields drifting slowly inside the tile (box-shadow glows, clipped) */}
-      <span className="hero-lights" aria-hidden="true">
+      <span ref={lights} className="hero-lights" aria-hidden="true">
         <span className="hero-light hero-light-a" />
         <span className="hero-light hero-light-b" />
         {shimmer && (
@@ -647,6 +673,10 @@ const tileValue = 'num num-display fit fit-tile mt-1.5 block';
 // phone: 11 px, slightly tight, so „im Ø-Monat € 1.035,83 ⓘ“ stays one line in a 2 × 2 tile
 const tileSub = 'mt-1.5 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[13px] lg:leading-5 lg:tracking-normal';
 
+/** Size of the tile numbers (src/components/fitText.ts), shared by the four tiles. */
+const TileFit = createContext<React.CSSProperties>({});
+const longest = (texts: string[]) => texts.reduce((a, b) => (fitEm(b) > fitEm(a) ? b : a));
+
 /** An amount inside a subline: never wraps in the middle. */
 function Amount({ children, strong, negative }: { children: React.ReactNode; strong?: boolean; negative?: boolean }) {
   // negative: red text token, the minus sign (U+2212) is part of the amount, so never colour only
@@ -667,7 +697,7 @@ const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: numbe
         <span className={tileLabel}>Netto-Gehalt</span>
         <span
           className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
-          style={fitStyle(salary === null ? '–' : formatEUR(salary))}
+          style={useContext(TileFit)}
           data-testid="salary-value"
         >
           {salary === null ? '–' : formatEUR(salary)}
@@ -684,7 +714,7 @@ function KpiTile({ label, value, children }: { label: string; value: string; chi
   return (
     <div className={`${tileClass} tone-butter`}>
       <span className={tileLabel}>{label}</span>
-      <span className={`${tileValue} text-ink`} style={fitStyle(value)} data-testid="kpi-value">
+      <span className={`${tileValue} text-ink`} style={useContext(TileFit)} data-testid="kpi-value">
         {value}
       </span>
       {children && <span className={tileSub}>{children}</span>}
@@ -758,7 +788,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         <span className={tileLabel}>Frei verfügbar</span>
         <span
           className={`${tileValue} ${value === null ? 'text-ink-faint' : value < 0 ? 'text-over' : 'text-ink'}`}
-          style={fitStyle(value === null ? '–' : formatEUR(value))}
+          style={useContext(TileFit)}
           data-testid="free-value"
           data-negative={value !== null && value < 0}
         >
@@ -806,7 +836,7 @@ function WealthTile({ wealth, notFromNet, rate }: { wealth: number; notFromNet: 
   return (
     <div className={`${tileClass} tone-lilac`} data-testid="wealth-tile">
       <span className={tileLabel}>Vermögensaufbau</span>
-      <span className={`${tileValue} text-ink`} style={fitStyle(formatEUR(wealth))} data-testid="wealth-value">
+      <span className={`${tileValue} text-ink`} style={useContext(TileFit)} data-testid="wealth-value">
         {formatEUR(wealth)}
       </span>
       {/* two fixed lines when part of it is not from the net salary; neither breaks inside */}

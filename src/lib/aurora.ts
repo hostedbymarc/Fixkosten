@@ -81,6 +81,9 @@ export const COMPOSITIONS: Record<Route, Composition> = {
 /** Drift on or off (the frame-time budget decides, see the PR: off when scrolling gets above 16 ms). */
 export const DRIFT = true;
 export const DRIFT_MS = 20_000;
+/** Ambient motion (drift, hero colour fields): this id, this long, then everything rests. */
+export const AMBIENT_ID = 'ambient';
+export const AMBIENT_MS = DRIFT_MS;
 export const FADE_MS = 600;
 /** Extra room around the viewport for the drift (vmax), every side. */
 const MARGIN_VMAX = 6;
@@ -248,6 +251,7 @@ export function initAurora() {
       // comes to rest softly
       easing: 'cubic-bezier(0.3, 0.1, 0.2, 1)',
       fill: 'forwards',
+      id: AMBIENT_ID,
     });
     if (document.hidden) drift.pause();
   }
@@ -293,9 +297,12 @@ export function initAurora() {
     // every CSS animation pauses with the page (index.css: :root[data-page-hidden])
     if (document.hidden) root.dataset.pageHidden = '';
     else delete root.dataset.pageHidden;
-    if (!drift) return;
-    if (document.hidden) drift.pause();
-    else if (drift.playState === 'paused') drift.play();
+    // and every ambient Web Animation (drift, hero colour fields)
+    for (const a of document.getAnimations()) {
+      if (a.id !== AMBIENT_ID) continue;
+      if (document.hidden && a.playState === 'running') a.pause();
+      else if (!document.hidden && a.playState === 'paused') a.play();
+    }
   });
   // theme (attribute or system) and size: repaint the shown composition
   let timer = 0;

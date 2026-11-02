@@ -106,9 +106,9 @@ test.describe('Audit: November 2026 (Golden Fixture)', () => {
       if (dark) await page.emulateMedia({ colorScheme: 'dark' });
       await importNovember(page);
       await expect(page.locator('[data-position="pos-lebensmittel"]').getByTestId('delta-chip')).toBeVisible();
-      // the dots of Investing (Mokka) and Sonstiges (Pflaume) are different colours
+      // the dots (Luxe 2: <Pea>) of Investing (Mokka) and Sonstiges (Pflaume) are different colours
       const dots = await page.getByTestId('category-group').evaluateAll((els) =>
-        Object.fromEntries(els.map((e) => [e.getAttribute('aria-label'), getComputedStyle(e.querySelector('[data-testid="group-toggle"] span[aria-hidden="true"].rounded-full')!).backgroundColor])),
+        Object.fromEntries(els.map((e) => [e.getAttribute('aria-label'), getComputedStyle(e.querySelector('[data-testid="group-toggle"] span.pea')!).backgroundColor])),
       );
       expect(new Set(Object.values(dots)).size, JSON.stringify(dots)).toBe(Object.keys(dots).length);
       await expectClean(page, 'main');

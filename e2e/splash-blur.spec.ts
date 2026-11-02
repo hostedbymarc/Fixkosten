@@ -157,7 +157,7 @@ async function contextFor(browser: Browser, testInfo: TestInfo, flags: Record<st
 async function still(page: Page) {
   await page.evaluate(async () => {
     await document.fonts.ready;
-    await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
+    await Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined)));
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   });
   await page.mouse.move(0, 0);

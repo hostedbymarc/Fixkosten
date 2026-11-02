@@ -34,7 +34,7 @@ async function settle(page: Page) {
   await appSettled(page);
   await page.evaluate(async () => {
     await document.fonts.ready;
-    await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
+    await Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined)));
   });
   await page.waitForTimeout(150);
 }
@@ -154,7 +154,10 @@ for (const scheme of ['light', 'dark'] as const) {
         }
       });
 
-      test(`${p.name}, Bildschirm: wie main (höchstens 3 % Pixel sichtbar anders)`, async ({ browser, page }, testInfo) => {
+      // Luxe 2 (redesign): the comparison with main (9eb9938) no longer applies – the screen is meant to
+      // look different. What stays: the screen renders the same every time (no flicker, no stray layer):
+      // the build opened twice, at most 3 % of the pixels visibly different.
+      test(`${p.name}, Bildschirm: zweimal geöffnet gleich (höchstens 3 % Pixel sichtbar anders)`, async ({ browser, page }, testInfo) => {
         test.skip(!/^(iphone-15|ipad-portrait|ipad-landscape|desktop|webkit-(iphone-15|ipad-portrait|ipad-landscape)-(light|dark))$/.test(testInfo.project.name), 'iPhone 15, iPad hoch und quer, Desktop 1440');
         test.setTimeout(120_000);
         expect(existsSync(join(MAIN, 'index.html')), 'build of main missing – run node scripts/build-legacy.mjs 9eb9938').toBe(true);
@@ -166,10 +169,10 @@ for (const scheme of ['light', 'dark'] as const) {
           await context.close();
           return png;
         };
-        const before = await shot(MAIN);
+        const before = await shot(null);
         const after = await shot(null);
         await page.goto('about:blank');
-        await testInfo.attach('main.png', { body: before, contentType: 'image/png' });
+        await testInfo.attach('erster.png', { body: before, contentType: 'image/png' });
         await testInfo.attach('neu.png', { body: after, contentType: 'image/png' });
         if (SHOTS) {
           mkdirSync(SHOTS, { recursive: true });
