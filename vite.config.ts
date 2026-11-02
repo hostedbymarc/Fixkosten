@@ -5,7 +5,6 @@ import react from '@vitejs/plugin-react';
 // Netlify sets COMMIT_REF during builds; locally the version reads "dev".
 const commit = process.env.COMMIT_REF?.slice(0, 7) || 'dev';
 const buildDate = new Date().toISOString();
-const glassDiagnose = process.env.CONTEXT === 'deploy-preview' || process.env.GLASS_DIAGNOSE === '1';
 
 export default defineConfig({
   plugins: [react()],
@@ -14,9 +13,6 @@ export default defineConfig({
     __APP_BUILD_DATE__: JSON.stringify(buildDate),
     // step log of the import for the import-hang harness only (src/lib/importTrace.ts)
     __IMPORT_TRACE__: JSON.stringify(process.env.ERBSE_IMPORT_TRACE === '1'),
-    // Diagnose-Seite /#diagnose-glas: only in Netlify deploy previews (or GLASS_DIAGNOSE=1);
-    // production builds drop it (scripts/check-bundle.mjs checks dist/)
-    __GLASS_DIAGNOSE__: JSON.stringify(glassDiagnose),
   },
   // the e2e/harness build gets source maps, so the import watchdog's stacks point into src/
   build: { sourcemap: process.env.ERBSE_IMPORT_TRACE === '1' },

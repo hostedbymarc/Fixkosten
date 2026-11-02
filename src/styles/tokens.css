@@ -66,9 +66,9 @@
   --field: rgba(255, 255, 255, 0.85);
   --scrim: rgba(31, 39, 36, 0.32);
 
-  /* Glas (Liquid Glass): fill per variant, static specular as a background layer of the surface,
-     rim = 1 px border + inset highlight, two-step shadow (dark: rim and highlight at half opacity).
-     Every gradient ends in the same colour at alpha 0, never `transparent` (black in iOS captures). */
+  /* Glas (Liquid Glass): flat fill per variant, rim = 1 px border + inset highlight, two-step shadow
+     (dark: rim and highlight at half opacity). No gradient on glass: iOS „Ganze Seite“ captures a
+     gradient into transparency as black, so there is no specular highlight. */
   --glass-bg: rgba(255, 255, 255, 0.52);
   --glass-strong-bg: rgba(255, 255, 255, 0.72);
   --glass-clear-bg: rgba(255, 255, 255, 0.4);
@@ -76,13 +76,10 @@
   --glass-edge-clear: rgba(255, 255, 255, 0.65); /* tab bar, sidebar, selection indicator */
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
   --glass-rim-solid: rgba(31, 39, 36, 0.12); /* Transparenz reduzieren: the rim as a fine line */
-  --glass-specular: rgba(255, 255, 255, 0.3);
-  --glass-specular-end: rgba(255, 255, 255, 0);
   --glass-pill-bg: rgba(255, 255, 255, 0.72); /* selection indicator in tab bar and sidebar */
   --glass-border: rgba(255, 255, 255, 0.65);
   --glass-shadow: 0 1px 1px rgba(31, 39, 36, 0.04), 0 12px 32px -12px rgba(31, 39, 36, 0.14);
   --glass-fallback: rgba(255, 255, 255, 0.92);
-  --glass-fallback-clear: rgba(255, 255, 255, 0); /* fade end: same colour, never `transparent` (black in iOS captures) */
   --glass-opaque: #ffffff;
   --shadow-sheet: 0 -8px 40px rgba(31, 39, 36, 0.14);
 
@@ -173,13 +170,10 @@
     --glass-edge-clear: rgba(255, 255, 255, 0.325);
     --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.125);
     --glass-rim-solid: rgba(255, 255, 255, 0.14);
-    --glass-specular: rgba(255, 255, 255, 0.04);
-    --glass-specular-end: rgba(255, 255, 255, 0);
     --glass-pill-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: 0 1px 1px rgba(0, 0, 0, 0.24), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
     --glass-fallback: rgba(28, 34, 30, 0.92);
-    --glass-fallback-clear: rgba(28, 34, 30, 0);
     --glass-opaque: #1c221e;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
     --nebel-base: #0e120f;
@@ -260,13 +254,10 @@
   --glass-edge-clear: rgba(255, 255, 255, 0.325);
   --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.125);
   --glass-rim-solid: rgba(255, 255, 255, 0.14);
-  --glass-specular: rgba(255, 255, 255, 0.04);
-  --glass-specular-end: rgba(255, 255, 255, 0);
   --glass-pill-bg: rgba(255, 255, 255, 0.1);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 1px 1px rgba(0, 0, 0, 0.24), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
   --glass-fallback: rgba(28, 34, 30, 0.92);
-  --glass-fallback-clear: rgba(28, 34, 30, 0);
   --glass-opaque: #1c221e;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
   --nebel-base: #0e120f;

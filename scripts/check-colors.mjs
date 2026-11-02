@@ -7,8 +7,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-// src/diagnose/glass-diagnose.css: the material of main (9eb9938) 1:1 for the Diagnose-Seite (deploy previews only)
-const ALLOWED = new Set(['src/styles/tokens.css', 'src/lib/categoryColors.ts', 'src/diagnose/glass-diagnose.css']);
+const ALLOWED = new Set(['src/styles/tokens.css', 'src/lib/categoryColors.ts']);
 const COLOR = /#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|\b(?:rgba?|hsla?)\(\s*[\d.]/;
 // the app is "Erbse"; "fixkosten" may only remain where renaming would lose data
 const OLD_NAME = /fixkosten/i;

@@ -6,13 +6,12 @@ import { appSettled, expect, FIXTURE, test, TODAY } from './fixtures';
 /**
  * Splash and blur apart (import hang of 31.10.2026): while the splash is there – also while it fades –
  * no visible element has a backdrop-filter, and the setup dialog only appears once the splash is
- * gone. The end image is the same as on main before the change (6e618fd, built by global-setup),
- * at most 1 % of the pixels visibly differ (more than 8 levels in a channel: since glass-layers.spec.ts
- * the specular is blended in the surface itself, which rounds a level or two differently over whole
- * surfaces; the rim is a border now).
+ * gone. The end image is the same as on main (9eb9938, built by global-setup): at most 1 % of the
+ * pixels visibly differ (more than 8 levels in a channel; renderers round blended surfaces a level or
+ * two differently).
  */
 
-const MAIN = resolve('.legacy/6e618fd/dist');
+const MAIN = resolve('.legacy/9eb9938/dist');
 
 /** Page side, before any app code: every frame while #splash exists, the visible elements with a backdrop-filter. */
 function watchSplash() {
@@ -214,9 +213,9 @@ async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<number> {
   );
 }
 
-test('Endbild nach dem Übergang wie auf main (6e618fd): Setup-Dialog und Monat, höchstens 1 % Pixel sichtbar anders', async ({ browser, page }, testInfo) => {
+test('Endbild nach dem Übergang wie auf main (9eb9938): Setup-Dialog und Monat, höchstens 1 % Pixel sichtbar anders', async ({ browser, page }, testInfo) => {
   test.setTimeout(120_000);
-  expect(existsSync(join(MAIN, 'index.html')), 'build of main missing – run node scripts/build-legacy.mjs 6e618fd').toBe(true);
+  expect(existsSync(join(MAIN, 'index.html')), 'build of main missing – run node scripts/build-legacy.mjs 9eb9938').toBe(true);
   const before = await endImages(browser, testInfo, MAIN);
   const after = await endImages(browser, testInfo, null);
   await page.goto('about:blank');

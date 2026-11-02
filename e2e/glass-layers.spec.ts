@@ -5,12 +5,13 @@ import { appSettled, expect, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // iOS Safari „Ganze Seite“ renders the SCREEN CSS (a dark-mode capture shows the dark colours) and
-// captured the transparent parts of the Liquid-Glass effect layers as black: in every glass surface
-// the specular ellipse was light, the rest black. The material now paints everything on the surface
-// itself (specular = a background layer, rim = border + inset highlight), without ::before/::after
-// and without mask. Playwright does not reproduce the iOS capture; what decides is that no transparent
-// effect layer exists any more (scripts/check-glass-layers.mjs, part of the build). These tests check
-// that the screen looks as before and that full-page captures show clean surfaces.
+// captured every gradient into transparency inside the glass as black: in every surface the specular
+// ellipse was light, the rest black – as a ::after layer and also as a background layer of the surface
+// (Diagnose-Seite on PR #36). The material is now a flat fill + rim (border + inset highlight), without
+// ::before/::after, mask or gradient. Playwright does not reproduce the iOS capture; what decides is
+// that no such layer or gradient exists any more (scripts/check-glass-layers.mjs, part of the build).
+// These tests check that the screen looks as before (apart from the specular) and that full-page
+// captures show clean surfaces.
 
 const MATERIAL = '.glass, .glass-strong, .glass-clear, .glass-tile, .glass-pill';
 const PAGES = [
@@ -153,7 +154,7 @@ for (const scheme of ['light', 'dark'] as const) {
         }
       });
 
-      test(`${p.name}, Bildschirm: wie main (höchstens 2 % Pixel sichtbar anders)`, async ({ browser, page }, testInfo) => {
+      test(`${p.name}, Bildschirm: wie main (höchstens 3 % Pixel sichtbar anders)`, async ({ browser, page }, testInfo) => {
         test.skip(!/^(iphone-15|ipad-portrait|ipad-landscape|desktop|webkit-(iphone-15|ipad-portrait|ipad-landscape)-(light|dark))$/.test(testInfo.project.name), 'iPhone 15, iPad hoch und quer, Desktop 1440');
         test.setTimeout(120_000);
         expect(existsSync(join(MAIN, 'index.html')), 'build of main missing – run node scripts/build-legacy.mjs 9eb9938').toBe(true);
@@ -180,7 +181,7 @@ for (const scheme of ['light', 'dark'] as const) {
         const { ratio, any } = await diffRatio(page, before, after);
         await testInfo.attach('diff.txt', { body: `> 8 Stufen: ${(ratio * 100).toFixed(3)} %, überhaupt anders: ${(any * 100).toFixed(3)} %` });
         console.log(`[glass-diff] ${testInfo.project.name} ${scheme} ${p.route}: ${(ratio * 100).toFixed(2)} % (any ${(any * 100).toFixed(2)} %)`);
-        expect(ratio, 'share of visibly differing pixels on screen').toBeLessThanOrEqual(0.02);
+        expect(ratio, 'share of visibly differing pixels on screen').toBeLessThanOrEqual(0.03);
       });
     }
   });
@@ -214,8 +215,7 @@ async function contextFor(browser: Browser, testInfo: TestInfo, scheme: 'light' 
 
 /**
  * Share of pixels that differ by more than 8 levels in a channel (visible), and of pixels that differ
- * at all (the specular now blends in the surface's own background instead of a layer above it:
- * rounding differs by a level or two over whole surfaces). Decoded in the browser.
+ * at all (renderers round blended surfaces a level or two differently). Decoded in the browser.
  */
 async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<{ ratio: number; any: number }> {
   return page.evaluate(

@@ -115,9 +115,8 @@ function surfaces(v: Record<string, string>) {
   // darkest: green centre with the darkest grain; lightest: plain base with the lightest grain
   const points: [RGB, RGB] = [grain(blob, 0, g), grain(base, 1, g)];
   const on = (layer: string) => points.map((p) => over(color(v, layer), p)) as [RGB, RGB];
-  // glass: fill over the background; the lightest point also carries the specular highlight (top left)
-  const glass = (layer: string, under: [RGB, RGB] = points) =>
-    [over(color(v, layer), under[0]), over(color(v, '--glass-specular'), over(color(v, layer), under[1]))] as [RGB, RGB];
+  // glass: the flat fill over the background (no specular highlight)
+  const glass = (layer: string, under: [RGB, RGB] = points) => [over(color(v, layer), under[0]), over(color(v, layer), under[1])] as [RGB, RGB];
   const card = glass('--glass-bg');
   // tab bar / sidebar: over the background or over a card scrolling below it
   const clearUnder: [RGB, RGB] = [over(color(v, '--glass-bg'), points[0]), card[1]];

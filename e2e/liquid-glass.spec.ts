@@ -79,7 +79,7 @@ async function scrollTo(page: Page, y: number) {
 test.describe('Liquid-Glass-Material', () => {
   // the material values below are the light ones (the dark ones: „dunkel“); the WebKit profiles also run dark
   test.use({ colorScheme: 'light' });
-  test('Karten, Kacheln, Sheets, Tab-Leiste: Fläche, Lichtkante, Glanzpunkt, Schatten, Radien', async ({ page }) => {
+  test('Karten, Kacheln, Sheets, Tab-Leiste: Fläche, Lichtkante, kein Verlauf, Schatten, Radien', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     const hero = page.getByTestId('hero');
     const m = await hero.evaluate((el) => {
@@ -87,7 +87,6 @@ test.describe('Liquid-Glass-Material', () => {
       return {
         bg: cs.backgroundColor,
         image: cs.backgroundImage,
-        origin: cs.backgroundOrigin,
         border: `${cs.borderTopWidth} ${cs.borderTopStyle} ${cs.borderTopColor}`,
         radius: cs.borderTopLeftRadius,
         shadow: cs.boxShadow,
@@ -106,9 +105,8 @@ test.describe('Liquid-Glass-Material', () => {
     expect(m.shadow).toContain('rgba(31, 39, 36, 0.04) 0px 1px 1px 0px');
     expect(m.shadow).toContain('rgba(31, 39, 36, 0.14) 0px 12px 32px -12px');
     expect(m.blur).toBe('blur(24px) saturate(1.8)');
-    // specular: a background layer of the surface over its fill, top left, over the border box
-    expect(m.image).toBe('radial-gradient(120% 60% at 20% 0%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 70%)');
-    expect(m.origin).toBe('border-box');
+    // no specular: iOS „Ganze Seite“ captures a gradient into transparency as black (PR #36)
+    expect(m.image).toBe('none');
     expect([m.before, m.after]).toEqual(['none', 'none']);
     // tiles: radius 20; their blur comes from the group layer, masked to the tiles
     await expect(page.getByTestId('salary-tile')).toHaveCSS('border-top-left-radius', '20px');

@@ -242,11 +242,12 @@ body::after {
      .glass        cards, hero, tiles, banner, toasts' content cards (radius 24, tiles 20 via .glass-tile)
      .glass-strong sheets, dialogs, menus, toasts (fill .72)
      .glass-clear  tab bar and sidebar (fill .40, stronger rim)
-     Everything is painted by the surface itself, no effect layers (::before/::after) and no mask:
-     iOS Safari „Ganze Seite“ captured the transparent parts of those layers as black (black surface
-     around a light specular ellipse). scripts/check-glass-layers.mjs keeps it that way.
-       fill      background colour
-       specular  a second background layer on the same element (radial, top left, over the border box)
+     Everything is painted by the surface itself: no effect layers (::before/::after), no mask and no
+     gradient. iOS Safari „Ganze Seite“ captures every gradient that runs into transparency as black,
+     whether a background layer or a pseudo-element (Diagnose-Seite on PR #36: a specular ellipse
+     fading to alpha 0 broke the capture, the same surface without it was clean, with or without
+     blur). So there is no specular highlight. scripts/check-glass-layers.mjs keeps it that way.
+       fill      flat background colour (--glass-fill)
        rim       1 px semi-transparent white border + inset highlight top/bottom (--glass-highlight)
        shadow    the two-step outer shadow (--glass-shadow)
      No refraction (SVG displacement in backdrop-filter): Safari does not support it.
@@ -260,7 +261,7 @@ body::after {
     position: relative;
     border: 1px solid var(--glass-edge);
     border-radius: var(--glass-r);
-    background: radial-gradient(120% 60% at 20% 0%, var(--glass-specular), var(--glass-specular-end) 70%) border-box var(--glass-fill);
+    background: var(--glass-fill);
     box-shadow: var(--glass-highlight), var(--glass-shadow);
   }
   .glass-strong {
