@@ -15,7 +15,8 @@ function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; sma
   const size = small ? 'h-[22px] w-[22px]' : 'h-[28px] w-[28px]';
   if (state === 'paid') {
     return (
-      <span className={`anim-check flex ${size} items-center justify-center rounded-full bg-paid text-paid-on`}>
+      // gefüllte Soft-3D-Erbse mit Häkchen; pops once (1 → 1.15 → 1) when it is ticked
+      <span className={`anim-check check-pea flex ${size} items-center justify-center rounded-full`}>
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

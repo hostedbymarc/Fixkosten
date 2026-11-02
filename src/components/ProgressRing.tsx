@@ -8,17 +8,19 @@ interface Props {
   size?: number;
   stroke?: number;
   label: string;
+  /** size classes (e.g. responsive); replaces `size` for the box, the drawing scales with it */
+  className?: string;
 }
 
 /** Month ring: brand on brand-100; a check replaces the percentage once everything is paid. */
-export function ProgressRing({ ratio, percent, done, size = 104, stroke = 10, label }: Props) {
+export function ProgressRing({ ratio, percent, done, size = 104, stroke = 10, label, className }: Props) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const clamped = Math.min(1, Math.max(0, ratio));
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label}>
-        <circle cx={size / 2} cy={size / 2} r={r} className="stroke-accent-soft" strokeWidth={stroke} fill="none" />
+    <div className={`relative shrink-0 ${className ?? ''}`} style={className ? undefined : { width: size, height: size }}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={label} className="block">
+        <circle cx={size / 2} cy={size / 2} r={r} className="ring-track stroke-accent-soft" strokeWidth={stroke} fill="none" />
         <circle
           cx={size / 2}
           cy={size / 2}

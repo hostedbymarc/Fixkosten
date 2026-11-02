@@ -29,12 +29,18 @@
   </head>
   <body>
     <!-- Lade-Animation at app start: visible before the JavaScript has loaded, styles in src/index.css,
-         faded out by src/lib/entrance.ts once the app is ready -->
+         faded out by src/lib/entrance.ts as soon as the data is there (no minimum duration).
+         Three Soft-3D peas pop in one after another, then bob in a wave until then. -->
     <div id="splash" aria-hidden="true">
-      <svg class="splash-mark" width="76" height="76" viewBox="0 0 28 28">
-        <circle class="splash-pea" cx="9" cy="14" r="3.4" />
-        <circle class="splash-pea" cx="14" cy="14" r="3.4" />
-        <circle class="splash-pea" cx="19" cy="14" r="3.4" />
+      <svg class="splash-mark" width="84" height="84" viewBox="0 0 28 28">
+        <defs>
+          <radialGradient id="splash-pea-1" cx=".36" cy=".32" r=".75" fx=".32" fy=".28"><stop offset="0" style="stop-color: var(--splash-glint)" /><stop offset=".5" style="stop-color: var(--pea-1)" /><stop offset="1" style="stop-color: var(--splash-rim)" /></radialGradient>
+          <radialGradient id="splash-pea-2" cx=".36" cy=".32" r=".75" fx=".32" fy=".28"><stop offset="0" style="stop-color: var(--splash-glint)" /><stop offset=".5" style="stop-color: var(--pea-2)" /><stop offset="1" style="stop-color: var(--splash-rim)" /></radialGradient>
+          <radialGradient id="splash-pea-3" cx=".36" cy=".32" r=".75" fx=".32" fy=".28"><stop offset="0" style="stop-color: var(--splash-glint)" /><stop offset=".5" style="stop-color: var(--pea-3)" /><stop offset="1" style="stop-color: var(--splash-rim)" /></radialGradient>
+        </defs>
+        <g class="splash-bob"><circle class="splash-pea" cx="8.5" cy="14" r="3.6" fill="url(#splash-pea-1)" /></g>
+        <g class="splash-bob"><circle class="splash-pea" cx="14" cy="14" r="3.4" fill="url(#splash-pea-2)" /></g>
+        <g class="splash-bob"><circle class="splash-pea" cx="19.3" cy="14" r="3.2" fill="url(#splash-pea-3)" /></g>
       </svg>
     </div>
     <script>
