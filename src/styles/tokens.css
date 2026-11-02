@@ -69,7 +69,7 @@
   /* Glas (Liquid Glass): flat fill per variant, rim = 1 px border + inset highlight, two-step shadow
      (dark: rim and highlight at half opacity). No gradient on glass: iOS „Ganze Seite“ captures a
      gradient into transparency as black, so there is no specular highlight. */
-  --glass-bg: rgba(255, 255, 255, 0.52);
+  --glass-bg: rgba(255, 255, 255, 0.5); /* Luxe 2: .42 asked, .50 for text contrast over the mesh */
   --glass-strong-bg: rgba(255, 255, 255, 0.72);
   --glass-clear-bg: rgba(255, 255, 255, 0.4);
   --glass-edge: rgba(255, 255, 255, 0.5); /* the rim: 1 px border */
@@ -188,6 +188,47 @@
   --check-ink: #ffffff;
   --shadow-check: 0 1px 2px rgba(60, 82, 31, 0.35);
   --fab-shadow: 0 2px 4px rgba(60, 82, 31, 0.24), 0 12px 28px -8px rgba(60, 82, 31, 0.55);
+
+  /* ── Luxe 2 ─────────────────────────────────────────────────────────────────────────────────
+     Aurora-Mesh: five soft colour fields over --mesh-base, painted into an OPAQUE bitmap by
+     src/lib/aurora.ts (never a CSS gradient into transparency: iOS „Ganze Seite“ captures those as
+     black). The composition per screen (place, size, alpha) lives in aurora.ts; the colours here. */
+  --mesh-base: #f4f5f1;
+  --mesh-brand: #7f9c4f; /* brand-400 */
+  --mesh-butter: #ffdd7a;
+  --mesh-peach: #ffb894;
+  --mesh-sky: #9cc4ff;
+  --mesh-lilac: #c6aeff;
+  --mesh-alpha: 1; /* light: the compositions use .35–.55 */
+  --mesh-reduced: 0.35; /* Transparenz reduzieren: the mesh much paler */
+  --grain-mesh: 0.05;
+
+  /* Liquid Glass 2.0 (values of .glass in index.css) */
+  --glass2-rim-light: rgba(255, 255, 255, 0.9); /* top and left edge */
+  --glass2-rim-dim: rgba(255, 255, 255, 0.15); /* bottom and right edge */
+  --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.4);
+  --glass2-contact: 0 1px 2px rgba(31, 39, 36, 0.06);
+  --glass2-tile-alpha: 0.55;
+  --hero-rim-light: rgba(255, 255, 255, 0.42);
+  --hero-rim-dim: rgba(255, 255, 255, 0.06);
+  --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+  /* Soft-3D-Erbse (<Pea>): every shade is derived from the pea's colour with color-mix(in oklch) */
+  --pea-c: #5a7a2e; /* default colour of a .pea (the component sets a token per pea) */
+  --pea-light: #ffffff;
+  --pea-dark: #000000;
+  --pea-rim-light: rgba(255, 255, 255, 0.35);
+  --pea-contact: rgba(20, 26, 22, 0.22);
+  --pea-logo: #f3f7ec; /* the very light green of the logo peas */
+  --pea-open-ring: rgba(31, 39, 36, 0.38);
+  --pea-open-inset: inset 0 1px 2px rgba(31, 39, 36, 0.12);
+
+  /* second tone of each tile family (tinted glass: light → this) */
+  --butter-2: 255 228 150;
+  --peach-2: 255 204 182;
+  --sky-2: 201 222 255;
+  --lilac-2: 221 208 255;
+  --pea-2: 214 228 190;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -228,7 +269,7 @@
     --edge: rgba(255, 255, 255, 0.16);
     --field: rgba(20, 26, 22, 0.85);
     --scrim: rgba(0, 0, 0, 0.5);
-    --glass-bg: rgba(28, 34, 30, 0.48);
+    --glass-bg: rgba(28, 32, 28, 0.62);
     --glass-strong-bg: rgba(28, 34, 30, 0.72);
     --glass-clear-bg: rgba(28, 34, 30, 0.4);
     --glass-edge: rgba(255, 255, 255, 0.25);
@@ -241,8 +282,8 @@
     --glass-fallback: rgba(28, 34, 30, 0.92);
     --glass-opaque: #1c221e;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
-    --nebel-base: #0e120f;
-    --nebel-base-rgb: 14 18 15;
+    --nebel-base: #121612;
+    --nebel-base-rgb: 18 22 18;
     --nebel-1: rgba(90, 122, 46, 0.16);
     --nebel-2: rgba(222, 206, 176, 0.04);
     --nebel-3: rgba(90, 122, 46, 0.1);
@@ -323,6 +364,36 @@
     --check-ink: #ffffff;
     --shadow-check: 0 1px 2px rgba(0, 0, 0, 0.45);
     --fab-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px -8px rgba(0, 0, 0, 0.6);
+    /* Luxe 2 */
+    --mesh-base: #121612;
+    --mesh-brand: #8fb34f;
+    --mesh-butter: #f5c542;
+    --mesh-peach: #ff9e7a;
+    --mesh-sky: #5f9dff;
+    --mesh-lilac: #a184ff;
+    --mesh-alpha: 0.55; /* dark: .20–.30 */
+    --mesh-reduced: 0.35;
+    --grain-mesh: 0.05;
+    --glass2-rim-light: rgba(255, 255, 255, 0.35);
+    --glass2-rim-dim: rgba(255, 255, 255, 0.05);
+    --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.08);
+    --glass2-contact: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --glass2-tile-alpha: 0.62;
+    --hero-rim-light: rgba(255, 255, 255, 0.3);
+    --hero-rim-dim: rgba(255, 255, 255, 0.04);
+    --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --pea-light: #ffffff;
+    --pea-dark: #000000;
+    --pea-rim-light: rgba(255, 255, 255, 0.28);
+    --pea-contact: rgba(0, 0, 0, 0.45);
+    --pea-logo: #f3f7ec;
+    --pea-open-ring: rgba(238, 241, 236, 0.42);
+    --pea-open-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    --butter-2: 74 56 8;
+    --peach-2: 92 38 20;
+    --sky-2: 24 52 98;
+    --lilac-2: 56 36 104;
+    --pea-2: 46 64 30;
   }
 }
 
@@ -363,7 +434,7 @@
   --edge: rgba(255, 255, 255, 0.16);
   --field: rgba(20, 26, 22, 0.85);
   --scrim: rgba(0, 0, 0, 0.5);
-  --glass-bg: rgba(28, 34, 30, 0.48);
+  --glass-bg: rgba(28, 32, 28, 0.62);
   --glass-strong-bg: rgba(28, 34, 30, 0.72);
   --glass-clear-bg: rgba(28, 34, 30, 0.4);
   --glass-edge: rgba(255, 255, 255, 0.25);
@@ -376,8 +447,8 @@
   --glass-fallback: rgba(28, 34, 30, 0.92);
   --glass-opaque: #1c221e;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
-  --nebel-base: #0e120f;
-  --nebel-base-rgb: 14 18 15;
+  --nebel-base: #121612;
+  --nebel-base-rgb: 18 22 18;
   --nebel-1: rgba(90, 122, 46, 0.16);
   --nebel-2: rgba(222, 206, 176, 0.04);
   --nebel-3: rgba(90, 122, 46, 0.1);
@@ -458,4 +529,34 @@
   --check-ink: #ffffff;
   --shadow-check: 0 1px 2px rgba(0, 0, 0, 0.45);
   --fab-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px -8px rgba(0, 0, 0, 0.6);
+  /* Luxe 2 */
+  --mesh-base: #121612;
+  --mesh-brand: #8fb34f;
+  --mesh-butter: #f5c542;
+  --mesh-peach: #ff9e7a;
+  --mesh-sky: #5f9dff;
+  --mesh-lilac: #a184ff;
+  --mesh-alpha: 0.55; /* dark: .20–.30 */
+  --mesh-reduced: 0.35;
+  --grain-mesh: 0.05;
+  --glass2-rim-light: rgba(255, 255, 255, 0.35);
+  --glass2-rim-dim: rgba(255, 255, 255, 0.05);
+  --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.08);
+  --glass2-contact: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --glass2-tile-alpha: 0.62;
+  --hero-rim-light: rgba(255, 255, 255, 0.3);
+  --hero-rim-dim: rgba(255, 255, 255, 0.04);
+  --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --pea-light: #ffffff;
+  --pea-dark: #000000;
+  --pea-rim-light: rgba(255, 255, 255, 0.28);
+  --pea-contact: rgba(0, 0, 0, 0.45);
+  --pea-logo: #f3f7ec;
+  --pea-open-ring: rgba(238, 241, 236, 0.42);
+  --pea-open-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  --butter-2: 74 56 8;
+  --peach-2: 92 38 20;
+  --sky-2: 24 52 98;
+  --lilac-2: 56 36 104;
+  --pea-2: 46 64 30;
 }

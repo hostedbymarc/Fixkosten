@@ -28,9 +28,10 @@ function files(dir) {
 
 const MATERIAL = /\.glass(?:-[a-z]+)*(?![\w-])/;
 // token values of every theme: a stop is opaque only if the token is opaque in all of them
-const tokenCss = readFileSync('src/styles/tokens.css', 'utf8');
+// tokens.css plus the derived custom properties of index.css (e.g. the Pea shades from --pea-c)
+const tokenCss = readFileSync('src/styles/tokens.css', 'utf8') + readFileSync('src/index.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const tokenValues = new Map();
-for (const [, name, value] of tokenCss.matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+for (const [, name, value] of tokenCss.matchAll(/(--[\w-]+):\s*([^;{}]+);/g)) {
   if (!tokenValues.has(name)) tokenValues.set(name, []);
   tokenValues.get(name).push(value.trim());
 }
@@ -38,12 +39,13 @@ function opaqueValue(v, depth = 0) {
   if (depth > 6) return false;
   v = v.trim();
   if (/^#[0-9a-f]{6}$/i.test(v)) return true;
+  if (/^rgb\(var\(--brand-\d+\)\)$/.test(v)) return true;
   if (/^\d+ \d+ \d+$/.test(v)) return true;
   let m = /^var\((--[\w-]+)\)$/.exec(v);
   if (m) return (tokenValues.get(m[1]) ?? ['transparent']).every((t) => opaqueValue(t, depth + 1));
   m = /^rgb\(var\((--[\w-]+)\)\)$/.exec(v);
   if (m) return (tokenValues.get(m[1]) ?? ['transparent']).every((t) => /^\d+ \d+ \d+$/.test(t.trim()) || opaqueValue(t, depth + 1));
-  m = /^color-mix\(in srgb,\s*(.+)\)$/.exec(v);
+  m = /^color-mix\(in (?:srgb|oklch|oklab),\s*(.+)\)$/s.exec(v);
   if (m) {
     // split the two colours at the top-level comma, drop a trailing percentage
     let d = 0;

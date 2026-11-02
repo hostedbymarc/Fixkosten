@@ -39,7 +39,7 @@ export const MonthNoteCard = forwardRef<HTMLButtonElement, { period: Period; not
         type="button"
         onClick={onOpen}
         aria-label={note ? `Notiz ${periodLabel(period)} bearbeiten` : `Notiz für ${monthName(period)} hinzufügen`}
-        className="tile tone-peach surface press focus-ring flex min-h-11 w-full items-start gap-3 px-5 py-4 text-left"
+        className="glass glass-tile tone-peach surface press focus-ring flex min-h-11 w-full items-start gap-3 px-5 py-4 text-left"
         data-testid="note-card"
       >
         {note ? (

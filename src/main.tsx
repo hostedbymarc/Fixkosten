@@ -6,11 +6,13 @@ import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { hideSplash } from './lib/entrance';
 import { testFlag } from './lib/importTrace';
+import { initAurora } from './lib/aurora';
 import { initNebel } from './lib/nebel';
 import { initTheme } from './lib/theme';
 
 initTheme();
 initNebel();
+initAurora();
 // reference image of e2e/splash-blur.spec.ts (test build only): the app starts without the splash
 if (testFlag('noSplash')) {
   document.getElementById('splash')?.remove();
