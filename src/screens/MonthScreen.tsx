@@ -3,6 +3,8 @@ import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
+import { GlassGroup } from '../components/GlassGroup';
+import { Pea } from '../components/Pea';
 import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
@@ -205,7 +207,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       <div className="grid gap-3 md:gap-4">
         <HeroCard figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {/* getöntes Glas: the four tiles share one blur surface (GlassGroup) */}
+        <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
             ref={salaryTile}
             period={period}
@@ -226,7 +229,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             onOpen={() => openClose(closeTile.current)}
           />
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
-        </div>
+        </GlassGroup>
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
@@ -601,7 +604,7 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
  * number directly below, at most one short subline. Content is top-aligned; the
  * grid stretches tiles of a row to the same height, so the numbers share a baseline.
  */
-const tileClass = 'tile surface press fit-box flex min-w-0 flex-col items-stretch justify-start p-4 text-left md:p-5 lg:p-6';
+const tileClass = 'glass glass-tile surface press fit-box flex min-w-0 flex-col items-stretch justify-start p-4 text-left md:p-5 lg:p-6';
 const tileLabel = 'block truncate text-[13px] font-medium leading-5 text-ink-mute';
 // Kachel-Zahl: 28 px (34 px from desktop), smaller for long amounts (fit), never cut
 const tileValue = 'num num-display fit fit-tile mt-1.5 block';
@@ -818,7 +821,7 @@ function GroupCard({
   const allPaid = tally.count > 0 && tally.openCount === 0;
   const status = `${savings ? 'Vermögensaufbau · ' : ''}${allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}`;
   return (
-    <section className="card surface overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
+    <section className="glass surface overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
       <Disclosure
         expanded={!collapsed}
         onToggle={onToggleCollapsed}
@@ -829,7 +832,7 @@ function GroupCard({
         header={
           <>
             {/* Soft-3D-Erbse in the category colour */}
-            <span className="pea-dot h-3.5 w-3.5" style={{ '--dot': categoryColor(group.category.color) } as React.CSSProperties} aria-hidden="true" />
+            <Pea size={16} color={categoryColor(group.category.color)} />
             {/* fixed grid: left name / status, right sum / Ø; every cell one line, long names end in an ellipsis */}
             <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
               <span className="truncate text-[15px] font-semibold leading-6 text-ink" data-testid="group-name">
@@ -890,7 +893,7 @@ function OpenFromPrevious({
   const title = groups.length === 1 ? `Offen aus ${monthName(groups[0]!.period)}` : 'Offen aus Vormonaten';
   const contentId = useId();
   return (
-    <section className="card surface mb-3 overflow-hidden" aria-label={title} data-testid="open-previous">
+    <section className="glass surface mb-3 overflow-hidden" aria-label={title} data-testid="open-previous">
       <button
         type="button"
         aria-expanded={expanded}
@@ -1003,7 +1006,7 @@ function UpcomingList({ items }: { items: DueItem[] }) {
   }, [items, all]);
   const hidden = items.length - UPCOMING_PHONE;
   return (
-    <div className="card surface overflow-hidden">
+    <div className="glass surface overflow-hidden">
       <ul ref={list} className="divide-y divide-line" data-testid="upcoming-list" data-stacked={stacked || undefined}>
         {items.map((item, i) => (
           <li
@@ -1048,5 +1051,5 @@ function UpcomingList({ items }: { items: DueItem[] }) {
 }
 
 function EmptyCard({ children }: { children: React.ReactNode }) {
-  return <div className="card surface px-5 py-5 text-[14px] text-ink-mute">{children}</div>;
+  return <div className="glass surface px-5 py-5 text-[14px] text-ink-mute">{children}</div>;
 }

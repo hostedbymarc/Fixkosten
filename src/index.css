@@ -61,7 +61,8 @@ body::after {
 body::before {
   z-index: -2;
   background-color: var(--nebel-base);
-  background-image: var(--nebel-image, none);
+  /* Luxe 2: the Aurora-Mesh (#aurora, src/lib/aurora.ts) replaces the Nebel bitmap */
+  background-image: none;
   background-repeat: no-repeat;
   background-position: left top;
   background-size: 100% 660px;
@@ -89,6 +90,8 @@ body::before {
   --grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.06 0 0 0 0.47 0.06 0 0 0 0.47 0.06 0 0 0 0.47 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 body::after {
+  /* Luxe 2: the grain lives on the Aurora layers */
+  display: none;
   z-index: -1;
   background-color: var(--nebel-base);
   background-image: var(--grain-image), var(--nebel-image, none);
@@ -96,6 +99,55 @@ body::after {
   background-repeat: repeat, no-repeat;
   background-position: left top, left top;
   background-size: 256px 256px, 100% 660px;
+}
+
+/* Aurora-Mesh (Luxe 2): two fixed, OPAQUE bitmap layers painted by src/lib/aurora.ts (one per screen
+   composition, cross-faded by opacity), with the paper grain blended in as one more background layer
+   (soft-light at --grain-mesh). Larger than the viewport by 6 vmax on every side for the drift. */
+:root {
+  --grain-mesh-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.05 0 0 0 0.475 0.05 0 0 0 0.475 0.05 0 0 0 0.475 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+#aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--mesh-base);
+}
+.aurora-layer {
+  position: absolute;
+  left: -6vmax;
+  top: -6vmax;
+  width: calc(100% + 12vmax);
+  height: calc(100% + 12vmax);
+  opacity: 0;
+  background-color: var(--mesh-base);
+  background-image: var(--grain-mesh-image), var(--aurora-image, none);
+  background-blend-mode: soft-light, normal;
+  background-repeat: repeat, no-repeat;
+  background-size: 256px 256px, 100% 100%;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .aurora-layer {
+    background-image: var(--aurora-image, none);
+  }
+}
+
+/* Glass 2.0: the coloured shadow follows the screen (src/lib/aurora.ts sets data-aurora on <html>) */
+:root {
+  --glass-tint: var(--mesh-butter);
+  --glass2-shadow: 0 10px 40px -12px color-mix(in oklch, color-mix(in oklch, var(--mesh-brand), var(--glass-tint)) 25%, transparent);
+  --hero-glow: 0 14px 44px -14px color-mix(in oklch, color-mix(in oklch, var(--mesh-brand) 70%, var(--glass-tint)) 45%, transparent);
+}
+:root[data-aurora='positionen'] {
+  --glass-tint: var(--mesh-sky);
+}
+:root[data-aurora='analyse'] {
+  --glass-tint: var(--mesh-lilac);
+}
+:root[data-aurora='einstellungen'] {
+  --glass-tint: var(--mesh-brand);
 }
 
 /* Oberer Rand – the one place for the status bar area (no per-screen copies).
@@ -172,6 +224,7 @@ body::after {
   body::before,
   body::after,
   #root::before,
+  #aurora,
   #splash {
     display: none !important;
   }
@@ -253,16 +306,23 @@ body::after {
      No refraction (SVG displacement in backdrop-filter): Safari does not support it.
      Blur: always on .glass-strong / .glass-clear; on cards only with [data-blur], which
      src/lib/glassBudget.ts grants to at most 8 surfaces per screen (the visible ones first). */
+  /* Liquid Glass 2.0 (Luxe 2), still painted by the surface itself:
+       rim       the 1 px border, bright top/left (.9) and dim bottom/right (.15): the corners blend
+                 the two diagonally – a light edge from top left to bottom right without a gradient
+       light     inset 1 px line at the top + a wide, soft inset glow from the top left (an inset
+                 shadow, not a radial gradient into transparency)
+       shadow    coloured: brand mixed with the screen's dominant mesh colour (--glass-tint), .25 */
   .glass,
   .glass-strong,
   .glass-clear {
-    --glass-r: 24px;
+    --glass-r: var(--r-lg);
     --glass-fill: var(--glass-bg);
     position: relative;
-    border: 1px solid var(--glass-edge);
+    border: 1px solid;
+    border-color: var(--glass2-rim-light) var(--glass2-rim-dim) var(--glass2-rim-dim) var(--glass2-rim-light);
     border-radius: var(--glass-r);
     background: var(--glass-fill);
-    box-shadow: var(--glass-highlight), var(--glass-shadow);
+    box-shadow: var(--glass2-inner), var(--glass2-contact), var(--glass2-shadow);
   }
   .glass-strong {
     --glass-fill: var(--glass-strong-bg);
@@ -272,14 +332,24 @@ body::after {
     border-color: var(--glass-edge-clear);
   }
   .glass-tile {
-    --glass-r: 20px;
+    --glass-r: var(--r-sm);
   }
   .glass-strong,
   .glass-clear,
   .glass[data-blur],
   .glass-group-blur[data-blur] {
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(180%) brightness(1.05);
+    backdrop-filter: blur(var(--glass-blur, 24px)) saturate(180%) brightness(1.05);
+  }
+  /* getöntes Glas (KPI tiles, note): the family's pastel at --glass2-tile-alpha, the second tone of
+     the family as a soft inset glow from the bottom right (reads as a two-tone gradient) */
+  .glass:is(.tone-butter, .tone-peach, .tone-sky, .tone-lilac, .tone-pea) {
+    background: rgb(var(--tone) / var(--glass2-tile-alpha));
+    box-shadow:
+      var(--glass2-inner),
+      inset -36px -36px 64px -36px rgb(var(--tone-2) / 0.9),
+      var(--glass2-contact),
+      var(--glass2-shadow);
   }
   /* no nested blur: a surface inside another surface never blurs */
   :is(.glass, .glass-strong, .glass-clear) :is(.glass, .glass-strong, .glass-clear, .glass-group-blur) {
@@ -419,12 +489,18 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear, .glass-group-bl
 body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
   background-color: var(--glass-fallback);
 }
+body[data-sheets] #root .glass:is(.tone-butter, .tone-peach, .tone-sky, .tone-lilac, .tone-pea) {
+  background-color: rgb(var(--tone));
+}
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
   .glass-strong,
   .glass-clear {
     background-color: var(--glass-fallback);
+  }
+  .glass:is(.tone-butter, .tone-peach, .tone-sky, .tone-lilac, .tone-pea) {
+    background: rgb(var(--tone));
   }
 }
 
@@ -441,6 +517,9 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
   .glass-strong,
   .glass-clear {
     background: var(--glass-opaque);
+  }
+  .glass:is(.tone-butter, .tone-peach, .tone-sky, .tone-lilac, .tone-pea) {
+    background: rgb(var(--tone));
   }
   .glass,
   .glass-strong,
@@ -506,7 +585,10 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
     border-radius: var(--r-lg);
     background-color: var(--hero-to);
     background-image: linear-gradient(135deg, var(--hero-from), var(--hero-to));
-    box-shadow: var(--hero-shadow);
+    /* Luxe 2: light edge (bright top left → dim bottom right, solid colours) + coloured shadow */
+    border: 1px solid;
+    border-color: var(--hero-rim-light) var(--hero-rim-dim) var(--hero-rim-dim) var(--hero-rim-light);
+    box-shadow: var(--hero-inner), var(--glass2-contact), var(--hero-glow);
     color: rgb(var(--hero-ink));
     /* everything inside reads the hero's inks (ring, InfoTip, divider) */
     --c-ink: var(--hero-ink);
@@ -552,26 +634,31 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
     color: rgb(var(--tone-ink));
   }
   .tone-butter {
+    --tone-2: var(--butter-2);
     --tone: var(--butter);
     --tone-ink: var(--butter-ink);
     --tone-ink-soft: var(--butter-ink-soft);
   }
   .tone-peach {
+    --tone-2: var(--peach-2);
     --tone: var(--peach);
     --tone-ink: var(--peach-ink);
     --tone-ink-soft: var(--peach-ink-soft);
   }
   .tone-sky {
+    --tone-2: var(--sky-2);
     --tone: var(--sky);
     --tone-ink: var(--sky-ink);
     --tone-ink-soft: var(--sky-ink-soft);
   }
   .tone-lilac {
+    --tone-2: var(--lilac-2);
     --tone: var(--lilac);
     --tone-ink: var(--lilac-ink);
     --tone-ink-soft: var(--lilac-ink-soft);
   }
   .tone-pea {
+    --tone-2: var(--pea-2);
     --tone: var(--pea);
     --tone-ink: var(--pea-ink);
     --tone-ink-soft: var(--pea-ink-soft);
@@ -626,6 +713,117 @@ body[data-sheets] #root :is(.glass, .glass-strong, .glass-clear) {
   .hero-chip:not([data-on]) {
     background-color: rgb(var(--hero-chip-solid));
   }
+}
+
+/* Soft-3D-Material <Pea> (src/components/Pea.tsx): matte, inflated, like soft rubber or clay.
+   Every shade comes from the pea's own colour (--pea-c) via color-mix(in oklab) – not oklch: mixing
+   with white or black in oklch interpolates the hue of an achromatic colour and tints light peas
+   pink (seen on the logo); oklab has no hue to interpolate. Sizes in em of
+   --pea-size (font-size), so the volume scales with the pea. Built from OPAQUE layers only: the soft
+   light top left is part of the body's radial gradient (no ::before fading into transparency, which
+   iOS „Ganze Seite“ would capture as black); volume and shadows are box-shadows. */
+.pea {
+  --pea-hi: color-mix(in oklab, var(--pea-c), var(--pea-light) 58%);
+  --pea-mid: color-mix(in oklab, var(--pea-c), var(--pea-light) 24%);
+  --pea-lo: color-mix(in oklab, var(--pea-c), var(--pea-dark) 30%);
+  --pea-lx: 35%;
+  --pea-ly: 30%;
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-size: var(--pea-size, 24px);
+  border-radius: 50% / 48%;
+  background-color: var(--pea-c);
+  /* body: soft light (lightened tone, a wide ellipse top left) → the colour at 45 % → darker rim */
+  background-image: radial-gradient(
+    ellipse 118% 108% at var(--pea-lx) var(--pea-ly),
+    var(--pea-hi) 0%,
+    var(--pea-mid) 20%,
+    var(--pea-c) 45%,
+    var(--pea-lo) 100%
+  );
+  box-shadow:
+    inset 0 -0.08em 0.15em var(--pea-lo),
+    inset 0 0.06em 0.12em var(--pea-rim-light),
+    0 0.12em 0.3em -0.04em color-mix(in oklab, var(--pea-lo) 45%, transparent),
+    0 0.03em 0.06em var(--pea-contact);
+  transition: transform 120ms ease-out;
+}
+/* under 16 px: no soft light, no drop shadow */
+.pea[data-flat] {
+  background-image: radial-gradient(circle at var(--pea-lx) var(--pea-ly), var(--pea-mid) 0%, var(--pea-c) 50%, var(--pea-lo) 100%);
+  box-shadow: inset 0 -0.08em 0.12em var(--pea-lo);
+}
+/* pressed: a little smaller, the light moves a bit towards the centre */
+.pea[data-state='pressed'],
+button:active > .pea[data-pressable] {
+  transform: scale(0.97);
+  --pea-lx: 40%;
+  --pea-ly: 36%;
+}
+.pea-check {
+  width: 0.5em;
+  height: 0.5em;
+  overflow: visible;
+}
+/* the tick looks slightly embossed: a darker copy just below it */
+.pea-check .emboss {
+  stroke: var(--pea-lo);
+}
+.pea-open {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  font-size: var(--pea-size, 24px);
+  border-radius: 50% / 48%;
+  border: 2px dashed var(--pea-open-ring);
+  box-shadow: var(--pea-open-inset);
+}
+
+/* Logo (src/components/Logo.tsx): the square has Soft-3D volume of its own – a soft light at the
+   top in an opaque gradient, an inner shadow at the bottom, a coloured shadow below. */
+.logo {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  font-size: var(--logo-size, 28px);
+  border-radius: 28.57%;
+  background-color: var(--logo-bottom);
+  background-image: radial-gradient(
+    ellipse 120% 90% at 38% 0%,
+    color-mix(in oklab, var(--logo-top), var(--pea-light) 18%) 0%,
+    var(--logo-top) 38%,
+    var(--logo-bottom) 100%
+  );
+  box-shadow:
+    inset 0 0.04em 0.06em var(--logo-edge),
+    inset 0 -0.06em 0.14em color-mix(in oklab, var(--logo-bottom), var(--pea-dark) 35%),
+    0 0.08em 0.24em -0.04em color-mix(in oklab, var(--logo-bottom) 45%, transparent),
+    0 0.02em 0.04em var(--pea-contact);
+}
+.logo[data-icon] {
+  box-shadow:
+    inset 0 0.04em 0.06em var(--logo-edge),
+    inset 0 -0.06em 0.14em color-mix(in oklab, var(--logo-bottom), var(--pea-dark) 35%);
+}
+.logo[data-bleed] {
+  border-radius: 0;
+  box-shadow: none;
+}
+.logo[data-flat] {
+  background-image: none;
+  background-color: var(--logo-flat);
+  box-shadow: none;
+}
+.logo-pea {
+  position: absolute;
 }
 
 @keyframes check-pop {
