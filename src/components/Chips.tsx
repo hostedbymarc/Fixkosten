@@ -68,7 +68,7 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[12px] font-medium ${tones[tone]}`}
+      className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-full px-2 text-[12px] font-medium ${tones[tone]}`}
     >
       {/* "kommt bald" is never colour alone: amber plus the clock */}
       {tone === 'warn' && <ClockIcon size={12} className="text-warn-icon" strokeWidth={2.2} />}
