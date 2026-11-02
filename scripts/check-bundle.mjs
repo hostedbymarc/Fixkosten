@@ -36,6 +36,7 @@ const testOnly = [
   '[import-trace]',
   '__importTrace',
   '__erbseDb',
+  '__erbseTestFlags',
   '__idb',
   'import-hang',
   'ImportWatchdog',

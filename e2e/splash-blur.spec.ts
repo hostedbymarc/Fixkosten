@@ -1,17 +1,18 @@
-import { existsSync, statSync } from 'node:fs';
-import { join, resolve } from 'node:path';
-import type { Browser, BrowserContext, Page, TestInfo } from '@playwright/test';
+import type { Browser, Page, TestInfo } from '@playwright/test';
 import { appSettled, expect, FIXTURE, test, TODAY } from './fixtures';
 
 /**
  * Splash and blur apart (import hang of 31.10.2026): while the splash is there – also while it fades –
  * no visible element has a backdrop-filter, and the setup dialog only appears once the splash is
- * gone. The end image is the same as on main (9eb9938, built by global-setup): at most 1 % of the
- * pixels visibly differ (more than 8 levels in a channel; renderers round blended surfaces a level or
- * two differently).
+ * gone. The end image after the splash is the same as the Monat screen of the same build loaded
+ * without a splash (test flag noSplash, src/lib/importTrace.ts): same viewport, theme and data, at
+ * most 1 % of the pixels visibly differ (more than 8 levels in a channel), and the same surfaces
+ * blur with the same values (computed backdrop-filter of every visible element). The second part is
+ * needed: Playwright's WebKit keeps backdrop-filter in the computed style but paints the backdrop
+ * sharp, so pixels alone cannot see a missing blur there (in Chromium a missing blur changes only
+ * about 1 % of the Monat screen). Counter-check: with the blur coming back late (test flag lateBlur)
+ * the same comparison fails.
  */
-
-const MAIN = resolve('.legacy/9eb9938/dist');
 
 /** Page side, before any app code: every frame while #splash exists, the visible elements with a backdrop-filter. */
 function watchSplash() {
@@ -135,8 +136,8 @@ test.describe('Splash und Blur entzerrt', () => {
   });
 });
 
-/** A context like the test's own (device, scheme, locale), serving `dir` when given (the build of main). */
-async function contextFor(browser: Browser, testInfo: TestInfo, dir: string | null): Promise<BrowserContext> {
+/** A context like the test's own (device, scheme, locale), with the given test flags set before any app code. */
+async function contextFor(browser: Browser, testInfo: TestInfo, flags: Record<string, boolean>) {
   const u = testInfo.project.use;
   const context = await browser.newContext({
     baseURL: u.baseURL,
@@ -149,15 +150,7 @@ async function contextFor(browser: Browser, testInfo: TestInfo, dir: string | nu
     timezoneId: u.timezoneId,
     serviceWorkers: 'block',
   });
-  if (dir) {
-    await context.route('**/*', async (route) => {
-      const url = new URL(route.request().url());
-      if (!['localhost', '127.0.0.1'].includes(url.hostname)) return route.continue();
-      let file = join(dir, decodeURIComponent(url.pathname));
-      if (!existsSync(file) || statSync(file).isDirectory()) file = join(dir, 'index.html');
-      await route.fulfill({ path: file });
-    });
-  }
+  await context.addInitScript((f) => ((window as unknown as { __erbseTestFlags: Record<string, boolean> }).__erbseTestFlags = f), flags);
   return context;
 }
 
@@ -170,23 +163,43 @@ async function still(page: Page) {
   await page.mouse.move(0, 0);
 }
 
-/** The two end images: setup dialog on first start, Monat after the import. */
-async function endImages(browser: Browser, testInfo: TestInfo, dir: string | null): Promise<[Buffer, Buffer]> {
-  const context = await contextFor(browser, testInfo, dir);
+/**
+ * The Monat screen after a fresh start with data: import on first start, then reload. With noSplash
+ * the reload comes up without the splash (reference); otherwise through the splash and its fade.
+ */
+interface EndImage {
+  shot: Buffer;
+  /** visible elements with a backdrop-filter, as `testid|class: filter`, sorted */
+  blur: string[];
+}
+
+async function monatAfterStart(browser: Browser, testInfo: TestInfo, flags: Record<string, boolean>): Promise<EndImage> {
+  const context = await contextFor(browser, testInfo, flags);
   const page = await context.newPage();
   await page.clock.setFixedTime(TODAY);
   await page.goto('/');
-  await expect(page.getByTestId('setup-dialog')).toBeVisible();
-  await expect(page.locator('#splash')).toHaveCount(0);
-  await still(page);
-  const setup = await page.screenshot();
   await page.getByTestId('import-file').setInputFiles(FIXTURE);
   await expect(page.getByTestId('hero')).toBeVisible();
   await appSettled(page);
+  await page.reload();
+  await expect(page.getByTestId('hero')).toBeVisible();
+  await expect(page.locator('#splash')).toHaveCount(0);
+  await appSettled(page);
   await still(page);
-  const month = await page.screenshot();
+  const shot = await page.screenshot();
+  const blur = await page.evaluate(() =>
+    [...document.querySelectorAll('*')]
+      .flatMap((el) => {
+        const s = getComputedStyle(el);
+        const f = s.backdropFilter || (s as unknown as Record<string, string>).webkitBackdropFilter || 'none';
+        const r = el.getBoundingClientRect();
+        const visible = s.visibility !== 'hidden' && s.display !== 'none' && r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight;
+        return f !== 'none' && visible ? [`${el.getAttribute('data-testid') ?? String(el.className)}: ${f}`] : [];
+      })
+      .sort(),
+  );
   await context.close();
-  return [setup, month];
+  return { shot, blur };
 }
 
 /** Share of pixels that differ by more than 8 levels in a channel (decoded in the browser: no image library needed). */
@@ -213,17 +226,34 @@ async function diffRatio(page: Page, a: Buffer, b: Buffer): Promise<number> {
   );
 }
 
-test('Endbild nach dem Übergang wie auf main (9eb9938): Setup-Dialog und Monat, höchstens 1 % Pixel sichtbar anders', async ({ browser, page }, testInfo) => {
-  test.setTimeout(120_000);
-  expect(existsSync(join(MAIN, 'index.html')), 'build of main missing – run node scripts/build-legacy.mjs 9eb9938').toBe(true);
-  const before = await endImages(browser, testInfo, MAIN);
-  const after = await endImages(browser, testInfo, null);
+/** Pixels (share visibly different) and blur (same surfaces, same values) of an end image against the reference. */
+async function compare(page: Page, testInfo: TestInfo, name: string, reference: EndImage, image: EndImage) {
   await page.goto('about:blank');
-  for (const [i, name] of ['setup', 'monat'].entries()) {
-    await testInfo.attach(`${name}-main.png`, { body: before[i]!, contentType: 'image/png' });
-    await testInfo.attach(`${name}-neu.png`, { body: after[i]!, contentType: 'image/png' });
-    const ratio = await diffRatio(page, before[i]!, after[i]!);
-    await testInfo.attach(`${name}-diff.txt`, { body: `${(ratio * 100).toFixed(3)} %` });
-    expect(ratio, `${name}: share of differing pixels`).toBeLessThanOrEqual(0.01);
-  }
+  await testInfo.attach(`${name}-referenz.png`, { body: reference.shot, contentType: 'image/png' });
+  await testInfo.attach(`${name}-endbild.png`, { body: image.shot, contentType: 'image/png' });
+  const ratio = await diffRatio(page, reference.shot, image.shot);
+  const sameBlur = JSON.stringify(reference.blur) === JSON.stringify(image.blur);
+  await testInfo.attach(`${name}-diff.txt`, { body: `${(ratio * 100).toFixed(3)} %\nreference blur:\n${reference.blur.join('\n')}\nend image blur:\n${image.blur.join('\n')}` });
+  console.log(`[splash-diff] ${testInfo.project.name} ${name}: ${(ratio * 100).toFixed(2)} %, blurred surfaces ${reference.blur.length} → ${image.blur.length}${sameBlur ? '' : ' (different)'}`);
+  return { ratio, sameBlur, reference: reference.blur, image: image.blur };
+}
+
+test('Endbild nach dem Splash wie derselbe Build ohne Splash: Monat, höchstens 1 % Pixel sichtbar anders, gleicher Blur', async ({ browser, page }, testInfo) => {
+  test.setTimeout(120_000);
+  const reference = await monatAfterStart(browser, testInfo, { noSplash: true });
+  const image = await monatAfterStart(browser, testInfo, {});
+  const c = await compare(page, testInfo, 'monat', reference, image);
+  expect(c.reference.length, 'the reference blurs (tab bar, cards)').toBeGreaterThan(0);
+  expect(c.ratio, 'monat: share of differing pixels').toBeLessThanOrEqual(0.01);
+  expect(c.image, 'monat: same surfaces blur with the same values').toEqual(c.reference);
+});
+
+test('Gegenprobe: Blur nach dem Splash künstlich verzögert – derselbe Vergleich schlägt an', async ({ browser, page }, testInfo) => {
+  test.setTimeout(120_000);
+  const reference = await monatAfterStart(browser, testInfo, { noSplash: true });
+  const image = await monatAfterStart(browser, testInfo, { lateBlur: true });
+  const c = await compare(page, testInfo, 'monat-blur-spaet', reference, image);
+  // the end-image test above fails on this image: pixels over 1 % or (WebKit: always) other blur
+  expect(c.ratio > 0.01 || !c.sameBlur, 'the comparison must see the missing blur').toBe(true);
+  expect(c.image, 'no surface blurs while the blur is held back').toEqual([]);
 });

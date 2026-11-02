@@ -5,6 +5,8 @@
 // the elements (no transform that would become a containing block for fixed children). With
 // „Bewegung reduzieren“ the splash and the screens only fade.
 
+import { testFlag } from './importTrace';
+
 /** The splash stays at least this long after navigation start, so its intro plays once. */
 export const SPLASH_MIN_MS = 700;
 /** Web Animations created here carry this id (tests wait for them). */
@@ -25,7 +27,9 @@ export const SPLASH_REMOVE_FALLBACK_MS = 400;
 /** The splash is gone: what it covered may blur now ([data-splash] in index.html, index.css). */
 function splashGone() {
   document.getElementById('splash')?.remove();
-  delete document.documentElement.dataset.splash;
+  // counter-check of e2e/splash-blur.spec.ts (test build only): the blur comes back late
+  if (testFlag('lateBlur')) window.setTimeout(() => delete document.documentElement.dataset.splash, 15_000);
+  else delete document.documentElement.dataset.splash;
   markRemoved();
 }
 
