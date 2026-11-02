@@ -32,7 +32,7 @@
   /* accent = filled surfaces with white text; accent-ink = text, links, borders */
   --c-accent: var(--brand-500);
   --c-accent-hover: var(--brand-600);
-  --c-accent-ink: var(--brand-600);
+  --c-accent-ink: var(--brand-700); /* Luxe 2: brand-700, links lie directly on the mesh */
   --c-accent-soft: var(--brand-100);
   --c-accent-soft-hover: var(--brand-200);
   --c-accent-strong: var(--brand-700);
@@ -69,7 +69,7 @@
   /* Glas (Liquid Glass): flat fill per variant, rim = 1 px border + inset highlight, two-step shadow
      (dark: rim and highlight at half opacity). No gradient on glass: iOS „Ganze Seite“ captures a
      gradient into transparency as black, so there is no specular highlight. */
-  --glass-bg: rgba(255, 255, 255, 0.5); /* Luxe 2: .42 asked, .50 for text contrast over the mesh */
+  --glass-bg: rgba(255, 255, 255, 0.56); /* Luxe 2: .42 asked, .56 for text contrast over the mesh */
   --glass-strong-bg: rgba(255, 255, 255, 0.72);
   --glass-clear-bg: rgba(255, 255, 255, 0.4);
   --glass-edge: rgba(255, 255, 255, 0.5); /* the rim: 1 px border */
@@ -208,7 +208,10 @@
   --glass2-rim-dim: rgba(255, 255, 255, 0.15); /* bottom and right edge */
   --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.4);
   --glass2-contact: 0 1px 2px rgba(31, 39, 36, 0.06);
-  --glass2-tile-alpha: 0.55;
+  --glass2-tile-alpha: 0.8; /* .55 asked; .80 so every subline keeps 4.5:1 over the mesh */
+  --hero-shimmer: rgba(255, 255, 255, 0.22);
+  --hero-ring-glow: rgba(255, 255, 255, 0.35);
+  --glass2-inner-pressed: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 34px 34px 60px -30px rgba(255, 255, 255, 0.32);
   --hero-rim-light: rgba(255, 255, 255, 0.42);
   --hero-rim-dim: rgba(255, 255, 255, 0.06);
   --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.22);
@@ -224,11 +227,11 @@
   --pea-open-inset: inset 0 1px 2px rgba(31, 39, 36, 0.12);
 
   /* second tone of each tile family (tinted glass: light → this) */
-  --butter-2: 255 228 150;
-  --peach-2: 255 204 182;
-  --sky-2: 201 222 255;
-  --lilac-2: 221 208 255;
-  --pea-2: 214 228 190;
+  --butter-deep: 255 228 150;
+  --peach-deep: 255 212 194;
+  --sky-deep: 201 222 255;
+  --lilac-deep: 221 208 255;
+  --pea-deep: 230 238 216;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -243,7 +246,7 @@
     --c-ink-faint: 143 153 148;
     --c-accent: var(--brand-500);
     --c-accent-hover: var(--brand-400);
-    --c-accent-ink: var(--brand-300);
+    --c-accent-ink: var(--brand-200);
     --c-accent-soft: 38 50 26;
     --c-accent-soft-hover: 50 66 34;
     --c-accent-strong: var(--brand-200);
@@ -269,7 +272,7 @@
     --edge: rgba(255, 255, 255, 0.16);
     --field: rgba(20, 26, 22, 0.85);
     --scrim: rgba(0, 0, 0, 0.5);
-    --glass-bg: rgba(28, 32, 28, 0.62);
+    --glass-bg: rgba(28, 32, 28, 0.76);
     --glass-strong-bg: rgba(28, 34, 30, 0.72);
     --glass-clear-bg: rgba(28, 34, 30, 0.4);
     --glass-edge: rgba(255, 255, 255, 0.25);
@@ -371,14 +374,17 @@
     --mesh-peach: #ff9e7a;
     --mesh-sky: #5f9dff;
     --mesh-lilac: #a184ff;
-    --mesh-alpha: 0.55; /* dark: .20–.30 */
+    --mesh-alpha: 0.45; /* dark: .16–.25 (text directly on the mesh keeps 4.5:1) */
     --mesh-reduced: 0.35;
     --grain-mesh: 0.05;
     --glass2-rim-light: rgba(255, 255, 255, 0.35);
     --glass2-rim-dim: rgba(255, 255, 255, 0.05);
     --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.08);
     --glass2-contact: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --glass2-tile-alpha: 0.62;
+    --glass2-tile-alpha: 0.86;
+    --hero-shimmer: rgba(255, 255, 255, 0.16);
+    --hero-ring-glow: rgba(255, 255, 255, 0.28);
+    --glass2-inner-pressed: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 34px 34px 60px -30px rgba(255, 255, 255, 0.06);
     --hero-rim-light: rgba(255, 255, 255, 0.3);
     --hero-rim-dim: rgba(255, 255, 255, 0.04);
     --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -389,11 +395,11 @@
     --pea-logo: #f3f7ec;
     --pea-open-ring: rgba(238, 241, 236, 0.42);
     --pea-open-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-    --butter-2: 74 56 8;
-    --peach-2: 92 38 20;
-    --sky-2: 24 52 98;
-    --lilac-2: 56 36 104;
-    --pea-2: 46 64 30;
+    --butter-deep: 44 33 4;
+    --peach-deep: 58 22 12;
+    --sky-deep: 14 30 60;
+    --lilac-deep: 34 22 68;
+    --pea-deep: 28 40 20;
   }
 }
 
@@ -408,7 +414,7 @@
   --c-ink-faint: 143 153 148;
   --c-accent: var(--brand-500);
   --c-accent-hover: var(--brand-400);
-  --c-accent-ink: var(--brand-300);
+  --c-accent-ink: var(--brand-200);
   --c-accent-soft: 38 50 26;
   --c-accent-soft-hover: 50 66 34;
   --c-accent-strong: var(--brand-200);
@@ -434,7 +440,7 @@
   --edge: rgba(255, 255, 255, 0.16);
   --field: rgba(20, 26, 22, 0.85);
   --scrim: rgba(0, 0, 0, 0.5);
-  --glass-bg: rgba(28, 32, 28, 0.62);
+  --glass-bg: rgba(28, 32, 28, 0.76);
   --glass-strong-bg: rgba(28, 34, 30, 0.72);
   --glass-clear-bg: rgba(28, 34, 30, 0.4);
   --glass-edge: rgba(255, 255, 255, 0.25);
@@ -536,14 +542,17 @@
   --mesh-peach: #ff9e7a;
   --mesh-sky: #5f9dff;
   --mesh-lilac: #a184ff;
-  --mesh-alpha: 0.55; /* dark: .20–.30 */
+  --mesh-alpha: 0.45; /* dark: .16–.25 (text directly on the mesh keeps 4.5:1) */
   --mesh-reduced: 0.35;
   --grain-mesh: 0.05;
   --glass2-rim-light: rgba(255, 255, 255, 0.35);
   --glass2-rim-dim: rgba(255, 255, 255, 0.05);
   --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.08);
   --glass2-contact: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --glass2-tile-alpha: 0.62;
+  --glass2-tile-alpha: 0.86;
+  --hero-shimmer: rgba(255, 255, 255, 0.16);
+  --hero-ring-glow: rgba(255, 255, 255, 0.28);
+  --glass2-inner-pressed: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 34px 34px 60px -30px rgba(255, 255, 255, 0.06);
   --hero-rim-light: rgba(255, 255, 255, 0.3);
   --hero-rim-dim: rgba(255, 255, 255, 0.04);
   --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14);
@@ -554,9 +563,9 @@
   --pea-logo: #f3f7ec;
   --pea-open-ring: rgba(238, 241, 236, 0.42);
   --pea-open-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-  --butter-2: 74 56 8;
-  --peach-2: 92 38 20;
-  --sky-2: 24 52 98;
-  --lilac-2: 56 36 104;
-  --pea-2: 46 64 30;
+  --butter-deep: 44 33 4;
+  --peach-deep: 58 22 12;
+  --sky-deep: 14 30 60;
+  --lilac-deep: 34 22 68;
+  --pea-deep: 28 40 20;
 }

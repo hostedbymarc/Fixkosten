@@ -61,12 +61,14 @@ function opaqueValue(v, depth = 0) {
   return false;
 }
 // SVG gradients with opaque token stops: the logo only
-const SVG_GRADIENT_FILES = new Set(['src/components/Logo.tsx']);
+const SVG_GRADIENT_FILES = new Set(['src/components/Logo.tsx', 'src/components/ProgressRing.tsx']);
 const PSEUDO = /::?(?:before|after)\b/;
 const problems = [];
 const classes = new Set();
 // the page background: Nebel + grain (body::before/::after) and the scrim at the top (#root::before)
 const PAGE_BACKGROUND = new Set(['body::before', 'body::after', '#root::before']);
+// the loading animation's light layer: removed before the app can be captured, never in a page capture
+const SPLASH_ONLY = new Set(['.splash-light']);
 let gradientRules = 0;
 /** The colour stops of every gradient in a declaration block (arguments without positions/directions). */
 function gradients(body) {
@@ -125,7 +127,7 @@ for (const file of files('src').filter((f) => f.endsWith('.css'))) {
     }
     if (/gradient\(/.test(body) && !selector.split(',').every((p) => MATERIAL.test(p) === false && PAGE_BACKGROUND.has(p.trim()))) {
       const flat = gradients(body).every((g) => new Set(g).size === 1 || g.every((stop) => opaqueValue(stop)));
-      if (!flat && !selector.split(',').some((p) => MATERIAL.test(p))) problems.push(`${file}:${line}: ${selector.replace(/\s+/g, ' ')} → Verlauf mit Transparenz`);
+      if (!flat && !selector.split(',').every((p) => SPLASH_ONLY.has(p.trim())) && !selector.split(',').some((p) => MATERIAL.test(p))) problems.push(`${file}:${line}: ${selector.replace(/\s+/g, ' ')} → Verlauf mit Transparenz`);
       gradientRules++;
     }
   }

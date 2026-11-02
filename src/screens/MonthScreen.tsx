@@ -18,6 +18,7 @@ import { PositionRow } from '../components/PositionRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
 import { fitStyle } from '../components/fitText';
+import { CountUp } from '../components/CountUp';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
 import { FEATURE_REMINDERS } from '../lib/features';
@@ -205,7 +206,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       )}
 
       <div className="grid gap-3 md:gap-4">
-        <HeroCard figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
+        <HeroCard period={period} figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
         {/* getöntes Glas: the four tiles share one blur surface (GlassGroup) */}
         <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
@@ -508,10 +509,38 @@ function MonthHeader({
   );
 }
 
-function HeroCard({ figures, openOnly, onToggleOpenOnly }: { figures: MonthFigures; openOnly: boolean; onToggleOpenOnly: () => void }) {
+/** The month the hero showed last (module level: a swipe re-creates the hero). */
+const heroShown: { period: Period | null } = { period: null };
+
+function HeroCard({
+  period,
+  figures,
+  openOnly,
+  onToggleOpenOnly,
+}: {
+  period: Period;
+  figures: MonthFigures;
+  openOnly: boolean;
+  onToggleOpenOnly: () => void;
+}) {
   const allPaid = figures.count > 0 && figures.openCount === 0;
+  // a diagonal shimmer once per month change (not when the screen first shows; survives the remount of a swipe)
+  const [shimmer] = useState(() => heroShown.period !== null && heroShown.period !== period);
+  useLayoutEffect(() => {
+    heroShown.period = period;
+  }, [period]);
   return (
     <div className="hero surface flex flex-col gap-5 p-6 md:flex-row md:items-center md:gap-8 md:p-7 lg:p-8" data-testid="hero">
+      {/* two soft colour fields drifting slowly inside the tile (box-shadow glows, clipped) */}
+      <span className="hero-lights" aria-hidden="true">
+        <span className="hero-light hero-light-a" />
+        <span className="hero-light hero-light-b" />
+        {shimmer && (
+          <span key={period} className="hero-shimmer-track">
+            <span className="hero-shimmer" />
+          </span>
+        )}
+      </span>
       <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7">
         <ProgressRing
           ratio={figures.ratio}
@@ -519,12 +548,19 @@ function HeroCard({ figures, openOnly, onToggleOpenOnly }: { figures: MonthFigur
           done={allPaid}
           label={`${progressPercent(figures)} Prozent abgebucht`}
           className="h-[84px] w-[84px] md:h-[124px] md:w-[124px]"
+          hero
         />
         {/* the one big number of the screen: shrinks to its box for long amounts, never cut */}
         <div className="fit-box flex-1">
-          <div className="num num-display fit fit-hero text-ink" style={fitStyle(formatEUR(figures.paid))} data-testid="hero-paid">
-            {formatEUR(figures.paid)}
-          </div>
+          {/* counts from the old to the new month's value (visual only, the element holds the final text) */}
+          <CountUp
+            value={figures.paid}
+            format={formatEUR}
+            trigger={period}
+            className="num num-display fit fit-hero text-ink"
+            style={fitStyle(formatEUR(figures.paid))}
+            testId="hero-paid"
+          />
           <div className="mt-2 text-[15px] text-ink-mute">
             von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
           </div>

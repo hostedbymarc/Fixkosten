@@ -29,21 +29,33 @@
     </script>
   </head>
   <body>
-    <!-- Lade-Animation at app start: visible before the JavaScript has loaded, styles in src/index.css,
-         faded out by src/lib/entrance.ts as soon as the data is there (no minimum duration).
-         Three Soft-3D peas pop in one after another, then bob in a wave until then. -->
+    <!-- Lade-Animation „Squish & Merge“ (styles in src/index.css, exit in src/lib/entrance.ts): shows
+         only when loading takes longer than 300 ms. Three peas drop in and squash on landing, glide
+         together and merge into one drop (SVG gooey filter on the silhouettes, only while they merge),
+         spring apart, then squash in a wave until the data is there. The soft light of each pea is its
+         own layer above the silhouettes and follows them (same animations). Only transform/opacity. -->
     <div id="splash" aria-hidden="true">
-      <svg class="splash-mark" width="84" height="84" viewBox="0 0 28 28">
-        <defs>
-          <radialGradient id="splash-pea-1" cx=".36" cy=".32" r=".75" fx=".32" fy=".28"><stop offset="0" style="stop-color: var(--splash-glint)" /><stop offset=".5" style="stop-color: var(--pea-1)" /><stop offset="1" style="stop-color: var(--splash-rim)" /></radialGradient>
-          <radialGradient id="splash-pea-2" cx=".36" cy=".32" r=".75" fx=".32" fy=".28"><stop offset="0" style="stop-color: var(--splash-glint)" /><stop offset=".5" style="stop-color: var(--pea-2)" /><stop offset="1" style="stop-color: var(--splash-rim)" /></radialGradient>
-          <radialGradient id="splash-pea-3" cx=".36" cy=".32" r=".75" fx=".32" fy=".28"><stop offset="0" style="stop-color: var(--splash-glint)" /><stop offset=".5" style="stop-color: var(--pea-3)" /><stop offset="1" style="stop-color: var(--splash-rim)" /></radialGradient>
-        </defs>
-        <g class="splash-bob"><circle class="splash-pea" cx="8.5" cy="14" r="3.6" fill="url(#splash-pea-1)" /></g>
-        <g class="splash-bob"><circle class="splash-pea" cx="14" cy="14" r="3.4" fill="url(#splash-pea-2)" /></g>
-        <g class="splash-bob"><circle class="splash-pea" cx="19.3" cy="14" r="3.2" fill="url(#splash-pea-3)" /></g>
+      <div class="splash-bg"></div>
+      <svg class="splash-filters" width="0" height="0" focusable="false">
+        <filter id="splash-goo" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+          <feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" />
+        </filter>
       </svg>
+      <div class="splash-stage">
+        <div class="splash-goo"><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-1); --pea-size: 36px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-2); --pea-size: 34px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-3); --pea-size: 32px"></span></span></span></div>
+        <div class="splash-lights"><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-1); --pea-size: 36px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-2); --pea-size: 34px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-3); --pea-size: 32px"></span></span></span></div>
+      </div>
     </div>
+    <script>
+      // the gooey filter exists only while the peas merge (phase 2: 840–1380 ms after the start)
+      (function () {
+        var s = document.getElementById('splash');
+        if (!s || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        setTimeout(function () { s.classList.add('splash-merging'); }, 840);
+        setTimeout(function () { s.classList.remove('splash-merging'); }, 1380);
+      })();
+    </script>
     <script>
       // never stay in front of the app (e.g. when the script below fails to load)
       setTimeout(function () {

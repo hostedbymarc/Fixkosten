@@ -290,6 +290,9 @@ export function initAurora() {
   show();
   window.addEventListener('hashchange', () => show());
   document.addEventListener('visibilitychange', () => {
+    // every CSS animation pauses with the page (index.css: :root[data-page-hidden])
+    if (document.hidden) root.dataset.pageHidden = '';
+    else delete root.dataset.pageHidden;
     if (!drift) return;
     if (document.hidden) drift.pause();
     else if (drift.playState === 'paused') drift.play();
