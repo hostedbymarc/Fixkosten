@@ -7,8 +7,11 @@
 
 import { testFlag } from './importTrace';
 
-/** The splash stays at least this long after navigation start, so its intro plays once. */
-export const SPLASH_MIN_MS = 700;
+/**
+ * No artificial minimum (Luxe): the splash fades as soon as the data is there. Kept as a constant
+ * (0) so the timing stays in one place.
+ */
+export const SPLASH_MIN_MS = 0;
 /** Web Animations created here carry this id (tests wait for them). */
 export const ENTRANCE_ID = 'entrance';
 
@@ -34,7 +37,7 @@ function splashGone() {
 }
 
 /**
- * Fades the splash out (once): not before SPLASH_MIN_MS, removed when its fade has ended
+ * Fades the splash out (once), at once (SPLASH_MIN_MS = 0); removed when its fade has ended
  * (`transitionend`, at the latest SPLASH_REMOVE_FALLBACK_MS after the fade started).
  */
 export function hideSplash(): Promise<void> {
@@ -86,6 +89,8 @@ export function splashRemoved(): Promise<void> {
 }
 
 const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+/** What rises in the entrance: glass cards and the Luxe surfaces. */
+const CARD_SELECTOR = '.glass, .surface';
 /** Card entrance: 420 ms, the first after 40 ms, each further card 45 ms later, at most 10 cards. */
 export const CARD_MS = 420;
 const CARD_DELAY = 40;
@@ -113,10 +118,11 @@ export async function playEntrance(main: HTMLElement, name: string, screen = mai
   }
   screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
   const fold = window.innerHeight;
-  const cards = [...screen.querySelectorAll<HTMLElement>('.glass')]
+  // glass cards and the Luxe surfaces (hero, tiles, cards: .surface)
+  const cards = [...screen.querySelectorAll<HTMLElement>(CARD_SELECTOR)]
     .filter((el) => {
       const r = el.getBoundingClientRect();
-      return r.height > 0 && r.top < fold && r.bottom > 0 && !el.parentElement?.closest('.glass');
+      return r.height > 0 && r.top < fold && r.bottom > 0 && !el.parentElement?.closest(CARD_SELECTOR);
     })
     .slice(0, MAX_CARDS);
   // no blur while a card moves in (it fades up from nothing anyway): each gets it back when it rests

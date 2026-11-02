@@ -14,7 +14,7 @@ const COUNTER_FROM = 1800;
 /** Draft is written this long after the last keystroke: nothing is lost when the app goes to the background. */
 const DRAFT_MS = 500;
 
-/** Glass card under the KPI tiles: one note per month. */
+/** Wide peach tile under the KPI tiles: one note per month. */
 export const MonthNoteCard = forwardRef<HTMLButtonElement, { period: Period; note: string | undefined; onOpen: () => void }>(
   function MonthNoteCard({ period, note, onOpen }, ref) {
     const text = useRef<HTMLSpanElement>(null);
@@ -39,12 +39,12 @@ export const MonthNoteCard = forwardRef<HTMLButtonElement, { period: Period; not
         type="button"
         onClick={onOpen}
         aria-label={note ? `Notiz ${periodLabel(period)} bearbeiten` : `Notiz für ${monthName(period)} hinzufügen`}
-        className="glass glass-tile focus-ring flex min-h-11 w-full items-start gap-3 rounded-tile px-4 py-3 text-left hover:bg-zinc-50/40"
+        className="tile tone-peach surface press focus-ring flex min-h-11 w-full items-start gap-3 px-5 py-4 text-left"
         data-testid="note-card"
       >
         {note ? (
           <span className="min-w-0 flex-1">
-            <span className="block text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]">Notiz</span>
+            <span className="block text-[13px] font-medium leading-5 text-ink-mute">Notiz</span>
             <span
               ref={text}
               className="mt-1 line-clamp-3 whitespace-pre-line break-words text-[15px] leading-snug text-ink"
