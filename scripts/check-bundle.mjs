@@ -36,6 +36,7 @@ const testOnly = [
   '[import-trace]',
   '__importTrace',
   '__erbseDb',
+  '__erbseTestFlags',
   '__idb',
   'import-hang',
   'ImportWatchdog',
@@ -52,8 +53,17 @@ for (const file of files('dist').filter((f) => /\.(js|html)$/.test(f))) {
   for (const marker of testOnly) if (text.includes(marker)) leaks.push(`${file}: test-only code "${marker}"`);
 }
 
+// the Diagnose-Seite /#diagnose-glas (PR #36, deploy previews only) is gone: nothing of it may come back
+const diagnoseMarkers = ['diagnose-glas', 'Diagnose Glas', 'GlassDiagnose', 'diag-v', '__GLASS_DIAGNOSE__'];
+for (const file of files('dist').filter((f) => /\.(js|css|html)$/.test(f))) {
+  const text = readFileSync(file, 'utf8');
+  for (const marker of diagnoseMarkers) if (text.includes(marker)) leaks.push(`${file}: Diagnose-Seite "${marker}"`);
+}
+
 if (leaks.length) {
   console.error(`Private data or test-only code found in bundle:\n${leaks.join('\n')}`);
   process.exit(1);
 }
-console.log(`check-bundle: ${terms.size} private terms and ${testOnly.length} test-only markers, none found in dist/`);
+console.log(
+  `check-bundle: ${terms.size} private terms, ${testOnly.length} test-only markers and ${diagnoseMarkers.length} Diagnose-Seite markers, none found in dist/`,
+);

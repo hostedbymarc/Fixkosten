@@ -138,15 +138,13 @@ export function BottomSheet({ title, subtitle, onClose, children, returnFocusTo 
           aria-modal="true"
           aria-labelledby={titleId}
           tabIndex={-1}
-          className="glass-strong anim-sheet relative flex w-full max-w-lg flex-col overflow-hidden !rounded-b-none !rounded-t-[22px] !shadow-sheet outline-none lg:!rounded-[22px]"
+          className="glass-strong anim-sheet relative flex w-full max-w-lg flex-col overflow-hidden !rounded-b-none !rounded-t-[22px] [--glass-shadow:var(--shadow-sheet)] outline-none lg:!rounded-[22px]"
           // the sheet slides in via transform: no blur while it moves (see .glass[data-animating])
           data-animating={moving ? '' : undefined}
           onAnimationEnd={(e) => e.target === e.currentTarget && setMoving(false)}
           style={{ maxHeight: `calc(100dvh - ${keyboard}px - var(--safe-top) - 24px)` }}
           data-testid="bottom-sheet"
         >
-          {/* blur is weakest at the very edge: a short veil keeps content behind the top edge from showing through */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-12 bg-[linear-gradient(var(--glass-fallback),var(--glass-fallback-clear))]" aria-hidden="true" />
           <div className="relative flex justify-center pt-2 lg:hidden" aria-hidden="true">
             <div className="h-1 w-9 rounded-full bg-zinc-200" />
           </div>
