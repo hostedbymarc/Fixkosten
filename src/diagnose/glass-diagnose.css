@@ -1,0 +1,93 @@
+/* Diagnose-Seite /#diagnose-glas (nur Deploy-Preview, src/diagnose/GlassDiagnose.tsx).
+   Acht Varianten des Glas-Materials, jede isoliert einen Faktor. Eigene Klassen (.diag-*), damit das
+   zentrale Material (.glass…) nicht hineinwirkt und die Checks des Materials unberührt bleiben.
+   Diese Datei kommt nur in den Diagnose-Chunk; der Produktions-Build enthält sie nicht
+   (scripts/check-bundle.mjs). */
+.diag-card {
+  position: relative;
+  border-radius: 24px;
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+}
+/* 2: Blur-Werte vor Liquid Glass */
+.diag-v2 {
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+/* 3–6: aktueller Blur */
+.diag-v3,
+.diag-v4,
+.diag-v5,
+.diag-v6,
+.diag-v8 {
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+/* 4 und 7: Glanzpunkt als zweite Hintergrundebene */
+.diag-v4,
+.diag-v7 {
+  background: radial-gradient(120% 60% at 20% 0%, var(--glass-specular), var(--glass-specular-end) 70%) border-box var(--glass-bg);
+}
+/* 5: Rand + Inset-Schatten (neue Lichtkante) */
+.diag-v5 {
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+/* 6: Grundfläche deckend (.92) */
+.diag-v6 {
+  background: var(--glass-fallback);
+}
+
+/* 8: exakt das Material von main (9eb9938): .glass mit [data-blur], Rand als ::before mit
+   mask-composite, Glanzpunkt als ::after. Werte 1:1 aus 9eb9938 (src/index.css, src/styles/tokens.css). */
+.diag-v8 {
+  --rim-1: rgba(255, 255, 255, 0.9);
+  --rim-2: rgba(255, 255, 255, 0.15);
+  --rim-3: rgba(255, 255, 255, 0.45);
+  --diag-mask-solid: #000000;
+  isolation: isolate;
+  border: 1px solid var(--glass-fallback-clear);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .diag-v8 {
+    --rim-1: rgba(255, 255, 255, 0.45);
+    --rim-2: rgba(255, 255, 255, 0.075);
+    --rim-3: rgba(255, 255, 255, 0.225);
+  }
+}
+:root[data-theme='dark'] .diag-v8 {
+  --rim-1: rgba(255, 255, 255, 0.45);
+  --rim-2: rgba(255, 255, 255, 0.075);
+  --rim-3: rgba(255, 255, 255, 0.225);
+}
+.diag-v8::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg, var(--rim-1), var(--rim-2) 50%, var(--rim-3));
+  -webkit-mask:
+    linear-gradient(var(--diag-mask-solid), var(--diag-mask-solid)) content-box,
+    linear-gradient(var(--diag-mask-solid), var(--diag-mask-solid));
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(var(--diag-mask-solid), var(--diag-mask-solid)) content-box exclude,
+    linear-gradient(var(--diag-mask-solid), var(--diag-mask-solid));
+}
+.diag-v8::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120% 60% at 20% 0%, var(--glass-specular), var(--glass-specular-end) 70%);
+}
+
+.diag-switch button[aria-pressed='true'] {
+  background: var(--glass-pill-bg);
+  box-shadow: var(--glass-shadow);
+}
