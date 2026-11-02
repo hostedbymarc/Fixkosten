@@ -604,8 +604,9 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
 const tileClass = 'tile surface press fit-box flex min-w-0 flex-col items-stretch justify-start p-4 text-left md:p-5 lg:p-6';
 const tileLabel = 'block truncate text-[13px] font-medium leading-5 text-ink-mute';
 // Kachel-Zahl: 28 px (34 px from desktop), smaller for long amounts (fit), never cut
-const tileValue = 'num num-display fit fit-tile mt-2 block';
-const tileSub = 'mt-2 block text-[12px] leading-4 text-ink-mute lg:text-[13px] lg:leading-5';
+const tileValue = 'num num-display fit fit-tile mt-1.5 block';
+// phone: 11 px, slightly tight, so „im Ø-Monat € 1.035,83 ⓘ“ stays one line in a 2 × 2 tile
+const tileSub = 'mt-1.5 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[13px] lg:leading-5 lg:tracking-normal';
 
 /** An amount inside a subline: never wraps in the middle. */
 function Amount({ children, strong, negative }: { children: React.ReactNode; strong?: boolean; negative?: boolean }) {
