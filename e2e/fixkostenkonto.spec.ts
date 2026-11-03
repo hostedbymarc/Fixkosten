@@ -187,7 +187,10 @@ test('Position aufs Girokonto: Dauerauftrag sinkt um ihren Monatsanteil', async 
   await page.getByRole('button', { name: 'Bearbeiten' }).click();
   await page.getByTestId('account-field').getByRole('radio', { name: 'Girokonto' }).click();
   await page.getByRole('button', { name: 'Speichern' }).click();
+  await expect(page.getByTestId('position-form')).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Miete' })).toBeVisible();
   await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip')).toHaveText('Girokonto');
   await goTo(page, 'monat');
   await page.getByTestId('konto-tile').click();

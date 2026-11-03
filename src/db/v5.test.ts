@@ -172,7 +172,7 @@ describe('Onboarding (F5)', () => {
       ],
     });
     const ds = await loadDataset(db);
-    expect(ds.positions.map((p) => [p.name, p.history[0]!.amount, p.history[0]!.frequency, p.history[0]!.dueMonths, p.account])).toEqual([
+    expect([...ds.positions].sort((a, b) => a.sortOrder - b.sortOrder).map((p) => [p.name, p.history[0]!.amount, p.history[0]!.frequency, p.history[0]!.dueMonths, p.account])).toEqual([
       ['Rundfunkbeitrag', 55.08, 'quarterly', [1, 4, 7, 10], 'fixkostenkonto'],
       ['Kfz-Steuer', 120, 'annual', [3], 'fixkostenkonto'],
     ]);
