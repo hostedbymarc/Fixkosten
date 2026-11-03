@@ -65,16 +65,41 @@ Phase A ändert nichts an der laufenden App. Die neuen Komponenten hängen nur a
 
 Alle neuen Texte mit Wortzahl je Satz stehen in [`TEXTE.md`](TEXTE.md), generiert aus `src/lib/schoteTexts.ts`.
 
-## 4. Entscheidungen zur Freigabe
+## 4. Entscheidungen (freigegeben)
 
-1. **Vorzeichen:** Jede Einzahlung aufs Fixkostenkonto bekommt `+`, auch der Dauerauftrag („Dauerauftrag +€ 2.955 am 1.“, „Noch +€ 580 einzahlen“). Abbuchungen bekommen `−`. Soll der Dauerauftrag ohne Vorzeichen stehen, ist das eine Zeile.
-2. **„am 1.“** ist fest; ein Ausführungstag wird nicht gespeichert.
-3. **„Noch nicht“ bei Frage 1** überspringt Frage 2 und 3, denn ohne Konto gibt es weder Kontostand noch Dauerauftrag. Es geht direkt zu „Dein Plan“. Der Fortschritt zählt trotzdem als 3 von 3.
-4. **Antwort bei Frage 3:**
-   - „Ja“ / „Nein“ → im Plan steht „Dauerauftrag **prüfen**: +€ X monatlich am 1.“, denn es gibt schon einen, der Betrag kann aber abweichen.
-   - „Ich habe noch keinen“ → „Dauerauftrag **einrichten**: …“. Die Novemberrate kommt dann nicht mehr und steckt in der Lücke (Beispiel: € 580 → € 3.535).
-5. **„Dein Plan“:** Die Schote bleibt leer, bis alle Punkte erledigt sind, dann füllt sie sich von November bis Oktober. So gibt es den Moment immer, auch ohne Lücke.
-6. **Polster:** Liegt der tiefste Monatsend-Stand über einem Dauerauftrag, gilt Polster = tiefster Stand ÷ Dauerauftrag, abgerundet auf eine Stelle (Beispiel: € 4.220 ÷ € 2.955 = +1,4 Monate).
-7. **„Gedeckt bis …“** erscheint nur, wenn alle 12 Monate gedeckt sind, sonst „n von 12 Monaten gedeckt“. Auch ein späterer ungedeckter Monat zählt.
-8. **Bestehende Installationen mit Modus an** (PR #39) und eingetragenem Kontostand gelten als eingerichtet, sehen also keinen Zustand 1. Ohne Kontostand sehen sie „Fixkostenkonto einrichten“.
-9. **Serie:** Ein Monat zählt, wenn der Monats-Check „Ja“ ist. Ein Monat ohne „Ja“ beendet die Serie, beim nächsten Monat steht „Neue Serie startet.“.
+1. **Kein Dexie-Versionssprung.** Die Felder liegen in `meta`. Bedingung erfüllt:
+   - Test „alter Eintrag ohne die neuen Felder wird korrekt gelesen“ (`src/lib/kontoBalance.test.ts`).
+   - Export → Import identisch (`toKontoSettings` idempotent; `v5.test.ts` unverändert grün).
+   - Gespeichert und exportiert werden nur Felder, die vom Standard abweichen. Ein alter Eintrag bleibt damit bitgleich.
+2. **Vorzeichen:** Der Dauerauftrag steht ohne Vorzeichen („Dauerauftrag € 2.955“), ebenso Lücke und Plan. Vorzeichen nur in Listen und Monatsdetails (Einzahlung +, Abbuchungen −).
+3. **Tag** = „Neuer Monat beginnt am“ (`orderDay`): „am 1.“, „am 25.“, „am Monatsletzten“. Er passt damit zur Simulation, in der die Einzahlung zu Beginn des aktiven Monats kommt.
+4. **„Noch nicht“ bei Frage 1** geht direkt zu „Dein Plan“. Der Plan startet mit „Fixkostenkonto eröffnen“.
+5. **„prüfen“ / „einrichten“**, Novemberrate in der Lücke: wie vorgeschlagen.
+6. **Belohnung pro Schritt:** Nach jedem erledigten Punkt rasten sofort die Erbsen ein, die dadurch gedeckt sind.
+   - Vor dem ersten Punkt rechnet die Schote ohne Dauerauftrag, nur mit dem Kontostand.
+   - „Dauerauftrag erledigt“ schaltet die Einzahlungen ein.
+   - „Einmalig überweisen erledigt“ legt die Lücke auf den Kontostand.
+   - „Fixkostenkonto eröffnen“ allein deckt noch nichts; dort ploppt nur die Erbse am Punkt selbst.
+7. **Polster:** wie vorgeschlagen.
+8. **Installationen aus #39 mit Kontostand** gelten als eingerichtet. Beim ersten Start wird ihr Kontostand zum Anker.
+9. **Monatskürzel** sind Knöpfe. Antippen zeigt den vollen Monatsnamen mit „gedeckt“ / „nicht gedeckt“ unter der Schote, in der Zeile statt darüber, sodass nichts überdeckt wird. Jedes Kürzel ist so breit wie seine Erbse. Der Test prüft, dass sie sich nicht überlappen, auch auf dem iPhone SE.
+
+## 5. Kontostand-Modell (Phase B)
+
+- **Erwarteter Stand** = Anker + bestätigte Einzahlungen seit dem Anker − abgehakte Fixkostenkonto-Positionen und Einmalbeträge seit dem Anker.
+  - „Seit“ ist ein Zeitpunkt (ISO-Zeitstempel), kein Monat. Ein neuer Anker mitten im Monat und ein Monatsbeginn ≠ 1 brauchen deshalb keinen Sonderfall.
+  - Die Einzahlung eines Monats zählt mit dem Dauerauftrag dieses Monats.
+- **„Ja“ bei der Einrichtung** = Check zum selben Zeitpunkt wie der Anker. Er zählt nicht doppelt, weil er schon im Kontostand steckt.
+- **„Nein“** = Check „noch nicht“; gefragt wird ab dem nächsten Tag.
+- **„Ich habe noch keinen“** = diesen Monat keine Einzahlung.
+- **Unbestätigte Monate** zählen ohne Einzahlung.
+- **Serie:** bestätigte Monate in Folge bis zum aktiven Monat, oder bis zum Vormonat, solange dieser Monat offen ist. Ab 2 als Abzeichen. Nach einem verpassten Monat: „Neue Serie startet.“
+- **Meilensteine:**
+  - „Erste Schote voll“ (bleibt, wenn einmal erreicht)
+  - „3 Monate in Folge“, „6 Monate in Folge“
+  - „Ein Jahr gedeckt“ = 12 bestätigte Monate in Folge
+  - Toast einmal, danach Abzeichen im Sheet.
+- **Karte oben auf dem Monats-Screen** (höchstens eine):
+  1. Erinnerung nach „Weiß ich gerade nicht“, beim nächsten Start
+  2. Monats-Check
+  3. alle 3 Monate „Stimmt dein Kontostand noch?“
