@@ -53,7 +53,7 @@ export function KontoTileView(props: KontoTileProps) {
   const label =
     state === 'gap'
       ? `Fixkostenkonto: ${text}. ${t('tile.gap.text', { betrag: formatEUR(gap) })}. Details öffnen`
-      : `Fixkostenkonto: ${text}. ${t('tile.order', { betrag: formatEUR(order), tag: day })}. Details öffnen`;
+      : `Fixkostenkonto: ${text}. ${t('tile.order', { betrag: formatEUR(order), tag: day }).replace(/\.$/, '')}. Details öffnen`;
   return (
     <section className="glass glass-tile tone-pea surface press relative min-w-0 p-4 md:p-5 xl:p-6" data-testid="konto-tile-card" data-state={state}>
       <div className="flex min-w-0 items-center gap-2">
