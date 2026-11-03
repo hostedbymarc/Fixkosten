@@ -73,7 +73,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   const before = Object.fromEntries(
     await Promise.all(['payments', 'oneOffs', 'monthClose', 'changeLog', 'categories', 'reminders'].map(async (t) => [t, await rawTable(page, t)])),
   );
-  const positionsBefore = (await rawTable(page, 'positions')) as { id: string; history: Record<string, unknown>[] }[];
+  const positionsBefore = (await rawTable(page, 'positions')) as { id: string; account?: string; history: Record<string, unknown>[] }[];
 
   // --- publish: same origin serves the current build
   dir.current = CURRENT;
@@ -86,7 +86,9 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   // nothing lost: every other table record by record, positions only gained changedOn
   for (const [t, rows] of Object.entries(before)) expect(await rawTable(page, t), t).toEqual(rows);
   const positionsAfter = (await rawTable(page, 'positions')) as typeof positionsBefore;
-  expect(positionsAfter.map((p) => ({ ...p, history: p.history.map(({ changedOn: _c, ...e }) => e) }))).toEqual(positionsBefore);
+  // v5 (Fixkostenkonto) adds only `account` to each position; everything else stays as before
+  expect(positionsAfter.map(({ account: _a, ...p }) => ({ ...p, history: p.history.map(({ changedOn: _c, ...e }) => e) }))).toEqual(positionsBefore);
+  expect(positionsAfter.every((p) => p.account === 'fixkostenkonto' || p.account === 'girokonto')).toBe(true);
   expect(positionsAfter.find((p) => p.id === 'pos-handy')!.history.map((e) => e.changedOn)).toEqual([undefined, '2026-11-01']);
 
   // control values
