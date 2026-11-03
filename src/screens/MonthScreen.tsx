@@ -65,8 +65,7 @@ import {
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import { calendarMonth, localToday } from '../lib/activeMonth';
-import { AMBIENT_ID, AMBIENT_MS } from '../lib/aurora';
-import { reducedMotion } from '../lib/entrance';
+import { driftHeroLights } from '../lib/aurora';
 import { MonthPicker } from '../components/MonthPicker';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
@@ -521,16 +520,6 @@ function MonthHeader({
       )}
     </>
   );
-}
-
-/** The hero's colour fields drift for AMBIENT_MS after the screen comes in, then rest (Ruhe-Regel). */
-function driftHeroLights(host: HTMLElement | null) {
-  if (!host || reducedMotion()) return;
-  const moves = ['translate(70px, -26px)', 'translate(-80px, 30px)'];
-  const anims = [...host.querySelectorAll<HTMLElement>('.hero-light')].map((el, i) =>
-    el.animate([{ transform: 'translate(0, 0)' }, { transform: moves[i] ?? 'none' }], { duration: AMBIENT_MS, easing: 'cubic-bezier(0.3, 0.1, 0.2, 1)', fill: 'forwards', id: AMBIENT_ID }),
-  );
-  return () => anims.forEach((a) => a.cancel());
 }
 
 /** The month the hero showed last (module level: a swipe re-creates the hero). */
