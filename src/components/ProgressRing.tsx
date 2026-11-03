@@ -18,8 +18,8 @@ interface Props {
   hero?: boolean;
 }
 
-/** Fill-in on entering the screen: 700 ms with a soft spring. */
-const FILL_MS = 700;
+/** Fill-in on entering the screen: 500 ms with a soft spring. */
+const FILL_MS = 500;
 const SPRING = 'linear(0, 0.22 8%, 0.62 20%, 0.9 33%, 1.03 45%, 1.05 53%, 1.01 68%, 1)';
 
 /** Month ring: brand on brand-100; a check replaces the percentage once everything is paid. */
