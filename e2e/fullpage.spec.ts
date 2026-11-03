@@ -13,7 +13,8 @@ import { importLive, NOV_TODAY, OKT_TODAY } from './live';
 // the whole page and the Nebel ends inside the first screen without an edge. The print path (PDF)
 // drops the Nebel entirely and prints the plain base colour.
 
-const BASE = { light: [244, 245, 241], dark: [14, 18, 15] } as const;
+// Luxe 2: dark base #121612
+const BASE = { light: [244, 245, 241], dark: [18, 22, 18] } as const;
 const PAGES = [
   { name: 'Monat Oktober', today: OKT_TODAY, route: 'monat' },
   { name: 'Monat November', today: NOV_TODAY, route: 'monat' },
@@ -24,8 +25,12 @@ const PAGES = [
 
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
-  await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
   await page.waitForTimeout(250);
+  // the slow ambient drift (mesh, hero lights; also ones started late) is taken out, back at rest: viewport
+  // and full-page capture are compared, and the mesh drift is in vmax, which the full-page resize changes
+  await page.evaluate(() => document.getAnimations().filter((a) => a.id === 'ambient').forEach((a) => a.cancel()));
+  await page.waitForTimeout(50);
 }
 
 for (const scheme of ['light', 'dark'] as const) {
@@ -50,7 +55,8 @@ for (const scheme of ['light', 'dark'] as const) {
       expect(r.isolation).toBe('isolate');
     });
 
-    test('kein CSS-Verlauf mit Transparenz (iOS „Ganze Seite“ malt ihn schwarz); Nebel ist ein deckendes Bild', async ({ page }) => {
+    // Luxe 2: the background is the Aurora-Mesh, an opaque bitmap on fixed layers (src/lib/aurora.ts)
+    test('kein CSS-Verlauf mit Transparenz (iOS „Ganze Seite“ malt ihn schwarz); Aurora-Mesh ist ein deckendes Bild', async ({ page }) => {
       await importLive(page, OKT_TODAY);
       await page.getByTestId('add-once').click(); // the sheet has a fade too
       await page.getByRole('dialog').waitFor();
@@ -62,11 +68,14 @@ for (const scheme of ['light', 'dark'] as const) {
             if (bg.includes('gradient(') && /transparent|rgba\(0, 0, 0, 0\)/.test(bg)) bad.push(`${el.tagName.toLowerCase()}${pseudo ?? ''}`);
           }
         const before = getComputedStyle(document.body, '::before');
-        return { bad, image: before.backgroundImage.slice(0, 27), size: before.backgroundSize, color: before.backgroundColor };
+        const shown = [...document.querySelectorAll<HTMLElement>('.aurora-layer')].find((l) => getComputedStyle(l).opacity === '1')!;
+        const mesh = getComputedStyle(shown);
+        return { bad, image: mesh.backgroundImage.slice(mesh.backgroundImage.lastIndexOf('url("data:image/png'), mesh.backgroundImage.lastIndexOf('url("data:image/png') + 27), size: mesh.backgroundSize, meshColor: mesh.backgroundColor, color: before.backgroundColor };
       });
       expect(r.bad).toEqual([]);
       expect(r.image).toBe('url("data:image/png;base64,');
-      expect(r.size).toBe('100% 660px');
+      expect(r.size).toBe('256px 256px, 100% 100%');
+      expect(r.meshColor).toBe(`rgb(${BASE[scheme].join(', ')})`);
       expect(r.color).toBe(`rgb(${BASE[scheme].join(', ')})`);
     });
 

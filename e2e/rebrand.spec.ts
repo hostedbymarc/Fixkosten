@@ -37,7 +37,7 @@ test.describe('Rebrand „Erbse“: Name und Icons', () => {
     for (const meta of await app.locator('meta[name="theme-color"]').all()) await expect(meta).toHaveAttribute('content', base);
     const manifest = await (await app.request.get('/manifest.webmanifest')).json();
     expect(manifest).toMatchObject({ name: 'Erbse', short_name: 'Erbse', start_url: '/', theme_color: '#5A7A2E', background_color: '#F4F5F1' });
-    for (const icon of [...manifest.icons.map((i: { src: string }) => i.src), '/apple-touch-icon.png', '/favicon.svg']) {
+    for (const icon of [...manifest.icons.map((i: { src: string }) => i.src), '/apple-touch-icon.png', '/favicon.png', '/favicon.svg']) {
       expect((await app.request.get(icon)).status(), icon).toBe(200);
     }
   });
@@ -45,14 +45,17 @@ test.describe('Rebrand „Erbse“: Name und Icons', () => {
   test('sidebar shows the logo and „Erbse“', async ({ app }) => {
     test.skip(!isSidebarLayout(app), 'sidebar only from 1024 px');
     await expect(app.getByTestId('sidebar')).toContainText('Erbse');
-    await expect(app.getByTestId('sidebar').locator('svg rect[rx="8"]')).toHaveCount(1);
+    // Luxe 2: the logo is the <Logo> component (square with three <Pea>s)
+    await expect(app.getByTestId('sidebar').getByTestId('logo')).toHaveCount(1);
+    await expect(app.getByTestId('sidebar').getByTestId('logo').locator('.pea')).toHaveCount(3);
   });
 
   test('glass surfaces fall back to opaque with reduced transparency', async ({ app }) => {
     const cdp = await app.context().newCDPSession(app);
     await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }] });
-    const hero = app.getByTestId('hero');
-    await expect(hero).toHaveCSS('backdrop-filter', 'none');
-    await expect(hero).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    // Luxe 2: the cards are the glass (the hero is an opaque gradient tile)
+    const card = app.locator('[data-testid="category-group"]').first();
+    await expect(card).toHaveCSS('backdrop-filter', 'none');
+    await expect(card).toHaveCSS('background-color', 'rgb(255, 255, 255)');
   });
 });

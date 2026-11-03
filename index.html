@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- status bar = page top: --nebel-base of src/styles/tokens.css per theme (src/lib/nebel.ts keeps it in sync) -->
     <meta name="theme-color" content="#f4f5f1" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0e120f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#121612" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Erbse" />
     <meta name="application-name" content="Erbse" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- rendered from <Logo> (scripts/make-icons.mjs) -->
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="64x64" />
     <!-- opaque, full-bleed PNG: iOS rounds the corners itself -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -28,15 +29,33 @@
     </script>
   </head>
   <body>
-    <!-- Lade-Animation at app start: visible before the JavaScript has loaded, styles in src/index.css,
-         faded out by src/lib/entrance.ts once the app is ready -->
+    <!-- Lade-Animation „Squish & Merge“ (styles in src/index.css, exit in src/lib/entrance.ts): shows
+         only when loading takes longer than 300 ms. Three peas drop in and squash on landing, glide
+         together and merge into one drop (SVG gooey filter on the silhouettes, only while they merge),
+         spring apart, then squash in a wave until the data is there. The soft light of each pea is its
+         own layer above the silhouettes and follows them (same animations). Only transform/opacity. -->
     <div id="splash" aria-hidden="true">
-      <svg class="splash-mark" width="76" height="76" viewBox="0 0 28 28">
-        <circle class="splash-pea" cx="9" cy="14" r="3.4" />
-        <circle class="splash-pea" cx="14" cy="14" r="3.4" />
-        <circle class="splash-pea" cx="19" cy="14" r="3.4" />
+      <div class="splash-bg"></div>
+      <svg class="splash-filters" width="0" height="0" focusable="false">
+        <filter id="splash-goo" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+          <feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" />
+        </filter>
       </svg>
+      <div class="splash-stage">
+        <div class="splash-goo"><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-1); --pea-size: 36px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-2); --pea-size: 34px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-3); --pea-size: 32px"></span></span></span></div>
+        <div class="splash-lights"><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-1); --pea-size: 36px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-2); --pea-size: 34px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-3); --pea-size: 32px"></span></span></span></div>
+      </div>
     </div>
+    <script>
+      // the gooey filter exists only while the peas merge (phase 2: 840–1380 ms after the start)
+      (function () {
+        var s = document.getElementById('splash');
+        if (!s || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        setTimeout(function () { s.classList.add('splash-merging'); }, 840);
+        setTimeout(function () { s.classList.remove('splash-merging'); }, 1380);
+      })();
+    </script>
     <script>
       // never stay in front of the app (e.g. when the script below fails to load)
       setTimeout(function () {

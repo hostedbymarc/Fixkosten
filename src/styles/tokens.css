@@ -32,7 +32,7 @@
   /* accent = filled surfaces with white text; accent-ink = text, links, borders */
   --c-accent: var(--brand-500);
   --c-accent-hover: var(--brand-600);
-  --c-accent-ink: var(--brand-600);
+  --c-accent-ink: var(--brand-700); /* Luxe 2: brand-700, links lie directly on the mesh */
   --c-accent-soft: var(--brand-100);
   --c-accent-soft-hover: var(--brand-200);
   --c-accent-strong: var(--brand-700);
@@ -69,7 +69,7 @@
   /* Glas (Liquid Glass): flat fill per variant, rim = 1 px border + inset highlight, two-step shadow
      (dark: rim and highlight at half opacity). No gradient on glass: iOS „Ganze Seite“ captures a
      gradient into transparency as black, so there is no specular highlight. */
-  --glass-bg: rgba(255, 255, 255, 0.52);
+  --glass-bg: rgba(255, 255, 255, 0.56); /* Luxe 2: .42 asked, .56 for text contrast over the mesh */
   --glass-strong-bg: rgba(255, 255, 255, 0.72);
   --glass-clear-bg: rgba(255, 255, 255, 0.4);
   --glass-edge: rgba(255, 255, 255, 0.5); /* the rim: 1 px border */
@@ -111,6 +111,8 @@
   --pea-1: #7f9c4f;
   --pea-2: #5a7a2e;
   --pea-3: #4b6626;
+  --splash-glint: #e3ecd2; /* Soft-3D: light top left … */
+  --splash-rim: #3c521f; /* … deeper rim (brand-700) */
 
   /* category tones (stored DB values are mapped to these in src/lib/categoryColors.ts):
      muted, matching the pea green – Tinte, Schiefer, Mauve, Petrol, Pflaume, Salbei, Kiesel, Mokka.
@@ -123,6 +125,113 @@
   --cat-6: #6caba7;
   --cat-7: #b9aea2;
   --cat-8: #392026;
+
+  /* ── Luxe (Redesign 2026-11) ─────────────────────────────────────────────────────────────────
+     Hero: deep pea-green gradient, white text. Both stops opaque: a gradient between two opaque
+     colours is safe in iOS „Ganze Seite“ (only gradients into transparency were captured as black). */
+  --hero-from: #2f4318;
+  --hero-to: #5a7a2e;
+  --hero-ink: 255 255 255;
+  --hero-ink-soft: 244 247 239;
+  --hero-rule: rgba(255, 255, 255, 0.2);
+  --hero-ring: 255 255 255;
+  --hero-ring-track: rgba(255, 255, 255, 0.2);
+  --hero-chip-bg: rgba(255, 255, 255, 0.86); /* the light glass pill on the hero */
+  --hero-chip-ink: 34 47 18;
+  --hero-chip-on-bg: 28 42 13; /* pressed (only open shown) */
+  --hero-chip-on-ink: 255 255 255;
+  --hero-shadow: 0 1px 2px rgba(47, 67, 24, 0.18), 0 8px 16px -8px rgba(47, 67, 24, 0.28), 0 24px 48px -20px rgba(47, 67, 24, 0.5);
+
+  /* Akzentflächen: cheerful fill, dark text of the same family (never white on pastel) */
+  --butter: 255 241 199;
+  --butter-ink: 107 78 0;
+  --butter-ink-soft: 122 93 18;
+  --peach: 255 224 210;
+  --peach-ink: 122 46 20;
+  --peach-ink-soft: 146 78 54;
+  --sky: 220 235 255;
+  --sky-ink: 30 58 107;
+  --sky-ink-soft: 64 90 134;
+  --lilac: 236 227 255;
+  --lilac-ink: 74 47 128;
+  --lilac-ink-soft: 103 79 151;
+  --pea: 234 240 221;
+  --pea-ink: 60 82 31;
+  --pea-ink-soft: 91 110 65;
+
+  /* Karten: half-opaque, no blur; soft layered shadows instead of borders */
+  --hero-chip-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(28, 42, 13, 0.18);
+  --hero-chip-solid: 255 255 255;
+  --card-ring: 0 0 0 1px rgba(31, 39, 36, 0.04);
+  --pea-shade: #1f2724;
+  /* .pea-dot colour: set per element to a --cat-N token (opaque) */
+  --dot: var(--cat-1);
+  --shadow-pea: 0 1px 1.5px rgba(31, 39, 36, 0.25);
+  --card-bg: rgba(255, 255, 255, 0.82);
+  --card-solid: 255 255 255; /* Transparenz reduzieren / no backdrop-filter */
+  --shadow-card: 0 1px 1px rgba(31, 39, 36, 0.03), 0 2px 6px -2px rgba(31, 39, 36, 0.06), 0 16px 32px -16px rgba(31, 39, 36, 0.14);
+  --shadow-tile: 0 1px 1px rgba(31, 39, 36, 0.03), 0 10px 24px -14px rgba(31, 39, 36, 0.16);
+  --r-lg: 28px;
+  --r-sm: 22px;
+
+  /* Soft-3D-Erbse (logo, loading animation, category dots, check, FAB): glint → body → rim */
+  --pea-glint: #ffffff;
+  --pea-body: #eef3e4;
+  --pea-drop: rgba(60, 82, 31, 0.25); /* brand-700 at 25 % */
+  --logo-top: #7f9c4f; /* brand-400 */
+  --logo-bottom: #4b6626; /* brand-600 */
+  --logo-edge: rgba(255, 255, 255, 0.25);
+  --logo-flat: #5a7a2e; /* below 20 px: the plain brand square */
+  --check-glint: #7a974a;
+  --check-body: #5a7a2e;
+  --check-rim: #3c521f;
+  --check-ink: #ffffff;
+  --shadow-check: 0 1px 2px rgba(60, 82, 31, 0.35);
+  --fab-shadow: 0 2px 4px rgba(60, 82, 31, 0.24), 0 12px 28px -8px rgba(60, 82, 31, 0.55);
+
+  /* ── Luxe 2 ─────────────────────────────────────────────────────────────────────────────────
+     Aurora-Mesh: five soft colour fields over --mesh-base, painted into an OPAQUE bitmap by
+     src/lib/aurora.ts (never a CSS gradient into transparency: iOS „Ganze Seite“ captures those as
+     black). The composition per screen (place, size, alpha) lives in aurora.ts; the colours here. */
+  --mesh-base: #f4f5f1;
+  --mesh-brand: #7f9c4f; /* brand-400 */
+  --mesh-butter: #ffdd7a;
+  --mesh-peach: #ffb894;
+  --mesh-sky: #9cc4ff;
+  --mesh-lilac: #c6aeff;
+  --mesh-alpha: 1; /* light: the compositions use .35–.55 */
+  --mesh-reduced: 0.35; /* Transparenz reduzieren: the mesh much paler */
+  --grain-mesh: 0.05;
+
+  /* Liquid Glass 2.0 (values of .glass in index.css) */
+  --glass2-rim-light: rgba(255, 255, 255, 0.9); /* top and left edge */
+  --glass2-rim-dim: rgba(255, 255, 255, 0.15); /* bottom and right edge */
+  --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.4);
+  --glass2-contact: 0 1px 2px rgba(31, 39, 36, 0.06);
+  --glass2-tile-alpha: 0.8; /* .55 asked; .80 so every subline keeps 4.5:1 over the mesh */
+  --hero-shimmer: rgba(255, 255, 255, 0.22);
+  --hero-ring-glow: rgba(255, 255, 255, 0.35);
+  --glass2-inner-pressed: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 34px 34px 60px -30px rgba(255, 255, 255, 0.32);
+  --hero-rim-light: rgba(255, 255, 255, 0.42);
+  --hero-rim-dim: rgba(255, 255, 255, 0.06);
+  --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+  /* Soft-3D-Erbse (<Pea>): every shade is derived from the pea's colour with color-mix(in oklch) */
+  --pea-c: #5a7a2e; /* default colour of a .pea (the component sets a token per pea) */
+  --pea-light: #ffffff;
+  --pea-dark: #000000;
+  --pea-rim-light: rgba(255, 255, 255, 0.35);
+  --pea-contact: rgba(20, 26, 22, 0.22);
+  --pea-logo: #f3f7ec; /* the very light green of the logo peas */
+  --pea-open-ring: rgba(31, 39, 36, 0.38);
+  --pea-open-inset: inset 0 1px 2px rgba(31, 39, 36, 0.12);
+
+  /* second tone of each tile family (tinted glass: light → this) */
+  --butter-deep: 255 228 150;
+  --peach-deep: 255 212 194;
+  --sky-deep: 201 222 255;
+  --lilac-deep: 221 208 255;
+  --pea-deep: 230 238 216;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -137,7 +246,7 @@
     --c-ink-faint: 143 153 148;
     --c-accent: var(--brand-500);
     --c-accent-hover: var(--brand-400);
-    --c-accent-ink: var(--brand-300);
+    --c-accent-ink: var(--brand-200);
     --c-accent-soft: 38 50 26;
     --c-accent-soft-hover: 50 66 34;
     --c-accent-strong: var(--brand-200);
@@ -163,7 +272,7 @@
     --edge: rgba(255, 255, 255, 0.16);
     --field: rgba(20, 26, 22, 0.85);
     --scrim: rgba(0, 0, 0, 0.5);
-    --glass-bg: rgba(28, 34, 30, 0.48);
+    --glass-bg: rgba(28, 32, 28, 0.76);
     --glass-strong-bg: rgba(28, 34, 30, 0.72);
     --glass-clear-bg: rgba(28, 34, 30, 0.4);
     --glass-edge: rgba(255, 255, 255, 0.25);
@@ -176,8 +285,8 @@
     --glass-fallback: rgba(28, 34, 30, 0.92);
     --glass-opaque: #1c221e;
     --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
-    --nebel-base: #0e120f;
-    --nebel-base-rgb: 14 18 15;
+    --nebel-base: #121612;
+    --nebel-base-rgb: 18 22 18;
     --nebel-1: rgba(90, 122, 46, 0.16);
     --nebel-2: rgba(222, 206, 176, 0.04);
     --nebel-3: rgba(90, 122, 46, 0.1);
@@ -199,6 +308,8 @@
     --pea-1: #a7c07c;
     --pea-2: #7f9c4f;
     --pea-3: #5a7a2e;
+    --splash-glint: #dbe6c6;
+    --splash-rim: #2f4318;
     --cat-1: #285c90;
     --cat-2: #7c88ac;
     --cat-3: #eec9f3;
@@ -207,6 +318,88 @@
     --cat-6: #90e3cf;
     --cat-7: #f2f0e9;
     --cat-8: #8a776f;
+    /* Luxe */
+    --hero-from: #1d2a0f;
+    --hero-to: #4b6626;
+    --hero-ink: 255 255 255;
+    --hero-ink-soft: 238 243 228;
+    --hero-rule: rgba(255, 255, 255, 0.16);
+    --hero-ring: 255 255 255;
+    --hero-ring-track: rgba(255, 255, 255, 0.16);
+    --hero-chip-bg: rgba(255, 255, 255, 0.86);
+    --hero-chip-ink: 34 47 18;
+    --hero-chip-on-bg: 14 22 10;
+    --hero-chip-on-ink: 255 255 255;
+    --hero-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 48px -20px rgba(0, 0, 0, 0.7);
+    --butter: 58 44 6;
+    --butter-ink: 255 226 154;
+    --butter-ink-soft: 216 190 124;
+    --peach: 74 30 16;
+    --peach-ink: 255 205 184;
+    --peach-ink-soft: 219 170 150;
+    --sky: 20 41 77;
+    --sky-ink: 204 224 255;
+    --sky-ink-soft: 167 187 219;
+    --lilac: 45 29 85;
+    --lilac-ink: 224 211 255;
+    --lilac-ink-soft: 188 175 221;
+    --pea: 36 51 26;
+    --pea-ink: 214 232 184;
+    --pea-ink-soft: 178 196 152;
+    --hero-chip-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --hero-chip-solid: 255 255 255;
+    --card-ring: 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --pea-shade: #000000;
+    --shadow-pea: 0 1px 1.5px rgba(0, 0, 0, 0.5);
+    --card-bg: rgba(30, 37, 32, 0.86);
+    --card-solid: 30 37 32;
+    --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 16px 32px -16px rgba(0, 0, 0, 0.6);
+    --shadow-tile: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 24px -14px rgba(0, 0, 0, 0.6);
+    --pea-glint: #ffffff;
+    --pea-body: #e3ead6;
+    --pea-drop: rgba(0, 0, 0, 0.35);
+    --logo-top: #7f9c4f;
+    --logo-bottom: #4b6626;
+    --logo-edge: rgba(255, 255, 255, 0.25);
+    --check-glint: #7a974a;
+    --check-body: #5a7a2e;
+    --check-rim: #3c521f;
+    --check-ink: #ffffff;
+    --shadow-check: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --fab-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px -8px rgba(0, 0, 0, 0.6);
+    /* Luxe 2 */
+    --mesh-base: #121612;
+    --mesh-brand: #8fb34f;
+    --mesh-butter: #f5c542;
+    --mesh-peach: #ff9e7a;
+    --mesh-sky: #5f9dff;
+    --mesh-lilac: #a184ff;
+    --mesh-alpha: 0.45; /* dark: .16–.25 (text directly on the mesh keeps 4.5:1) */
+    --mesh-reduced: 0.35;
+    --grain-mesh: 0.05;
+    --glass2-rim-light: rgba(255, 255, 255, 0.35);
+    --glass2-rim-dim: rgba(255, 255, 255, 0.05);
+    --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.08);
+    --glass2-contact: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --glass2-tile-alpha: 0.86;
+    --hero-shimmer: rgba(255, 255, 255, 0.16);
+    --hero-ring-glow: rgba(255, 255, 255, 0.28);
+    --glass2-inner-pressed: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 34px 34px 60px -30px rgba(255, 255, 255, 0.06);
+    --hero-rim-light: rgba(255, 255, 255, 0.3);
+    --hero-rim-dim: rgba(255, 255, 255, 0.04);
+    --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    --pea-light: #ffffff;
+    --pea-dark: #000000;
+    --pea-rim-light: rgba(255, 255, 255, 0.28);
+    --pea-contact: rgba(0, 0, 0, 0.45);
+    --pea-logo: #f3f7ec;
+    --pea-open-ring: rgba(238, 241, 236, 0.42);
+    --pea-open-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    --butter-deep: 44 33 4;
+    --peach-deep: 58 22 12;
+    --sky-deep: 14 30 60;
+    --lilac-deep: 34 22 68;
+    --pea-deep: 28 40 20;
   }
 }
 
@@ -221,7 +414,7 @@
   --c-ink-faint: 143 153 148;
   --c-accent: var(--brand-500);
   --c-accent-hover: var(--brand-400);
-  --c-accent-ink: var(--brand-300);
+  --c-accent-ink: var(--brand-200);
   --c-accent-soft: 38 50 26;
   --c-accent-soft-hover: 50 66 34;
   --c-accent-strong: var(--brand-200);
@@ -247,7 +440,7 @@
   --edge: rgba(255, 255, 255, 0.16);
   --field: rgba(20, 26, 22, 0.85);
   --scrim: rgba(0, 0, 0, 0.5);
-  --glass-bg: rgba(28, 34, 30, 0.48);
+  --glass-bg: rgba(28, 32, 28, 0.76);
   --glass-strong-bg: rgba(28, 34, 30, 0.72);
   --glass-clear-bg: rgba(28, 34, 30, 0.4);
   --glass-edge: rgba(255, 255, 255, 0.25);
@@ -260,8 +453,8 @@
   --glass-fallback: rgba(28, 34, 30, 0.92);
   --glass-opaque: #1c221e;
   --shadow-sheet: 0 -8px 40px rgba(0, 0, 0, 0.5);
-  --nebel-base: #0e120f;
-  --nebel-base-rgb: 14 18 15;
+  --nebel-base: #121612;
+  --nebel-base-rgb: 18 22 18;
   --nebel-1: rgba(90, 122, 46, 0.16);
   --nebel-2: rgba(222, 206, 176, 0.04);
   --nebel-3: rgba(90, 122, 46, 0.1);
@@ -283,6 +476,8 @@
   --pea-1: #a7c07c;
   --pea-2: #7f9c4f;
   --pea-3: #5a7a2e;
+  --splash-glint: #dbe6c6;
+  --splash-rim: #2f4318;
   --cat-1: #285c90;
   --cat-2: #7c88ac;
   --cat-3: #eec9f3;
@@ -291,4 +486,86 @@
   --cat-6: #90e3cf;
   --cat-7: #f2f0e9;
   --cat-8: #8a776f;
+  /* Luxe */
+  --hero-from: #1d2a0f;
+  --hero-to: #4b6626;
+  --hero-ink: 255 255 255;
+  --hero-ink-soft: 238 243 228;
+  --hero-rule: rgba(255, 255, 255, 0.16);
+  --hero-ring: 255 255 255;
+  --hero-ring-track: rgba(255, 255, 255, 0.16);
+  --hero-chip-bg: rgba(255, 255, 255, 0.86);
+  --hero-chip-ink: 34 47 18;
+  --hero-chip-on-bg: 14 22 10;
+  --hero-chip-on-ink: 255 255 255;
+  --hero-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 48px -20px rgba(0, 0, 0, 0.7);
+  --butter: 58 44 6;
+  --butter-ink: 255 226 154;
+  --butter-ink-soft: 216 190 124;
+  --peach: 74 30 16;
+  --peach-ink: 255 205 184;
+  --peach-ink-soft: 219 170 150;
+  --sky: 20 41 77;
+  --sky-ink: 204 224 255;
+  --sky-ink-soft: 167 187 219;
+  --lilac: 45 29 85;
+  --lilac-ink: 224 211 255;
+  --lilac-ink-soft: 188 175 221;
+  --pea: 36 51 26;
+  --pea-ink: 214 232 184;
+  --pea-ink-soft: 178 196 152;
+  --hero-chip-edge: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --hero-chip-solid: 255 255 255;
+  --card-ring: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --pea-shade: #000000;
+  --shadow-pea: 0 1px 1.5px rgba(0, 0, 0, 0.5);
+  --card-bg: rgba(30, 37, 32, 0.86);
+  --card-solid: 30 37 32;
+  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 16px 32px -16px rgba(0, 0, 0, 0.6);
+  --shadow-tile: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 24px -14px rgba(0, 0, 0, 0.6);
+  --pea-glint: #ffffff;
+  --pea-body: #e3ead6;
+  --pea-drop: rgba(0, 0, 0, 0.35);
+  --logo-top: #7f9c4f;
+  --logo-bottom: #4b6626;
+  --logo-edge: rgba(255, 255, 255, 0.25);
+  --check-glint: #7a974a;
+  --check-body: #5a7a2e;
+  --check-rim: #3c521f;
+  --check-ink: #ffffff;
+  --shadow-check: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --fab-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px -8px rgba(0, 0, 0, 0.6);
+  /* Luxe 2 */
+  --mesh-base: #121612;
+  --mesh-brand: #8fb34f;
+  --mesh-butter: #f5c542;
+  --mesh-peach: #ff9e7a;
+  --mesh-sky: #5f9dff;
+  --mesh-lilac: #a184ff;
+  --mesh-alpha: 0.45; /* dark: .16–.25 (text directly on the mesh keeps 4.5:1) */
+  --mesh-reduced: 0.35;
+  --grain-mesh: 0.05;
+  --glass2-rim-light: rgba(255, 255, 255, 0.35);
+  --glass2-rim-dim: rgba(255, 255, 255, 0.05);
+  --glass2-inner: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 26px 26px 52px -30px rgba(255, 255, 255, 0.08);
+  --glass2-contact: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --glass2-tile-alpha: 0.86;
+  --hero-shimmer: rgba(255, 255, 255, 0.16);
+  --hero-ring-glow: rgba(255, 255, 255, 0.28);
+  --glass2-inner-pressed: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 34px 34px 60px -30px rgba(255, 255, 255, 0.06);
+  --hero-rim-light: rgba(255, 255, 255, 0.3);
+  --hero-rim-dim: rgba(255, 255, 255, 0.04);
+  --hero-inner: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --pea-light: #ffffff;
+  --pea-dark: #000000;
+  --pea-rim-light: rgba(255, 255, 255, 0.28);
+  --pea-contact: rgba(0, 0, 0, 0.45);
+  --pea-logo: #f3f7ec;
+  --pea-open-ring: rgba(238, 241, 236, 0.42);
+  --pea-open-inset: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  --butter-deep: 44 33 4;
+  --peach-deep: 58 22 12;
+  --sky-deep: 14 30 60;
+  --lilac-deep: 34 22 68;
+  --pea-deep: 28 40 20;
 }

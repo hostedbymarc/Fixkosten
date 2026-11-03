@@ -43,28 +43,67 @@ const recordEntrance = (page: Page) =>
 const entrance = (page: Page) => page.evaluate(() => (window as unknown as { entranceRec: { end: number; iterations: number; target: string }[] }).entranceRec);
 
 test.describe('Lade-Animation', () => {
-  test('Start: Splash mit den drei Erbsen, sofort sichtbar, endlich, blockiert nichts, nach ≥ 700 ms weg', async ({ page }) => {
+  // Luxe 2: „Squish & Merge“ – visible only after 300 ms, no minimum duration, the wave loops until the
+  // data is there (the only endless animation, gone with the splash)
+  test('Start: Squish & Merge – drei Erbsen, erst nach 300 ms sichtbar, keine Mindestdauer, blockiert nichts', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await watchSplash(page);
+    // a slow app script: the splash gets its stage
+    await page.route(/\/assets\/index-.*\.js$/, async (r) => {
+      await new Promise((res) => setTimeout(res, 1500));
+      await r.continue();
+    });
     await page.reload({ waitUntil: 'commit' });
     const splash = page.locator('#splash');
-    await expect(splash).toBeVisible();
     await expect(splash).toHaveAttribute('aria-hidden', 'true');
-    await expect(splash.locator('svg circle')).toHaveCount(3);
-    await expect(splash.locator('rect')).toHaveCount(0);
+    await expect(splash.locator('.splash-goo .splash-body')).toHaveCount(3);
+    await expect(splash.locator('.splash-lights .splash-light')).toHaveCount(3);
     await expect(splash).toHaveText('');
-    const info = await splash.evaluate((el) => ({
-      pointer: getComputedStyle(el).pointerEvents,
-      infinite: el.getAnimations({ subtree: true }).filter((a) => a.effect!.getComputedTiming().iterations === Infinity).length,
-      animated: el.getAnimations({ subtree: true }).filter((a) => (a as CSSAnimation).animationName === 'splash-pea').length,
-    }));
+    const info = await splash.evaluate((el) => {
+      const anims = el.getAnimations({ subtree: true }) as CSSAnimation[];
+      const show = anims.find((a) => a.animationName === 'splash-show');
+      return {
+        pointer: getComputedStyle(el).pointerEvents,
+        showDelay: show ? Number(show.effect!.getTiming().delay) : -1,
+        drops: anims.filter((a) => a.animationName === 'splash-drop').length,
+        // only transform and opacity
+        props: [...new Set(anims.flatMap((a) => (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k)))).values()].filter(
+          (k) => !['offset', 'computedOffset', 'easing', 'composite', 'transform', 'opacity'].includes(k),
+        ),
+      };
+    });
     expect(info.pointer).toBe('none');
-    expect(info.infinite, 'no endless animation in the splash').toBe(0);
-    expect(info.animated, 'the 3 peas animate').toBe(3);
-    await expect(splash).toHaveCount(0, { timeout: 3000 });
-    const gone = await page.evaluate(() => (window as unknown as { splashGoneAt: number }).splashGoneAt);
-    expect(gone, 'shown at least 700 ms').toBeGreaterThanOrEqual(700);
+    expect(info.showDelay, 'visible only after 300 ms').toBe(300);
+    expect(info.drops, 'the 3 peas drop in (silhouette and light layer each)').toBe(6);
+    expect(info.props, 'only transform and opacity').toEqual([]);
+    await expect(splash).toHaveCount(0, { timeout: 8000 });
     await expect(page.getByTestId('hero')).toBeVisible();
+    const infinite = await page.evaluate(() => document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations === Infinity).length);
+    expect(infinite, 'nothing loops once the splash is gone').toBe(0);
+  });
+
+  test('schnelle Daten: der Splash blitzt nicht auf', async ({ page }) => {
+    await importLive(page, OKT_TODAY);
+    await page.addInitScript(() => {
+      const w = window as unknown as { splashMax: number; splashGone: number };
+      w.splashMax = 0;
+      const tick = () => {
+        const s = document.getElementById('splash');
+        if (s) {
+          w.splashMax = Math.max(w.splashMax, Number(getComputedStyle(s).opacity));
+          requestAnimationFrame(tick);
+        } else w.splashGone = performance.now();
+      };
+      requestAnimationFrame(tick);
+    });
+    await page.reload();
+    await expect(page.locator('#splash')).toHaveCount(0, { timeout: 8000 });
+    const { splashMax, splashGone } = await page.evaluate(() => {
+      const w = window as unknown as { splashMax: number; splashGone: number };
+      return { splashMax: w.splashMax, splashGone: w.splashGone };
+    });
+    // gone before 300 ms: it never showed
+    if (splashGone < 280) expect(splashMax, 'no flash').toBeLessThan(0.05);
   });
 
   test('erster Start (leere Datenbank): Splash, dann der Einrichtungs-Dialog', async ({ page }) => {
