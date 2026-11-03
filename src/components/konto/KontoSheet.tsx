@@ -102,7 +102,12 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
         {milestones.length > 0 && (
           <ul className="flex flex-wrap gap-2" aria-label="Meilensteine" data-testid="konto-milestones">
             {milestones.map((m) => (
-              <li key={m} className="inline-flex items-center gap-1.5 rounded-full bg-paid-soft px-2.5 py-1 text-[12px] font-semibold text-paid-ink" data-testid="konto-milestone" data-milestone={m}>
+              <li
+                key={m}
+                className="inline-flex items-center gap-1.5 rounded-full bg-paid-soft px-2.5 py-1 text-[12px] font-semibold text-paid-ink"
+                data-testid="konto-milestone"
+                data-milestone={m}
+              >
                 <Pea size={10} />
                 {t(MILESTONE_TEXT[m])}
               </li>
@@ -113,25 +118,25 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
         <Fold summary={t('sheet.settings')} testId="konto-settings-inline">
           <div className="flex flex-col gap-5">
             <KontoInputs settings={settings} active={active} balance={state.balance} />
-            <Fold summary={`Im Dauerauftrag (${overview.order.positions.length})`} testId="konto-positions">
-              <ul className="divide-y divide-line text-[14px]">
-                {overview.order.positions.map(({ position, monthly }) => (
-                  <li key={position.id} className="flex min-h-11 items-center justify-between gap-3">
-                    <span className="min-w-0 truncate text-ink">{position.name}</span>
-                    <span className="num shrink-0 text-ink-soft">{formatAvg(monthly)}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-2 flex items-center text-[13px] text-ink-mute">
-                <p data-testid="konto-order-exact">
-                  genau <span className="num">{formatAvg(overview.order.exact)}</span> aus {overview.order.positions.length}{' '}
-                  {overview.order.positions.length === 1 ? 'Position' : 'Positionen'}, aufgerundet auf {formatEUR(overview.order.rounding)}
-                </p>
-                <InfoTip label="Erklärung: Im Dauerauftrag" title="Im Dauerauftrag" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
-                  <p>Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.</p>
-                </InfoTip>
-              </div>
-            </Fold>
+          </div>
+        </Fold>
+        <Fold summary={`Im Dauerauftrag (${overview.order.positions.length})`} testId="konto-positions">
+          <ul className="divide-y divide-line text-[14px]">
+            {overview.order.positions.map(({ position, monthly }) => (
+              <li key={position.id} className="flex min-h-11 items-center justify-between gap-3">
+                <span className="min-w-0 truncate text-ink">{position.name}</span>
+                <span className="num shrink-0 text-ink-soft">{formatAvg(monthly)}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 flex items-center text-[13px] text-ink-mute">
+            <p data-testid="konto-order-exact">
+              genau <span className="num">{formatAvg(overview.order.exact)}</span> aus {overview.order.positions.length}{' '}
+              {overview.order.positions.length === 1 ? 'Position' : 'Positionen'}, aufgerundet auf {formatEUR(overview.order.rounding)}
+            </p>
+            <InfoTip label="Erklärung: Im Dauerauftrag" title="Im Dauerauftrag" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
+              <p>Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.</p>
+            </InfoTip>
           </div>
         </Fold>
       </div>

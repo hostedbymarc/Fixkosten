@@ -61,6 +61,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           await startApp(page);
           const card = page.getByTestId('konto-tile-card');
           // directly below the hero
+          await expect(card).toBeVisible();
+          await expect(page.getByTestId('kpi-value')).toBeVisible();
           const below = await page.evaluate(() => {
             const [hero, tile, kpi] = ['hero', 'konto-tile-card', 'kpi-value'].map((id) => document.querySelector(`[data-testid="${id}"]`)!);
             const follows = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
