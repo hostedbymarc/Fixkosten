@@ -27,6 +27,10 @@ async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
   await page.waitForTimeout(250);
+  // the slow ambient drift (mesh, hero lights; also ones started late) is taken out, back at rest: viewport
+  // and full-page capture are compared, and the mesh drift is in vmax, which the full-page resize changes
+  await page.evaluate(() => document.getAnimations().filter((a) => a.id === 'ambient').forEach((a) => a.cancel()));
+  await page.waitForTimeout(50);
 }
 
 for (const scheme of ['light', 'dark'] as const) {

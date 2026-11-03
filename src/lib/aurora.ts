@@ -241,12 +241,24 @@ export function initAurora() {
     return url ?? null;
   }
 
+  /** The layers in px of the viewport the mesh was painted for; a height-only resize keeps them. */
+  function sizeLayers() {
+    const vp = viewport();
+    const height = Math.ceil(vp.height / 120) * 120;
+    host.style.setProperty('--aurora-w', `${vp.width}px`);
+    host.style.setProperty('--aurora-h', `${height}px`);
+    host.style.setProperty('--aurora-pad', `${Math.round(Math.max(vp.width, height) * 0.06)}px`);
+  }
+
   function startDrift(layer: HTMLElement, route: Route) {
     drift?.cancel();
     drift = null;
     if (!DRIFT || media('(prefers-reduced-motion: reduce)') || !layer.animate) return;
     const [dx, dy] = COMPOSITIONS[route].drift;
-    drift = layer.animate([{ transform: 'translate3d(0, 0, 0)' }, { transform: `translate3d(${dx}vmax, ${dy}vmax, 0)` }], {
+    // in px of the painted viewport (like the layer's size): a full-page capture does not move it
+    const vp = viewport();
+    const unit = Math.max(vp.width, Math.ceil(vp.height / 120) * 120) / 100;
+    drift = layer.animate([{ transform: 'translate3d(0, 0, 0)' }, { transform: `translate3d(${(dx * unit).toFixed(1)}px, ${(dy * unit).toFixed(1)}px, 0)` }], {
       duration: DRIFT_MS,
       // comes to rest softly
       easing: 'cubic-bezier(0.3, 0.1, 0.2, 1)',
@@ -269,6 +281,7 @@ export function initAurora() {
     const prev = layers[front]!;
     if (next !== prev) next.getAnimations().forEach((a) => a.cancel());
     next.style.setProperty('--aurora-image', target);
+    sizeLayers();
     if (first || force || media('(prefers-reduced-motion: reduce)')) {
       next.style.opacity = '1';
       if (next !== prev) {
