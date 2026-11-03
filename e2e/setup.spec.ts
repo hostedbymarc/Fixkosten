@@ -116,5 +116,5 @@ test('existing v1 database: no dialog, upgraded to v4, ticks and notes kept', as
       };
     }),
   );
-  expect(version).toBe(40); // Dexie stores schema v4 × 10
+  expect(version).toBe(50); // Dexie stores schema v5 × 10
 });

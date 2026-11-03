@@ -57,3 +57,14 @@ Alle Beträge in ganzen Cent (`src/lib/calc.ts`, `monthFigures`), je Monat; eine
 - **im Ø-Monat** = Netto-Gehalt − Ø pro Monat − Ø Vermögensaufbau (Vermögensaufbau-Positionen × Fälligkeitsmonate ÷ 12).
 - **Aktiver Monat / Stichtag** = Kalendermonat bei Monatsbeginn 1.; sonst ab dem Stichtag (15.–28. oder Monatsletzter, in kurzen Monaten der letzte Tag) der Folgemonat (`src/lib/activeMonth.ts`).
 - **Import (atomar, mit Timeout)** = eine IndexedDB-Transaktion über alle Tabellen: ganz oder gar nicht; nach `IMPORT_TIMEOUT_MS` = 20 s Abbruch mit Rollback und Fehlermeldung, die bisherigen Daten bleiben unverändert (`src/db/backup.ts`).
+
+## Fixkostenkonto
+
+Eigenes Konto für die Fixkosten, gefüllt per Dauerauftrag (`src/lib/fixkostenkonto.ts`, nur auf den Funktionen aus `calc.ts`; Einstellungen im `meta`-Store, `src/db/settings.ts`).
+
+- **Konto je Position** = `account` (`fixkostenkonto` | `girokonto`, Schema v5, optional). Ohne Feld: Vermögensaufbau-Kategorien → Girokonto, sonst Fixkostenkonto. Einmalige Zahlungen „nicht vom Netto“ zählen nie.
+- **Dauerauftrag** = Σ Monatsanteile (`monthlyEquivalent`) aller wiederkehrenden Positionen auf dem Fixkostenkonto im aktiven Monat, nach oben gerundet auf 1, 5 oder 10 (Standard 5).
+- **Simulation** = 12 Monate ab dem aktiven Monat, Start „Kontostand heute“. Die Einzahlung kommt vor allen Abbuchungen; im aktiven Monat nur noch offene Positionen (und keine Einzahlung, wenn sie schon eingegangen ist); danach alles Fällige laut `dueItems` (geplante Änderungen, einmalige Zahlungen, Einmalbeträge; entfallene nicht).
+- **Startlücke** = max(0, −niedrigster Monatsend-Stand).
+- **„steigt stark“** = 12 Einzahlungen − alle Abbuchungen der 12 Monate > eine Monatseinzahlung.
+- **Land** (AT/DE/CH, `src/lib/country.ts`): Währung und Zahlenformat zentral in `src/lib/format.ts` (de-AT €, de-DE €, de-CH CHF); ohne Wahl AT.

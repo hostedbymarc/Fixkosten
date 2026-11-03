@@ -81,7 +81,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await page.reload();
   await expect(page.getByTestId('hero')).toBeVisible();
   await expect(page.getByTestId('setup-dialog')).toHaveCount(0);
-  expect(await idbVersion(page)).toBe(40);
+  expect(await idbVersion(page)).toBe(50);
 
   // nothing lost: every other table record by record, positions only gained changedOn
   for (const [t, rows] of Object.entries(before)) expect(await rawTable(page, t), t).toEqual(rows);
