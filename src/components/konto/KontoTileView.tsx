@@ -1,5 +1,5 @@
 import type { Ref } from 'react';
-import { formatDelta } from '../../lib/format';
+import { formatEUR } from '../../lib/format';
 import { podText, type Pod, type TileState } from '../../lib/schote';
 import { t } from '../../lib/schoteTexts';
 import { InfoTip } from '../InfoTip';
@@ -26,6 +26,8 @@ export interface KontoTileProps {
   onOpen: () => void;
   onPaid?: () => void;
   onSetup?: () => void;
+  /** „am 1.“ – from „Neuer Monat beginnt am“ (orderDay) */
+  day: string;
   buttonRef?: Ref<HTMLButtonElement>;
 }
 
@@ -46,12 +48,12 @@ export function formatCushion(months: number): string {
  */
 export function KontoTileView(props: KontoTileProps) {
   if (props.state === 'setup') return <SetupTile {...props} />;
-  const { state, pod, order, gap, cushion, streak, onOpen, onPaid, buttonRef } = props;
+  const { state, pod, order, gap, cushion, streak, onOpen, onPaid, buttonRef, day } = props;
   const text = podText(pod);
   const label =
     state === 'gap'
-      ? `Fixkostenkonto: ${text}. ${t('tile.gap.text', { betrag: formatDelta(gap) })}. Details öffnen`
-      : `Fixkostenkonto: ${text}. ${t('tile.order', { betrag: formatDelta(order) })} Details öffnen`;
+      ? `Fixkostenkonto: ${text}. ${t('tile.gap.text', { betrag: formatEUR(gap) })}. Details öffnen`
+      : `Fixkostenkonto: ${text}. ${t('tile.order', { betrag: formatEUR(order), tag: day })}. Details öffnen`;
   return (
     <section className="glass glass-tile tone-pea surface press relative min-w-0 p-4 md:p-5 xl:p-6" data-testid="konto-tile-card" data-state={state}>
       <div className="flex min-w-0 items-center gap-2">
@@ -74,11 +76,11 @@ export function KontoTileView(props: KontoTileProps) {
         <span className="mt-1 block text-[13px] leading-5 text-ink-soft lg:text-[14px]" data-testid="konto-tile-sub">
           {state === 'gap' ? (
             <>
-              Noch <span className="num whitespace-nowrap font-semibold text-ink">{formatDelta(gap)}</span> einzahlen, dann ist alles gedeckt
+              Noch <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(gap)}</span> einzahlen, dann ist alles gedeckt
             </>
           ) : (
             <>
-              Dauerauftrag <span className="num whitespace-nowrap font-semibold text-ink">{formatDelta(order)}</span> am 1.
+              Dauerauftrag <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(order)}</span> {day}
             </>
           )}
         </span>

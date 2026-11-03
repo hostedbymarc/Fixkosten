@@ -1226,14 +1226,30 @@ button:active > .pea[data-pressable] {
   display: flex;
   justify-content: space-between;
   gap: 5px;
-  margin-top: 4px;
+  margin-top: 2px;
   padding: 0 14px;
 }
-.pod-months > span {
+.pod-month {
+  /* one per slot, as wide as its pea: never overlaps its neighbour, even on the iPhone SE */
   width: clamp(16px, calc((100cqi - 2 * 14px - 11 * 5px) / 12), 30px);
+  height: 26px;
+  border-radius: 6px;
   text-align: center;
   font-size: 11px;
-  line-height: 14px;
+  line-height: 26px;
   font-weight: 500;
   color: rgb(var(--c-ink-faint));
+}
+.pod-month[aria-pressed='true'] {
+  color: rgb(var(--c-ink));
+  font-weight: 700;
+}
+.pod-month-name:empty {
+  display: none;
+}
+.pod-month-name {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: rgb(var(--c-ink-soft));
 }

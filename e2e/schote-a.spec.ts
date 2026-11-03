@@ -49,7 +49,26 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         const eight = page.getByTestId('dev-pod-8-von-12').getByTestId('dev-pod-large');
         await expect(eight.locator('[data-testid="pod-slot"]:not([data-covered]) .pod-empty svg')).toHaveCount(4);
         await expect(eight.locator('[data-testid="pod-slot"][data-covered] .pea')).toHaveCount(8);
-        await expect(eight.locator('.pod-months span')).toHaveText(['N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O']);
+        const months = eight.getByTestId('pod-month');
+        await expect(months).toHaveText(['N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O']);
+        // the initials never overlap and stay inside the pod (iPhone SE too)
+        const boxes = await months.evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).map((r) => [r.left, r.right] as [number, number]));
+        const pod = (await eight.boundingBox())!;
+        for (const [i, [l, r]] of boxes.entries()) {
+          expect(l, `month ${i} inside`).toBeGreaterThanOrEqual(pod.x - 0.5);
+          expect(r, `month ${i} inside`).toBeLessThanOrEqual(pod.x + pod.width + 0.5);
+          if (i > 0) expect(l, `month ${i} after month ${i - 1}`).toBeGreaterThanOrEqual(boxes[i - 1]![1]);
+        }
+        // tap an initial: the full month name, below the pod; tap again: gone
+        const tapM = (n: number) => (use.hasTouch ? months.nth(n).tap() : months.nth(n).click());
+        await tapM(3);
+        await expect(eight.getByTestId('dev-pod-large-month')).toHaveText('Februar 2027: nicht gedeckt');
+        await tapM(0);
+        await expect(eight.getByTestId('dev-pod-large-month')).toHaveText('November 2026: gedeckt');
+        await expect(months.nth(0)).toHaveAttribute('aria-pressed', 'true');
+        if (SHOTS.has(name) && theme === 'light') await shot(page, `${tag}-1b-schote-monat`);
+        await tapM(0);
+        await expect(eight.getByTestId('dev-pod-large-month')).toBeEmpty();
         await expectNoOverflow(page);
         if (SHOTS.has(name)) await shot(page, `${tag}-1-schote`, true);
 
@@ -67,10 +86,10 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         await expect(cards.nth(0)).toHaveAttribute('data-state', 'setup');
         await expect(cards.nth(0).getByTestId('konto-tile-progress')).toHaveText('0 von 3 Schritten');
         await expect(cards.nth(1)).toHaveAttribute('data-state', 'gap');
-        await expect(cards.nth(1).getByTestId('konto-tile-sub')).toHaveText('Noch +€ 580 einzahlen, dann ist alles gedeckt');
+        await expect(cards.nth(1).getByTestId('konto-tile-sub')).toHaveText('Noch € 580 einzahlen, dann ist alles gedeckt');
         await expect(cards.nth(2)).toHaveAttribute('data-state', 'covered');
         await expect(cards.nth(2).getByTestId('tile-pod-text')).toHaveText('Gedeckt bis Oktober 2027');
-        await expect(cards.nth(2).getByTestId('konto-tile-sub')).toHaveText('Dauerauftrag +€ 2.955 am 1.');
+        await expect(cards.nth(2).getByTestId('konto-tile-sub')).toHaveText('Dauerauftrag € 2.955 am 1.');
         await expect(cards.nth(3)).toHaveAttribute('data-state', 'cushion');
         await expect(cards.nth(3).getByTestId('konto-tile-cushion')).toHaveText('Polster: +1,4 Monate');
         await expect(cards.nth(4).getByTestId('konto-tile-streak')).toHaveText('4 Monate in Folge');
@@ -97,62 +116,86 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
           await tap('dev-setup-open');
           const setup = page.getByTestId('konto-setup');
           await expect(setup).toHaveAttribute('data-step', 'account');
-          await expect(page.getByTestId('setup-progress')).toContainText('Schritt 1 von 3');
-          await expect(page.getByTestId('setup-question')).toHaveText('Hast du ein eigenes Konto nur für Rechnungen?');
+          await expect(page.getByTestId('konto-setup-progress')).toContainText('Schritt 1 von 3');
+          await expect(page.getByTestId('konto-setup-question')).toHaveText('Hast du ein eigenes Konto nur für Rechnungen?');
           if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-3-einrichtung-1-konto`);
 
           if (variant === 'noch-nicht') {
-            await tap('setup-no-account-button');
-            await expect(page.getByTestId('setup-no-account')).toHaveText('Kein Problem. Erbse rechnet trotzdem aus, wie viel du brauchst.');
+            await tap('konto-setup-no-account-button');
+            await expect(page.getByTestId('konto-setup-no-account')).toHaveText('Kein Problem. Erbse rechnet trotzdem aus, wie viel du brauchst.');
             if (SHOTS.has(name)) await shot(page, `${tag}-3-einrichtung-1b-kein-konto`);
-            await tap('setup-next');
+            await tap('konto-setup-next');
           } else {
-            await tap('setup-has-account');
+            await tap('konto-setup-has-account');
             await expect(setup).toHaveAttribute('data-step', 'balance');
-            await expect(page.getByTestId('setup-balance')).toHaveAttribute('inputmode', 'decimal');
-            await expect(page.getByTestId('setup-balance-hint')).toHaveText('Nur einmal eintragen. Danach rechnet Erbse selbst weiter.');
+            await expect(page.getByTestId('konto-setup-balance')).toHaveAttribute('inputmode', 'decimal');
+            await expect(page.getByTestId('konto-setup-balance-hint')).toHaveText('Nur einmal eintragen. Danach rechnet Erbse selbst weiter.');
             if (variant === 'ja') {
-              await expect(page.getByTestId('setup-next')).toBeDisabled();
-              await page.getByTestId('setup-balance').fill('0');
+              await expect(page.getByTestId('konto-setup-next')).toBeDisabled();
+              await page.getByTestId('konto-setup-balance').fill('0');
               if (SHOTS.has(name)) await shot(page, `${tag}-3-einrichtung-2-kontostand`);
-              await tap('setup-next');
+              await tap('konto-setup-next');
             } else {
-              await tap('setup-balance-unknown');
+              await tap('konto-setup-balance-unknown');
             }
             await expect(setup).toHaveAttribute('data-step', 'order');
-            await expect(page.getByTestId('setup-question')).toHaveText('Ist der Dauerauftrag für November schon eingegangen?');
+            await expect(page.getByTestId('konto-setup-question')).toHaveText('Ist der Dauerauftrag für November schon eingegangen?');
             if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-3-einrichtung-3-dauerauftrag`);
-            await tap(variant === 'ja' ? 'setup-order-no' : 'setup-order-none');
+            await tap(variant === 'ja' ? 'konto-setup-order-no' : 'konto-setup-order-none');
           }
 
           await expect(setup).toHaveAttribute('data-step', 'plan');
-          const plan = page.getByTestId('setup-plan');
-          await expect(page.getByTestId('plan-pod-text')).toHaveText('Erledige die Punkte, dann füllt sich die Schote.');
-          await expect(page.getByTestId('plan-pod').locator('[data-testid="pod-slot"][data-covered]')).toHaveCount(0);
+          const plan = page.getByTestId('konto-setup-plan');
+          const covered = page.getByTestId('plan-pod').locator('[data-testid="pod-slot"][data-covered]');
+          // before any point: no standing order on the account yet, balance 0 → nothing covered
+          await expect(page.getByTestId('plan-pending')).toHaveText('Erledige die Punkte, dann füllt sich die Schote.');
+          await expect(page.getByTestId('plan-pod-text')).toHaveText('0 von 12 Monaten gedeckt');
+          await expect(covered).toHaveCount(0);
           // balance 0 and November still coming (ja): gap € 580; no standing order this month: € 3.535
-          const gap = variant === 'ja' ? '+€ 580' : '+€ 3.535';
-          await expect(page.getByTestId('plan-order')).toContainText(variant === 'ja' ? 'Dauerauftrag prüfen: +€ 2.955 monatlich am 1.' : 'Dauerauftrag einrichten: +€ 2.955 monatlich am 1.');
+          const gap = variant === 'ja' ? '€ 580' : '€ 3.535';
+          await expect(page.getByTestId('plan-order')).toContainText(
+            variant === 'ja' ? 'Dauerauftrag prüfen: € 2.955 monatlich am 1.' : 'Dauerauftrag einrichten: € 2.955 monatlich am 1.',
+          );
           await expect(page.getByTestId('plan-gap')).toContainText(`Einmalig ${gap} überweisen`);
-          if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-4-plan`);
+          // „Noch nicht“: the plan starts with opening the account, before the standing order
+          const items = page.getByTestId('konto-setup-plan').locator('li');
+          await expect(items).toHaveCount(variant === 'noch-nicht' ? 3 : 2);
+          if (variant === 'noch-nicht') {
+            await expect(items.first()).toHaveAttribute('data-testid', 'plan-account');
+            await expect(items.first()).toContainText('Fixkostenkonto eröffnen');
+          } else await expect(page.getByTestId('plan-account')).toHaveCount(0);
+          if (SHOTS.has(name) && variant !== 'weiss-nicht') await shot(page, `${tag}-4-plan${variant === 'noch-nicht' ? '-kein-konto' : ''}`);
 
+          if (variant === 'noch-nicht') {
+            await tap('plan-account-done');
+            await expect(page.getByTestId('plan-pending')).toHaveCount(0);
+            await expect(covered).toHaveCount(0); // an account alone covers nothing yet
+          }
+          // reward per step: the standing order covers 8 months right away (ja); without this month's
+          // deposit (Ich habe noch keinen) every month stays short until the one-time transfer
           await tap('plan-order-done');
+          await expect(covered).toHaveCount(variant === 'ja' ? 8 : 0);
+          await expect(page.getByTestId('plan-pod-text')).toHaveText(variant === 'ja' ? '8 von 12 Monaten gedeckt' : '0 von 12 Monaten gedeckt');
           await expect(plan).not.toHaveAttribute('data-done');
+          if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-4b-plan-dauerauftrag-erledigt`);
           await tap('plan-gap-done');
           await expect(plan).toHaveAttribute('data-done', 'true');
           await expect(page.getByTestId('plan-pod')).toHaveAttribute('data-full', 'true');
-          await expect(page.getByTestId('plan-pod').locator('[data-testid="pod-slot"][data-covered]')).toHaveCount(12);
+          await expect(covered).toHaveCount(12);
           await expect(page.getByTestId('plan-pod-text')).toHaveText('Alles gedeckt bis Oktober 2027');
           await expectNoOverflow(page);
           if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-5-plan-erledigt`);
 
-          await tap('setup-finish');
+          await tap('konto-setup-finish');
           await expect(setup).toHaveCount(0);
           const result = JSON.parse((await page.getByTestId('dev-setup-result').textContent())!);
-          expect(result).toMatchObject({
-            ja: { hasAccount: true, balance: 0, balanceUnknown: false, order: 'no', orderDone: true, gapDone: true },
-            'noch-nicht': { hasAccount: false, balance: 0, balanceUnknown: false, order: 'none', orderDone: true, gapDone: true },
-            'weiss-nicht': { hasAccount: true, balance: 0, balanceUnknown: true, order: 'none', orderDone: true, gapDone: true },
-          }[variant]);
+          expect(result).toMatchObject(
+            {
+              ja: { hasAccount: true, balance: 0, balanceUnknown: false, order: 'no', accountDone: false, orderDone: true, gapDone: true },
+              'noch-nicht': { hasAccount: false, balance: 0, balanceUnknown: false, order: 'none', accountDone: true, orderDone: true, gapDone: true },
+              'weiss-nicht': { hasAccount: true, balance: 0, balanceUnknown: true, order: 'none', orderDone: true, gapDone: true },
+            }[variant],
+          );
         });
       }
     });
@@ -177,26 +220,31 @@ test.describe('Schote A · Video der Einrichtung', () => {
   test('Einrichtung durchklicken', async ({ browser, baseURL }) => {
     test.setTimeout(90_000);
     const size = { width: 393, height: 852 };
-    const context = await browser.newContext({ ...VIEWPORTS['iphone-15'], deviceScaleFactor: 2, baseURL, recordVideo: { dir: 'test-results/schote-video', size } });
+    const context = await browser.newContext({
+      ...VIEWPORTS['iphone-15'],
+      deviceScaleFactor: 2,
+      baseURL,
+      recordVideo: { dir: 'test-results/schote-video', size },
+    });
     const page = await context.newPage();
     const slow = (ms = 900) => page.waitForTimeout(ms);
     await page.goto(url('light', '&view=setup'));
     await slow();
     await page.getByTestId('dev-setup-open').tap();
     await slow(1200);
-    await page.getByTestId('setup-has-account').tap();
+    await page.getByTestId('konto-setup-has-account').tap();
     await slow();
-    await page.getByTestId('setup-balance').pressSequentially('0', { delay: 120 });
+    await page.getByTestId('konto-setup-balance').pressSequentially('0', { delay: 120 });
     await slow();
-    await page.getByTestId('setup-next').tap();
+    await page.getByTestId('konto-setup-next').tap();
     await slow(1200);
-    await page.getByTestId('setup-order-no').tap();
+    await page.getByTestId('konto-setup-order-no').tap();
     await slow(1800);
     await page.getByTestId('plan-order-done').tap();
-    await slow(1200);
+    await slow(2000);
     await page.getByTestId('plan-gap-done').tap();
     await slow(2800);
-    await page.getByTestId('setup-finish').tap();
+    await page.getByTestId('konto-setup-finish').tap();
     await slow(1200);
     const video = page.video()!;
     await context.close();

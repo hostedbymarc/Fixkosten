@@ -81,7 +81,11 @@ export function KontoInvite() {
   const { stored } = useKonto();
   if (stored !== null) return null;
   return (
-    <section className="glass surface flex flex-col gap-3 p-4 md:flex-row md:items-center md:p-5" aria-labelledby="konto-invite-title" data-testid="konto-invite">
+    <section
+      className="glass surface flex flex-col gap-3 p-4 md:flex-row md:items-center md:p-5"
+      aria-labelledby="konto-invite-title"
+      data-testid="konto-invite"
+    >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <Pea size={28} className="mt-0.5 shrink-0" />
         <p className="min-w-0 text-[15px] leading-snug text-ink">

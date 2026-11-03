@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addPeriods } from './period';
-import { cushionMonths, podFromMonths, podText, tileState } from './schote';
+import { cushionMonths, orderDay, podFromMonths, podText, tileState } from './schote';
 import { SCHOTE_TEXTS, sentences, t, wordCount } from './schoteTexts';
 import type { Period } from './types';
 
@@ -68,5 +68,13 @@ describe('Texte', () => {
   it('Wörter zählen', () => {
     expect(wordCount('Erbse rechnet deinen Dauerauftrag aus und warnt, bevor das Konto knapp wird.')).toBe(12);
     expect(wordCount('Noch {betrag} einzahlen')).toBe(3);
+  });
+});
+
+describe('Tag des Dauerauftrags = „Neuer Monat beginnt am“', () => {
+  it('1., 15.–28., Monatsletzter', () => {
+    expect(orderDay(1)).toBe('am 1.');
+    expect(orderDay(25)).toBe('am 25.');
+    expect(orderDay('last')).toBe('am Monatsletzten');
   });
 });
