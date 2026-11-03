@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, openInfo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, openInfo, setUpKonto, test, TODAY } from './fixtures';
 
 // Fixkostenkonto sprint: onboarding AT/DE/CH, activation through the invitation card, sheet with
 // Startlücke, analysis section – on iPhone SE, iPhone 15, iPad portrait/landscape and desktop 1440,
@@ -59,6 +59,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-invite')).toHaveCount(0);
         const tile = page.getByTestId('konto-tile');
         await expect(tile).toBeVisible();
+        await setUpKonto(page);
         const order = amountOf((await page.getByTestId('konto-tile-value').textContent())!);
         await tile.scrollIntoViewIfNeeded();
         await shot(page, vp, scheme, '2-kachel');
@@ -86,7 +87,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const gap = sheet.getByTestId('konto-gap');
         await expect(gap).toBeVisible();
         if ((await gap.getAttribute('data-gap')) !== null) {
-          await expect(gap).toContainText('Damit dein Konto nie ins Minus rutscht, zahl einmalig');
+          await expect(gap).toContainText('Ja. Zahl einmalig');
           // months below 0: red dot with „!“ and a signed amount, never colour only
           await expect(sheet.locator('[data-testid=konto-dot][data-negative]').first()).toBeAttached();
         }
@@ -103,7 +104,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // Kontostand heute high enough → covered
         await sheet.getByTestId('konto-settings-inline').locator('summary').click();
         await sheet.getByTestId('konto-balance').fill('20000');
-        await expect(sheet.getByTestId('konto-covered')).toHaveText('Dein Konto ist gedeckt.');
+        await expect(sheet.getByTestId('konto-covered')).toHaveText('Nein, alles gedeckt.');
         await sheet.getByTestId('konto-balance').fill('0');
         await shot(page, vp, scheme, '4-sheet-eingaben');
         await page.keyboard.press('Escape');
@@ -164,6 +165,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           const tile = page.getByTestId('konto-tile');
           await expect(tile).toBeVisible();
           await expect(page.getByTestId('konto-invite')).toHaveCount(0);
+          await setUpKonto(page);
           const value = (await page.getByTestId('konto-tile-value').textContent())!;
           // annual or quarterly template → monthly share, rounded up to 5
           if (country === 'CH') {
@@ -185,6 +187,7 @@ test('Position aufs Alltagskonto: Dauerauftrag sinkt um ihren Monatsanteil', asy
   test.skip(test.info().project.name !== 'desktop');
   await importApp(page);
   await page.getByTestId('konto-invite-enable').click();
+  await setUpKonto(page);
   await page.getByTestId('konto-tile').click();
   const exact = async () => {
     const text = (await page.getByTestId('konto-order-exact').textContent())!;

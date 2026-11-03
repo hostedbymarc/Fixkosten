@@ -1,5 +1,5 @@
 // Recharts lives in its own chunk: the month screen loads this file only when the sheet opens.
-import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { axisPeriodLabel, shortPeriodLabel } from '../../lib/analytics';
 import type { KontoOverview } from '../../lib/fixkostenkonto';
 import { formatEUR } from '../../lib/format';
@@ -103,7 +103,9 @@ export default function KontoChart({
             tick={{ ...AXIS_TICK }}
           />
           <YAxis {...yAxisProps} ticks={ticks} domain={[ticks[0]!, ticks[ticks.length - 1]!]} />
-          <ReferenceLine y={0} stroke={COLORS.over} strokeDasharray="4 4" ifOverflow="extendDomain" />
+          {/* below 0 is tinted red, the zero line is clear: you see at once where the account would be short */}
+          {ticks[0]! < 0 && <ReferenceArea y1={ticks[0]!} y2={0} fill={COLORS.over} fillOpacity={0.09} stroke="none" ifOverflow="hidden" data-testid="konto-below-zero" />}
+          <ReferenceLine y={0} stroke={COLORS.ink} strokeWidth={1.5} ifOverflow="extendDomain" data-testid="konto-zero-line" />
           <Tooltip
             {...tooltipProps}
             cursor={{ stroke: COLORS.grid }}

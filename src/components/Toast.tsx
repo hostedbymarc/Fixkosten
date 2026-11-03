@@ -4,6 +4,8 @@ import { entersAnimated } from './BottomSheet';
 
 interface ToastOptions {
   message: string;
+  /** optional, before the message (e.g. the pea of a milestone) */
+  icon?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
   durationMs?: number;
@@ -64,6 +66,11 @@ function ToastBox({ toast, onDone }: { toast: ToastState; onDone: () => void }) 
       data-animating={moving ? '' : undefined}
       onAnimationEnd={() => setMoving(false)}
     >
+      {toast.icon && (
+        <span className="shrink-0" aria-hidden="true">
+          {toast.icon}
+        </span>
+      )}
       <span className="flex-1">{toast.message}</span>
       {toast.actionLabel && (
         <button

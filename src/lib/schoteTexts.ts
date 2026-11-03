@@ -55,12 +55,15 @@ export const SCHOTE_TEXTS = {
 
   // · Phase B: monatlicher Erbsen-Check
   'check.month': 'Neuer Monat. Ist dein Dauerauftrag eingegangen?',
+  'check.month.again': 'Ist dein Dauerauftrag für {monat} eingegangen?',
   'check.month.yes': 'Ja',
   'check.month.no': 'Noch nicht',
   'check.balance': 'Stimmt dein Kontostand noch? {betrag}',
   'check.balance.ok': 'Stimmt',
   'check.balance.other': 'Anderer Betrag',
   'check.balance.remind': 'Trag deinen Kontostand ein. Dann rechnet Erbse genauer.',
+  'check.balance.save': 'Speichern',
+  'check.later': 'Später',
 
   // · Phase B: Meilensteine
   'milestone.firstPod': 'Erste Schote voll',
@@ -91,6 +94,14 @@ export const SCHOTE_TEXTS = {
 } as const;
 
 export type SchoteTextId = keyof typeof SCHOTE_TEXTS;
+
+/** Milestone (src/db/settings.ts) → its text. */
+export const MILESTONE_TEXT = {
+  firstPod: 'milestone.firstPod',
+  streak3: 'milestone.streak3',
+  streak6: 'milestone.streak6',
+  year: 'milestone.year',
+} as const satisfies Record<string, SchoteTextId>;
 
 /** Text with its {platzhalter} filled in. */
 export function t(id: SchoteTextId, vars: Record<string, string | number> = {}): string {
