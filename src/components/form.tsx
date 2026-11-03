@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { localToday } from '../lib/activeMonth';
-import { parseAmount } from '../lib/format';
+import { currencySymbol, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel, shortMonthName } from '../lib/period';
 import type { Period } from '../lib/types';
 
@@ -41,7 +41,7 @@ export function AmountField({
         {label}
       </label>
       <div className={`flex h-14 items-center px-4 ${boxClass(!!error)}`}>
-        <span className="mr-2 text-[20px] text-ink-mute">€</span>
+        <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
         <input
           id={id}
           inputMode="decimal"

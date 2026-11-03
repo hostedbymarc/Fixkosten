@@ -11,6 +11,8 @@ import type {
 import type { Table, Transaction } from 'dexie';
 import { traceImport } from '../lib/importTrace';
 import { SCHEMA_VERSION, type FixkostenDB } from './db';
+import { COUNTRY_KEY, isCountry, type Country } from '../lib/country';
+import { KONTO_KEY, readCountryRaw, readKontoRaw, toKontoSettings, writeCountry, type KontoSettings } from './settings';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, upgradePositionV5 } from './migrations';
 
 /** Oldest backup version that can still be imported (migrated on the fly). */
@@ -35,6 +37,10 @@ export interface BackupFile {
   settings?: {
     /** Einstellungen → „Neuer Monat beginnt am“ (src/lib/activeMonth.ts) */
     monthStartDay?: MonthStart;
+    /** Fixkostenkonto (schema v5); only present once it was set on the exporting device */
+    fixkostenkonto?: KontoSettings;
+    /** country (schema v5): currency, number format, templates; only present once chosen */
+    country?: Country;
   };
 }
 
@@ -136,7 +142,10 @@ export function parseBackup(raw: unknown): BackupFile {
   // settings are optional; an unknown value is dropped (→ default on import)
   if (raw.settings !== undefined) {
     const settings = isObject(raw.settings) ? raw.settings : {};
-    raw.settings = settings.monthStartDay === undefined ? {} : { monthStartDay: toMonthStart(settings.monthStartDay) };
+    const clean: Record<string, unknown> = settings.monthStartDay === undefined ? {} : { monthStartDay: toMonthStart(settings.monthStartDay) };
+    if (settings.fixkostenkonto !== undefined) clean.fixkostenkonto = toKontoSettings(settings.fixkostenkonto);
+    if (isCountry(settings.country)) clean.country = settings.country;
+    raw.settings = clean;
   }
   const positions = data.positions as Position[];
   const categoryIds = new Set((data.categories as Category[]).map((c) => c.id));
@@ -170,10 +179,18 @@ export async function writeMonthStart(db: FixkostenDB, start: MonthStart): Promi
 }
 
 /** The file's setting; a file without it sets the default 1 (replace, first import, undo) or keeps the current one (merge). */
-async function importSettings(db: FixkostenDB, backup: BackupFile, keepWhenMissing: boolean) {
+async function importSettings(db: FixkostenDB, backup: BackupFile, keepWhenMissing: boolean, exact = false) {
   const start = backup.settings?.monthStartDay;
   if (start !== undefined) await writeMonthStart(db, start);
   else if (!keepWhenMissing) await writeMonthStart(db, 1);
+  // Fixkostenkonto and country: taken over when the file has them, otherwise this device keeps its own
+  const konto = backup.settings?.fixkostenkonto;
+  if (konto !== undefined) await db.meta.put({ key: KONTO_KEY, value: toKontoSettings(konto) });
+  const country = backup.settings?.country;
+  if (country !== undefined) await writeCountry(db, country);
+  // undo: back to exactly the snapshot, also where it had none
+  if (exact && konto === undefined) await db.meta.delete(KONTO_KEY);
+  if (exact && country === undefined) await db.meta.delete(COUNTRY_KEY);
 }
 
 async function markSetupDone(db: FixkostenDB, extra: { key: string; value: unknown }[] = []) {
@@ -239,12 +256,17 @@ export async function exportBackup(db: FixkostenDB): Promise<BackupFile> {
     db.changeLog.toArray(),
     db.reminders.toArray(),
   ]);
+  const [konto, country] = await Promise.all([readKontoRaw(db), readCountryRaw(db)]);
   return {
     format: BACKUP_FORMAT,
     schemaVersion: SCHEMA_VERSION,
     exportedAt: new Date().toISOString(),
     data: { categories, positions, payments, oneOffs, monthClose, changeLog, reminders },
-    settings: { monthStartDay: await readMonthStart(db) },
+    settings: {
+      monthStartDay: await readMonthStart(db),
+      ...(konto ? { fixkostenkonto: konto } : {}),
+      ...(country ? { country } : {}),
+    },
   };
 }
 
@@ -366,7 +388,7 @@ export async function undoLastImport(db: FixkostenDB): Promise<boolean> {
     const { snapshot } = entry.value as { snapshot: BackupFile };
     await clearAll(db);
     await writeAll(db, snapshot.data);
-    await importSettings(db, snapshot, false);
+    await importSettings(db, snapshot, false, true);
     await db.meta.delete(UNDO_KEY);
     return true;
   });
