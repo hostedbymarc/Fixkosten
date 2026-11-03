@@ -3,7 +3,11 @@ import { Screen } from '../components/Screen';
 import { FEATURE_REMINDERS } from '../lib/features';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
-import { Segmented, SelectField } from '../components/form';
+import { Segmented, SelectField, SwitchField } from '../components/form';
+import { KontoInputs } from '../components/konto/KontoParts';
+import { useKonto } from '../db/useKonto';
+import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
+import { COUNTRIES, COUNTRY_FORMAT, COUNTRY_LABEL, DEFAULT_COUNTRY, toCountry } from '../lib/country';
 import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
 import { useToast } from '../components/Toast';
@@ -56,6 +60,8 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
       <div className="flex max-w-2xl flex-col gap-6">
         <AppearanceSection />
         <MonthSection />
+        <KontoSection />
+        <CountrySection />
 
         <section aria-labelledby="archive-title">
           <h2 id="archive-title" className="section-title mb-2 px-1">
@@ -320,6 +326,51 @@ function AppearanceSection() {
             In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.
           </p>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/** Fixkostenkonto: on/off, „Kontostand heute“, „schon eingegangen?“, rounding (meta, carried by backups). */
+function KontoSection() {
+  const { settings } = useKonto();
+  const active = useActiveMonth();
+  return (
+    <section aria-labelledby="konto-title">
+      <h2 id="konto-title" className="section-title mb-2 px-1">
+        Fixkostenkonto
+      </h2>
+      <div className="glass flex flex-col gap-4 p-4" data-testid="konto-settings">
+        <SwitchField
+          label="Fixkostenkonto verwenden"
+          checked={settings.enabled}
+          onChange={(v) => void writeKonto(db, { enabled: v, ...(v ? {} : { inviteDismissed: true }) })}
+          hint="Erbse rechnet aus, welchen Dauerauftrag dein Fixkostenkonto braucht und ob es jeden Monat reicht. Ohne Banklogin."
+          testId="konto-enabled"
+        />
+        {settings.enabled && <KontoInputs settings={settings} active={active} />}
+      </div>
+    </section>
+  );
+}
+
+/** Land: currency and number format (CH: CHF), templates of the setup. Stored in meta, carried by backups. */
+function CountrySection() {
+  const stored = useLiveQuery(() => readCountryRaw(db), []);
+  const country = stored ?? DEFAULT_COUNTRY;
+  return (
+    <section aria-labelledby="country-title">
+      <h2 id="country-title" className="section-title mb-2 px-1">
+        Land
+      </h2>
+      <div className="glass flex flex-col gap-2 p-4" data-testid="country-settings">
+        <SelectField
+          label="Land und Währung"
+          value={country}
+          onChange={(v) => void writeCountry(db, toCountry(v))}
+          options={COUNTRIES.map((c) => ({ value: c, label: `${COUNTRY_LABEL[c]} · ${COUNTRY_FORMAT[c].currency}` }))}
+          hint="Bestimmt Währung und Zahlenformat. Die Beträge selbst bleiben unverändert."
+        />
       </div>
     </section>
   );

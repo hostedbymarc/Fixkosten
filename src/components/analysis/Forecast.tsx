@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DeferredChart } from './DeferredChart';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { forecastRange, forecastSummary, shortPeriodLabel, yearForecast, type ForecastItem, type ForecastMonth, type YearForecast } from '../../lib/analytics';
-import { formatCompactEUR, formatEUR } from '../../lib/format';
+import { formatCompactNumber, formatEUR, withoutCurrency } from '../../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { NoteIcon } from '../Icons';
@@ -319,7 +319,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
     recurring: m.regular,
   }));
   const hasOnce = f.months.some((m) => m.extra !== 0);
-  const avgText = `Ø ${formatEUR(Math.round(f.average)).replace(/^€\s/, '')}`;
+  const avgText = `Ø ${withoutCurrency(formatEUR(Math.round(f.average)))}`;
   return (
     <ChartCard
       id="forecast"
@@ -364,8 +364,8 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             />
             <YAxis
               {...yAxisProps}
-              // the card is about euros: narrow phones drop the '€ ' of the scale ('8k')
-              tickFormatter={narrow ? (v: number) => formatCompactEUR(v).replace(/€\s/, '') : yAxisProps.tickFormatter}
+              // the card is about money: narrow phones drop the currency of the scale ('8k')
+              tickFormatter={narrow ? formatCompactNumber : yAxisProps.tickFormatter}
               tick={{ ...AXIS_TICK, fontSize: narrow ? 10 : 11 }}
               width={narrow ? 30 : 44}
             />
