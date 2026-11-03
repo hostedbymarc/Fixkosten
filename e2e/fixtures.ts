@@ -340,6 +340,17 @@ export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>
   await page.waitForTimeout(250); // settle animation
 }
 
+/**
+ * Opens an ⓘ (InfoTip): tap on touch projects, hover on desktop. Returns the open popover.
+ * Explanations live in these tooltips, not as visible text below a field.
+ */
+export async function openInfo(page: Page, button: Locator): Promise<Locator> {
+  await (isTouchProject() ? button.tap() : button.hover());
+  const pop = page.getByRole('tooltip');
+  await expect(pop).toBeVisible();
+  return pop;
+}
+
 /** Touch projects (iPhone, iPad) archive by swiping; desktop uses the ⋯ menu. */
 export function isTouchProject(): boolean {
   return base.info().project.name !== 'desktop';

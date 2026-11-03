@@ -4,8 +4,13 @@ import { writeKonto } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
 import { formatEUR } from '../../lib/format';
 import type { Dataset, Period } from '../../lib/types';
+import { InfoTip } from '../InfoTip';
 import { Pea } from '../Pea';
 import { KontoSheet, useKontoOverview } from './KontoSheet';
+
+/** Explanation of the standing order, in the tile's tooltip. */
+export const STANDING_ORDER_INFO =
+  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: die Monatsanteile aller Rechnungen auf diesem Konto (Quartal ÷ 3, Halbjahr ÷ 6, Jahr ÷ 12), aufgerundet.';
 
 /**
  * Bento tile „Fixkostenkonto · Dauerauftrag € X / Monat“ (mode on only), for the active month.
@@ -24,35 +29,45 @@ function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
   const gap = Math.round(overview.simulation.gap * 100) > 0;
   return (
     <>
-      <button
-        ref={button}
-        type="button"
-        onClick={() => setOpen(true)}
-        className="glass glass-tile surface press focus-ring flex min-w-0 items-center gap-4 p-4 text-left md:p-5 xl:p-6"
-        data-testid="konto-tile"
-        aria-label={`Fixkostenkonto: Dauerauftrag ${formatEUR(overview.order.amount)} pro Monat${gap ? `, Startlücke ${formatEUR(overview.simulation.gap)}` : ', gedeckt'} – Details öffnen`}
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[13px] font-medium leading-5 text-ink-mute">Fixkostenkonto</span>
-          <span className="mt-1 block text-ink">
-            <span className="text-[15px] font-medium text-ink-soft">Dauerauftrag </span>
-            <span className="num text-[24px] font-semibold tracking-[-0.02em] md:text-[28px]" data-testid="konto-tile-value">
-              {formatEUR(overview.order.amount)}
+      {/* the ⓘ is its own button next to (not inside) the tile button; the tile button covers the whole card */}
+      <div className="glass glass-tile tone-pea surface press relative flex min-w-0 items-center gap-4 p-4 md:p-5 xl:p-6" data-testid="konto-tile-card">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center">
+            <span className="truncate text-[13px] font-medium leading-5 text-ink-mute">Fixkostenkonto</span>
+            <InfoTip label="Erklärung: Dauerauftrag" title="Dauerauftrag" className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
+              <p>{STANDING_ORDER_INFO}</p>
+            </InfoTip>
+          </div>
+          <button
+            ref={button}
+            type="button"
+            onClick={() => setOpen(true)}
+            className="focus-ring block w-full min-w-0 rounded-lg text-left after:absolute after:inset-0 after:rounded-[inherit] after:content-['']"
+            data-testid="konto-tile"
+            aria-label={`Fixkostenkonto: Dauerauftrag ${formatEUR(overview.order.amount)} pro Monat${gap ? `, Startlücke ${formatEUR(overview.simulation.gap)}` : ', gedeckt'} – Details öffnen`}
+          >
+            <span className="block text-ink">
+              <span className="text-[15px] font-medium text-ink-soft">Dauerauftrag </span>
+              <span className="num text-[24px] font-semibold tracking-[-0.02em] md:text-[28px]" data-testid="konto-tile-value">
+                {formatEUR(overview.order.amount)}
+              </span>
+              <span className="text-[15px] font-medium text-ink-soft"> / Monat</span>
             </span>
-            <span className="text-[15px] font-medium text-ink-soft"> / Monat</span>
-          </span>
-          <span className="mt-1 block text-[12px] leading-4 text-ink-mute lg:text-[13px]" data-testid="konto-tile-sub">
-            {gap ? (
-              <>
-                Einmalig <span className="num font-semibold text-ink">{formatEUR(overview.simulation.gap)}</span> einzahlen, dann reicht es 12 Monate
-              </>
-            ) : (
-              'Gedeckt für die nächsten 12 Monate'
-            )}
-          </span>
+            <span className="mt-1 block text-[12px] leading-4 text-ink-mute lg:text-[13px]" data-testid="konto-tile-sub">
+              {gap ? (
+                <>
+                  Einmalig <span className="num font-semibold text-ink">{formatEUR(overview.simulation.gap)}</span> einzahlen, dann reicht es 12 Monate
+                </>
+              ) : (
+                'Gedeckt für die nächsten 12 Monate'
+              )}
+            </span>
+          </button>
+        </div>
+        <span className="shrink-0 text-[14px] font-semibold text-accent-ink" aria-hidden="true">
+          Details
         </span>
-        <span className="shrink-0 text-[14px] font-semibold text-accent-ink">Details</span>
-      </button>
+      </div>
       {open && <KontoSheet ds={ds} active={active} onClose={() => setOpen(false)} returnFocusTo={button.current} />}
     </>
   );

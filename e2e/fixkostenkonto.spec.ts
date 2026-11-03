@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, openInfo, test, TODAY } from './fixtures';
 
 // Fixkostenkonto sprint: onboarding AT/DE/CH, activation through the invitation card, sheet with
 // Startlücke, analysis section – on iPhone SE, iPhone 15, iPad portrait/landscape and desktop 1440,
@@ -70,7 +70,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(sheet).toBeVisible();
         await expect(sheet.getByTestId('konto-order-value')).toHaveText(/./);
         expect(amountOf((await sheet.getByTestId('konto-order-value').textContent())!)).toBe(order);
-        await expect(sheet.getByTestId('konto-assumption')).toContainText('vor allen Abbuchungen');
+        // the assumption is in the ⓘ next to „Kontostand am Monatsende“
+        const assumption = await openInfo(page, sheet.getByTestId('konto-assumption'));
+        await expect(assumption).toContainText('vor allen Abbuchungen');
+        await page.keyboard.press('Escape');
+        await expect(assumption).toHaveCount(0);
+        await expect(sheet).toBeVisible();
         await expect(sheet.getByTestId('konto-chart')).toBeVisible();
         await expect(sheet.getByTestId('konto-dot')).toHaveCount(12);
         const gap = sheet.getByTestId('konto-gap');
@@ -171,7 +176,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
   }
 }
 
-test('Position aufs Girokonto: Dauerauftrag sinkt um ihren Monatsanteil', async ({ page }) => {
+test('Position aufs Alltagskonto: Dauerauftrag sinkt um ihren Monatsanteil', async ({ page }) => {
   test.skip(test.info().project.name !== 'desktop');
   await importApp(page);
   await page.getByTestId('konto-invite-enable').click();
@@ -185,13 +190,13 @@ test('Position aufs Girokonto: Dauerauftrag sinkt um ihren Monatsanteil', async 
   await goTo(page, 'positionen');
   await page.getByRole('button', { name: 'Miete – Details' }).click();
   await page.getByRole('button', { name: 'Bearbeiten' }).click();
-  await page.getByTestId('account-field').getByRole('radio', { name: 'Girokonto' }).click();
+  await page.getByTestId('account-field').getByRole('radio', { name: 'Alltagskonto' }).click();
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByTestId('position-form')).toHaveCount(0);
   await expect(page.getByRole('dialog', { name: 'Miete' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip')).toHaveText('Girokonto');
+  await expect(page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip')).toHaveText('Alltagskonto');
   await goTo(page, 'monat');
   await page.getByTestId('konto-tile').click();
   await expect.poll(exact).toBeLessThan(before);

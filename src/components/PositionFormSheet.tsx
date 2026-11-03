@@ -214,17 +214,25 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
         {showAccount && (
           <div data-testid="account-field">
             <Segmented<Account>
-              label="Abbuchung vom"
+              label="Von welchem Konto geht das weg?"
               value={account}
               onChange={setAccountChoice}
               options={[
                 { value: 'fixkostenkonto', label: 'Fixkostenkonto' },
-                { value: 'girokonto', label: 'Girokonto' },
+                { value: 'girokonto', label: 'Alltagskonto' },
               ]}
+              info={
+                <>
+                  <span className="block">
+                    <span className="font-semibold text-ink">Fixkostenkonto:</span> Ein zweites Konto nur für deine Rechnungen. Erbse sagt dir, wie viel du jeden Monat
+                    draufüberweist.
+                  </span>
+                  <span className="mt-1 block">
+                    <span className="font-semibold text-ink">Alltagskonto:</span> Dein normales Konto mit Karte. Zählt nicht zum Dauerauftrag.
+                  </span>
+                </>
+              }
             />
-            <p className="mt-1.5 px-1 text-[13px] leading-snug text-ink-mute">
-              {account === 'fixkostenkonto' ? 'Zählt zum Dauerauftrag aufs Fixkostenkonto.' : 'Zählt nicht zum Dauerauftrag.'}
-            </p>
           </div>
         )}
         {frequencies.length > 0 ? (
@@ -256,7 +264,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
                 label="Von ‚Frei verfügbar‘ abziehen"
                 checked={fromNet}
                 onChange={setFromNet}
-                hint="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
+                info="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
                 testId="from-net"
               />
             )}
@@ -274,7 +282,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
               value={String(startMonth)}
               onChange={(v) => chooseStart(Number(v))}
               options={ALL_MONTHS.map((m) => ({ value: String(m), label: shortMonthName(m) }))}
-              hint="Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar."
+              info="Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar."
             />
             <MonthChips label="Fällig in" value={dueMonths} onChange={setDueMonths} error={errors.months} />
           </>
@@ -288,7 +296,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           onChange={(v) => setDueDayText(v.replace(/[^0-9]/g, '').slice(0, 2))}
           placeholder="1–31"
           error={errors.dueDay}
-          hint="31 = letzter Tag des Monats"
+          info="31 = letzter Tag des Monats"
         />
         )}
         <TextField label="Notiz" optional multiline value={note} onChange={setNote} placeholder="z. B. Vertrag bis 2027" />

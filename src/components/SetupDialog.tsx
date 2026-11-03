@@ -11,6 +11,7 @@ import { templatesFor, type Template } from '../lib/templates';
 import { traceImport } from '../lib/importTrace';
 import { ALL_MONTHS } from '../lib/calc';
 import { AmountField, SelectField } from './form';
+import { InfoTip } from './InfoTip';
 import { Brand } from './Logo';
 
 type Step = 'start' | 'country' | 'templates';
@@ -54,6 +55,13 @@ export function SetupDialog() {
     country: 'Wo wohnst du?',
     templates: 'Was zahlst du nicht monatlich?',
   };
+  // the explanation of each step lives in the ⓘ next to its title
+  const infos: Record<Step, string> = {
+    start:
+      'Deine Fixkosten liegen nur auf diesem Gerät. Wähle eine Sicherung (JSON), um deinen Stand zu übernehmen, richte Erbse neu ein oder starte mit einer leeren App.',
+    country: 'Davon hängen Währung und Vorlagen ab. Du kannst das Land später in den Einstellungen ändern.',
+    templates: 'Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus deinen Dauerauftrag fürs Fixkostenkonto.',
+  };
 
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 pt-safe pb-safe">
@@ -61,7 +69,6 @@ export function SetupDialog() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="setup-title"
-        aria-describedby="setup-text"
         className="glass w-full max-w-md p-6"
         data-testid="setup-dialog"
         data-step={step}
@@ -72,17 +79,17 @@ export function SetupDialog() {
             Schritt {step === 'country' ? 1 : 2} von 2
           </p>
         )}
-        <h1 id="setup-title" className={`${step === 'start' ? 'mt-4' : 'mt-1'} text-[22px] font-semibold tracking-tight text-ink`}>
-          {titles[step]}
-        </h1>
+        <div className={`${step === 'start' ? 'mt-4' : 'mt-1'} flex items-center`}>
+          <h1 id="setup-title" className="text-[22px] font-semibold tracking-tight text-ink">
+            {titles[step]}
+          </h1>
+          <InfoTip label={`Erklärung: ${titles[step]}`} title={titles[step]} className="-my-3 -ml-1 shrink-0" testId="setup-info">
+            <p>{infos[step]}</p>
+          </InfoTip>
+        </div>
 
         {step === 'start' && (
           <>
-            <p id="setup-text" className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-              Deine Fixkosten liegen nur auf diesem Gerät. Wähle eine Sicherung (JSON), um deinen Stand zu übernehmen, richte
-              Erbse neu ein oder starte mit einer leeren App.
-            </p>
-
             {error && (
               <p role="alert" className="mt-4 rounded-xl bg-over-soft px-3 py-2.5 text-[14px] text-over">
                 {error}
@@ -150,9 +157,6 @@ export function SetupDialog() {
 function CountryStep({ country, onChange, onBack, onNext }: { country: Country; onChange: (c: Country) => void; onBack: () => void; onNext: () => void }) {
   return (
     <>
-      <p id="setup-text" className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-        Davon hängen Währung und Vorlagen ab. Du kannst das Land später in den Einstellungen ändern.
-      </p>
       <div role="radiogroup" aria-label="Land" className="mt-5 flex flex-col gap-2" data-testid="setup-countries">
         {COUNTRIES.map((c) => {
           const on = c === country;
@@ -228,9 +232,6 @@ function TemplatesStep({ country, onBack }: { country: Country; onBack: () => vo
 
   return (
     <>
-      <p id="setup-text" className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-        Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus deinen Dauerauftrag fürs Fixkostenkonto.
-      </p>
       <ul className="mt-5 flex flex-col gap-2" data-testid="setup-templates">
         {templates.map((t) => {
           const draft = chosen[t.id];

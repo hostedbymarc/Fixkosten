@@ -191,7 +191,7 @@ export function KontoInputs({ settings, active, showRounding = true }: { setting
         }}
         placeholder="0"
         error={parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.250,00' : null}
-        hint="Was heute auf deinem Fixkostenkonto liegt."
+        info="Was heute auf deinem Fixkostenkonto liegt."
         testId="konto-balance"
       />
       <Segmented<'yes' | 'no'>

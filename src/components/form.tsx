@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react';
+import { InfoTip } from './InfoTip';
 import { localToday } from '../lib/activeMonth';
 import { currencySymbol, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel, shortMonthName } from '../lib/period';
@@ -10,6 +11,29 @@ export function parseOptionalAmount(text: string): number | undefined | null {
 }
 
 const labelClass = 'mb-2 block text-[14px] font-medium text-ink-soft';
+
+/**
+ * The label of a field, with an ⓘ next to it when the field has an explanation (`info`): the
+ * explanation lives in the tooltip, the field itself shows only label, value and errors.
+ */
+function FieldLabel({ id, label, info, children, as = 'label' }: { id: string; label: string; info?: ReactNode; children?: ReactNode; as?: 'label' | 'div' }) {
+  const Tag = as;
+  const text = (
+    <Tag {...(as === 'label' ? { htmlFor: id } : { id })} className={info ? 'block text-[14px] font-medium text-ink-soft' : labelClass}>
+      {label}
+      {children}
+    </Tag>
+  );
+  if (!info) return text;
+  return (
+    <div className="mb-2 flex min-w-0 items-center">
+      {text}
+      <InfoTip label={`Erklärung: ${label}`} title={label} className="-my-3 -ml-1.5" testId="field-info">
+        <p>{info}</p>
+      </InfoTip>
+    </div>
+  );
+}
 const hintClass = 'mt-2 text-[13px] leading-5 text-ink-mute';
 const boxClass = (invalid: boolean) =>
   `rounded-2xl border bg-field focus-within:ring-2 ${
@@ -23,6 +47,7 @@ export function AmountField({
   placeholder,
   error,
   hint,
+  info,
   testId,
 }: {
   label: string;
@@ -32,14 +57,14 @@ export function AmountField({
   /** shown in red; the field is marked invalid */
   error?: string | null;
   hint?: ReactNode;
+  /** explanation in a tooltip next to the label */
+  info?: ReactNode;
   testId?: string;
 }) {
   const id = useId();
   return (
     <div>
-      <label htmlFor={id} className={labelClass}>
-        {label}
-      </label>
+      <FieldLabel id={id} label={label} info={info} />
       <div className={`flex h-14 items-center px-4 ${boxClass(!!error)}`}>
         <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
         <input
@@ -73,6 +98,7 @@ export function TextField({
   placeholder,
   error,
   hint,
+  info,
   multiline,
   inputMode,
   optional,
@@ -83,6 +109,7 @@ export function TextField({
   placeholder?: string;
   error?: string | null;
   hint?: ReactNode;
+  info?: ReactNode;
   multiline?: boolean;
   inputMode?: 'numeric' | 'text';
   optional?: boolean;
@@ -98,9 +125,9 @@ export function TextField({
   };
   return (
     <div>
-      <label htmlFor={id} className={labelClass}>
-        {label} {optional && <span className="font-normal text-ink-faint">(optional)</span>}
-      </label>
+      <FieldLabel id={id} label={label} info={info}>
+        {optional && <span className="font-normal text-ink-faint"> (optional)</span>}
+      </FieldLabel>
       <div className={boxClass(!!error)}>
         {multiline ? (
           <textarea {...common} rows={2} onChange={(e) => onChange(e.target.value)} className={`${common.className} resize-none py-3`} />
@@ -129,19 +156,19 @@ export function SelectField({
   onChange,
   options,
   hint,
+  info,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
   hint?: ReactNode;
+  info?: ReactNode;
 }) {
   const id = useId();
   return (
     <div>
-      <label htmlFor={id} className={labelClass}>
-        {label}
-      </label>
+      <FieldLabel id={id} label={label} info={info} />
       <div className={`relative ${boxClass(false)}`}>
         <select
           id={id}
@@ -180,6 +207,7 @@ export function Segmented<T extends string>({
   onChange,
   options,
   gridClass,
+  info,
 }: {
   label: string;
   value: T;
@@ -187,13 +215,13 @@ export function Segmented<T extends string>({
   options: { value: T; label: string }[];
   /** Tailwind grid columns (e.g. wrap to 3 per row on phones); default: one row */
   gridClass?: string;
+  info?: ReactNode;
 }) {
   const id = useId();
   return (
-    <div role="radiogroup" aria-labelledby={id}>
-      <div id={id} className={labelClass}>
-        {label}
-      </div>
+    <div>
+      <FieldLabel id={id} label={label} info={info} as="div" />
+      <div role="radiogroup" aria-labelledby={id}>
       <div
         className={`grid gap-1 rounded-2xl bg-zinc-100 p-1 ${gridClass ?? ''}`}
         style={gridClass ? undefined : { gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
@@ -215,6 +243,7 @@ export function Segmented<T extends string>({
             </button>
           );
         })}
+      </div>
       </div>
     </div>
   );
@@ -377,21 +406,30 @@ export function SwitchField({
   checked,
   onChange,
   hint,
+  info,
   testId,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   hint?: ReactNode;
+  info?: ReactNode;
   testId?: string;
 }) {
   const id = useId();
   return (
     <div data-testid={testId}>
       <div className="flex min-h-11 items-center justify-between gap-3">
-        <label htmlFor={id} className="text-[15px] font-medium text-ink">
-          {label}
-        </label>
+        <span className="flex min-w-0 items-center">
+          <label htmlFor={id} className="text-[15px] font-medium text-ink">
+            {label}
+          </label>
+          {info && (
+            <InfoTip label={`Erklärung: ${label}`} title={label} className="-my-3 -ml-1 shrink-0" testId="field-info">
+              <p>{info}</p>
+            </InfoTip>
+          )}
+        </span>
         {/* 44 px hit area around the 52 × 32 track */}
         <button
           id={id}
