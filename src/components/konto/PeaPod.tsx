@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { monthOf, shortMonthName } from '../../lib/period';
+import { monthOf, periodLabel, shortMonthName } from '../../lib/period';
 import { podText, type Pod } from '../../lib/schote';
+import { t } from '../../lib/schoteTexts';
 import { Pea } from '../Pea';
 
 export type PodSize = 'large' | 'compact';
@@ -35,6 +36,15 @@ export function PeaPod({ pod, size = 'large', empty = false, text, hideText = fa
   const target = pod.slots.map((s) => !empty && s.covered);
   const shown = useSnapIn(target);
   const label = text ?? podText(pod);
+  // large pod: tapping a month initial shows the full month name below (in the flow, never on top)
+  const [picked, setPicked] = useState<number | null>(null);
+  const pickedSlot = picked === null ? null : pod.slots[picked];
+  useEffect(() => {
+    if (picked === null) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPicked(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [picked]);
   return (
     <div className={`pod pod-${size} ${className}`} data-testid={testId} data-covered={empty ? 0 : pod.covered} data-full={(!empty && pod.full) || undefined}>
       <div className="pod-shell" aria-hidden="true">
@@ -56,11 +66,26 @@ export function PeaPod({ pod, size = 'large', empty = false, text, hideText = fa
         })}
       </div>
       {size === 'large' && (
-        <div className="pod-months" aria-hidden="true">
-          {pod.slots.map((slot) => (
-            <span key={slot.period}>{shortMonthName(monthOf(slot.period)).charAt(0)}</span>
-          ))}
-        </div>
+        <>
+          <div className="pod-months">
+            {pod.slots.map((slot, i) => (
+              <button
+                key={slot.period}
+                type="button"
+                className="pod-month focus-ring"
+                aria-label={t(slot.covered && !empty ? 'pod.month.covered' : 'pod.month.open', { monat: periodLabel(slot.period) })}
+                aria-pressed={picked === i}
+                onClick={() => setPicked((cur) => (cur === i ? null : i))}
+                data-testid="pod-month"
+              >
+                {shortMonthName(monthOf(slot.period)).charAt(0)}
+              </button>
+            ))}
+          </div>
+          <p className="pod-month-name" aria-live="polite" data-testid={`${testId}-month`}>
+            {pickedSlot && t(pickedSlot.covered && !empty ? 'pod.month.covered' : 'pod.month.open', { monat: periodLabel(pickedSlot.period) })}
+          </p>
+        </>
       )}
       {!hideText && (
         <p className="pod-text" data-testid={`${testId}-text`}>

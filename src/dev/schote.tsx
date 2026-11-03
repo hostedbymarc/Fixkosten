@@ -14,7 +14,7 @@ import { initAurora } from '../lib/aurora';
 import { initNebel } from '../lib/nebel';
 import { formatEUR } from '../lib/format';
 import { addPeriods, monthName } from '../lib/period';
-import { cushionMonths, podFromMonths, tileState, type Pod } from '../lib/schote';
+import { cushionMonths, orderDay, podFromMonths, tileState, type Pod } from '../lib/schote';
 import { initTheme } from '../lib/theme';
 import type { Period } from '../lib/types';
 
@@ -28,21 +28,26 @@ initAurora();
 const ACTIVE: Period = '2026-11';
 /** rounded standing order of the example */
 const ORDER = 2955;
+/** „Neuer Monat beginnt am“ of the example: ?start=25 or ?start=last */
+const START = params.get('start');
+const DAY = orderDay(START === 'last' ? 'last' : START ? Number(START) : 1);
 /** debits on the Fixkostenkonto per month (November: what is still open) – December and February are the big months */
 const DEBITS = [1800, 4100, 2600, 3900, 2500, 2900, 2600, 3300, 2700, 2600, 2600, 3200];
 
-function simulate(balance: number, firstDeposit: boolean) {
+function simulate(balance: number, firstDeposit: boolean, deposits = true) {
   let b = balance;
   const months = DEBITS.map((d, i) => {
-    b += (i === 0 && !firstDeposit ? 0 : ORDER) - d;
+    b += (!deposits || (i === 0 && !firstDeposit) ? 0 : ORDER) - d;
     return { period: addPeriods(ACTIVE, i), end: b };
   });
   const lowest = Math.min(...months.map((m) => m.end));
   return { months, lowest, gap: Math.max(0, -lowest) };
 }
 
-function coverage(balance: number, firstDeposit: boolean): Coverage {
-  const s = simulate(balance, firstDeposit);
+const pods = (balance: number, firstDeposit = true): Coverage => setupCoverage(balance, { firstDeposit, deposits: true });
+
+function setupCoverage(balance: number, opts: { firstDeposit: boolean; deposits: boolean }): Coverage {
+  const s = simulate(balance, opts.firstDeposit, opts.deposits);
   return { pod: podFromMonths(s.months), gap: s.gap };
 }
 
@@ -61,9 +66,9 @@ function PodSection() {
   const [filled, setFilled] = useState(false);
   const rows: { name: string; pod: Pod }[] = [
     { name: '0 von 12', pod: podOf(DEBITS.map(() => -1)) },
-    { name: '8 von 12', pod: coverage(0, true).pod },
-    { name: '11 von 12', pod: coverage(300, true).pod },
-    { name: 'voll', pod: coverage(1200, true).pod },
+    { name: '8 von 12', pod: pods(0).pod },
+    { name: '11 von 12', pod: pods(300).pod },
+    { name: 'voll', pod: pods(1200).pod },
   ];
   return (
     <Section title="Schote · groß und kompakt" id="pod">
@@ -79,7 +84,7 @@ function PodSection() {
         ))}
         <div className="glass surface p-4 md:col-span-2" data-testid="dev-pod-snap">
           <p className="mb-2 text-[12px] font-medium text-ink-faint">Einrasten: 8 → 12 (Bewegung reduzieren: ohne Animation)</p>
-          <PeaPod pod={coverage(filled ? 580 : 0, true).pod} size="large" testId="dev-pod-snapper" />
+          <PeaPod pod={pods(filled ? 580 : 0).pod} size="large" testId="dev-pod-snapper" />
           <button
             type="button"
             className="focus-ring mt-3 h-11 rounded-xl bg-accent px-4 text-[15px] font-semibold text-white"
@@ -101,6 +106,7 @@ function tileProps(balance: number, setupDone = true): Omit<KontoTileProps, 'onO
     state: tileState({ setupDone, gap: s.gap, cushion }),
     pod: podFromMonths(s.months),
     order: ORDER,
+    day: DAY,
     gap: s.gap,
     cushion,
   };
@@ -190,7 +196,8 @@ function SetupSection({ autoOpen }: { autoOpen: boolean }) {
         <KontoSetupSheet
           monthName={monthName(ACTIVE)}
           order={ORDER}
-          coverage={coverage}
+          day={DAY}
+          coverage={setupCoverage}
           onClose={() => setOpen(false)}
           onFinish={(r) => (setResult(r), setOpen(false))}
           initialStep={autoOpen ? step : 'account'}

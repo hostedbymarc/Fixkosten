@@ -6,6 +6,8 @@ export const SCHOTE_TEXTS = {
   // · Schote
   'pod.until': 'Gedeckt bis {monat}',
   'pod.count': '{n} von {gesamt} Monaten gedeckt',
+  'pod.month.covered': '{monat}: gedeckt',
+  'pod.month.open': '{monat}: nicht gedeckt',
 
   // · Kachel auf dem Monats-Screen
   'tile.title': 'Fixkostenkonto',
@@ -13,7 +15,7 @@ export const SCHOTE_TEXTS = {
   'tile.setup.progress': '{n} von 3 Schritten',
   'tile.gap.text': 'Noch {betrag} einzahlen, dann ist alles gedeckt',
   'tile.gap.action': 'Erledigt, eingezahlt',
-  'tile.order': 'Dauerauftrag {betrag} am 1.',
+  'tile.order': 'Dauerauftrag {betrag} {tag}',
   'tile.cushion': 'Polster: {monate} Monate',
   'tile.streak': '{n} Monate in Folge',
   'tile.streak.new': 'Neue Serie startet.',
@@ -39,8 +41,10 @@ export const SCHOTE_TEXTS = {
 
   // · Ergebnis „Dein Plan“
   'plan.title': 'Dein Plan',
-  'plan.order.new': 'Dauerauftrag einrichten: {betrag} monatlich am 1.',
-  'plan.order.check': 'Dauerauftrag prüfen: {betrag} monatlich am 1.',
+  'plan.account': 'Fixkostenkonto eröffnen',
+  'plan.account.hint': 'Ein zweites Konto, nur für deine Rechnungen.',
+  'plan.order.new': 'Dauerauftrag einrichten: {betrag} monatlich {tag}',
+  'plan.order.check': 'Dauerauftrag prüfen: {betrag} monatlich {tag}',
   'plan.copy': 'Betrag kopieren',
   'plan.copied': 'Kopiert',
   'plan.done': 'Erledigt',

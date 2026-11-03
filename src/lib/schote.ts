@@ -2,6 +2,7 @@
 // when its month-end balance is ≥ 0. Everything here is derived from the month-end balances of
 // simulateKonto (src/lib/fixkostenkonto.ts); nothing is stored.
 
+import type { MonthStart } from './activeMonth';
 import { periodLabel } from './period';
 import type { Period } from './types';
 
@@ -60,4 +61,12 @@ export function tileState(input: { setupDone: boolean; gap: number; cushion: num
   if (!input.setupDone) return 'setup';
   if (cents(input.gap) > 0) return 'gap';
   return input.cushion !== null ? 'cushion' : 'covered';
+}
+
+/**
+ * Day of the standing order, from „Neuer Monat beginnt am“ – so the text matches the simulation
+ * (the deposit arrives when the active month begins): „am 1.“, „am 25.“, „am Monatsletzten“.
+ */
+export function orderDay(start: MonthStart): string {
+  return start === 'last' ? 'am Monatsletzten' : `am ${start}.`;
 }
