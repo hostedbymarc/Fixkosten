@@ -7,6 +7,13 @@ export type Period = string; // 'YYYY-MM'
 export type Frequency = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'once';
 export type Kind = 'expense' | 'savings';
 
+/**
+ * Which account a position is paid from. 'fixkostenkonto' = the separate account that the
+ * monthly standing order fills (src/lib/fixkostenkonto.ts), 'girokonto' = the salary account.
+ * Missing (data before schema v5): Vermögensaufbau categories → 'girokonto', else 'fixkostenkonto'.
+ */
+export type Account = 'fixkostenkonto' | 'girokonto';
+
 export interface Category {
   id: string;
   name: string;
@@ -58,6 +65,8 @@ export interface Position {
    * against „Frei verfügbar“ or the Sparquote. Missing = true (old data, every other position).
    */
   fromNet?: boolean;
+  /** schema v5, optional: paying account (see Account); missing = default by category kind */
+  account?: Account;
 }
 
 export type PaymentStatus = 'paid' | 'skipped';

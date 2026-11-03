@@ -111,7 +111,7 @@ describe('migration v1 → v2 → v3 → v4', () => {
       );
     }
 
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(5);
     expect(await needsSetup(db)).toBe(false);
     const ds = await loadDataset(db);
     const progress = periodProgress(ds, '2026-10');
@@ -194,7 +194,7 @@ describe('first start: import or empty', () => {
   it('rejects files that are not a backup', () => {
     expect(() => parseBackup({ hello: 'world' })).toThrow(BackupError);
     expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 1 })).toThrow(/Version 1/);
-    expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 5 })).toThrow(/Version 5/);
+    expect(() => parseBackup({ ...fixtureRaw(), schemaVersion: 6 })).toThrow(/Version 6/);
     const broken = fixtureRaw();
     broken.data.positions[0]!.categoryId = 'cat-unknown';
     expect(() => parseBackup(broken)).toThrow(BackupError);

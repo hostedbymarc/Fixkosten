@@ -19,7 +19,7 @@ describe('Einstellung „Neuer Monat beginnt am“: Export und Import', () => {
     expect(await readMonthStart(db)).toBe(25);
     expect((await db.meta.get('monthStartDay'))?.value).toBe(25);
     expect(db.tables.map((t) => t.name).sort()).toEqual(['categories', 'changeLog', 'meta', 'monthClose', 'oneOffs', 'payments', 'positions', 'reminders']);
-    expect(SCHEMA_VERSION).toBe(4);
+    expect(SCHEMA_VERSION).toBe(5);
     await db.delete();
   });
 
@@ -31,7 +31,7 @@ describe('Einstellung „Neuer Monat beginnt am“: Export und Import', () => {
       await writeMonthStart(src, start);
       const file = JSON.parse(JSON.stringify(await exportBackup(src)));
       expect(file.settings).toEqual({ monthStartDay: start });
-      expect(file.schemaVersion).toBe(4);
+      expect(file.schemaVersion).toBe(5);
       await importIntoEmpty(dst, parseBackup(file));
       expect(await readMonthStart(dst)).toBe(start);
       await src.delete();
