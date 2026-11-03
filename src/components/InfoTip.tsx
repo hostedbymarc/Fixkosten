@@ -91,7 +91,6 @@ export function InfoTip({ label, title, children, className = '', style, testId 
       <button
         ref={button}
         type="button"
-        aria-label={label}
         aria-describedby={open ? id : undefined}
         className={`focus-ring flex h-11 w-11 items-center justify-center rounded-full text-ink-mute hover:text-ink ${className}`}
         style={style}
@@ -110,6 +109,8 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         }}
       >
         <InfoIcon size={15} />
+        {/* name as text, not aria-label: getByLabel/label lookups of the field next to it stay unique */}
+        <span className="sr-only">{label}</span>
       </button>
       {open &&
         createPortal(
