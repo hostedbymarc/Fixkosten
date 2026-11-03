@@ -104,30 +104,48 @@ async function exercise(page: Page, button: Locator, mode: Mode, seen: Collector
   }
 }
 
-/** A point next to the button on a non-interactive spot (inside the sheet when there is one). */
+/**
+ * The nearest spot to the button that is not interactive (no button, link, field, tile, tooltip),
+ * inside the sheet when there is one (the scrim would close the sheet).
+ */
 async function outsidePoint(page: Page, button: Locator, sheet?: Locator): Promise<{ x: number; y: number }> {
   const b = (await button.boundingBox())!;
-  const area = sheet ? (await sheet.boundingBox())! : { x: 0, y: 0, width: page.viewportSize()!.width, height: page.viewportSize()!.height };
-  // the popover opens below or above: go sideways, at the button's height
-  const candidates = [
-    { x: b.x - 8, y: b.y + b.height / 2 },
-    { x: b.x + b.width + 8, y: b.y + b.height / 2 },
-    { x: area.x + 6, y: b.y + b.height / 2 },
-  ];
-  for (const c of candidates) {
-    if (c.x < area.x + 2 || c.x > area.x + area.width - 2) continue;
-    const ok = await page.evaluate(({ x, y }) => {
-      const el = document.elementFromPoint(x, y);
-      return !!el && !el.closest('button, a, input, select, textarea, summary, label, [role="tooltip"], [role="switch"], [role="radio"]');
-    }, c);
-    if (ok) return c;
-  }
-  return candidates[0]!;
+  const vp = page.viewportSize()!;
+  const area = sheet ? (await sheet.boundingBox())! : { x: 0, y: 0, width: vp.width, height: vp.height };
+  const point = await page.evaluate(
+    ({ b, area, vp }) => {
+      const interactive = 'button, a, input, select, textarea, summary, label, nav, [role="tooltip"], [role="switch"], [role="radio"], [role="dialog"] [data-sheet-handle]';
+      let best: { x: number; y: number; d: number } | null = null;
+      const x0 = Math.max(area.x + 4, 2);
+      const y0 = Math.max(area.y + 4, 2);
+      const x1 = Math.min(area.x + area.width - 4, vp.width - 2);
+      const y1 = Math.min(area.y + area.height - 4, vp.height - 2);
+      for (let y = y0; y <= y1; y += 12) {
+        for (let x = x0; x <= x1; x += 12) {
+          // not on the icon itself
+          if (x >= b.x - 4 && x <= b.x + b.width + 4 && y >= b.y - 4 && y <= b.y + b.height + 4) continue;
+          // touch adjustment snaps a tap to a nearby target: the whole neighbourhood must be neutral
+          const around = [
+            [0, 0], [-20, 0], [20, 0], [0, -20], [0, 20], [-14, -14], [14, -14], [-14, 14], [14, 14],
+          ].map(([dx, dy]) => document.elementFromPoint(x + dx!, y + dy!));
+          if (around.some((el) => !el || el.closest(interactive) || el.closest('.glass-tile, [data-testid="hero"]'))) continue;
+          const d = Math.hypot(x - (b.x + b.width / 2), y - (b.y + b.height / 2));
+          if (!best || d < best.d) best = { x, y, d };
+        }
+      }
+      return best;
+    },
+    { b, area, vp },
+  );
+  if (!point) throw new Error('no neutral spot next to the ⓘ');
+  return { x: point.x, y: point.y };
 }
 
 /** Tab through the page until `target` has the focus (keyboard focus, :focus-visible). */
 async function focusByTab(page: Page, target: Locator) {
   const handle = await target.elementHandle();
+  // start from no focus: a focus left by a tap is not keyboard focus
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur?.());
   for (let i = 0; i < 120; i++) {
     if (await page.evaluate((el) => document.activeElement === el, handle)) return;
     await page.keyboard.press('Tab');
@@ -183,24 +201,11 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
 
-      // --- Bearbeiten-Dialog: account, Startmonat, Fälligkeitstag (annual position)
-      await goTo(page, 'positionen');
-      await expandAll(page);
-      await page.getByRole('button', { name: 'Steuerberater – Details' }).click();
-      await page.getByRole('button', { name: 'Bearbeiten' }).click();
+      // one-time Vermögensaufbau on the month screen: „Von ‚Frei verfügbar‘ abziehen“
       const form = page.getByTestId('bottom-sheet');
-      await expect(page.getByTestId('position-form')).toBeVisible();
-      await animationsDone(page, 'bottom-sheet');
-      await exercise(page, info(form, 'Von welchem Konto geht das weg?'), mode, seen, form);
-      await exercise(page, info(form, 'Startmonat'), mode, seen, form);
-      await exercise(page, info(form, 'Fälligkeitstag'), mode, seen, form);
-      await page.keyboard.press('Escape');
-      await page.keyboard.press('Escape');
-      await expect(page.getByRole('dialog')).toHaveCount(0);
-
-      // one-time Vermögensaufbau: „Von ‚Frei verfügbar‘ abziehen“
+      await expandAll(page);
       await page.getByRole('button', { name: 'Miete 1220 – Details', exact: true }).click();
-      await page.getByRole('button', { name: 'Bearbeiten' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Bearbeiten' }).click();
       await expect(page.getByTestId('position-form')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
       await exercise(page, info(form, 'Von ‚Frei verfügbar‘ abziehen'), mode, seen, form);
@@ -209,10 +214,24 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(page.getByRole('dialog')).toHaveCount(0);
 
       // Einmalbetrag
-      await page.getByRole('button', { name: 'Strom – Details' }).click();
-      await page.getByRole('button', { name: 'Einmalbetrag hinzufügen' }).click();
+      await page.getByRole('button', { name: 'Strom – Details', exact: true }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Einmalbetrag hinzufügen' }).click();
       await animationsDone(page, 'bottom-sheet');
       await exercise(page, info(form, 'Betrag'), mode, seen, form);
+      await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+
+      // --- Bearbeiten-Dialog: account, Startmonat, Fälligkeitstag (annual position)
+      await goTo(page, 'positionen');
+      await expandAll(page);
+      await page.getByRole('button', { name: 'Steuerberater – Details' }).click();
+      await page.getByRole('button', { name: 'Bearbeiten' }).click();
+      await expect(page.getByTestId('position-form')).toBeVisible();
+      await animationsDone(page, 'bottom-sheet');
+      await exercise(page, info(form, 'Von welchem Konto geht das weg?'), mode, seen, form);
+      await exercise(page, info(form, 'Startmonat'), mode, seen, form);
+      await exercise(page, info(form, 'Fälligkeitstag'), mode, seen, form);
       await page.keyboard.press('Escape');
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
