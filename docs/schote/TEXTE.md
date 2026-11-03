@@ -2,12 +2,14 @@
 |---|---|---|---|
 | Schote | `pod.until` | Gedeckt bis {monat} | 3 |
 | Schote | `pod.count` | {n} von {gesamt} Monaten gedeckt | 5 |
+| Schote | `pod.month.covered` | {monat}: gedeckt | 2 |
+| Schote | `pod.month.open` | {monat}: nicht gedeckt | 3 |
 | Kachel | `tile.title` | Fixkostenkonto | 1 |
 | Kachel | `tile.setup.title` | Fixkostenkonto einrichten | 2 |
 | Kachel | `tile.setup.progress` | {n} von 3 Schritten | 4 |
 | Kachel | `tile.gap.text` | Noch {betrag} einzahlen, dann ist alles gedeckt | 7 |
 | Kachel | `tile.gap.action` | Erledigt, eingezahlt | 2 |
-| Kachel | `tile.order` | Dauerauftrag {betrag} am 1. | 4 |
+| Kachel | `tile.order` | Dauerauftrag {betrag} {tag} | 3 |
 | Kachel | `tile.cushion` | Polster: {monate} Monate | 3 |
 | Kachel | `tile.streak` | {n} Monate in Folge | 4 |
 | Kachel | `tile.streak.new` | Neue Serie startet. | 3 |
@@ -29,8 +31,10 @@
 | Einrichtung | `setup.q3.no` | Nein | 1 |
 | Einrichtung | `setup.q3.none` | Ich habe noch keinen | 4 |
 | Dein Plan | `plan.title` | Dein Plan | 2 |
-| Dein Plan | `plan.order.new` | Dauerauftrag einrichten: {betrag} monatlich am 1. | 6 |
-| Dein Plan | `plan.order.check` | Dauerauftrag prüfen: {betrag} monatlich am 1. | 6 |
+| Dein Plan | `plan.account` | Fixkostenkonto eröffnen | 2 |
+| Dein Plan | `plan.account.hint` | Ein zweites Konto, nur für deine Rechnungen. | 7 |
+| Dein Plan | `plan.order.new` | Dauerauftrag einrichten: {betrag} monatlich {tag} | 5 |
+| Dein Plan | `plan.order.check` | Dauerauftrag prüfen: {betrag} monatlich {tag} | 5 |
 | Dein Plan | `plan.copy` | Betrag kopieren | 2 |
 | Dein Plan | `plan.copied` | Kopiert | 1 |
 | Dein Plan | `plan.done` | Erledigt | 1 |
@@ -39,12 +43,15 @@
 | Dein Plan | `plan.full` | Alles gedeckt bis {monat} | 4 |
 | Dein Plan | `plan.finish` | Fertig | 1 |
 | Erbsen-Check (B) | `check.month` | Neuer Monat. Ist dein Dauerauftrag eingegangen? | 2 · 4 |
+| Erbsen-Check (B) | `check.month.again` | Ist dein Dauerauftrag für {monat} eingegangen? | 6 |
 | Erbsen-Check (B) | `check.month.yes` | Ja | 1 |
 | Erbsen-Check (B) | `check.month.no` | Noch nicht | 2 |
 | Erbsen-Check (B) | `check.balance` | Stimmt dein Kontostand noch? {betrag} | 4 · 1 |
 | Erbsen-Check (B) | `check.balance.ok` | Stimmt | 1 |
 | Erbsen-Check (B) | `check.balance.other` | Anderer Betrag | 2 |
 | Erbsen-Check (B) | `check.balance.remind` | Trag deinen Kontostand ein. Dann rechnet Erbse genauer. | 4 · 4 |
+| Erbsen-Check (B) | `check.balance.save` | Speichern | 1 |
+| Erbsen-Check (B) | `check.later` | Später | 1 |
 | Meilensteine (B) | `milestone.firstPod` | Erste Schote voll | 3 |
 | Meilensteine (B) | `milestone.streak3` | 3 Monate in Folge | 4 |
 | Meilensteine (B) | `milestone.streak6` | 6 Monate in Folge | 4 |

@@ -68,7 +68,7 @@ export function KontoTileView(props: KontoTileProps) {
         ref={buttonRef}
         type="button"
         onClick={onOpen}
-        className="focus-ring mt-2 block w-full min-w-0 rounded-lg text-left after:absolute after:inset-0 after:rounded-[inherit] after:content-['']"
+        className="mt-2 block w-full min-w-0 rounded-lg text-left outline-none after:absolute after:inset-0 after:rounded-[20px] after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-focus"
         data-testid="konto-tile"
         aria-label={label}
       >
@@ -80,7 +80,10 @@ export function KontoTileView(props: KontoTileProps) {
             </>
           ) : (
             <>
-              Dauerauftrag <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(order)}</span> {day}
+              Dauerauftrag <span className="num whitespace-nowrap font-semibold text-ink" data-testid="konto-tile-value">
+                {formatEUR(order)}
+              </span>{' '}
+              {day}
             </>
           )}
         </span>
@@ -126,7 +129,7 @@ function SetupTile({ setupSteps = 0, onSetup, buttonRef }: KontoTileProps) {
         ref={buttonRef}
         type="button"
         onClick={onSetup}
-        className="focus-ring flex w-full min-w-0 items-center gap-4 rounded-lg text-left after:absolute after:inset-0 after:rounded-[inherit] after:content-['']"
+        className="flex w-full min-w-0 items-center gap-4 rounded-lg text-left outline-none after:absolute after:inset-0 after:rounded-[20px] after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-focus"
         data-testid="konto-tile"
         aria-label={`${t('tile.setup.title')}, ${t('tile.setup.progress', { n: setupSteps })}`}
       >

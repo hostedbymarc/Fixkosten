@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { liveBackup } from '../tests/fixtures/live';
-import { animationsDone, appSettled, expandAll, expect, goTo, test } from './fixtures';
+import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test } from './fixtures';
 import { NEVER_IN_TOOLTIP, TOOLTIP_TEXTS } from './help-texts';
 import { OKT_TODAY } from './live';
 
@@ -183,6 +183,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
+      await setUpKonto(page);
 
       // --- Monat
       await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
@@ -196,7 +197,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await exercise(page, info(kontoSheet, 'Kontostand am Monatsende'), mode, seen, kontoSheet);
       await kontoSheet.getByTestId('konto-settings-inline').locator('summary').click();
       await exercise(page, info(kontoSheet, 'Kontostand heute'), mode, seen, kontoSheet);
-      await kontoSheet.getByTestId('konto-positions').locator('summary').click();
+      await kontoSheet.getByTestId('konto-positions').locator('summary').first().click();
       await exercise(page, info(kontoSheet, 'Im Dauerauftrag'), mode, seen, kontoSheet);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -242,7 +243,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
 
       // --- Einstellungen
       await goTo(page, 'einstellungen');
-      for (const name of ['Neuer Monat beginnt am', 'Fixkostenkonto verwenden', 'Kontostand heute', 'Design', 'Erbse wie eine App öffnen', 'Sicherung', 'Land und Währung']) {
+      for (const name of ['Neuer Monat beginnt am', 'Fixkostenkonto verwenden', 'Design', 'Erbse wie eine App öffnen', 'Sicherung', 'Land und Währung']) {
         await exercise(page, info(page, name), mode, seen);
       }
 
@@ -266,6 +267,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(page.getByTestId('hero')).toBeVisible();
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
+      await setUpKonto(page);
       const pop = page.getByRole('tooltip');
       const open = async (button: Locator) => (tap ? button.tap() : button.hover());
       // the tile ⓘ moved to the very right edge, then to the bottom right corner (over the tab bar)

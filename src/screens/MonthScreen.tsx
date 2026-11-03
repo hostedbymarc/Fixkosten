@@ -67,6 +67,7 @@ import { addPeriods, monthName, periodLabel } from '../lib/period';
 import { calendarMonth, localToday } from '../lib/activeMonth';
 import { driftHeroLights } from '../lib/aurora';
 import { MonthPicker } from '../components/MonthPicker';
+import { KontoCheckCard } from '../components/konto/KontoCheckCard';
 import { KontoInvite, KontoTile } from '../components/konto/KontoTile';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
@@ -208,7 +209,9 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       )}
 
       <div className="grid gap-3 md:gap-4">
+        <KontoCheckCard ds={ds} active={today} />
         <HeroCard period={period} figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
+        <KontoTile ds={ds} active={today} />
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
         {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
             size – the one that fits the longest of them – so a row keeps one baseline */}
@@ -245,7 +248,6 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
         </GlassGroup>
         </TileFit.Provider>
-        <KontoTile ds={ds} active={today} />
         <KontoInvite />
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>

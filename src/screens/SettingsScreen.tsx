@@ -4,7 +4,10 @@ import { FEATURE_REMINDERS } from '../lib/features';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { Segmented, SelectField, SwitchField } from '../components/form';
-import { KontoInputs } from '../components/konto/KontoParts';
+import { useKontoState } from '../components/konto/KontoSheet';
+import { KontoSetup } from '../components/konto/KontoTile';
+import { orderDay } from '../lib/schote';
+import { t } from '../lib/schoteTexts';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
 import { COUNTRIES, COUNTRY_FORMAT, COUNTRY_LABEL, DEFAULT_COUNTRY, toCountry } from '../lib/country';
@@ -61,7 +64,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
       <div className="flex max-w-2xl flex-col gap-6">
         <AppearanceSection />
         <MonthSection />
-        <KontoSection />
+        <KontoSection ds={ds} />
         <CountrySection />
 
         <section aria-labelledby="archive-title">
@@ -336,10 +339,17 @@ function AppearanceSection() {
   );
 }
 
-/** Fixkostenkonto: on/off, „Kontostand heute“, „schon eingegangen?“, rounding (meta, carried by backups). */
-function KontoSection() {
+/**
+ * Fixkostenkonto: the switch with a visible sentence for each state; when on, a summary (balance and
+ * since when, standing order, rounding) and „Einrichtung ändern“, which opens the setup again.
+ */
+function KontoSection({ ds }: { ds: Dataset }) {
   const { settings } = useKonto();
   const active = useActiveMonth();
+  const start = useMonthStart();
+  const state = useKontoState(ds, active);
+  const [setup, setSetup] = useState(false);
+  const asOf = settings.anchor ? formatDate(settings.anchor.at.slice(0, 10)) : null;
   return (
     <section aria-labelledby="konto-title">
       <h2 id="konto-title" className="section-title mb-2 px-1">
@@ -350,11 +360,58 @@ function KontoSection() {
           label="Fixkostenkonto verwenden"
           checked={settings.enabled}
           onChange={(v) => void writeKonto(db, { enabled: v, ...(v ? {} : { inviteDismissed: true }) })}
+          hint={<span data-testid="konto-enabled-text">{t(settings.enabled ? 'settings.on' : 'settings.off')}</span>}
           info="Erbse rechnet aus, welchen Dauerauftrag dein Fixkostenkonto braucht und ob es jeden Monat reicht. Ohne Banklogin."
           testId="konto-enabled"
         />
-        {settings.enabled && <KontoInputs settings={settings} active={active} />}
+        {settings.enabled && (
+          <>
+            {settings.setupDone && (
+              <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 border-t border-line pt-3 text-[15px]" data-testid="konto-summary">
+                <dt className="text-ink-soft">{t('settings.balance')}</dt>
+                <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-balance">
+                  {formatEUR(state.balance)}
+                </dd>
+                {asOf && (
+                  <>
+                    <dt className="sr-only">Stand</dt>
+                    <dd className="col-span-2 -mt-1.5 text-[13px] text-ink-mute" data-testid="konto-summary-asof">
+                      {t('settings.asOf', { datum: asOf })}
+                    </dd>
+                  </>
+                )}
+                <dt className="text-ink-soft">{t('settings.order')}</dt>
+                <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-order">
+                  {formatEUR(state.overview.order.amount)} {orderDay(start)}
+                </dd>
+                <dt className="text-ink-soft">{t('settings.rounding')}</dt>
+                <dd className="num text-right text-ink" data-testid="konto-summary-rounding">
+                  {formatEUR(settings.rounding)}
+                </dd>
+              </dl>
+            )}
+            <button
+              type="button"
+              onClick={() => setSetup(true)}
+              className="focus-ring h-11 self-start rounded-xl px-4 text-[15px] font-semibold text-accent-ink glass-inset bg-surface hover:bg-accent-soft"
+              data-testid="konto-setup-edit"
+            >
+              {settings.setupDone ? t('settings.edit') : t('tile.setup.title')}
+            </button>
+          </>
+        )}
       </div>
+      {setup && (
+        <KontoSetup
+          ds={ds}
+          active={active}
+          onClose={() => setSetup(false)}
+          onDone={() => {
+            setSetup(false);
+            window.location.hash = '#monat';
+          }}
+        />
+      )}
     </section>
   );
 }

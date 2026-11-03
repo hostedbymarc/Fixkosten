@@ -1,20 +1,28 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { db } from '../../db/db';
+import { adoptLegacyBalance, finishSetup, markMilestones, saveSetupProgress, setAnchor } from '../../db/kontoActions';
 import { writeKonto } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
-import { formatEUR } from '../../lib/format';
+import { localToday } from '../../lib/activeMonth';
+import { depositDone, newMilestones, setupCoverage, streakBadge, type KontoState } from '../../lib/kontoBalance';
+import { monthName } from '../../lib/period';
+import { orderDay } from '../../lib/schote';
+import { MILESTONE_TEXT, t } from '../../lib/schoteTexts';
 import type { Dataset, Period } from '../../lib/types';
-import { InfoTip } from '../InfoTip';
+import { useMonthStart } from '../../lib/useToday';
 import { Pea } from '../Pea';
-import { KontoSheet, useKontoOverview } from './KontoSheet';
+import { useToast } from '../Toast';
+import { KontoSetupSheet } from './KontoSetupSheet';
+import { KontoSheet, useKontoState } from './KontoSheet';
+import { KontoTileView, ORDER_INFO } from './KontoTileView';
 
 /** Explanation of the standing order, in the tile's tooltip. */
-export const STANDING_ORDER_INFO =
-  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.';
+export const STANDING_ORDER_INFO = ORDER_INFO;
 
 /**
- * Bento tile „Fixkostenkonto · Dauerauftrag € X / Monat“ (mode on only), for the active month.
- * Below: covered or the Startlücke. Opens the sheet.
+ * The Fixkostenkonto tile on the month screen (mode on only), directly below the hero: not set up →
+ * the setup; otherwise the pod with the gap, „gedeckt“ or a Polster; it opens the sheet. Every change
+ * of balance, account or positions shows at once (live query + kontoState).
  */
 export function KontoTile({ ds, active }: { ds: Dataset; active: Period }) {
   const { settings } = useKonto();
@@ -23,53 +31,81 @@ export function KontoTile({ ds, active }: { ds: Dataset; active: Period }) {
 }
 
 function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
-  const overview = useKontoOverview(ds, active);
-  const [open, setOpen] = useState(false);
+  const { settings } = useKonto();
+  const state = useKontoState(ds, active);
+  const start = useMonthStart();
+  const [open, setOpen] = useState<'sheet' | 'setup' | null>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const gap = Math.round(overview.simulation.gap * 100) > 0;
+  useMilestoneToasts(state);
+  // data from PR #39: the stored balance becomes the anchor once
+  useEffect(() => {
+    if (settings.setupDone && !settings.anchor) void adoptLegacyBalance(db, localToday());
+  }, [settings.setupDone, settings.anchor]);
   return (
     <>
-      {/* the ⓘ is its own button next to (not inside) the tile button; the tile button covers the whole card */}
-      <div className="glass glass-tile tone-pea surface press relative flex min-w-0 items-center gap-4 p-4 md:p-5 xl:p-6" data-testid="konto-tile-card">
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center">
-            <span className="truncate text-[13px] font-medium leading-5 text-ink-mute">Fixkostenkonto</span>
-            <InfoTip label="Erklärung: Dauerauftrag" title="Dauerauftrag" className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
-              <p>{STANDING_ORDER_INFO}</p>
-            </InfoTip>
-          </div>
-          <button
-            ref={button}
-            type="button"
-            onClick={() => setOpen(true)}
-            className="focus-ring block w-full min-w-0 rounded-lg text-left after:absolute after:inset-0 after:rounded-[inherit] after:content-['']"
-            data-testid="konto-tile"
-            aria-label={`Fixkostenkonto: Dauerauftrag ${formatEUR(overview.order.amount)} pro Monat${gap ? `, Startlücke ${formatEUR(overview.simulation.gap)}` : ', gedeckt'} – Details öffnen`}
-          >
-            <span className="block text-ink">
-              <span className="text-[15px] font-medium text-ink-soft">Dauerauftrag </span>
-              <span className="num text-[24px] font-semibold tracking-[-0.02em] md:text-[28px]" data-testid="konto-tile-value">
-                {formatEUR(overview.order.amount)}
-              </span>
-              <span className="text-[15px] font-medium text-ink-soft"> / Monat</span>
-            </span>
-            <span className="mt-1 block text-[12px] leading-4 text-ink-mute lg:text-[13px]" data-testid="konto-tile-sub">
-              {gap ? (
-                <>
-                  Einmalig <span className="num font-semibold text-ink">{formatEUR(overview.simulation.gap)}</span> einzahlen, dann reicht es 12 Monate
-                </>
-              ) : (
-                'Gedeckt für die nächsten 12 Monate'
-              )}
-            </span>
-          </button>
-        </div>
-        <span className="shrink-0 text-[14px] font-semibold text-accent-ink" aria-hidden="true">
-          Details
-        </span>
-      </div>
-      {open && <KontoSheet ds={ds} active={active} onClose={() => setOpen(false)} returnFocusTo={button.current} />}
+      <KontoTileView
+        state={state.tile}
+        pod={state.pod}
+        order={state.overview.order.amount}
+        gap={state.gap}
+        cushion={state.cushion}
+        setupSteps={settings.setupSteps}
+        streak={streakBadge(state.streak)}
+        day={orderDay(start)}
+        onOpen={() => setOpen('sheet')}
+        onSetup={() => setOpen('setup')}
+        onPaid={() => void setAnchor(db, state.balance + state.gap, localToday())}
+        buttonRef={button}
+      />
+      {open === 'sheet' && <KontoSheet ds={ds} active={active} onClose={() => setOpen(null)} returnFocusTo={button.current} />}
+      {open === 'setup' && <KontoSetup ds={ds} active={active} onClose={() => setOpen(null)} />}
     </>
+  );
+}
+
+/** A milestone reached for the first time: a short toast with a pea, once; afterwards only the badge in the sheet. */
+function useMilestoneToasts(state: KontoState) {
+  const { settings } = useKonto();
+  const toast = useToast();
+  const fresh = newMilestones(settings, state.pod, state.streak);
+  const key = fresh.join(',');
+  useEffect(() => {
+    if (!settings.setupDone || fresh.length === 0) return;
+    toast({ message: t('milestone.toast', { meilenstein: t(MILESTONE_TEXT[fresh[fresh.length - 1]!]) }), icon: <Pea size={22} className="anim-check" /> });
+    void markMilestones(db, fresh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, settings.setupDone]);
+}
+
+/** The setup sheet with the real numbers of the active month. */
+export function KontoSetup({ ds, active, onClose, onDone }: { ds: Dataset; active: Period; onClose: () => void; onDone?: () => void }) {
+  const { settings } = useKonto();
+  const start = useMonthStart();
+  const state = useKontoState(ds, active);
+  const order = state.overview.order.amount;
+  const coverage = (balance: number, opts: { firstDeposit: boolean; deposits: boolean }) => setupCoverage(ds, active, settings.rounding, balance, opts);
+  // again from the settings („Einrichtung ändern“): the answers so far
+  const initialResult = settings.setupDone
+    ? {
+        hasAccount: settings.hasAccount ?? true,
+        balance: state.balance,
+        order: depositDone(settings, active) ? (settings.orderStartsAfter === active ? 'none' : 'yes') : 'no',
+      } as const
+    : undefined;
+  return (
+    <KontoSetupSheet
+      monthName={monthName(active)}
+      order={order}
+      day={orderDay(start)}
+      coverage={coverage}
+      initialResult={initialResult}
+      onProgress={(steps) => void saveSetupProgress(db, steps)}
+      onClose={onClose}
+      onFinish={(r) => {
+        const gap = coverage(r.balance, { firstDeposit: r.order === 'no', deposits: true }).gap;
+        void finishSetup(db, r, { active, gap, now: localToday() }).then(() => (onDone ?? onClose)());
+      }}
+    />
   );
 }
 

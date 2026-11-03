@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
+import { answerMonthCheck, setAnchor } from '../../db/kontoActions';
 import { writeKonto, type KontoSettings } from '../../db/settings';
+import { localToday } from '../../lib/activeMonth';
+import { depositDone } from '../../lib/kontoBalance';
 import { ROUNDING_CHOICES, type KontoMonth, type KontoOverview, type Rounding, type StandingOrderCause } from '../../lib/fixkostenkonto';
 import { amountToInput, formatAvg, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
 import { monthName, periodLabel } from '../../lib/period';
@@ -198,16 +201,20 @@ export function StandingOrderHeadline({ overview }: { overview: KontoOverview })
   );
 }
 
-/** „Kontostand heute“, „Dauerauftrag für diesen Monat schon eingegangen?“, rounding. Saved right away. */
-export function KontoInputs({ settings, active, showRounding = true }: { settings: KontoSettings; active: Period; showRounding?: boolean }) {
-  const [text, setText] = useState(amountToInput(settings.balance));
+/**
+ * „Kontostand heute“, „Dauerauftrag für diesen Monat schon eingegangen?“, rounding. Saved right away:
+ * a balance typed here is a new anchor, the answer is this month's check.
+ */
+export function KontoInputs({ settings, active, balance, showRounding = true }: { settings: KontoSettings; active: Period; balance?: number; showRounding?: boolean }) {
+  const shown = balance ?? settings.balance;
+  const [text, setText] = useState(amountToInput(shown));
   const [dirty, setDirty] = useState(false);
   // a change from elsewhere (import, the other screen) shows up unless the field is being edited
   useEffect(() => {
-    if (!dirty) setText(amountToInput(settings.balance));
-  }, [settings.balance, dirty]);
+    if (!dirty) setText(amountToInput(shown));
+  }, [shown, dirty]);
   const parsed = text.trim() === '' ? 0 : parseAmount(text);
-  const received = settings.receivedFor === active;
+  const received = depositDone(settings, active);
   return (
     <div className="flex flex-col gap-4" data-testid="konto-inputs">
       <AmountField
@@ -217,7 +224,7 @@ export function KontoInputs({ settings, active, showRounding = true }: { setting
           setText(v);
           setDirty(true);
           const value = v.trim() === '' ? 0 : parseAmount(v);
-          if (value !== null) void writeKonto(db, { balance: value });
+          if (value !== null) void setAnchor(db, value, localToday());
         }}
         placeholder="0"
         error={parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.250,00' : null}
@@ -227,7 +234,11 @@ export function KontoInputs({ settings, active, showRounding = true }: { setting
       <Segmented<'yes' | 'no'>
         label={`Dauerauftrag für ${monthName(active)} schon eingegangen?`}
         value={received ? 'yes' : 'no'}
-        onChange={(v) => void writeKonto(db, { receivedFor: v === 'yes' ? active : null })}
+        onChange={(v) =>
+          void answerMonthCheck(db, active, v === 'yes', localToday()).then(() =>
+            writeKonto(db, { receivedFor: v === 'yes' ? active : null, ...(v === 'yes' && settings.orderStartsAfter === active ? { orderStartsAfter: null } : {}) }),
+          )
+        }
         options={[
           { value: 'yes', label: 'Ja' },
           { value: 'no', label: 'Nein' },
