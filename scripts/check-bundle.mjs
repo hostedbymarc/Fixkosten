@@ -22,7 +22,8 @@ function files(dir) {
 }
 
 // UI copy that happens to contain a generic seed word (dictated hints in the position form)
-const allowedPhrases = ['strom-nachzahlung', 'eine mieteinnahme'];
+// and template names of the onboarding that the Fixkostenkonto sprint dictates (src/lib/templates.ts; never with an amount)
+const allowedPhrases = ['strom-nachzahlung', 'eine mieteinnahme', 'strom-jahresabrechnung', 'haushaltsversicherung'];
 
 const leaks = [];
 for (const file of files('dist').filter((f) => /\.(js|css|html|json|webmanifest|map)$/.test(f))) {
