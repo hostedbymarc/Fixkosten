@@ -4,6 +4,7 @@ import { kontoOverview, type KontoOverview } from '../../lib/fixkostenkonto';
 import { formatAvg, formatEUR } from '../../lib/format';
 import type { Dataset, Period } from '../../lib/types';
 import { BottomSheet } from '../BottomSheet';
+import { InfoTip } from '../InfoTip';
 import { Fold, GapMessage, KONTO_ASSUMPTION, KontoInputs, MonthBreakdown, MonthList, RisingHint, StandingOrderHeadline } from './KontoParts';
 
 const KontoChart = lazy(() => import('./KontoChart'));
@@ -23,7 +24,12 @@ export function KontoSimulationView({ overview, active, chartHeight }: { overvie
   return (
     <div className="flex flex-col gap-3" data-testid="konto-simulation">
       <div>
-        <p className="text-[13px] font-medium text-ink-mute">Kontostand am Monatsende</p>
+        <div className="flex items-center">
+          <p className="text-[13px] font-medium text-ink-mute">Kontostand am Monatsende</p>
+          <InfoTip label="Erklärung: Kontostand am Monatsende" title="Kontostand am Monatsende" className="-my-3 -ml-1.5" testId="konto-assumption">
+            <p>{KONTO_ASSUMPTION}</p>
+          </InfoTip>
+        </div>
         <Suspense fallback={<div style={{ height: chartHeight ?? 220 }} />}>
           <KontoChart overview={overview} active={active} selected={selected} onSelect={(p) => setSelected(p === selected ? null : p)} height={chartHeight} />
         </Suspense>
@@ -34,9 +40,6 @@ export function KontoSimulationView({ overview, active, chartHeight }: { overvie
         </div>
       )}
       <RisingHint overview={overview} />
-      <p className="text-[12px] leading-snug text-ink-mute" data-testid="konto-assumption">
-        {KONTO_ASSUMPTION}
-      </p>
       <Fold summary="Alle Monate" testId="konto-months">
         <MonthList overview={overview} active={active} selected={selected} onSelect={setSelected} />
       </Fold>
@@ -49,7 +52,7 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
   const { settings } = useKonto();
   const overview = useKontoOverview(ds, active);
   return (
-    <BottomSheet title="Fixkostenkonto" subtitle="Dauerauftrag, Startlücke und die nächsten 12 Monate" onClose={onClose} returnFocusTo={returnFocusTo}>
+    <BottomSheet title="Fixkostenkonto" onClose={onClose} returnFocusTo={returnFocusTo}>
       <div className="flex flex-col gap-5" data-testid="konto-sheet">
         <StandingOrderHeadline overview={overview} />
         <GapMessage overview={overview} active={active} />
@@ -66,10 +69,15 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-[13px] text-ink-mute">
-            Summe <span className="num">{formatAvg(overview.order.exact)}</span> → aufgerundet{' '}
-            <span className="num font-semibold text-ink">{formatEUR(overview.order.amount)}</span>. Eine Position aufs Girokonto stellen: Positionen → Bearbeiten.
-          </p>
+          <div className="mt-2 flex items-center text-[13px] text-ink-mute">
+            <p>
+              Summe <span className="num">{formatAvg(overview.order.exact)}</span> → aufgerundet{' '}
+              <span className="num font-semibold text-ink">{formatEUR(overview.order.amount)}</span>
+            </p>
+            <InfoTip label="Erklärung: Im Dauerauftrag" title="Im Dauerauftrag" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
+              <p>Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.</p>
+            </InfoTip>
+          </div>
         </Fold>
       </div>
     </BottomSheet>

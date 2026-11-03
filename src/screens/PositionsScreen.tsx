@@ -272,7 +272,7 @@ function PositionListRow({
           )}
           {girokonto && (
             <span className="mt-1 block" data-testid="account-chip">
-              <Badge>Girokonto</Badge>
+              <Badge>Alltagskonto</Badge>
             </span>
           )}
         </span>

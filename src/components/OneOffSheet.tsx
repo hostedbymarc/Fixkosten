@@ -62,7 +62,7 @@ export function OneOffSheet({ position, period, oneOff, onClose, onDelete, retur
             setDirty(true);
           }}
           error={dirty ? amountError : null}
-          hint={type === 'credit' ? 'Wird abgezogen.' : 'Kommt in diesem Monat dazu.'}
+          info={type === 'credit' ? 'Wird abgezogen.' : 'Kommt in diesem Monat dazu.'}
         />
         <SelectField label="Monat" value={month} onChange={setMonth} options={monthOptions(period)} />
         <TextField label="Bezeichnung" value={label} onChange={setLabel} placeholder="z. B. Jahresabrechnung" />

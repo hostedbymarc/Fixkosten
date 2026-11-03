@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import type { Download, Locator, Page } from '@playwright/test';
 import type { BackupFile } from '../src/db/backup';
 import { LIVE_FILE, live29Backup } from '../tests/fixtures/live';
-import { appSettled, checkRadio, eur, expect, goTo, isTouchProject, test, touchSwipe } from './fixtures';
+import { appSettled, checkRadio, eur, expect, goTo, isTouchProject, openInfo, test, touchSwipe } from './fixtures';
 import { expectClean } from './measure';
 
 /** 26.10.2026: with „Neuer Monat beginnt am 25.“ the app is already in November. */
@@ -43,7 +43,11 @@ test.describe('Aktiver Monat: Einstellung und Startmonat', () => {
     await expect(select).toHaveValue('1');
     const options = await select.locator('option').allTextContents();
     expect(options).toEqual(['1. (Kalendermonat)', ...Array.from({ length: 14 }, (_, i) => `${15 + i}.`), 'Monatsletzter']);
-    await expect(section).toContainText('Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt.');
+    // the explanation is in the ⓘ next to the label (Tooltips statt Erklärtexte)
+    const info = await openInfo(page, section.getByRole('button', { name: 'Erklärung: Neuer Monat beginnt am' }));
+    await expect(info).toContainText('Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt.');
+    await page.keyboard.press('Escape');
+    await expect(info).toHaveCount(0);
     await expect(section.getByTestId('active-month')).toHaveText('Aktiver Monat: Oktober 2026');
     await select.selectOption('25');
     await expect(section.getByTestId('active-month')).toHaveText('Aktiver Monat: November 2026');

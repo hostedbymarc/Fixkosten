@@ -62,9 +62,13 @@ Alle Beträge in ganzen Cent (`src/lib/calc.ts`, `monthFigures`), je Monat; eine
 
 Eigenes Konto für die Fixkosten, gefüllt per Dauerauftrag (`src/lib/fixkostenkonto.ts`, nur auf den Funktionen aus `calc.ts`; Einstellungen im `meta`-Store, `src/db/settings.ts`).
 
-- **Konto je Position** = `account` (`fixkostenkonto` | `girokonto`, Schema v5, optional). Ohne Feld: Vermögensaufbau-Kategorien → Girokonto, sonst Fixkostenkonto. Einmalige Zahlungen „nicht vom Netto“ zählen nie.
+- **Konto je Position** = `account` (`fixkostenkonto` | `girokonto`, Schema v5, optional). Ohne Feld: Vermögensaufbau-Kategorien → Girokonto, sonst Fixkostenkonto. In der Oberfläche heißt das Girokonto „Alltagskonto“. Einmalige Zahlungen „nicht vom Netto“ zählen nie.
 - **Dauerauftrag** = Σ Monatsanteile (`monthlyEquivalent`) aller wiederkehrenden Positionen auf dem Fixkostenkonto im aktiven Monat, nach oben gerundet auf 1, 5 oder 10 (Standard 5).
 - **Simulation** = 12 Monate ab dem aktiven Monat, Start „Kontostand heute“. Die Einzahlung kommt vor allen Abbuchungen; im aktiven Monat nur noch offene Positionen (und keine Einzahlung, wenn sie schon eingegangen ist); danach alles Fällige laut `dueItems` (geplante Änderungen, einmalige Zahlungen, Einmalbeträge; entfallene nicht).
 - **Startlücke** = max(0, −niedrigster Monatsend-Stand).
 - **„steigt stark“** = 12 Einzahlungen − alle Abbuchungen der 12 Monate > eine Monatseinzahlung.
 - **Land** (AT/DE/CH, `src/lib/country.ts`): Währung und Zahlenformat zentral in `src/lib/format.ts` (de-AT €, de-DE €, de-CH CHF); ohne Wahl AT.
+
+## Tooltips statt Erklärtexte
+
+Sichtbar sind nur Werte, Labels, Aktionen, Warnungen und Fehler. Definitionen, Rechenannahmen und Erklärungen stehen in einem ⓘ (`src/components/InfoTip.tsx`, bei Formularfeldern über die Eigenschaft `info`): Tap öffnet und schließt, Hover und Tastaturfokus öffnen, Esc schließt (in einem Sheet nur den Tooltip), das Popover bleibt immer im Viewport. Bestandsaufnahme aller Texte: `e2e/help-texts.ts` (Tabelle: `docs/fixkostenkonto/TOOLTIPS.md`, erzeugt mit `node --experimental-strip-types scripts/help-texts-table.mjs`); `e2e/tooltips.spec.ts` prüft, dass jede Erklärung in einem Tooltip steht und keine Warnung.
