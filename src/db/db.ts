@@ -2,7 +2,7 @@ import Dexie, { type EntityTable, type Transaction } from 'dexie';
 import { IMMOS_COLOR_KEY } from '../lib/categoryColors';
 import { calendarMonth } from '../lib/activeMonth';
 import { exposeForTrace } from '../lib/importTrace';
-import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, type PositionV2 } from './migrations';
+import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, upgradePositionV5, type PositionV2 } from './migrations';
 import type {
   Category,
   ChangeLog,
@@ -15,7 +15,7 @@ import type {
 } from '../lib/types';
 
 /** Bump together with a new db.version(n) block (and a backup migration). */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /** Schema v1 as shipped in phase 1. Never change it: devices already run it. */
 const SCHEMA_V1 = {
@@ -41,6 +41,9 @@ const SCHEMA_V3_CHANGES = {};
 
 /** v4: no index changes – 'once', dueDate and changedOn live inside `history`. */
 const SCHEMA_V4_CHANGES = {};
+
+/** v5: no index changes – the optional `account` lives on the position record. */
+const SCHEMA_V5_CHANGES = {};
 
 export const IMMOS_CATEGORY: Category = {
   id: 'cat-immos',
@@ -154,6 +157,18 @@ export async function migrateToV4(tx: Transaction): Promise<void> {
   await tx.table<MetaEntry, string>('meta').put({ key: 'schemaVersion', value: 4 });
 }
 
+/**
+ * v4 → v5 data migration: every position gets `account` (Fixkostenkonto, Vermögensaufbau:
+ * Girokonto). Payments, one-offs, month closes and the ChangeLog stay untouched.
+ */
+export async function migrateToV5(tx: Transaction): Promise<void> {
+  const kinds = new Map((await tx.table<Category, string>('categories').toArray()).map((c) => [c.id, c.kind]));
+  await tx.table('positions').toCollection().modify((p: Record<string, unknown>) => {
+    upgradePositionV5(p, (id) => kinds.get(id));
+  });
+  await tx.table<MetaEntry, string>('meta').put({ key: 'schemaVersion', value: 5 });
+}
+
 export class FixkostenDB extends Dexie {
   categories!: EntityTable<Category, 'id'>;
   positions!: EntityTable<Position, 'id'>;
@@ -173,6 +188,7 @@ export class FixkostenDB extends Dexie {
     if (maxVersion >= 2) this.version(2).stores(SCHEMA_V2_CHANGES).upgrade(migrateToV2);
     if (maxVersion >= 3) this.version(3).stores(SCHEMA_V3_CHANGES).upgrade(migrateToV3);
     if (maxVersion >= 4) this.version(4).stores(SCHEMA_V4_CHANGES).upgrade(migrateToV4);
+    if (maxVersion >= 5) this.version(5).stores(SCHEMA_V5_CHANGES).upgrade(migrateToV5);
   }
 }
 

@@ -1,7 +1,7 @@
 // Pure record migrations. Used by the Dexie upgrade functions and by the
 // backup import, so an old backup file goes through exactly the same steps.
 
-import type { Frequency, Payment, PlanEntry, Position } from '../lib/types';
+import type { Account, Frequency, Kind, Payment, PlanEntry, Position } from '../lib/types';
 
 const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
@@ -64,6 +64,24 @@ export function upgradePositionV4(record: Record<string, unknown>): Position {
   const first = history.reduce((a, b) => (b.validFrom < a.validFrom ? b : a));
   for (const entry of history) {
     if (entry !== first && !entry.changedOn) entry.changedOn = `${entry.validFrom}-01`;
+  }
+  return position;
+}
+
+/** Default account of a position without one: Vermögensaufbau is paid from the Girokonto. */
+export function defaultAccount(kind: Kind | undefined): Account {
+  return kind === 'savings' ? 'girokonto' : 'fixkostenkonto';
+}
+
+/**
+ * v4 → v5: every position gets `account` (Vermögensaufbau categories 'girokonto', all others
+ * 'fixkostenkonto'). An existing value is kept. Mutates in place and returns the record. Idempotent;
+ * nothing else changes.
+ */
+export function upgradePositionV5(record: Record<string, unknown>, kindOfCategory: (id: string) => Kind | undefined): Position {
+  const position = record as unknown as Position;
+  if (position.account !== 'fixkostenkonto' && position.account !== 'girokonto') {
+    position.account = defaultAccount(kindOfCategory(position.categoryId));
   }
   return position;
 }

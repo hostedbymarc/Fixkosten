@@ -505,7 +505,7 @@ test.describe('Export und Import mit und ohne Einstellung', () => {
     const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Sicherung exportieren' }).click()]);
     const exported = await readDownload(download);
     expect(exported.settings).toEqual({ monthStartDay: 25 });
-    expect(exported.schemaVersion).toBe(4);
+    expect(exported.schemaVersion).toBe(5);
 
     const importFile = async (json: unknown) => {
       await page.getByTestId('backup-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(json)) });

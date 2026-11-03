@@ -11,7 +11,7 @@ import type {
 import type { Table, Transaction } from 'dexie';
 import { traceImport } from '../lib/importTrace';
 import { SCHEMA_VERSION, type FixkostenDB } from './db';
-import { upgradePaymentV3, upgradePositionV3, upgradePositionV4 } from './migrations';
+import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, upgradePositionV5 } from './migrations';
 
 /** Oldest backup version that can still be imported (migrated on the fly). */
 const MIN_IMPORT_VERSION = 2;
@@ -127,6 +127,10 @@ export function parseBackup(raw: unknown): BackupFile {
     data.positions = (data.positions as Record<string, unknown>[]).map((p) =>
       upgradePositionV4({ ...p, history: ((p.history as Record<string, unknown>[] | undefined) ?? []).map((e) => ({ ...e })) }),
     );
+  }
+  if (version < 5) {
+    const kinds = new Map((data.categories as Category[]).map((c) => [c.id, c.kind]));
+    data.positions = (data.positions as Record<string, unknown>[]).map((p) => upgradePositionV5({ ...p }, (id) => kinds.get(id)));
   }
   raw.schemaVersion = SCHEMA_VERSION;
   // settings are optional; an unknown value is dropped (→ default on import)
