@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 // Netlify sets COMMIT_REF during builds; locally the version reads "dev".
 const commit = process.env.COMMIT_REF?.slice(0, 7) || 'dev';
 const buildDate = new Date().toISOString();
+// the dev page /dev/schote/ is built for Netlify deploy previews and the e2e build, never for production
+const devPages = process.env.CONTEXT === 'deploy-preview' || process.env.ERBSE_IMPORT_TRACE === '1' || process.env.ERBSE_DEV_PAGES === '1';
 
 export default defineConfig({
   plugins: [react()],
@@ -15,7 +17,10 @@ export default defineConfig({
     __IMPORT_TRACE__: JSON.stringify(process.env.ERBSE_IMPORT_TRACE === '1'),
   },
   // the e2e/harness build gets source maps, so the import watchdog's stacks point into src/
-  build: { sourcemap: process.env.ERBSE_IMPORT_TRACE === '1' },
+  build: {
+    sourcemap: process.env.ERBSE_IMPORT_TRACE === '1',
+    ...(devPages && { rollupOptions: { input: { main: 'index.html', schote: 'dev/schote/index.html' } } }),
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],

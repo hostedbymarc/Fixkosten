@@ -1,0 +1,311 @@
+import { useState, type ReactNode } from 'react';
+import { amountToInput, formatDelta, parseAmount } from '../../lib/format';
+import { periodLabel } from '../../lib/period';
+import type { Pod } from '../../lib/schote';
+import { t } from '../../lib/schoteTexts';
+import { BottomSheet } from '../BottomSheet';
+import { AmountField } from '../form';
+import { Pea, PeaOpen } from '../Pea';
+import { PeaPod } from './PeaPod';
+
+/** Answer to „Ist der Dauerauftrag für November schon eingegangen?“ */
+export type OrderAnswer = 'yes' | 'no' | 'none';
+
+export interface SetupResult {
+  hasAccount: boolean;
+  /** „Kontostand heute“ (0 without an account or with „Weiß ich gerade nicht“) */
+  balance: number;
+  /** „Weiß ich gerade nicht“: ask again on the next start */
+  balanceUnknown: boolean;
+  order: OrderAnswer;
+  /** plan checklist */
+  orderDone: boolean;
+  gapDone: boolean;
+}
+
+export interface Coverage {
+  pod: Pod;
+  gap: number;
+}
+
+interface Props {
+  /** „November“ – the active month */
+  monthName: string;
+  /** the rounded standing order */
+  order: number;
+  /**
+   * Coverage for a balance. `firstDeposit` = this month's standing order still arrives
+   * (answer „Nein“); „Ja“ (already on the balance) and „Ich habe noch keinen“ (none this month) don't.
+   */
+  coverage: (balance: number, firstDeposit: boolean) => Coverage;
+  onClose: () => void;
+  onFinish: (result: SetupResult) => void;
+  /** start on a given step (dev page / screenshots) */
+  initialStep?: Step;
+  initialResult?: Partial<SetupResult>;
+}
+
+export type Step = 'account' | 'balance' | 'order' | 'plan';
+const STEP_NO: Record<Exclude<Step, 'plan'>, number> = {
+  account: 1,
+  balance: 2,
+  order: 3,
+};
+
+const BIG = 'focus-ring flex h-14 w-full items-center justify-center rounded-2xl px-5 text-[17px] font-semibold';
+const PRIMARY = `${BIG} bg-accent text-white hover:bg-accent-hover disabled:opacity-50`;
+const SECONDARY = `${BIG} glass-inset bg-surface text-ink hover:bg-zinc-100`;
+
+/**
+ * Setup of the Fixkostenkonto: one question per screen, big buttons, progress on top, then
+ * „Dein Plan“ as a checklist with peas instead of ticks. When every point is done the pod fills pea
+ * by pea („Alles gedeckt bis …“), „Fertig“ goes back to the month screen.
+ */
+export function KontoSetupSheet({ monthName, order, coverage, onClose, onFinish, initialStep = 'account', initialResult }: Props) {
+  const [step, setStep] = useState<Step>(initialStep);
+  const [noAccount, setNoAccount] = useState(initialResult?.hasAccount === false && initialStep === 'account');
+  const [r, setR] = useState<SetupResult>({
+    hasAccount: true,
+    balance: 0,
+    balanceUnknown: false,
+    order: 'no',
+    orderDone: false,
+    gapDone: false,
+    ...initialResult,
+  });
+  const [balanceText, setBalanceText] = useState(initialResult?.balance ? amountToInput(initialResult.balance) : '');
+  const balance = parseAmount(balanceText);
+  const balanceError = balanceText.trim() !== '' && balance === null ? 'Bitte einen Betrag eingeben' : null;
+  const set = (patch: Partial<SetupResult>) => setR((cur) => ({ ...cur, ...patch }));
+
+  return (
+    <BottomSheet title={step === 'plan' ? t('plan.title') : t('setup.title')} onClose={onClose}>
+      <div data-testid="konto-setup" data-step={step}>
+        {step !== 'plan' && <Progress n={STEP_NO[step]} />}
+
+        {step === 'account' && (
+          <Question title={t('setup.q1')}>
+            {noAccount ? (
+              <>
+                <p className="flex items-start gap-3 text-[16px] leading-snug text-ink" data-testid="setup-no-account">
+                  <Pea size={24} className="mt-0.5 shrink-0" />
+                  {t('setup.q1.noText')}
+                </p>
+                {/* without an account the balance is 0 and there is no standing order yet */}
+                <button type="button" className={PRIMARY} onClick={() => setStep('plan')} data-testid="setup-next">
+                  {t('setup.next')}
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className={PRIMARY} onClick={() => (set({ hasAccount: true }), setStep('balance'))} data-testid="setup-has-account">
+                  {t('setup.q1.yes')}
+                </button>
+                <button
+                  type="button"
+                  className={SECONDARY}
+                  onClick={() => (
+                    set({
+                      hasAccount: false,
+                      balance: 0,
+                      balanceUnknown: false,
+                      order: 'none',
+                    }),
+                    setNoAccount(true)
+                  )}
+                  data-testid="setup-no-account-button"
+                >
+                  {t('setup.q1.no')}
+                </button>
+              </>
+            )}
+          </Question>
+        )}
+
+        {step === 'balance' && (
+          <Question title={t('setup.q2')}>
+            <AmountField
+              label={t('setup.q2.label')}
+              value={balanceText}
+              onChange={setBalanceText}
+              placeholder="z. B. 1.200"
+              error={balanceError}
+              testId="setup-balance"
+            />
+            <p className="-mt-1 text-[14px] leading-snug text-ink-soft" data-testid="setup-balance-hint">
+              {t('setup.q2.hint')}
+            </p>
+            <button
+              type="button"
+              className={PRIMARY}
+              disabled={balanceText.trim() === '' || balance === null}
+              onClick={() => (set({ balance: balance ?? 0, balanceUnknown: false }), setStep('order'))}
+              data-testid="setup-next"
+            >
+              {t('setup.next')}
+            </button>
+            <button
+              type="button"
+              className="focus-ring mx-auto h-11 rounded-lg px-3 text-[15px] font-semibold text-accent-ink underline-offset-4 hover:underline"
+              onClick={() => (set({ balance: 0, balanceUnknown: true }), setBalanceText(''), setStep('order'))}
+              data-testid="setup-balance-unknown"
+            >
+              {t('setup.q2.unknown')}
+            </button>
+            <BackButton onClick={() => setStep('account')} />
+          </Question>
+        )}
+
+        {step === 'order' && (
+          <Question title={t('setup.q3', { monat: monthName })}>
+            {(
+              [
+                ['yes', t('setup.q3.yes')],
+                ['no', t('setup.q3.no')],
+                ['none', t('setup.q3.none')],
+              ] as const
+            ).map(([answer, text]) => (
+              <button
+                key={answer}
+                type="button"
+                className={SECONDARY}
+                onClick={() => (set({ order: answer }), setStep('plan'))}
+                data-testid={`setup-order-${answer}`}
+              >
+                {text}
+              </button>
+            ))}
+            <BackButton onClick={() => setStep('balance')} />
+          </Question>
+        )}
+
+        {step === 'plan' && <Plan r={r} set={set} order={order} coverage={coverage} onFinish={() => onFinish(r)} />}
+      </div>
+    </BottomSheet>
+  );
+}
+
+function Plan({
+  r,
+  set,
+  order,
+  coverage,
+  onFinish,
+}: {
+  r: SetupResult;
+  set: (patch: Partial<SetupResult>) => void;
+  order: number;
+  coverage: Props['coverage'];
+  onFinish: () => void;
+}) {
+  const firstDeposit = r.order === 'no';
+  // the gap is fixed from the answers; „Erledigt“ on it puts it on the balance
+  const before = coverage(r.balance, firstDeposit);
+  const gap = Math.round(before.gap * 100) > 0 ? before.gap : 0;
+  const now = coverage(r.balance + (r.gapDone ? gap : 0), firstDeposit);
+  const allDone = r.orderDone && (gap === 0 || r.gapDone);
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard?.writeText(amountToInput(order));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* no clipboard: the amount stays visible */
+    }
+  }
+
+  const until = now.pod.coveredUntil;
+  return (
+    <div className="flex flex-col gap-5" data-testid="setup-plan" data-done={allDone || undefined}>
+      <div>
+        <PeaPod pod={now.pod} size="large" empty={!allDone} hideText testId="plan-pod" />
+        <p className="pod-text" data-testid="plan-pod-text" aria-live="polite">
+          {allDone
+            ? until
+              ? t('plan.full', { monat: periodLabel(until) })
+              : `${now.pod.covered} von ${now.pod.slots.length} Monaten gedeckt`
+            : t('plan.pending')}
+        </p>
+      </div>
+      <ul className="flex flex-col gap-3">
+        <PlanItem done={r.orderDone} onDone={() => set({ orderDone: !r.orderDone })} testId="plan-order">
+          {r.order === 'none' ? 'Dauerauftrag einrichten: ' : 'Dauerauftrag prüfen: '}
+          <span className="num whitespace-nowrap font-semibold">{formatDelta(order)}</span> monatlich am 1.
+          <button
+            type="button"
+            onClick={copy}
+            className="focus-ring mt-2 flex h-11 items-center rounded-xl px-3 text-[15px] font-semibold text-accent-ink glass-inset bg-surface"
+            data-testid="plan-copy"
+          >
+            {copied ? t('plan.copied') : t('plan.copy')}
+          </button>
+        </PlanItem>
+        {gap > 0 && (
+          <PlanItem done={r.gapDone} onDone={() => set({ gapDone: !r.gapDone })} testId="plan-gap">
+            Einmalig <span className="num whitespace-nowrap font-semibold">{formatDelta(gap)}</span> überweisen
+          </PlanItem>
+        )}
+      </ul>
+      {allDone && (
+        <button type="button" className={PRIMARY} onClick={onFinish} data-testid="setup-finish">
+          {t('plan.finish')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function PlanItem({ done, onDone, children, testId }: { done: boolean; onDone: () => void; children: ReactNode; testId: string }) {
+  return (
+    <li className="glass-inset flex items-start gap-3 rounded-2xl bg-surface p-4" data-testid={testId} data-done={done || undefined}>
+      <span className="mt-0.5 shrink-0">{done ? <Pea size={24} state="checked" className="anim-check" /> : <PeaOpen size={24} />}</span>
+      <div className="min-w-0 flex-1 text-[16px] leading-snug text-ink">{children}</div>
+      <button
+        type="button"
+        onClick={onDone}
+        aria-pressed={done}
+        className={`focus-ring h-11 shrink-0 rounded-xl px-4 text-[15px] font-semibold ${done ? 'text-paid-ink' : 'bg-accent text-white hover:bg-accent-hover'}`}
+        data-testid={`${testId}-done`}
+      >
+        {t('plan.done')}
+      </button>
+    </li>
+  );
+}
+
+function Progress({ n }: { n: number }) {
+  return (
+    <div className="mb-5 flex items-center gap-3" data-testid="setup-progress">
+      <span className="flex items-center gap-1.5" aria-hidden="true">
+        {[1, 2, 3].map((i) => (i <= n ? <Pea key={i} size={14} /> : <PeaOpen key={i} size={14} />))}
+      </span>
+      <span className="text-[13px] font-medium text-ink-mute">{t('setup.progress', { n })}</span>
+    </div>
+  );
+}
+
+function Question({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="mb-2 text-[24px] font-semibold leading-tight tracking-[-0.01em] text-ink" data-testid="setup-question">
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="focus-ring mx-auto h-11 rounded-lg px-3 text-[15px] font-medium text-ink-mute hover:text-ink"
+      data-testid="setup-back"
+    >
+      {t('setup.back')}
+    </button>
+  );
+}
