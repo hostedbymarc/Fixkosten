@@ -33,7 +33,7 @@ async function settle(page: Page) {
   await appSettled(page);
   await page.evaluate(async () => {
     await document.fonts.ready;
-    await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
+    await Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined)));
   });
   await page.waitForTimeout(150);
 }
@@ -146,7 +146,7 @@ for (const scheme of ['light', 'dark'] as const) {
         // WebKit switches to the light appearance for print: colour transitions run to their end first
         // (a printed page has no transitions)
         await page.waitForTimeout(50);
-        await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+        await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
         // WebKit prints with the light appearance
         const printed = isWebKit(page) ? 'light' : scheme;
 

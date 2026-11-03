@@ -7,8 +7,8 @@
 
 import { testFlag } from './importTrace';
 
-/** The splash stays at least this long after navigation start, so its intro plays once. */
-export const SPLASH_MIN_MS = 700;
+/** The splash only shows when loading takes longer than this (index.css: splash-show delay). */
+export const SPLASH_SHOW_AFTER_MS = 300;
 /** Web Animations created here carry this id (tests wait for them). */
 export const ENTRANCE_ID = 'entrance';
 
@@ -21,8 +21,6 @@ const fading = new Promise<void>((resolve) => (markFading = resolve));
 let markRemoved: () => void = () => {};
 /** Resolves when the splash is gone from the DOM (at once if there is none). */
 const removed = new Promise<void>((resolve) => (markRemoved = resolve));
-/** Fallback when no `transitionend` arrives (tab in the background, transition skipped). */
-export const SPLASH_REMOVE_FALLBACK_MS = 400;
 
 /** The splash is gone: what it covered may blur now ([data-splash] in index.html, index.css). */
 function splashGone() {
@@ -33,9 +31,26 @@ function splashGone() {
   markRemoved();
 }
 
+/** Exit of the splash: FLIP into the header logo, or zoom-out with fade, or (reduced motion) a fade. */
+export const SPLASH_FLIP_MS = 360;
+export const SPLASH_ZOOM_MS = 240;
+export const SPLASH_FADE_MS = 180;
+
+/** The logo the peas fly into: visible, in the viewport, not in a hidden tab (desktop: the sidebar). */
+function headerLogo(): HTMLElement | null {
+  for (const el of document.querySelectorAll<HTMLElement>('#root [data-testid="logo"]')) {
+    if (el.closest('[data-tab-hidden]')) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width >= 20 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth) return el;
+  }
+  return null;
+}
+
 /**
- * Fades the splash out (once): not before SPLASH_MIN_MS, removed when its fade has ended
- * (`transitionend`, at the latest SPLASH_REMOVE_FALLBACK_MS after the fade started).
+ * Takes the splash out (once), as soon as the app is ready. A splash that never became visible (the
+ * load took less than 300 ms) is removed at once. Otherwise: the three peas fly into the header logo
+ * (FLIP, 360 ms) while the background fades; without a visible logo they zoom out and fade (240 ms);
+ * „Bewegung reduzieren“: only a fade (180 ms). Removed when that has ended.
  */
 export function hideSplash(): Promise<void> {
   if (started) return fading;
@@ -46,27 +61,47 @@ export function hideSplash(): Promise<void> {
     markFading();
     return fading;
   }
-  const reduced = reducedMotion();
-  window.setTimeout(
-    () => {
-      let done = false;
-      const remove = () => {
-        if (done) return;
-        done = true;
-        window.clearTimeout(fallback);
-        splash.removeEventListener('transitionend', onEnd);
-        splashGone();
-      };
-      const onEnd = (e: TransitionEvent) => {
-        if (e.target === splash && e.propertyName === 'opacity') remove();
-      };
-      splash.addEventListener('transitionend', onEnd);
-      const fallback = window.setTimeout(remove, SPLASH_REMOVE_FALLBACK_MS);
-      splash.classList.add('splash-out');
-      markFading();
-    },
-    reduced ? 0 : Math.max(0, SPLASH_MIN_MS - performance.now()),
-  );
+  // never shown (faster than 300 ms): nothing to animate, nothing may flash
+  if (parseFloat(getComputedStyle(splash).opacity) < 0.02) {
+    splashGone();
+    markFading();
+    return fading;
+  }
+  const stage = splash.querySelector<HTMLElement>('.splash-stage');
+  const logo = reducedMotion() ? null : headerLogo();
+  let ms = SPLASH_FADE_MS;
+  if (stage && reducedMotion()) {
+    stage.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPLASH_FADE_MS, easing: 'ease-out', fill: 'forwards' });
+  } else if (stage && logo) {
+    ms = SPLASH_FLIP_MS;
+    const from = stage.getBoundingClientRect();
+    const to = logo.getBoundingClientRect();
+    // the peas span 60 % of the logo's width and ~86 % of the stage's
+    const scale = (to.width * 0.6) / (from.width * 0.86);
+    const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+    const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+    stage.animate(
+      [
+        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, opacity: 1, offset: 0.8 },
+        { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, opacity: 0 },
+      ],
+      { duration: SPLASH_FLIP_MS, easing: 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'forwards' },
+    );
+  } else if (stage) {
+    ms = SPLASH_ZOOM_MS;
+    stage.animate(
+      [
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: 'scale(0.6)', opacity: 0 },
+      ],
+      { duration: SPLASH_ZOOM_MS, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' },
+    );
+  }
+  splash.style.setProperty('--splash-out-ms', `${ms}ms`);
+  splash.classList.add('splash-out');
+  markFading();
+  window.setTimeout(splashGone, ms + 30);
   return fading;
 }
 
@@ -86,18 +121,22 @@ export function splashRemoved(): Promise<void> {
 }
 
 const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
-/** Card entrance: 420 ms, the first after 40 ms, each further card 45 ms later, at most 10 cards. */
-export const CARD_MS = 420;
-const CARD_DELAY = 40;
-const CARD_STAGGER = 45;
+/** What rises in the entrance: glass cards and the Luxe surfaces. */
+const CARD_SELECTOR = '.glass, .surface';
+/** The screen's own fade-in. */
+const SCREEN_FADE_MS = 150;
+/** Card entrance: 280 ms, the first at once, each further card 20 ms later, at most 10 cards (Luxe 2: quicker tab switch). */
+export const CARD_MS = 280;
+const CARD_DELAY = 0;
+const CARD_STAGGER = 20;
 const MAX_CARDS = 10;
 /** „Bewegung reduzieren“: the screen only fades in. */
 export const REDUCED_FADE_MS = 120;
 
 /**
  * THE screen entrance – the one of the Monat screen, used by every tab (src/components/Screen.tsx):
- * the screen fades in (220 ms), its cards (glass surfaces in view, at most 10, top to bottom) rise by
- * 14 px one after another (420 ms each, 45 ms apart). Runs after the splash has started to fade.
+ * the screen fades in (150 ms), its cards (glass surfaces in view, at most 10, top to bottom) rise by
+ * 14 px one after another (280 ms each, 20 ms apart). Runs after the splash has started to fade.
  * Resolves with the time (ms from now) when the last card has arrived, so a screen can follow up
  * (Analyse: the bars grow). „Bewegung reduzieren“: only a fade (120 ms), resolves with 0.
  */
@@ -111,12 +150,13 @@ export async function playEntrance(main: HTMLElement, name: string, screen = mai
     screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: REDUCED_FADE_MS, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
     return 0;
   }
-  screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
+  screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SCREEN_FADE_MS, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
   const fold = window.innerHeight;
-  const cards = [...screen.querySelectorAll<HTMLElement>('.glass')]
+  // glass cards and the Luxe surfaces (hero, tiles, cards: .surface)
+  const cards = [...screen.querySelectorAll<HTMLElement>(CARD_SELECTOR)]
     .filter((el) => {
       const r = el.getBoundingClientRect();
-      return r.height > 0 && r.top < fold && r.bottom > 0 && !el.parentElement?.closest('.glass');
+      return r.height > 0 && r.top < fold && r.bottom > 0 && !el.parentElement?.closest(CARD_SELECTOR);
     })
     .slice(0, MAX_CARDS);
   // no blur while a card moves in (it fades up from nothing anyway): each gets it back when it rests
@@ -152,5 +192,5 @@ export async function playEntrance(main: HTMLElement, name: string, screen = mai
       }),
     );
   }
-  return cards.length ? CARD_DELAY + (cards.length - 1) * CARD_STAGGER + CARD_MS : 220;
+  return cards.length ? CARD_DELAY + (cards.length - 1) * CARD_STAGGER + CARD_MS : SCREEN_FADE_MS;
 }

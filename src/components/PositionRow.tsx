@@ -2,6 +2,7 @@ import { nextPlannedChange, type DueItem } from '../lib/calc';
 import { formatDelta, formatEUR } from '../lib/format';
 import type { OneOff } from '../lib/types';
 import { Badge, DeltaChip, planChangeLabel, scheduleLabel } from './Chips';
+import { Pea, PeaOpen } from './Pea';
 
 interface Props {
   item: DueItem;
@@ -12,17 +13,13 @@ interface Props {
 }
 
 function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; small?: boolean }) {
-  const size = small ? 'h-[22px] w-[22px]' : 'h-[28px] w-[28px]';
+  const px = small ? 22 : 28;
   if (state === 'paid') {
-    return (
-      <span className={`anim-check flex ${size} items-center justify-center rounded-full bg-paid text-paid-on`}>
-        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-          <path d="M3 7.2l2.6 2.6L11 4.4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
-    );
+    // gefüllte Soft-3D-Erbse mit geprägtem Häkchen; pops once (1 → 1.15 → 1) when it is ticked
+    return <Pea size={px} state="checked" className="anim-check" pressable />;
   }
   if (state === 'skipped') {
+    const size = small ? 'h-[22px] w-[22px]' : 'h-[28px] w-[28px]';
     return (
       <span className={`flex ${size} items-center justify-center rounded-full bg-zinc-200 text-ink-mute`}>
         <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -31,11 +28,7 @@ function CheckCircle({ state, small }: { state: 'open' | 'paid' | 'skipped'; sma
       </span>
     );
   }
-  return (
-    <span
-      className={`${size} rounded-full border-2 border-dashed border-check-open transition-colors group-hover:border-solid group-hover:border-accent-ink`}
-    />
-  );
+  return <PeaOpen size={px} className="transition-colors group-hover:border-solid group-hover:border-accent-ink" />;
 }
 
 export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneOff }: Props) {

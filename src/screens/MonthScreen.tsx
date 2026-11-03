@@ -1,9 +1,10 @@
-import { forwardRef, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
 import { GlassGroup } from '../components/GlassGroup';
+import { Pea } from '../components/Pea';
 import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
@@ -16,6 +17,8 @@ import { PositionFormSheet } from '../components/PositionFormSheet';
 import { PositionRow } from '../components/PositionRow';
 import { ProgressRing } from '../components/ProgressRing';
 import { Badge, scheduleLabel } from '../components/Chips';
+import { fitEm, fitStyle } from '../components/fitText';
+import { CountUp } from '../components/CountUp';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
 import { FEATURE_REMINDERS } from '../lib/features';
@@ -62,6 +65,7 @@ import {
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
 import { calendarMonth, localToday } from '../lib/activeMonth';
+import { driftHeroLights } from '../lib/aurora';
 import { MonthPicker } from '../components/MonthPicker';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
@@ -203,8 +207,20 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
       )}
 
       <div className="grid gap-3 md:gap-4">
-        <HeroCard figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
-        {/* iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
+        <HeroCard period={period} figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
+        {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
+        {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
+            size – the one that fits the longest of them – so a row keeps one baseline */}
+        <TileFit.Provider
+          value={fitStyle(
+            longest([
+              netSalaryForPeriod(ds, period) === null ? '–' : formatEUR(netSalaryForPeriod(ds, period)!),
+              formatAvg(fixedCostsAvg(ds, period)),
+              figures.free === null ? '–' : formatEUR(figures.free),
+              formatEUR(figures.wealth),
+            ]),
+          )}
+        >
         <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SalaryTile
             ref={salaryTile}
@@ -227,6 +243,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           />
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
         </GlassGroup>
+        </TileFit.Provider>
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 
@@ -286,7 +303,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             ref={onceButton}
             type="button"
             onClick={() => setOnceOpen(true)}
-            className="focus-ring flex min-h-[52px] items-center justify-center gap-2 rounded-card border border-dashed border-edge bg-field px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
+            className="focus-ring press flex min-h-[56px] items-center justify-center gap-2 rounded-[22px] border border-dashed border-edge bg-field px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
             data-testid="add-once"
           >
             <span aria-hidden="true" className="text-[20px] leading-none">+</span>
@@ -505,27 +522,66 @@ function MonthHeader({
   );
 }
 
-function HeroCard({ figures, openOnly, onToggleOpenOnly }: { figures: MonthFigures; openOnly: boolean; onToggleOpenOnly: () => void }) {
+/** The month the hero showed last (module level: a swipe re-creates the hero). */
+const heroShown: { period: Period | null } = { period: null };
+
+function HeroCard({
+  period,
+  figures,
+  openOnly,
+  onToggleOpenOnly,
+}: {
+  period: Period;
+  figures: MonthFigures;
+  openOnly: boolean;
+  onToggleOpenOnly: () => void;
+}) {
   const allPaid = figures.count > 0 && figures.openCount === 0;
+  // a diagonal shimmer once per month change (not when the screen first shows; survives the remount of a swipe)
+  const [shimmer] = useState(() => heroShown.period !== null && heroShown.period !== period);
+  useLayoutEffect(() => {
+    heroShown.period = period;
+  }, [period]);
+  const lights = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => driftHeroLights(lights.current), []);
   return (
-    <div className="glass flex flex-col gap-4 p-4 md:flex-row md:items-center md:gap-6 md:p-5" data-testid="hero">
-      <div className="flex min-w-0 items-center gap-4 md:gap-6">
+    <div className="hero surface flex flex-col gap-5 p-6 md:flex-row md:items-center md:gap-8 md:p-7 lg:p-8" data-testid="hero">
+      {/* two soft colour fields drifting slowly inside the tile (box-shadow glows, clipped) */}
+      <span ref={lights} className="hero-lights" aria-hidden="true">
+        <span className="hero-light hero-light-a" />
+        <span className="hero-light hero-light-b" />
+        {shimmer && (
+          <span key={period} className="hero-shimmer-track">
+            <span className="hero-shimmer" />
+          </span>
+        )}
+      </span>
+      <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7">
         <ProgressRing
           ratio={figures.ratio}
           percent={progressPercent(figures)}
           done={allPaid}
           label={`${progressPercent(figures)} Prozent abgebucht`}
+          className="h-[84px] w-[84px] md:h-[124px] md:w-[124px]"
+          hero
         />
-        <div className="min-w-0">
-          <div className="num text-[32px] font-semibold leading-tight tracking-[-0.03em] text-ink lg:text-[38px]" data-testid="hero-paid">
-            {formatEUR(figures.paid)}
-          </div>
-          <div className="text-[15px] text-ink-mute">
+        {/* the one big number of the screen: shrinks to its box for long amounts, never cut */}
+        <div className="fit-box flex-1">
+          {/* counts from the old to the new month's value (visual only, the element holds the final text) */}
+          <CountUp
+            value={figures.paid}
+            format={formatEUR}
+            trigger={period}
+            className="num num-display fit fit-hero text-ink"
+            style={fitStyle(formatEUR(figures.paid))}
+            testId="hero-paid"
+          />
+          <div className="mt-2 text-[15px] text-ink-mute">
             von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
           </div>
           <div className="mt-3">
             {allPaid ? (
-              <span className="inline-flex h-7 items-center rounded-full bg-paid-soft px-3 text-[13px] font-semibold text-paid-ink">
+              <span className="hero-chip inline-flex h-8 items-center rounded-full px-3.5 text-[13px] font-semibold">
                 Alles abgebucht
               </span>
             ) : figures.count === 0 ? (
@@ -540,9 +596,8 @@ function HeroCard({ figures, openOnly, onToggleOpenOnly }: { figures: MonthFigur
                 data-testid="hero-open-filter"
               >
                 <span
-                  className={`num inline-flex h-7 items-center rounded-full px-3 text-[13px] font-semibold ${
-                    openOnly ? 'bg-accent text-white' : 'bg-accent-soft text-accent-strong'
-                  }`}
+                  className="hero-chip num inline-flex h-8 items-center rounded-full px-3.5 text-[13px] font-semibold"
+                  data-on={openOnly || undefined}
                   data-testid="hero-open"
                 >
                   {figures.openCount} offen · {formatEUR(shownOpen(figures))}
@@ -565,7 +620,7 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
   const explanation = deductionsExplanation(figures);
   return (
     <div
-      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-3 md:ml-auto md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-6 md:text-right"
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-4 md:ml-auto md:shrink-0 md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-8 md:text-right"
       data-testid="hero-deductions"
     >
       <div className="col-start-1 row-start-1 flex items-center text-[13px] font-medium text-ink-mute">
@@ -600,10 +655,17 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
  * number directly below, at most one short subline. Content is top-aligned; the
  * grid stretches tiles of a row to the same height, so the numbers share a baseline.
  */
-const tileClass = 'glass glass-tile flex min-w-0 flex-col items-stretch justify-start rounded-tile p-4 text-left md:p-5';
-const tileLabel = 'block truncate text-[12px] font-medium leading-4 text-ink-mute lg:text-[13px]';
-const tileValue = 'num mt-1 block truncate text-[17px] font-semibold leading-6 lg:text-[20px] lg:leading-7';
-const tileSub = 'mt-1 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:tracking-normal';
+const tileClass = 'glass glass-tile surface press fit-box flex min-w-0 flex-col items-stretch justify-start p-4 text-left md:p-5 xl:p-6';
+const tileLabel = 'block truncate text-[13px] font-medium leading-5 text-ink-mute';
+// Kachel-Zahl: 28 px (34 px from desktop), smaller for long amounts (fit), never cut
+const tileValue = 'num num-display fit fit-tile mt-1.5 block';
+// phone: 11 px, slightly tight, so „im Ø-Monat € 1.035,83 ⓘ“ stays one line in a 2 × 2 tile;
+// iPad landscape (four in a row, sidebar): 12 px and 20 px padding, 13 px / 24 px only from xl
+const tileSub = 'mt-1.5 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:leading-5 lg:tracking-normal xl:text-[13px]';
+
+/** Size of the tile numbers (src/components/fitText.ts), shared by the four tiles. */
+const TileFit = createContext<React.CSSProperties>({});
+const longest = (texts: string[]) => texts.reduce((a, b) => (fitEm(b) > fitEm(a) ? b : a));
 
 /** An amount inside a subline: never wraps in the middle. */
 function Amount({ children, strong, negative }: { children: React.ReactNode; strong?: boolean; negative?: boolean }) {
@@ -619,11 +681,15 @@ const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: numbe
         ref={ref}
         type="button"
         onClick={onOpen}
-        className={`${tileClass} focus-ring hover:bg-zinc-50/40`}
+        className={`${tileClass} tone-sky focus-ring`}
         data-testid="salary-tile"
       >
         <span className={tileLabel}>Netto-Gehalt</span>
-        <span className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`} data-testid="salary-value">
+        <span
+          className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
+          style={useContext(TileFit)}
+          data-testid="salary-value"
+        >
           {salary === null ? '–' : formatEUR(salary)}
         </span>
         <span className={tileSub}>
@@ -636,9 +702,11 @@ const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: numbe
 
 function KpiTile({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
   return (
-    <div className={tileClass}>
+    <div className={`${tileClass} tone-butter`}>
       <span className={tileLabel}>{label}</span>
-      <span className={`${tileValue} text-ink`} data-testid="kpi-value">{value}</span>
+      <span className={`${tileValue} text-ink`} style={useContext(TileFit)} data-testid="kpi-value">
+        {value}
+      </span>
       {children && <span className={tileSub}>{children}</span>}
     </div>
   );
@@ -698,18 +766,19 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
   const info = useSlotPosition(wrapper, slot, showInfo);
   return (
     // the ⓘ is its own button next to (not inside) the tile button
-    <div ref={wrapper} className="relative flex min-w-0">
+    <div ref={wrapper} className="tone-pea relative flex min-w-0 bg-transparent">
       <button
         ref={ref}
         type="button"
         onClick={onOpen}
         aria-label={`Frei verfügbar – Monatsabschluss ${periodLabel(period)} öffnen`}
-        className={`${tileClass} focus-ring w-full hover:bg-zinc-50/40`}
+        className={`${tileClass} tone-pea focus-ring w-full`}
         data-testid="free-tile"
       >
         <span className={tileLabel}>Frei verfügbar</span>
         <span
           className={`${tileValue} ${value === null ? 'text-ink-faint' : value < 0 ? 'text-over' : 'text-ink'}`}
+          style={useContext(TileFit)}
           data-testid="free-value"
           data-negative={value !== null && value < 0}
         >
@@ -755,9 +824,9 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
 function WealthTile({ wealth, notFromNet, rate }: { wealth: number; notFromNet: number; rate: number | null }) {
   const other = Math.round(notFromNet * 100) > 0;
   return (
-    <div className={tileClass} data-testid="wealth-tile">
+    <div className={`${tileClass} tone-lilac`} data-testid="wealth-tile">
       <span className={tileLabel}>Vermögensaufbau</span>
-      <span className={`${tileValue} text-ink`} data-testid="wealth-value">
+      <span className={`${tileValue} text-ink`} style={useContext(TileFit)} data-testid="wealth-value">
         {formatEUR(wealth)}
       </span>
       {/* two fixed lines when part of it is not from the net salary; neither breaks inside */}
@@ -808,17 +877,18 @@ function GroupCard({
   const allPaid = tally.count > 0 && tally.openCount === 0;
   const status = `${savings ? 'Vermögensaufbau · ' : ''}${allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}`;
   return (
-    <section className="glass overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
+    <section className="glass surface overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
       <Disclosure
         expanded={!collapsed}
         onToggle={onToggleCollapsed}
         headingLevel={2}
         buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${status}`}
-        buttonClassName={`px-4 py-3 hover:bg-zinc-50/40 md:px-5 ${collapsed ? '' : 'border-b border-line'}`}
+        buttonClassName={`px-5 py-4 hover:bg-zinc-50/40 md:px-6 ${collapsed ? '' : 'border-b border-line'}`}
         buttonTestId="group-toggle"
         header={
           <>
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryColor(group.category.color) }} aria-hidden="true" />
+            {/* Soft-3D-Erbse in the category colour */}
+            <Pea size={16} color={categoryColor(group.category.color)} />
             {/* fixed grid: left name / status, right sum / Ø; every cell one line, long names end in an ellipsis */}
             <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
               <span className="truncate text-[15px] font-semibold leading-6 text-ink" data-testid="group-name">
@@ -879,7 +949,7 @@ function OpenFromPrevious({
   const title = groups.length === 1 ? `Offen aus ${monthName(groups[0]!.period)}` : 'Offen aus Vormonaten';
   const contentId = useId();
   return (
-    <section className="glass mb-3 overflow-hidden" aria-label={title} data-testid="open-previous">
+    <section className="glass surface mb-3 overflow-hidden" aria-label={title} data-testid="open-previous">
       <button
         type="button"
         aria-expanded={expanded}
@@ -992,7 +1062,7 @@ function UpcomingList({ items }: { items: DueItem[] }) {
   }, [items, all]);
   const hidden = items.length - UPCOMING_PHONE;
   return (
-    <div className="glass overflow-hidden">
+    <div className="glass surface overflow-hidden">
       <ul ref={list} className="divide-y divide-line" data-testid="upcoming-list" data-stacked={stacked || undefined}>
         {items.map((item, i) => (
           <li
@@ -1037,5 +1107,5 @@ function UpcomingList({ items }: { items: DueItem[] }) {
 }
 
 function EmptyCard({ children }: { children: React.ReactNode }) {
-  return <div className="glass px-4 py-5 text-[14px] text-ink-mute">{children}</div>;
+  return <div className="glass surface px-5 py-5 text-[14px] text-ink-mute">{children}</div>;
 }

@@ -4,7 +4,7 @@
 // of its own here. Tab bar, sidebar and the background do not take part.
 // „Bewegung reduzieren“: the same fade out, the new screen only fades in (entrance.ts).
 
-export const TAB_OUT_MS = 120;
+export const TAB_OUT_MS = 70;
 /** The fade out carries this id (tests look for it). */
 export const TAB_OUT_ID = 'tab-out';
 
