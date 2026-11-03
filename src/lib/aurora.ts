@@ -320,3 +320,22 @@ export function initAurora() {
     repaint();
   });
 }
+
+/**
+ * The hero's two colour fields (.hero-light in `host`) drift for AMBIENT_MS after the screen comes in,
+ * then rest (Ruhe-Regel); off with „Bewegung reduzieren“. Returns the cleanup.
+ */
+export function driftHeroLights(host: HTMLElement | null): (() => void) | undefined {
+  if (!host || media('(prefers-reduced-motion: reduce)')) return;
+  const moves = ['translate(70px, -26px)', 'translate(-80px, 30px)'];
+  const anims = [...host.querySelectorAll<HTMLElement>('.hero-light')].map((el, i) =>
+    el.animate([{ transform: 'translate(0, 0)' }, { transform: moves[i] ?? 'none' }], {
+      duration: AMBIENT_MS,
+      easing: 'cubic-bezier(0.3, 0.1, 0.2, 1)',
+      fill: 'forwards',
+      id: AMBIENT_ID,
+    }),
+  );
+  if (document.hidden) anims.forEach((a) => a.pause());
+  return () => anims.forEach((a) => a.cancel());
+}
