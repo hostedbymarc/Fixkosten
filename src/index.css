@@ -103,7 +103,7 @@ body::after {
 
 /* Aurora-Mesh (Luxe 2): two fixed, OPAQUE bitmap layers painted by src/lib/aurora.ts (one per screen
    composition, cross-faded by opacity), with the paper grain blended in as one more background layer
-   (soft-light at --grain-mesh). Larger than the viewport by 6 vmax on every side for the drift. */
+   (soft-light at --grain-mesh). Larger than the viewport by 6 vmax on every side for the drift, in px. */
 :root {
   --grain-mesh-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.05 0 0 0 0.475 0.05 0 0 0 0.475 0.05 0 0 0 0.475 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -117,10 +117,12 @@ body::after {
 }
 .aurora-layer {
   position: absolute;
-  left: -6vmax;
-  top: -6vmax;
-  width: calc(100% + 12vmax);
-  height: calc(100% + 12vmax);
+  /* sized in px from the viewport it was painted for (src/lib/aurora.ts): a capture that makes the
+     viewport as tall as the page (full-page screenshot) must not stretch the mesh */
+  left: calc(-1 * var(--aurora-pad, 6vmax));
+  top: calc(-1 * var(--aurora-pad, 6vmax));
+  width: calc(var(--aurora-w, 100%) + 2 * var(--aurora-pad, 6vmax));
+  height: calc(var(--aurora-h, 100%) + 2 * var(--aurora-pad, 6vmax));
   opacity: 0;
   background-color: var(--mesh-base);
   background-image: var(--grain-mesh-image), var(--aurora-image, none);

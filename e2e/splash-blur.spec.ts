@@ -116,7 +116,8 @@ test.describe('Splash und Blur entzerrt', () => {
     await page.reload();
     await appSettled(page);
     const w = await readWatch(page);
-    expect(w.frames).toBeGreaterThan(5);
+    // the splash is short with data (it only shows after 300 ms): a few frames are enough to sample
+    expect(w.frames).toBeGreaterThanOrEqual(3);
     expect(w.violations).toEqual([]);
     await expect(page.locator('html')).not.toHaveAttribute('data-splash');
     expect(await page.getByTestId('tabbar').locator('.glass-clear').first().evaluate((el) => getComputedStyle(el).backdropFilter || getComputedStyle(el).getPropertyValue('-webkit-backdrop-filter'))).toMatch(/blur\(24px\)/);

@@ -655,12 +655,13 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
  * number directly below, at most one short subline. Content is top-aligned; the
  * grid stretches tiles of a row to the same height, so the numbers share a baseline.
  */
-const tileClass = 'glass glass-tile surface press fit-box flex min-w-0 flex-col items-stretch justify-start p-4 text-left md:p-5 lg:p-6';
+const tileClass = 'glass glass-tile surface press fit-box flex min-w-0 flex-col items-stretch justify-start p-4 text-left md:p-5 xl:p-6';
 const tileLabel = 'block truncate text-[13px] font-medium leading-5 text-ink-mute';
 // Kachel-Zahl: 28 px (34 px from desktop), smaller for long amounts (fit), never cut
 const tileValue = 'num num-display fit fit-tile mt-1.5 block';
-// phone: 11 px, slightly tight, so „im Ø-Monat € 1.035,83 ⓘ“ stays one line in a 2 × 2 tile
-const tileSub = 'mt-1.5 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[13px] lg:leading-5 lg:tracking-normal';
+// phone: 11 px, slightly tight, so „im Ø-Monat € 1.035,83 ⓘ“ stays one line in a 2 × 2 tile;
+// iPad landscape (four in a row, sidebar): 12 px and 20 px padding, 13 px / 24 px only from xl
+const tileSub = 'mt-1.5 block text-[11px] leading-4 tracking-[-0.01em] text-ink-mute lg:text-[12px] lg:leading-5 lg:tracking-normal xl:text-[13px]';
 
 /** Size of the tile numbers (src/components/fitText.ts), shared by the four tiles. */
 const TileFit = createContext<React.CSSProperties>({});

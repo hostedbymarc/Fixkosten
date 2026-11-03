@@ -178,7 +178,7 @@ test.describe('Liquid-Glass-Material', () => {
       spec: getComputedStyle(el).backgroundImage,
       grain: getComputedStyle(document.body, '::after').display,
       // Luxe 2: the grain is a background layer of the Aurora layers – gone with reduced transparency
-      meshGrain: [...document.querySelectorAll('.aurora-layer')].some((l) => getComputedStyle(l).backgroundImage.includes('svg')),
+      meshGrain: [...document.querySelectorAll('.aurora-layer')].some((l) => getComputedStyle(l).backgroundImage.includes('data:image/svg')),
       blurred: [...document.querySelectorAll('*')].filter((e) => getComputedStyle(e).backdropFilter !== 'none').length,
     }));
     expect(m.rim).toBe('rgba(31, 39, 36, 0.12)');
@@ -525,13 +525,13 @@ test.describe('Tabwechsel-Animation', () => {
 
   test.describe('Bewegung reduzieren', () => {
     test.use({ contextOptions: { reducedMotion: 'reduce' } });
-    test('nur Überblendung, 120 ms, kein Versatz', async ({ page }) => {
+    test('nur Überblendung (70 ms aus, 120 ms ein), kein Versatz', async ({ page }) => {
       await importLive(page, OKT_TODAY);
       const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
       for (const route of ['analyse', 'monat'] as const) {
         const r = await recordSwitch(page, route, () => nav.getByRole('link', { name: TAB[route] }).click());
         expect(r.anims.map((a) => [a.target.split(':')[0], a.keys.join(), a.duration])).toEqual([
-          ['screen', 'opacity', 120],
+          ['screen', 'opacity', 70],
           ['screen', 'opacity', 120],
         ]);
         expect(new Set(r.card.map((c) => `${Math.round(c.x)},${Math.round(c.y)}`)).size, `${route}: no motion`).toBe(1);
@@ -610,7 +610,7 @@ test.describe('Einheitliche Ladeanimation', () => {
     await nav.getByRole('link', { name: 'Analyse' }).click();
     await appSettled(page);
     const anims = await page.evaluate(() => (window as unknown as { anims: { id: string; delay: number; raw: number; duration: number; tag: string }[] }).anims);
-    const cards = anims.filter((a) => a.id === 'entrance' && a.duration === 420);
+    const cards = anims.filter((a) => a.id === 'entrance' && a.duration === 280);
     const bars = anims.filter((a) => a.id === 'bar-grow');
     expect(cards.length).toBeGreaterThan(1);
     expect(bars.filter((b) => b.tag === 'path').length, 'forecast bars').toBeGreaterThanOrEqual(12);
