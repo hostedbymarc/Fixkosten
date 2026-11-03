@@ -69,11 +69,11 @@ export function standingOrder(ds: Dataset, period: Period, rounding: Rounding = 
     .map((position) => ({ position, monthly: monthlyEquivalent(position, period) }))
     .filter((p) => p.monthly > 0)
     .sort((a, b) => b.monthly - a.monthly || a.position.sortOrder - b.position.sortOrder);
-  // monthlyEquivalent = integer numerator ÷ 1200: sum the numerators, divide once
+  // monthlyEquivalent = integer numerator (cents × due months) ÷ 1200 = euros: sum the numerators, divide once
   const numerator = positions.reduce((acc, p) => acc + Math.round(p.monthly * 1200), 0);
-  const step = rounding * 100 * 1200;
-  const amount = numerator <= 0 ? 0 : (Math.ceil(numerator / step) * step) / 1200 / 100;
-  return { exact: numerator / 1200 / 100, amount, rounding, positions };
+  const step = rounding * 1200; // one rounding step in numerator units
+  const amount = numerator <= 0 ? 0 : (Math.ceil(numerator / step) * step) / 1200;
+  return { exact: numerator / 1200, amount, rounding, positions };
 }
 
 // ---------------------------------------------------------------------------
