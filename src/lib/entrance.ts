@@ -123,18 +123,20 @@ export function splashRemoved(): Promise<void> {
 const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 /** What rises in the entrance: glass cards and the Luxe surfaces. */
 const CARD_SELECTOR = '.glass, .surface';
-/** Card entrance: 420 ms, the first after 40 ms, each further card 45 ms later, at most 10 cards. */
-export const CARD_MS = 420;
-const CARD_DELAY = 40;
-const CARD_STAGGER = 45;
+/** The screen's own fade-in. */
+const SCREEN_FADE_MS = 150;
+/** Card entrance: 280 ms, the first at once, each further card 20 ms later, at most 10 cards (Luxe 2: quicker tab switch). */
+export const CARD_MS = 280;
+const CARD_DELAY = 0;
+const CARD_STAGGER = 20;
 const MAX_CARDS = 10;
 /** „Bewegung reduzieren“: the screen only fades in. */
 export const REDUCED_FADE_MS = 120;
 
 /**
  * THE screen entrance – the one of the Monat screen, used by every tab (src/components/Screen.tsx):
- * the screen fades in (220 ms), its cards (glass surfaces in view, at most 10, top to bottom) rise by
- * 14 px one after another (420 ms each, 45 ms apart). Runs after the splash has started to fade.
+ * the screen fades in (150 ms), its cards (glass surfaces in view, at most 10, top to bottom) rise by
+ * 14 px one after another (280 ms each, 20 ms apart). Runs after the splash has started to fade.
  * Resolves with the time (ms from now) when the last card has arrived, so a screen can follow up
  * (Analyse: the bars grow). „Bewegung reduzieren“: only a fade (120 ms), resolves with 0.
  */
@@ -148,7 +150,7 @@ export async function playEntrance(main: HTMLElement, name: string, screen = mai
     screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: REDUCED_FADE_MS, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
     return 0;
   }
-  screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
+  screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: SCREEN_FADE_MS, easing: 'ease-out', fill: 'backwards', id: ENTRANCE_ID });
   const fold = window.innerHeight;
   // glass cards and the Luxe surfaces (hero, tiles, cards: .surface)
   const cards = [...screen.querySelectorAll<HTMLElement>(CARD_SELECTOR)]
@@ -190,5 +192,5 @@ export async function playEntrance(main: HTMLElement, name: string, screen = mai
       }),
     );
   }
-  return cards.length ? CARD_DELAY + (cards.length - 1) * CARD_STAGGER + CARD_MS : 220;
+  return cards.length ? CARD_DELAY + (cards.length - 1) * CARD_STAGGER + CARD_MS : SCREEN_FADE_MS;
 }

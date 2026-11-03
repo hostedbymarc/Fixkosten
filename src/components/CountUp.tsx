@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, type CSSProperties } from 'react';
 import { reducedMotion } from '../lib/entrance';
+import { fitEm } from './fitText';
 
 const COUNT_MS = 400;
 /** Last shown value per number, across remounts (a swipe re-creates the month content). */
@@ -36,10 +37,13 @@ export function CountUp({ value, format, trigger, className = '', style, testId 
     const start = performance.now();
     el.style.color = 'transparent';
     copy.hidden = false;
+    // the copy fits the WIDER of the two values: in between it shows whole euros only, never wider
+    // than that (cents in between made „€ 2.511,83“ wider than „€ 2.589“ and it ran out of the tile)
+    copy.style.setProperty('--fit-em', Math.max(fitEm(format(from.value)), fitEm(format(value))).toFixed(3));
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / COUNT_MS);
       const eased = 1 - (1 - t) ** 3;
-      copy.textContent = format(from.value + (value - from.value) * eased);
+      copy.textContent = t < 1 ? format(Math.round(from.value + (value - from.value) * eased)) : format(value);
       if (t < 1) frame = requestAnimationFrame(step);
       else end();
     };
