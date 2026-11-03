@@ -19,7 +19,7 @@ export default defineConfig({
   // the e2e/harness build gets source maps, so the import watchdog's stacks point into src/
   build: {
     sourcemap: process.env.ERBSE_IMPORT_TRACE === '1',
-    ...(devPages && { rollupOptions: { input: { main: 'index.html', schote: 'dev/schote/index.html' } } }),
+    ...(devPages && { rollupOptions: { input: { index: 'index.html', schote: 'dev/schote/index.html' } } }),
   },
   test: {
     environment: 'node',
