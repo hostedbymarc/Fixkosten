@@ -1151,3 +1151,89 @@ button:active > .pea[data-pressable] {
   }
 }
 
+
+/* Pea pod „Schote“ (src/components/konto/PeaPod.tsx): a soft capsule tinted from the brand colour,
+   12 slots. The pea size follows the width of the pod (container query units), so it never stretches:
+   large up to 30 px, compact up to 18 px. */
+.pod {
+  container-type: inline-size;
+  width: 100%;
+}
+.pod-large {
+  max-width: 460px;
+}
+.pod-compact {
+  max-width: 320px;
+}
+.pod-shell {
+  --pod-gap: 5px;
+  --pod-pad: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pod-gap);
+  padding: var(--pod-pad) calc(var(--pod-pad) + 4px);
+  border-radius: 999px;
+  background: color-mix(in oklab, rgb(var(--brand-500)) 13%, transparent);
+  box-shadow:
+    inset 0 1px 3px color-mix(in oklab, rgb(var(--brand-500)) 28%, transparent),
+    inset 0 -1px 0 var(--pea-rim-light);
+}
+.pod-large .pod-shell {
+  --pod-pea: clamp(16px, calc((100cqi - 2 * (var(--pod-pad) + 4px) - 11 * var(--pod-gap)) / 12), 30px);
+}
+.pod-compact .pod-shell {
+  --pod-gap: 3px;
+  --pod-pad: 6px;
+  --pod-pea: clamp(11px, calc((100cqi - 2 * (var(--pod-pad) + 4px) - 11 * var(--pod-gap)) / 12), 18px);
+}
+.pod-slot {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.pod-empty {
+  position: relative;
+  color: var(--pea-open-ring);
+}
+.pod-empty svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+}
+.pod-snap {
+  animation: check-pop 220ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.pod-text {
+  margin-top: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgb(var(--c-ink));
+}
+.pod-compact .pod-text {
+  margin-top: 6px;
+  font-size: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pod-snap {
+    animation: none;
+  }
+}
+/* month initials below the large pod, one per slot */
+.pod-months {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 0 14px;
+}
+.pod-months > span {
+  width: clamp(16px, calc((100cqi - 2 * 14px - 11 * 5px) / 12), 30px);
+  text-align: center;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  color: rgb(var(--c-ink-faint));
+}
