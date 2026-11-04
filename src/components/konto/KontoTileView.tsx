@@ -8,7 +8,7 @@ import { PeaPod, PodAnswer } from './PeaPod';
 
 /** Explanation of the standing order (the ⓘ next to the title). */
 export const ORDER_INFO =
-  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: die Monatsanteile aller Rechnungen auf diesem Konto (Quartal ÷ 3, Halbjahr ÷ 6, Jahr ÷ 12), aufgerundet.';
+  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.';
 
 export interface KontoTileProps {
   state: TileState;

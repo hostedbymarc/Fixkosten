@@ -74,7 +74,7 @@ export const SCHOTE_TEXTS = {
 
   // · Phase B: Sheet „Fixkostenkonto“
   'sheet.q1': 'Wie viel überweise ich monatlich?',
-  'sheet.q1.cause': 'Aus {n} Rechnungen im Monatsschnitt, aufgerundet.',
+  'sheet.q1.cause': 'Aus {n} Rechnungen der nächsten 12 Monate, aufgerundet.',
   'sheet.q2': 'Muss ich jetzt etwas tun?',
   'sheet.q2.none': 'Nein, alles gedeckt.',
   'sheet.q2.gap': 'Ja. Zahl einmalig {betrag} ein.',
