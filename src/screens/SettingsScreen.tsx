@@ -6,8 +6,9 @@ import { ConfirmSheet } from '../components/ConfirmSheet';
 import { Segmented, SelectField, SwitchField } from '../components/form';
 import { useKontoState } from '../components/konto/KontoSheet';
 import { KontoSetup } from '../components/konto/KontoTile';
-import { orderDay } from '../lib/schote';
-import { t } from '../lib/schoteTexts';
+import { orderDay } from '../lib/kontoBalance';
+import { t } from '../lib/kontoTexts';
+import { KontoStatusLine } from '../components/konto/KontoStatusView';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
 import { COUNTRIES, COUNTRY_FORMAT, COUNTRY_LABEL, DEFAULT_COUNTRY, toCountry } from '../lib/country';
@@ -367,28 +368,40 @@ function KontoSection({ ds }: { ds: Dataset }) {
         {settings.enabled && (
           <>
             {settings.setupDone && (
-              <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 border-t border-line pt-3 text-[15px]" data-testid="konto-summary">
-                <dt className="text-ink-soft">{t('settings.balance')}</dt>
-                <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-balance">
-                  {formatEUR(state.balance)}
-                </dd>
-                {asOf && (
-                  <>
-                    <dt className="sr-only">Stand</dt>
-                    <dd className="col-span-2 -mt-1.5 text-[13px] text-ink-mute" data-testid="konto-summary-asof">
-                      {t('settings.asOf', { datum: asOf })}
-                    </dd>
-                  </>
-                )}
-                <dt className="text-ink-soft">{t('settings.order')}</dt>
-                <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-order">
-                  {formatEUR(state.overview.order.amount)} {orderDay(start)}
-                </dd>
-                <dt className="text-ink-soft">{t('settings.rounding')}</dt>
-                <dd className="num text-right text-ink" data-testid="konto-summary-rounding">
-                  {formatEUR(settings.rounding)}
-                </dd>
-              </dl>
+              <div className="flex flex-col gap-3 border-t border-line pt-3">
+                {/* the same status, standing order and gap as tile, sheet and „Dein Plan“ (kontoState) */}
+                <KontoStatusLine state={state} withAction={false} testId="settings-status" />
+                <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 text-[15px]" data-testid="konto-summary">
+                  <dt className="text-ink-soft">{t('settings.balance')}</dt>
+                  <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-balance">
+                    {formatEUR(state.balance)}
+                  </dd>
+                  {asOf && (
+                    <>
+                      <dt className="sr-only">Stand</dt>
+                      <dd className="col-span-2 -mt-1.5 text-[13px] text-ink-mute" data-testid="konto-summary-asof">
+                        {t('settings.asOf', { datum: asOf })}
+                      </dd>
+                    </>
+                  )}
+                  <dt className="text-ink-soft">{t('settings.order')}</dt>
+                  <dd className="num text-right font-semibold text-ink">
+                    <span data-testid="konto-summary-order">{formatEUR(state.order)}</span> {orderDay(start)}
+                  </dd>
+                  {state.gap > 0 && (
+                    <>
+                      <dt className="text-ink-soft">{t('settings.gap')}</dt>
+                      <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-gap">
+                        {formatEUR(state.gap)}
+                      </dd>
+                    </>
+                  )}
+                  <dt className="text-ink-soft">{t('settings.rounding')}</dt>
+                  <dd className="num text-right text-ink" data-testid="konto-summary-rounding">
+                    {formatEUR(settings.rounding)}
+                  </dd>
+                </dl>
+              </div>
             )}
             <button
               type="button"
@@ -396,7 +409,7 @@ function KontoSection({ ds }: { ds: Dataset }) {
               className="focus-ring h-11 self-start rounded-xl px-4 text-[15px] font-semibold text-accent-ink glass-inset bg-surface hover:bg-accent-soft"
               data-testid="konto-setup-edit"
             >
-              {settings.setupDone ? t('settings.edit') : t('tile.setup.title')}
+              {settings.setupDone ? t('settings.edit') : t('status.setup')}
             </button>
           </>
         )}
@@ -405,6 +418,7 @@ function KontoSection({ ds }: { ds: Dataset }) {
         <KontoSetup
           ds={ds}
           active={active}
+          restart
           onClose={() => setSetup(false)}
           onDone={() => {
             setSetup(false);

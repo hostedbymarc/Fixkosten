@@ -84,10 +84,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(sheet).toBeVisible();
         await expect(sheet.getByTestId('konto-chart')).toBeVisible();
         await expect(sheet.getByTestId('konto-dot')).toHaveCount(12);
-        const gap = sheet.getByTestId('konto-gap');
-        await expect(gap).toBeVisible();
-        if ((await gap.getAttribute('data-gap')) !== null) {
-          await expect(gap).toContainText('Ja. Zahl einmalig');
+        const status = sheet.getByTestId('sheet-status');
+        await expect(status).toBeVisible();
+        if ((await status.getAttribute('data-status')) === 'gap') {
+          await expect(status).toContainText('Zahl einmalig');
           // months below 0: red dot with „!“ and a signed amount, never colour only
           await expect(sheet.locator('[data-testid=konto-dot][data-negative]').first()).toBeAttached();
         }
@@ -104,7 +104,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // Kontostand heute high enough → covered
         await sheet.getByTestId('konto-settings-inline').locator('summary').click();
         await sheet.getByTestId('konto-balance').fill('20000');
-        await expect(sheet.getByTestId('konto-covered')).toHaveText('Nein, alles gedeckt.');
+        await expect(sheet.getByTestId('sheet-status-text')).toHaveText(/^Alles gedeckt bis \S+ \d{4}\.$/);
         await sheet.getByTestId('konto-balance').fill('0');
         await shot(page, vp, scheme, '4-sheet-eingaben');
         await page.keyboard.press('Escape');

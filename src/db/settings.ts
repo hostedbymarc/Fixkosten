@@ -24,6 +24,7 @@ export interface KontoCheck {
   answeredAt: string;
 }
 
+// 'firstPod' (stored id, kept for existing data) = „Zum ersten Mal alles gedeckt“
 export const MILESTONES = ['firstPod', 'streak3', 'streak6', 'year'] as const;
 export type Milestone = (typeof MILESTONES)[number];
 
@@ -37,23 +38,25 @@ export interface KontoSettings {
   /** month for which the standing order already arrived; another month = not yet */
   receivedFor: Period | null;
   rounding: Rounding;
-  // ---- Schote (all optional in storage; defaults below) ----
-  /** balance anchor; none: `balance` without corrections (data from before the Schote) */
+  // ---- Einrichtung und Plan (all optional in storage; defaults below) ----
+  /** balance anchor; none: `balance` without corrections (data from PR #39) */
   anchor: KontoAnchor | null;
-  /** answer to „Hast du ein eigenes Konto nur für Rechnungen?“ (null: not asked) */
+  /** false: „Ich habe noch keins“ in the setup (null: not asked) */
   hasAccount: boolean | null;
-  /** setup questions answered (0–3) */
+  /** answer to „Läuft dein Dauerauftrag schon?“ (null: not asked) */
+  orderRuns: boolean | null;
+  /** setup questions answered (older setups; not shown any more) */
   setupSteps: number;
-  /** setup finished → the tile shows the pod */
+  /** both setup questions answered → „Dein Plan“ */
   setupDone: boolean;
-  /** „Weiß ich gerade nicht“: ask for the balance on the next start */
+  /** balance unknown (older setup „Weiß ich gerade nicht“): ask for it on the next start */
   balanceUnknown: boolean;
   checks: KontoCheck[];
   /** „Noch nicht“ on the monthly check: not again on this day (YYYY-MM-DD) */
   snoozedOn: string | null;
   /** last „Stimmt dein Kontostand noch?“ (YYYY-MM-DD); asked again after 3 months */
   balanceCheckedOn: string | null;
-  /** „Ich habe noch keinen“: no standing order arrives in this month */
+  /** no standing order arrives in this month (it is set up only now) */
   orderStartsAfter: Period | null;
   /** „Dein Plan“ */
   plan: { accountDone: boolean; orderDone: boolean; gapDone: boolean };
@@ -69,6 +72,7 @@ export const DEFAULT_KONTO: KontoSettings = {
   rounding: DEFAULT_ROUNDING,
   anchor: null,
   hasAccount: null,
+  orderRuns: null,
   setupSteps: 0,
   setupDone: false,
   balanceUnknown: false,
@@ -87,7 +91,7 @@ const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2
 
 /**
  * Any stored value → valid settings (unknown parts fall back to the defaults). Idempotent, so an
- * export → import gives identical settings. Data from before the Schote (PR #39) has none of the
+ * export → import gives identical settings. Data from from PR #39 (PR #39) has none of the
  * new fields: with a balance it counts as set up (no setup prompt), without one it does not.
  */
 export function toKontoSettings(value: unknown): KontoSettings {
@@ -114,6 +118,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
     rounding: toRounding(v.rounding),
     anchor,
     hasAccount: typeof v.hasAccount === 'boolean' ? v.hasAccount : null,
+    orderRuns: typeof v.orderRuns === 'boolean' ? v.orderRuns : null,
     setupSteps: steps,
     setupDone: typeof v.setupDone === 'boolean' ? v.setupDone : derivedSetupDone({ balance, anchor }),
     balanceUnknown: v.balanceUnknown === true,
@@ -134,7 +139,7 @@ function derivedSetupDone(s: Pick<KontoSettings, 'balance' | 'anchor'>): boolean
 }
 
 /** What is stored and exported: the fields of PR #39 always, every newer field only when it differs
- * from what toKontoSettings would derive without it. An entry from before the Schote therefore stays
+ * from what toKontoSettings would derive without it. An entry from from PR #39 therefore stays
  * byte for byte the same when it is read and written back, and toKontoSettings(storedKonto(s)) = s. */
 export type StoredKontoSettings = Pick<KontoSettings, 'enabled' | 'inviteDismissed' | 'balance' | 'receivedFor' | 'rounding'> & Partial<KontoSettings>;
 
@@ -149,6 +154,7 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   const derivedDone = derivedSetupDone(s);
   if (s.anchor) out.anchor = s.anchor;
   if (s.hasAccount !== null) out.hasAccount = s.hasAccount;
+  if (s.orderRuns !== null) out.orderRuns = s.orderRuns;
   if (s.setupSteps !== 0) out.setupSteps = s.setupSteps;
   if (s.setupDone !== derivedDone) out.setupDone = s.setupDone;
   if (s.balanceUnknown) out.balanceUnknown = true;

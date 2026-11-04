@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_KONTO, toKontoSettings, type KontoSettings } from '../db/settings';
 import { activeMonth } from './activeMonth';
 import { dayKey, depositDone, dueCard, expectedBalance, kontoState, newMilestones, reachedMilestones, streakBadge, streakOf } from './kontoBalance';
-import { podFromMonths } from './schote';
 import type { Category, Dataset, OneOff, Payment, Position } from './types';
 
 const ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -117,24 +116,23 @@ describe('Erwarteter Kontostand = Anker + bestätigte Einzahlungen − abgehakte
   });
 });
 
-describe('Kachel-Zustände aus den gespeicherten Daten', () => {
+describe('Status aus den gespeicherten Daten', () => {
   it('nicht eingerichtet', () => {
-    expect(kontoState(DATA, '2026-11', settings({ setupDone: false })).tile).toBe('setup');
+    const st = kontoState(DATA, '2026-11', settings({ setupDone: false }));
+    expect(st.status).toBe('setup');
+    expect(st.planDone).toBe(0);
   });
   it('Lücke → „Erledigt, eingezahlt“ (neuer Anker = Stand + Lücke) → gedeckt', () => {
     const s = settings({ anchor: { amount: 0, at: ANCHOR.at } });
     const before = kontoState(DATA, '2026-11', s);
-    expect(before.tile).toBe('gap');
-    // Nov: +1050 − 1000 = 50; Dec 100; Jan 150; Feb 200 − 600 = −400 → gap 400
+    expect(before.status).toBe('gap');
+    // Nov: +1050 − 1000 = 50; Dec 100; Jan 150; Feb 200 − 600 = −400 → gap 400, in February
     expect(before.gap).toBe(400);
+    expect(before.gapMonth).toBe('2027-02');
     const after = kontoState(DATA, '2026-11', settings({ anchor: { amount: before.balance + before.gap, at: '2026-11-03T11:00:00.000Z' } }));
-    expect(after.tile).toBe('covered');
-    expect(after.pod.full).toBe(true);
-  });
-  it('Polster über einem Dauerauftrag', () => {
-    const st = kontoState(DATA, '2026-11', settings({ anchor: { amount: 2000, at: ANCHOR.at } }));
-    expect(st.tile).toBe('cushion');
-    expect(st.cushion).toBe(1.5); // lowest 1600 (Feb) ÷ 1050
+    expect(after.status).toBe('covered');
+    expect(after.gap).toBe(0);
+    expect(after.coveredUntil).toBe('2027-10');
   });
   it('Dauerauftrag diesen Monat bestätigt: keine zweite Einzahlung im aktiven Monat', () => {
     const s = settings({ anchor: { amount: 1050, at: ANCHOR.at }, checks: [{ period: '2026-11', deposited: true, answeredAt: '2026-11-03T09:00:00.000Z' }] });
@@ -181,32 +179,30 @@ describe('Serie (abgeleitet aus den Checks)', () => {
 });
 
 describe('Meilensteine', () => {
-  const full = podFromMonths([{ period: '2026-11', end: 1 }]);
-  const notFull = podFromMonths([{ period: '2026-11', end: -1 }]);
-  it('erste Schote voll, 3 und 6 Monate in Folge, ein Jahr', () => {
+  it('zum ersten Mal alles gedeckt, 3 und 6 Monate in Folge, ein Jahr', () => {
     const run = (n: number) =>
       streakOf(
         Array.from({ length: n }, (_, i) => check(`2026-${String(i + 1).padStart(2, '0')}`)),
         '2026-12',
       );
-    expect(reachedMilestones({ milestonesShown: [] }, notFull, run(2))).toEqual([]);
-    expect(reachedMilestones({ milestonesShown: [] }, full, run(3))).toEqual(['firstPod', 'streak3']);
-    expect(reachedMilestones({ milestonesShown: [] }, notFull, run(6))).toEqual(['streak3', 'streak6']);
+    expect(reachedMilestones({ milestonesShown: [] }, 'gap', run(2))).toEqual([]);
+    expect(reachedMilestones({ milestonesShown: [] }, 'covered', run(3))).toEqual(['firstPod', 'streak3']);
+    expect(reachedMilestones({ milestonesShown: [] }, 'setup', run(6))).toEqual(['streak3', 'streak6']);
     const year = streakOf(
       Array.from({ length: 12 }, (_, i) => check(`2026-${String(i + 1).padStart(2, '0')}`)),
       '2026-12',
     );
-    expect(reachedMilestones({ milestonesShown: [] }, notFull, year)).toEqual(['streak3', 'streak6', 'year']);
+    expect(reachedMilestones({ milestonesShown: [] }, 'gap', year)).toEqual(['streak3', 'streak6', 'year']);
   });
-  it('einmal gezeigt bleibt es (auch wenn die Schote später nicht mehr voll ist), Toast nur einmal', () => {
+  it('einmal gezeigt bleibt es (auch wenn später etwas fehlt), Toast nur einmal', () => {
     const none = streakOf([], '2026-11');
-    expect(reachedMilestones({ milestonesShown: ['firstPod'] }, notFull, none)).toEqual(['firstPod']);
-    expect(newMilestones({ milestonesShown: ['firstPod'] }, full, none)).toEqual([]);
-    expect(newMilestones({ milestonesShown: [] }, full, none)).toEqual(['firstPod']);
+    expect(reachedMilestones({ milestonesShown: ['firstPod'] }, 'gap', none)).toEqual(['firstPod']);
+    expect(newMilestones({ milestonesShown: ['firstPod'] }, 'covered', none)).toEqual([]);
+    expect(newMilestones({ milestonesShown: [] }, 'covered', none)).toEqual(['firstPod']);
   });
 });
 
-describe('Erbsen-Check: welche Karte', () => {
+describe('Monats-Check: welche Karte', () => {
   const base = settings({ anchor: { amount: 0, at: '2026-11-03T10:00:00.000Z' } });
   const nov4 = new Date(2026, 10, 4, 9);
   it('nicht eingerichtet oder Modus aus: keine Karte', () => {
