@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { reducedMotion } from '../lib/entrance';
 import { NAV, type Route } from '../lib/routes';
-import { Brand } from './Logo';
+import { PeaMark } from './Logo';
 
 // Tab bar (iPhone, iPad portrait) and sidebar (from iPad landscape). Both: a resting glass
 // container (.glass-clear, the only blurred part) and a selection indicator (.glass-pill) that
@@ -163,8 +163,8 @@ export function Sidebar({ route }: { route: Route }) {
       style={{ ['--glass-inset' as string]: '12px' }}
       data-testid="sidebar"
     >
-      <div className="mb-6 flex items-center gap-2.5 px-3">
-        <Brand />
+      <div className="mb-6 flex h-7 items-center px-3">
+        <PeaMark />
       </div>
       <ul ref={list} className="relative flex flex-col gap-1">
         <li aria-hidden="true" className="contents">
