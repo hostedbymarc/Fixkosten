@@ -58,7 +58,7 @@
 | Meilensteine (B) | `milestone.year` | Ein Jahr gedeckt | 3 |
 | Meilensteine (B) | `milestone.toast` | Geschafft: {meilenstein} | 2 |
 | Sheet (B) | `sheet.q1` | Wie viel überweise ich monatlich? | 5 |
-| Sheet (B) | `sheet.q1.cause` | Aus {n} Rechnungen im Monatsschnitt, aufgerundet. | 6 |
+| Sheet (B) | `sheet.q1.cause` | Aus {n} Rechnungen der nächsten 12 Monate, aufgerundet. | 8 |
 | Sheet (B) | `sheet.q2` | Muss ich jetzt etwas tun? | 5 |
 | Sheet (B) | `sheet.q2.none` | Nein, alles gedeckt. | 3 |
 | Sheet (B) | `sheet.q2.gap` | Ja. Zahl einmalig {betrag} ein. | 1 · 4 |

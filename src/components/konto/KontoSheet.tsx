@@ -17,7 +17,8 @@ import { formatAvg, formatEUR } from '../../lib/format';
 import type { Dataset, Period } from '../../lib/types';
 import { BottomSheet } from '../BottomSheet';
 import { InfoTip } from '../InfoTip';
-import { Fold, KONTO_ASSUMPTION, KontoInputs, MonthBreakdown, MonthList, RisingHint } from './KontoParts';
+import { causeText, Fold, KONTO_ASSUMPTION, KontoInputs, MonthBreakdown, MonthList, RisingHint } from './KontoParts';
+import { periodLabel } from '../../lib/period';
 
 const KontoChart = lazy(() => import('./KontoChart'));
 
@@ -83,9 +84,15 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
               <span data-testid="konto-order-value">{formatEUR(overview.order.amount)}</span>
               <span className="text-[16px] font-medium text-ink-mute"> {orderDay(start)}</span>
             </p>
-            <p className="mt-0.5 text-[14px] text-ink-soft" data-testid="konto-order-cause">
+            <p className="mt-0.5 text-[14px] text-ink-soft" data-testid="konto-order-basis">
               {t('sheet.q1.cause', { n: overview.order.positions.length })}
             </p>
+            {/* the largest reason why it differs from today's monthly shares (planned change, start, end, one-time) */}
+            {overview.order.cause && (
+              <p className="mt-0.5 text-[14px] text-ink-soft" data-testid="konto-order-cause">
+                {causeText(overview.order.cause)}
+              </p>
+            )}
           </div>
           <CopyButton amount={overview.order.amount} />
         </Question>
@@ -133,8 +140,8 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
           </ul>
           <div className="mt-2 flex items-center text-[13px] text-ink-mute">
             <p data-testid="konto-order-exact">
-              genau <span className="num">{formatAvg(overview.order.exact)}</span> aus {overview.order.positions.length}{' '}
-              {overview.order.positions.length === 1 ? 'Position' : 'Positionen'}, aufgerundet auf {formatEUR(overview.order.rounding)}
+              Abbuchungen {periodLabel(overview.order.from)} bis {periodLabel(overview.order.to)} ÷ 12 ={' '}
+              <span className="num">{formatAvg(overview.order.exact)}</span>, aufgerundet auf {formatEUR(overview.order.rounding)}
             </p>
             <InfoTip label="Erklärung: Im Dauerauftrag" title="Im Dauerauftrag" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
               <p>Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.</p>
