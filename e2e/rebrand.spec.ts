@@ -23,7 +23,7 @@ test.describe('Rebrand „Erbse“: Daten bleiben', () => {
     ]);
     expect(download.suggestedFilename()).toMatch(/^erbse-backup-\d{4}-\d{2}-\d{2}\.json$/);
     const json = JSON.parse(readFileSync((await download.path())!, 'utf8'));
-    expect(json).toMatchObject({ format: 'fixkosten-backup', schemaVersion: 4 });
+    expect(json).toMatchObject({ format: 'fixkosten-backup', schemaVersion: 5 });
   });
 });
 

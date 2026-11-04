@@ -1,0 +1,7870 @@
+{
+ "tests/fixtures/seed.json": {
+  "months": {
+   "2025-08": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-09": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-10": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-11": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-12": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-01": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-02": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-03": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-04": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-05": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-06": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-07": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-08": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-09": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-10": {
+    "figures": {
+     "total": 3403,
+     "paid": 3368,
+     "open": 35,
+     "count": 16,
+     "paidCount": 15,
+     "openCount": 1,
+     "ratio": 0.9897149573905377,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4203,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 1602,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 739,
+       "paid": 704,
+       "open": 35,
+       "count": 3,
+       "paidCount": 2,
+       "openCount": 1
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3403,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3403,
+    "actual": 3368,
+    "openFromPrevious": []
+   },
+   "2026-11": {
+    "figures": {
+     "total": 2664,
+     "paid": 0,
+     "open": 2664,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3464,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2664,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2664,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-12": {
+    "figures": {
+     "total": 3013.02,
+     "paid": 0,
+     "open": 3013.02,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3813.02,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1253.02,
+       "paid": 0,
+       "open": 1253.02,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 158,
+       "paid": 0,
+       "open": 158,
+       "count": 5,
+       "paidCount": 0,
+       "openCount": 5
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3013.02,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3013.02,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-01": {
+    "figures": {
+     "total": 2713,
+     "paid": 0,
+     "open": 2713,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3513,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 0,
+       "open": 49,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2713,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2713,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-02": {
+    "figures": {
+     "total": 4610,
+     "paid": 0,
+     "open": 4610,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 5410,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 1260,
+       "paid": 0,
+       "open": 1260,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      },
+      {
+       "category": "cat-mobilitaet",
+       "total": 686,
+       "paid": 0,
+       "open": 686,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 4610,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 4610,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-03": {
+    "figures": {
+     "total": 2664,
+     "paid": 0,
+     "open": 2664,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3464,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2664,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2664,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-04": {
+    "figures": {
+     "total": 2713,
+     "paid": 0,
+     "open": 2713,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3513,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 0,
+       "open": 49,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2713,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2713,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-05": {
+    "figures": {
+     "total": 2664,
+     "paid": 0,
+     "open": 2664,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3464,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2664,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2664,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-06": {
+    "figures": {
+     "total": 2926.02,
+     "paid": 0,
+     "open": 2926.02,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3726.02,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1253.02,
+       "paid": 0,
+       "open": 1253.02,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2926.02,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2926.02,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-07": {
+    "figures": {
+     "total": 2713,
+     "paid": 0,
+     "open": 2713,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3513,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 0,
+       "open": 49,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2713,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2713,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-08": {
+    "figures": {
+     "total": 2664,
+     "paid": 0,
+     "open": 2664,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3464,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2664,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2664,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-09": {
+    "figures": {
+     "total": 2679,
+     "paid": 0,
+     "open": 2679,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3479,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 15,
+       "paid": 0,
+       "open": 15,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2679,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2679,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-10": {
+    "figures": {
+     "total": 3403,
+     "paid": 0,
+     "open": 3403,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4203,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 739,
+       "paid": 0,
+       "open": 739,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3403,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3403,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-11": {
+    "figures": {
+     "total": 2664,
+     "paid": 0,
+     "open": 2664,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3464,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2664,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2664,
+    "actual": 0,
+    "openFromPrevious": []
+   }
+  },
+  "forecast": {
+   "months": [
+    {
+     "period": "2026-10",
+     "due": 3403,
+     "once": 0,
+     "regular": 3403,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Amex Gebühr",
+       "amount": 690
+      },
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2026-11",
+     "due": 2664,
+     "once": 0,
+     "regular": 2664,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2026-12",
+     "due": 3013.02,
+     "once": 0,
+     "regular": 3013.02,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Baurechtszins",
+       "amount": 262.02
+      },
+      {
+       "name": "Parqet",
+       "amount": 87
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-01",
+     "due": 2713,
+     "once": 0,
+     "regular": 2713,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-02",
+     "due": 4610,
+     "once": 0,
+     "regular": 4610,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Steuerberater",
+       "amount": 1260
+      },
+      {
+       "name": "Offi (Jahreskarte)",
+       "amount": 686
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-03",
+     "due": 2664,
+     "once": 0,
+     "regular": 2664,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-04",
+     "due": 2713,
+     "once": 0,
+     "regular": 2713,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-05",
+     "due": 2664,
+     "once": 0,
+     "regular": 2664,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-06",
+     "due": 2926.02,
+     "once": 0,
+     "regular": 2926.02,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Baurechtszins",
+       "amount": 262.02
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-07",
+     "due": 2713,
+     "once": 0,
+     "regular": 2713,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-08",
+     "due": 2664,
+     "once": 0,
+     "regular": 2664,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-09",
+     "due": 2679,
+     "once": 0,
+     "regular": 2679,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Amex Membership Rewards Turbo",
+       "amount": 15
+      }
+     ],
+     "aboveAverage": false
+    }
+   ],
+   "average": 2952.17,
+   "total": 35426.04,
+   "onceTotal": 0,
+   "peak": "2027-02",
+   "peakAboveAverage": 1657.83
+  },
+  "distribution": {
+   "total": 2952.17,
+   "rows": [
+    {
+     "category": "cat-wohnen",
+     "monthly": 1602,
+     "share": 0.5426516765633416,
+     "positions": [
+      [
+       "pos-miete",
+       1008
+      ],
+      [
+       "pos-lebensmittel",
+       480
+      ],
+      [
+       "pos-strom",
+       64
+      ],
+      [
+       "pos-internet",
+       23
+      ],
+      [
+       "pos-haushaltsversicherung",
+       17
+      ],
+      [
+       "pos-handy",
+       10
+      ]
+     ]
+    },
+    {
+     "category": "cat-immos",
+     "monthly": 1034.67,
+     "share": 0.3504777841384473,
+     "positions": [
+      [
+       "pos-kredit-1220",
+       735
+      ],
+      [
+       "pos-bk-1220",
+       169
+      ],
+      [
+       "pos-bk-1160",
+       87
+      ],
+      [
+       "pos-baurechtszins",
+       43.67
+      ]
+     ]
+    },
+    {
+     "category": "cat-banking",
+     "monthly": 180.08333333333334,
+     "share": 0.06100032631363822,
+     "positions": [
+      [
+       "pos-steuerberater",
+       105
+      ],
+      [
+       "pos-amex-gebuehr",
+       57.5
+      ],
+      [
+       "pos-depotentgelt",
+       11.666666666666666
+      ],
+      [
+       "pos-kontofuehrung",
+       4.666666666666667
+      ],
+      [
+       "pos-amex-mr-turbo",
+       1.25
+      ]
+     ]
+    },
+    {
+     "category": "cat-abos",
+     "monthly": 78.25,
+     "share": 0.026505926149239373,
+     "positions": [
+      [
+       "pos-gym",
+       35
+      ],
+      [
+       "pos-claude",
+       22
+      ],
+      [
+       "pos-spotify",
+       11
+      ],
+      [
+       "pos-parqet",
+       7.25
+      ],
+      [
+       "pos-icloud",
+       3
+      ]
+     ]
+    },
+    {
+     "category": "cat-mobilitaet",
+     "monthly": 57.166666666666664,
+     "share": 0.019364286835333557,
+     "positions": [
+      [
+       "pos-offi",
+       57.166666666666664
+      ]
+     ]
+    }
+   ]
+  },
+  "savings": {
+   "total": 0,
+   "changes": []
+  }
+ },
+ "tests/fixtures/live-2026-10-25.json": {
+  "months": {
+   "2025-08": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-09": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-10": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-11": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-12": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-01": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-02": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-03": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-04": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-05": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-06": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-07": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-08": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-09": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-10": {
+    "figures": {
+     "total": 3488.5,
+     "paid": 3488.5,
+     "open": 0,
+     "count": 18,
+     "paidCount": 18,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 1860,
+     "wealthFromNet": 1860,
+     "wealthNotFromNet": 0,
+     "deductions": 5348.5,
+     "netSalary": 4788,
+     "free": -560.5,
+     "savingsRate": 0.38847117794486213,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651.5,
+       "paid": 1651.5,
+       "open": 0,
+       "count": 8,
+       "paidCount": 8,
+       "openCount": 0
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 776,
+       "paid": 776,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 1860,
+       "paid": 1860,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 70,
+       "paid": 70,
+       "open": 0,
+       "count": 1,
+       "paidCount": 1,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3488.5,
+    "fixedCostsAvg": 2952.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 1860,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 1860,
+    "freeAfterFixed": -560.5,
+    "freeAfterFixedAvg": 1035.83,
+    "savingsRate": 0.38847117794486213,
+    "planned": 3488,
+    "actual": 3488.5,
+    "openFromPrevious": []
+   },
+   "2026-11": {
+    "figures": {
+     "total": 5649,
+     "paid": 450,
+     "open": 5199,
+     "count": 15,
+     "paidCount": 1,
+     "openCount": 14,
+     "ratio": 0.07966011683483802,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 6449,
+     "netSalary": 7819,
+     "free": 1370,
+     "savingsRate": 0.10231487402481136,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1572,
+       "paid": 450,
+       "open": 1122,
+       "count": 6,
+       "paidCount": 1,
+       "openCount": 5
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 400,
+       "open": 400,
+       "count": 2,
+       "paidCount": 1,
+       "openCount": 1
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 3015,
+       "paid": 0,
+       "open": 3015,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 5649,
+    "fixedCostsAvg": 2952.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1370,
+    "freeAfterFixedAvg": 4066.83,
+    "savingsRate": 0.10231487402481136,
+    "planned": 5679,
+    "actual": 450,
+    "openFromPrevious": []
+   },
+   "2026-12": {
+    "figures": {
+     "total": 3143,
+     "paid": 0,
+     "open": 3143,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3943,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1253,
+       "paid": 0,
+       "open": 1253,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 158,
+       "paid": 0,
+       "open": 158,
+       "count": 5,
+       "paidCount": 0,
+       "openCount": 5
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 130,
+       "paid": 0,
+       "open": 130,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3143,
+    "fixedCostsAvg": 2952.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3143,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-01": {
+    "figures": {
+     "total": 3173,
+     "paid": 0,
+     "open": 3173,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3973,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3173,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3173,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-02": {
+    "figures": {
+     "total": 5070,
+     "paid": 0,
+     "open": 5070,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 5870,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 2288,
+       "paid": 0,
+       "open": 2288,
+       "count": 7,
+       "paidCount": 0,
+       "openCount": 7
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 1260,
+       "paid": 0,
+       "open": 1260,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 5070,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 5070,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-03": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-04": {
+    "figures": {
+     "total": 3173,
+     "paid": 0,
+     "open": 3173,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3973,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3173,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3173,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-05": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-06": {
+    "figures": {
+     "total": 3386,
+     "paid": 0,
+     "open": 3386,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4186,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1713,
+       "paid": 0,
+       "open": 1713,
+       "count": 5,
+       "paidCount": 0,
+       "openCount": 5
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3386,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3386,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-07": {
+    "figures": {
+     "total": 3173,
+     "paid": 0,
+     "open": 3173,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3973,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3173,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3173,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-08": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-09": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-10": {
+    "figures": {
+     "total": 3905.8,
+     "paid": 0,
+     "open": 3905.8,
+     "count": 18,
+     "paidCount": 0,
+     "openCount": 18,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4705.8,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 803.8,
+       "paid": 0,
+       "open": 803.8,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3905.8,
+    "fixedCostsAvg": 3414.483333333333,
+    "reserveNeeded": 290.48333333333335,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3905.8,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-11": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3414.483333333333,
+    "reserveNeeded": 290.48333333333335,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   }
+  },
+  "forecast": {
+   "months": [
+    {
+     "period": "2026-10",
+     "due": 3488.5,
+     "once": 70,
+     "regular": 3418.5,
+     "extra": 70,
+     "items": [
+      {
+       "name": "Amex",
+       "amount": 690
+      },
+      {
+       "name": "Öbb MUC",
+       "amount": 70,
+       "once": true
+      },
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Amex Turbopunkte",
+       "amount": 15
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2026-11",
+     "due": 5649,
+     "once": 3015,
+     "regular": 2634,
+     "extra": 3015,
+     "items": [
+      {
+       "name": "iPhones + Zubehör",
+       "amount": 2511,
+       "once": true
+      },
+      {
+       "name": "Hotel Copenhagen",
+       "amount": 504,
+       "once": true
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2026-12",
+     "due": 3143,
+     "once": 130,
+     "regular": 3013,
+     "extra": 130,
+     "items": [
+      {
+       "name": "Baurechtszins 1220",
+       "amount": 262
+      },
+      {
+       "name": "Hotel MUC",
+       "amount": 130,
+       "once": true
+      },
+      {
+       "name": "Parqet",
+       "amount": 87
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-01",
+     "due": 3173,
+     "once": 0,
+     "regular": 3173,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-02",
+     "due": 5070,
+     "once": 0,
+     "regular": 5070,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Steuerberater",
+       "amount": 1260
+      },
+      {
+       "name": "Öffis",
+       "amount": 686
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-03",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-04",
+     "due": 3173,
+     "once": 0,
+     "regular": 3173,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-05",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-06",
+     "due": 3386,
+     "once": 0,
+     "regular": 3386,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Baurechtszins 1220",
+       "amount": 262
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-07",
+     "due": 3173,
+     "once": 0,
+     "regular": 3173,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-08",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-09",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    }
+   ],
+   "average": 2952.1666666666665,
+   "total": 42751.5,
+   "onceTotal": 3215,
+   "peak": "2026-11",
+   "peakAboveAverage": 2696.8333333333335
+  },
+  "distribution": {
+   "total": 2952.1666666666665,
+   "rows": [
+    {
+     "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+     "monthly": 1675.5,
+     "share": 0.567549257607407,
+     "positions": [
+      [
+       "d78e8150-a3f4-4642-9adf-9f2e85d15433",
+       1008
+      ],
+      [
+       "7d257793-da75-43c3-939f-fc6c5a30d1bd",
+       480
+      ],
+      [
+       "059588e2-ed75-49b2-b355-47691c7375cf",
+       64
+      ],
+      [
+       "7b17ee85-e566-4531-80b5-ba8cdc2479d8",
+       57.166666666666664
+      ],
+      [
+       "979af8f4-a74e-4223-8522-1bd5858bc8b2",
+       23
+      ],
+      [
+       "8ca2130c-1e9a-4bac-bdcb-ff13f2a30e2e",
+       17
+      ],
+      [
+       "85643f12-fe15-4d13-8432-3300cf8775c1",
+       11.666666666666666
+      ],
+      [
+       "d83cb046-9b0f-49a7-95de-ed7ce7e83eed",
+       10
+      ],
+      [
+       "10b1a68a-ae1f-42f8-b7b9-d1253d811be1",
+       4.666666666666667
+      ]
+     ]
+    },
+    {
+     "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+     "monthly": 1034.6666666666667,
+     "share": 0.3504770507536838,
+     "positions": [
+      [
+       "94be4631-a535-46c4-85ec-fb6fcd3f3769",
+       735
+      ],
+      [
+       "2bd64917-6308-458d-9c53-434e7105c22e",
+       169
+      ],
+      [
+       "5311d700-7cfd-4fdc-96a4-460d0af59d2a",
+       87
+      ],
+      [
+       "702de13d-c23e-46e0-b514-a9d6a9d83a87",
+       43.666666666666664
+      ]
+     ]
+    },
+    {
+     "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+     "monthly": 137,
+     "share": 0.04640659402698583,
+     "positions": [
+      [
+       "7ee835b8-ac98-477e-a3ea-68d5cec833e8",
+       57.5
+      ],
+      [
+       "eaa3433d-e97c-4206-8d48-47d0cdde3193",
+       35
+      ],
+      [
+       "6fc5ab7e-7207-43b9-af1e-6615bcb8abc7",
+       22
+      ],
+      [
+       "e54e2eed-10db-44a3-a38c-ff08fa87632d",
+       11
+      ],
+      [
+       "579aa906-9b71-45fc-85fd-979654c05565",
+       7.25
+      ],
+      [
+       "650af84a-3cff-415b-b83e-8c0f6587dd7d",
+       3
+      ],
+      [
+       "3ca0473d-1c36-477f-8ba8-168a7396b2ee",
+       1.25
+      ]
+     ]
+    },
+    {
+     "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+     "monthly": 105,
+     "share": 0.03556709761192345,
+     "positions": [
+      [
+       "09cc160c-a6b9-4b3c-8a6c-91fcaaa66e78",
+       105
+      ]
+     ]
+    }
+   ]
+  },
+  "savings": {
+   "total": -27.8,
+   "changes": [
+    [
+     "7ee835b8-ac98-477e-a3ea-68d5cec833e8",
+     "2027-10",
+     27.8
+    ]
+   ]
+  }
+ },
+ "tests/fixtures/live-2026-10-29.json": {
+  "months": {
+   "2025-08": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-09": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-10": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-11": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2025-12": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-01": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-02": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-03": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-04": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-05": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-06": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-07": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-08": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-09": {
+    "figures": {
+     "total": 0,
+     "paid": 0,
+     "open": 0,
+     "count": 0,
+     "paidCount": 0,
+     "openCount": 0,
+     "ratio": 0,
+     "wealth": 0,
+     "wealthFromNet": 0,
+     "wealthNotFromNet": 0,
+     "deductions": 0,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [],
+     "unassigned": 0
+    },
+    "fixedCosts": 0,
+    "fixedCostsAvg": 0,
+    "reserveNeeded": 0,
+    "wealthBuilding": 0,
+    "wealthBuildingAvg": 0,
+    "wealthFromNet": 0,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 0,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-10": {
+    "figures": {
+     "total": 3488.5,
+     "paid": 3488.5,
+     "open": 0,
+     "count": 18,
+     "paidCount": 18,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 1860,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 1060,
+     "deductions": 4288.5,
+     "netSalary": 4788,
+     "free": 499.5,
+     "savingsRate": 0.1670843776106934,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651.5,
+       "paid": 1651.5,
+       "open": 0,
+       "count": 8,
+       "paidCount": 8,
+       "openCount": 0
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 776,
+       "paid": 776,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 1860,
+       "paid": 1860,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 70,
+       "paid": 70,
+       "open": 0,
+       "count": 1,
+       "paidCount": 1,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3488.5,
+    "fixedCostsAvg": 2952.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 1860,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 499.5,
+    "freeAfterFixedAvg": 1035.83,
+    "savingsRate": 0.1670843776106934,
+    "planned": 3488,
+    "actual": 3488.5,
+    "openFromPrevious": []
+   },
+   "2026-11": {
+    "figures": {
+     "total": 5662.45,
+     "paid": 2578,
+     "open": 3084.45,
+     "count": 15,
+     "paidCount": 10,
+     "openCount": 5,
+     "ratio": 0.4552799583219278,
+     "wealth": 1660,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 860,
+     "deductions": 6462.45,
+     "netSalary": 7819,
+     "free": 1356.55,
+     "savingsRate": 0.10231487402481136,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1572,
+       "paid": 1562,
+       "open": 10,
+       "count": 6,
+       "paidCount": 5,
+       "openCount": 1
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 25,
+       "open": 46,
+       "count": 4,
+       "paidCount": 2,
+       "openCount": 2
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 1660,
+       "paid": 800,
+       "open": 860,
+       "count": 3,
+       "paidCount": 2,
+       "openCount": 1
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 3028.45,
+       "paid": 0,
+       "open": 3028.45,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 5662.45,
+    "fixedCostsAvg": 2952.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 1660,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1356.55,
+    "freeAfterFixedAvg": 4066.83,
+    "savingsRate": 0.10231487402481136,
+    "planned": 5692.45,
+    "actual": 2578,
+    "openFromPrevious": []
+   },
+   "2026-12": {
+    "figures": {
+     "total": 3143,
+     "paid": 0,
+     "open": 3143,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3943,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1253,
+       "paid": 0,
+       "open": 1253,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 158,
+       "paid": 0,
+       "open": 158,
+       "count": 5,
+       "paidCount": 0,
+       "openCount": 5
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 130,
+       "paid": 0,
+       "open": 130,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3143,
+    "fixedCostsAvg": 2952.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3143,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-01": {
+    "figures": {
+     "total": 3173,
+     "paid": 0,
+     "open": 3173,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3973,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3173,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3173,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-02": {
+    "figures": {
+     "total": 5070,
+     "paid": 0,
+     "open": 5070,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 5870,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 2288,
+       "paid": 0,
+       "open": 2288,
+       "count": 7,
+       "paidCount": 0,
+       "openCount": 7
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+       "total": 1260,
+       "paid": 0,
+       "open": 1260,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 5070,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 5070,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-03": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-04": {
+    "figures": {
+     "total": 3173,
+     "paid": 0,
+     "open": 3173,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3973,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3173,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3173,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-05": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-06": {
+    "figures": {
+     "total": 3386,
+     "paid": 0,
+     "open": 3386,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4186,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1713,
+       "paid": 0,
+       "open": 1713,
+       "count": 5,
+       "paidCount": 0,
+       "openCount": 5
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3386,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3386,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-07": {
+    "figures": {
+     "total": 3173,
+     "paid": 0,
+     "open": 3173,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3973,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3173,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3173,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-08": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-09": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3412.1666666666665,
+    "reserveNeeded": 288.1666666666667,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-10": {
+    "figures": {
+     "total": 3905.8,
+     "paid": 0,
+     "open": 3905.8,
+     "count": 18,
+     "paidCount": 0,
+     "openCount": 18,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4705.8,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1651,
+       "paid": 0,
+       "open": 1651,
+       "count": 8,
+       "paidCount": 0,
+       "openCount": 8
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 803.8,
+       "paid": 0,
+       "open": 803.8,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3905.8,
+    "fixedCostsAvg": 3414.483333333333,
+    "reserveNeeded": 290.48333333333335,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3905.8,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-11": {
+    "figures": {
+     "total": 3124,
+     "paid": 0,
+     "open": 3124,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3924,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+       "total": 1451,
+       "paid": 0,
+       "open": 1451,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "20d6a4b8-ceb0-40a1-8372-44be55dc66f4",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3124,
+    "fixedCostsAvg": 3414.483333333333,
+    "reserveNeeded": 290.48333333333335,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3124,
+    "actual": 0,
+    "openFromPrevious": []
+   }
+  },
+  "forecast": {
+   "months": [
+    {
+     "period": "2026-10",
+     "due": 3488.5,
+     "once": 70,
+     "regular": 3418.5,
+     "extra": 70,
+     "items": [
+      {
+       "name": "Amex",
+       "amount": 690
+      },
+      {
+       "name": "Öbb MUC",
+       "amount": 70,
+       "once": true
+      },
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Amex Turbopunkte",
+       "amount": 15
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2026-11",
+     "due": 5662.45,
+     "once": 3028.45,
+     "regular": 2634,
+     "extra": 3028.45,
+     "items": [
+      {
+       "name": "iPhones + Zubehör",
+       "amount": 2511,
+       "once": true
+      },
+      {
+       "name": "Hotel Copenhagen",
+       "amount": 517.45,
+       "once": true
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2026-12",
+     "due": 3143,
+     "once": 130,
+     "regular": 3013,
+     "extra": 130,
+     "items": [
+      {
+       "name": "Baurechtszins 1220",
+       "amount": 262
+      },
+      {
+       "name": "Hotel MUC",
+       "amount": 130,
+       "once": true
+      },
+      {
+       "name": "Parqet",
+       "amount": 87
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-01",
+     "due": 3173,
+     "once": 0,
+     "regular": 3173,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-02",
+     "due": 5070,
+     "once": 0,
+     "regular": 5070,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Steuerberater",
+       "amount": 1260
+      },
+      {
+       "name": "Öffis",
+       "amount": 686
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-03",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-04",
+     "due": 3173,
+     "once": 0,
+     "regular": 3173,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-05",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-06",
+     "due": 3386,
+     "once": 0,
+     "regular": 3386,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Baurechtszins 1220",
+       "amount": 262
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-07",
+     "due": 3173,
+     "once": 0,
+     "regular": 3173,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Entgelt Depot",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Konto",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-08",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-09",
+     "due": 3124,
+     "once": 0,
+     "regular": 3124,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": true
+    }
+   ],
+   "average": 2952.1666666666665,
+   "total": 42764.95,
+   "onceTotal": 3228.45,
+   "peak": "2026-11",
+   "peakAboveAverage": 2710.2833333333333
+  },
+  "distribution": {
+   "total": 2952.1666666666665,
+   "rows": [
+    {
+     "category": "e7eeb1bc-2ee3-40da-8e84-c849021137b8",
+     "monthly": 1675.5,
+     "share": 0.567549257607407,
+     "positions": [
+      [
+       "d78e8150-a3f4-4642-9adf-9f2e85d15433",
+       1008
+      ],
+      [
+       "7d257793-da75-43c3-939f-fc6c5a30d1bd",
+       480
+      ],
+      [
+       "059588e2-ed75-49b2-b355-47691c7375cf",
+       64
+      ],
+      [
+       "7b17ee85-e566-4531-80b5-ba8cdc2479d8",
+       57.166666666666664
+      ],
+      [
+       "979af8f4-a74e-4223-8522-1bd5858bc8b2",
+       23
+      ],
+      [
+       "8ca2130c-1e9a-4bac-bdcb-ff13f2a30e2e",
+       17
+      ],
+      [
+       "85643f12-fe15-4d13-8432-3300cf8775c1",
+       11.666666666666666
+      ],
+      [
+       "d83cb046-9b0f-49a7-95de-ed7ce7e83eed",
+       10
+      ],
+      [
+       "10b1a68a-ae1f-42f8-b7b9-d1253d811be1",
+       4.666666666666667
+      ]
+     ]
+    },
+    {
+     "category": "6e7de785-4c0a-4a4f-b66b-400c9d675946",
+     "monthly": 1034.6666666666667,
+     "share": 0.3504770507536838,
+     "positions": [
+      [
+       "94be4631-a535-46c4-85ec-fb6fcd3f3769",
+       735
+      ],
+      [
+       "2bd64917-6308-458d-9c53-434e7105c22e",
+       169
+      ],
+      [
+       "5311d700-7cfd-4fdc-96a4-460d0af59d2a",
+       87
+      ],
+      [
+       "702de13d-c23e-46e0-b514-a9d6a9d83a87",
+       43.666666666666664
+      ]
+     ]
+    },
+    {
+     "category": "5b3b8d02-9b29-4d18-8b56-fe8282b2998e",
+     "monthly": 137,
+     "share": 0.04640659402698583,
+     "positions": [
+      [
+       "7ee835b8-ac98-477e-a3ea-68d5cec833e8",
+       57.5
+      ],
+      [
+       "eaa3433d-e97c-4206-8d48-47d0cdde3193",
+       35
+      ],
+      [
+       "6fc5ab7e-7207-43b9-af1e-6615bcb8abc7",
+       22
+      ],
+      [
+       "e54e2eed-10db-44a3-a38c-ff08fa87632d",
+       11
+      ],
+      [
+       "579aa906-9b71-45fc-85fd-979654c05565",
+       7.25
+      ],
+      [
+       "650af84a-3cff-415b-b83e-8c0f6587dd7d",
+       3
+      ],
+      [
+       "3ca0473d-1c36-477f-8ba8-168a7396b2ee",
+       1.25
+      ]
+     ]
+    },
+    {
+     "category": "73332c38-910a-4537-bb63-c0c4909a4cb0",
+     "monthly": 105,
+     "share": 0.03556709761192345,
+     "positions": [
+      [
+       "09cc160c-a6b9-4b3c-8a6c-91fcaaa66e78",
+       105
+      ]
+     ]
+    }
+   ]
+  },
+  "savings": {
+   "total": -27.8,
+   "changes": [
+    [
+     "7ee835b8-ac98-477e-a3ea-68d5cec833e8",
+     "2027-10",
+     27.8
+    ]
+   ]
+  }
+ },
+ "tests/fixtures/history-24m.json": {
+  "months": {
+   "2025-08": {
+    "figures": {
+     "total": 2543.3,
+     "paid": 2543.3,
+     "open": 0,
+     "count": 13,
+     "paidCount": 13,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 700,
+     "wealthFromNet": 700,
+     "wealthNotFromNet": 0,
+     "deductions": 3243.3,
+     "netSalary": 4900,
+     "free": 1656.7,
+     "savingsRate": 0.14285714285714285,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1503.3,
+       "paid": 1503.3,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 49,
+       "paid": 49,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 700,
+       "paid": 700,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2543.3,
+    "fixedCostsAvg": 2890.17,
+    "reserveNeeded": 280.17,
+    "wealthBuilding": 700,
+    "wealthBuildingAvg": 700,
+    "wealthFromNet": 700,
+    "freeAfterFixed": 1656.7,
+    "freeAfterFixedAvg": 1309.83,
+    "savingsRate": 0.14285714285714285,
+    "planned": 2578,
+    "actual": 2543.3,
+    "openFromPrevious": []
+   },
+   "2025-09": {
+    "figures": {
+     "total": 2640.9,
+     "paid": 2640.9,
+     "open": 0,
+     "count": 14,
+     "paidCount": 14,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 700,
+     "wealthFromNet": 700,
+     "wealthNotFromNet": 0,
+     "deductions": 3340.9,
+     "netSalary": 4900,
+     "free": 1559.1,
+     "savingsRate": 0.14285714285714285,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1566.9,
+       "paid": 1566.9,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 68,
+       "paid": 68,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 15,
+       "paid": 15,
+       "open": 0,
+       "count": 1,
+       "paidCount": 1,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 700,
+       "paid": 700,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2640.9,
+    "fixedCostsAvg": 2907.17,
+    "reserveNeeded": 280.17,
+    "wealthBuilding": 700,
+    "wealthBuildingAvg": 700,
+    "wealthFromNet": 700,
+    "freeAfterFixed": 1559.1,
+    "freeAfterFixedAvg": 1292.83,
+    "savingsRate": 0.14285714285714285,
+    "planned": 2642,
+    "actual": 2640.9,
+    "openFromPrevious": []
+   },
+   "2025-10": {
+    "figures": {
+     "total": 3398.5,
+     "paid": 3398.5,
+     "open": 0,
+     "count": 16,
+     "paidCount": 16,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4198.5,
+     "netSalary": 4900,
+     "free": 701.5,
+     "savingsRate": 0.16326530612244897,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1600.5,
+       "paid": 1600.5,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 68,
+       "paid": 68,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 739,
+       "paid": 739,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3398.5,
+    "fixedCostsAvg": 2907.17,
+    "reserveNeeded": 280.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 701.5,
+    "freeAfterFixedAvg": 1192.83,
+    "savingsRate": 0.16326530612244897,
+    "planned": 3366,
+    "actual": 3398.5,
+    "openFromPrevious": []
+   },
+   "2025-11": {
+    "figures": {
+     "total": 2739.7,
+     "paid": 2739.7,
+     "open": 0,
+     "count": 14,
+     "paidCount": 14,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3539.7,
+     "netSalary": 4900,
+     "free": 1360.3,
+     "savingsRate": 0.16326530612244897,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1680.7,
+       "paid": 1680.7,
+       "open": 0,
+       "count": 7,
+       "paidCount": 7,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 68,
+       "paid": 68,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2739.7,
+    "fixedCostsAvg": 2907.17,
+    "reserveNeeded": 280.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1360.3,
+    "freeAfterFixedAvg": 1192.83,
+    "savingsRate": 0.16326530612244897,
+    "planned": 2627,
+    "actual": 2739.7,
+    "openFromPrevious": []
+   },
+   "2025-12": {
+    "figures": {
+     "total": 3008.32,
+     "paid": 3008.32,
+     "open": 0,
+     "count": 15,
+     "paidCount": 15,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3808.32,
+     "netSalary": 4900,
+     "free": 1091.68,
+     "savingsRate": 0.16326530612244897,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1253.02,
+       "paid": 1253.02,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1600.3,
+       "paid": 1600.3,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 155,
+       "paid": 155,
+       "open": 0,
+       "count": 5,
+       "paidCount": 5,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3008.32,
+    "fixedCostsAvg": 2913.17,
+    "reserveNeeded": 280.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1091.68,
+    "freeAfterFixedAvg": 1186.83,
+    "savingsRate": 0.16326530612244897,
+    "planned": 2982.02,
+    "actual": 3008.32,
+    "openFromPrevious": []
+   },
+   "2026-01": {
+    "figures": {
+     "total": 2699.5,
+     "paid": 2699.5,
+     "open": 0,
+     "count": 15,
+     "paidCount": 15,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3499.5,
+     "netSalary": 5000,
+     "free": 1500.5,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1588.5,
+       "paid": 1588.5,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 49,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2699.5,
+    "fixedCostsAvg": 2944.17,
+    "reserveNeeded": 280.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1500.5,
+    "freeAfterFixedAvg": 1255.83,
+    "savingsRate": 0.16,
+    "planned": 2713,
+    "actual": 2699.5,
+    "openFromPrevious": []
+   },
+   "2026-02": {
+    "figures": {
+     "total": 4710.1,
+     "paid": 4710.1,
+     "open": 0,
+     "count": 15,
+     "paidCount": 15,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 5510.1,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1622.1,
+       "paid": 1622.1,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 1340,
+       "paid": 1340,
+       "open": 0,
+       "count": 1,
+       "paidCount": 1,
+       "openCount": 0
+      },
+      {
+       "category": "cat-mobilitaet",
+       "total": 686,
+       "paid": 686,
+       "open": 0,
+       "count": 1,
+       "paidCount": 1,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 4710.1,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 4610,
+    "actual": 4710.1,
+    "openFromPrevious": []
+   },
+   "2026-03": {
+    "figures": {
+     "total": 3232.2,
+     "paid": 3232.2,
+     "open": 0,
+     "count": 14,
+     "paidCount": 14,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4032.2,
+     "netSalary": 5000,
+     "free": 967.8,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 2170.2,
+       "paid": 2170.2,
+       "open": 0,
+       "count": 7,
+       "paidCount": 7,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3232.2,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 967.8,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 3264,
+    "actual": 3232.2,
+    "openFromPrevious": []
+   },
+   "2026-04": {
+    "figures": {
+     "total": 2726.9,
+     "paid": 2726.9,
+     "open": 0,
+     "count": 15,
+     "paidCount": 15,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3526.9,
+     "netSalary": 5000,
+     "free": 1473.1,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1615.9,
+       "paid": 1615.9,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 49,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2726.9,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1473.1,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 2713,
+    "actual": 2726.9,
+    "openFromPrevious": []
+   },
+   "2026-05": {
+    "figures": {
+     "total": 2626,
+     "paid": 2626,
+     "open": 0,
+     "count": 13,
+     "paidCount": 13,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3426,
+     "netSalary": 5000,
+     "free": 1574,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1564,
+       "paid": 1564,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2626,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1574,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 2664,
+    "actual": 2626,
+    "openFromPrevious": []
+   },
+   "2026-06": {
+    "figures": {
+     "total": 2921.62,
+     "paid": 2921.62,
+     "open": 0,
+     "count": 14,
+     "paidCount": 14,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3721.62,
+     "netSalary": 5000,
+     "free": 1278.38,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1253.02,
+       "paid": 1253.02,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1597.6,
+       "paid": 1597.6,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2921.62,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1278.38,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 2926.02,
+    "actual": 2921.62,
+    "openFromPrevious": []
+   },
+   "2026-07": {
+    "figures": {
+     "total": 2754.3,
+     "paid": 2754.3,
+     "open": 0,
+     "count": 15,
+     "paidCount": 15,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3554.3,
+     "netSalary": 5000,
+     "free": 1445.7,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1643.3,
+       "paid": 1643.3,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 49,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2754.3,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1445.7,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 2713,
+    "actual": 2754.3,
+    "openFromPrevious": []
+   },
+   "2026-08": {
+    "figures": {
+     "total": 2653.4,
+     "paid": 2653.4,
+     "open": 0,
+     "count": 13,
+     "paidCount": 13,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3453.4,
+     "netSalary": 5000,
+     "free": 1546.6,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1591.4,
+       "paid": 1591.4,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2653.4,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1546.6,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 2664,
+    "actual": 2653.4,
+    "openFromPrevious": []
+   },
+   "2026-09": {
+    "figures": {
+     "total": 2702,
+     "paid": 2702,
+     "open": 0,
+     "count": 14,
+     "paidCount": 14,
+     "openCount": 0,
+     "ratio": 1,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3502,
+     "netSalary": 5000,
+     "free": 1498,
+     "savingsRate": 0.16,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1625,
+       "paid": 1625,
+       "open": 0,
+       "count": 6,
+       "paidCount": 6,
+       "openCount": 0
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 15,
+       "paid": 15,
+       "open": 0,
+       "count": 1,
+       "paidCount": 1,
+       "openCount": 0
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 800,
+       "open": 0,
+       "count": 2,
+       "paidCount": 2,
+       "openCount": 0
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2702,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": 1498,
+    "freeAfterFixedAvg": 1247.83,
+    "savingsRate": 0.16,
+    "planned": 2679,
+    "actual": 2702,
+    "openFromPrevious": []
+   },
+   "2026-10": {
+    "figures": {
+     "total": 3410.4,
+     "paid": 2895.4,
+     "open": 515,
+     "count": 16,
+     "paidCount": 14,
+     "openCount": 2,
+     "ratio": 0.8489913206661975,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4210.4,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 991,
+       "open": 0,
+       "count": 3,
+       "paidCount": 3,
+       "openCount": 0
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1609.4,
+       "paid": 1129.4,
+       "open": 480,
+       "count": 6,
+       "paidCount": 5,
+       "openCount": 1
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 71,
+       "open": 0,
+       "count": 4,
+       "paidCount": 4,
+       "openCount": 0
+      },
+      {
+       "category": "cat-banking",
+       "total": 739,
+       "paid": 704,
+       "open": 35,
+       "count": 3,
+       "paidCount": 2,
+       "openCount": 1
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 400,
+       "open": 400,
+       "count": 2,
+       "paidCount": 1,
+       "openCount": 1
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3410.4,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3403,
+    "actual": 2895.4,
+    "openFromPrevious": []
+   },
+   "2026-11": {
+    "figures": {
+     "total": 2664,
+     "paid": 0,
+     "open": 2664,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3464,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 991,
+       "paid": 0,
+       "open": 991,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2664,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2664,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2026-12": {
+    "figures": {
+     "total": 3253.02,
+     "paid": 0,
+     "open": 3253.02,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4053.02,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1253.02,
+       "paid": 0,
+       "open": 1253.02,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1842,
+       "paid": 0,
+       "open": 1842,
+       "count": 7,
+       "paidCount": 0,
+       "openCount": 7
+      },
+      {
+       "category": "cat-abos",
+       "total": 158,
+       "paid": 0,
+       "open": 158,
+       "count": 5,
+       "paidCount": 0,
+       "openCount": 5
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3253.02,
+    "fixedCostsAvg": 2952.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3253.02,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-01": {
+    "figures": {
+     "total": 2738,
+     "paid": 0,
+     "open": 2738,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3538,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 0,
+       "open": 49,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2738,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2738,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-02": {
+    "figures": {
+     "total": 4635,
+     "paid": 0,
+     "open": 4635,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 5435,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 1260,
+       "paid": 0,
+       "open": 1260,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      },
+      {
+       "category": "cat-mobilitaet",
+       "total": 686,
+       "paid": 0,
+       "open": 686,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 4635,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 4635,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-03": {
+    "figures": {
+     "total": 2689,
+     "paid": 0,
+     "open": 2689,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3489,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2689,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2689,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-04": {
+    "figures": {
+     "total": 2738,
+     "paid": 0,
+     "open": 2738,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3538,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 0,
+       "open": 49,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2738,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2738,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-05": {
+    "figures": {
+     "total": 2689,
+     "paid": 0,
+     "open": 2689,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3489,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2689,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2689,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-06": {
+    "figures": {
+     "total": 2951.02,
+     "paid": 0,
+     "open": 2951.02,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3751.02,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1278.02,
+       "paid": 0,
+       "open": 1278.02,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2951.02,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2951.02,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-07": {
+    "figures": {
+     "total": 2738,
+     "paid": 0,
+     "open": 2738,
+     "count": 15,
+     "paidCount": 0,
+     "openCount": 15,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3538,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 49,
+       "paid": 0,
+       "open": 49,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2738,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2738,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-08": {
+    "figures": {
+     "total": 2689,
+     "paid": 0,
+     "open": 2689,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3489,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2689,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2689,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-09": {
+    "figures": {
+     "total": 2704,
+     "paid": 0,
+     "open": 2704,
+     "count": 14,
+     "paidCount": 0,
+     "openCount": 14,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3504,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 15,
+       "paid": 0,
+       "open": 15,
+       "count": 1,
+       "paidCount": 0,
+       "openCount": 1
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2704,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2704,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-10": {
+    "figures": {
+     "total": 3428,
+     "paid": 0,
+     "open": 3428,
+     "count": 16,
+     "paidCount": 0,
+     "openCount": 16,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 4228,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-banking",
+       "total": 739,
+       "paid": 0,
+       "open": 739,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 3428,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 3428,
+    "actual": 0,
+    "openFromPrevious": []
+   },
+   "2027-11": {
+    "figures": {
+     "total": 2689,
+     "paid": 0,
+     "open": 2689,
+     "count": 13,
+     "paidCount": 0,
+     "openCount": 13,
+     "ratio": 0,
+     "wealth": 800,
+     "wealthFromNet": 800,
+     "wealthNotFromNet": 0,
+     "deductions": 3489,
+     "netSalary": null,
+     "free": null,
+     "savingsRate": null,
+     "categories": [
+      {
+       "category": "cat-immos",
+       "total": 1016,
+       "paid": 0,
+       "open": 1016,
+       "count": 3,
+       "paidCount": 0,
+       "openCount": 3
+      },
+      {
+       "category": "cat-wohnen",
+       "total": 1602,
+       "paid": 0,
+       "open": 1602,
+       "count": 6,
+       "paidCount": 0,
+       "openCount": 6
+      },
+      {
+       "category": "cat-abos",
+       "total": 71,
+       "paid": 0,
+       "open": 71,
+       "count": 4,
+       "paidCount": 0,
+       "openCount": 4
+      },
+      {
+       "category": "cat-investing",
+       "total": 800,
+       "paid": 0,
+       "open": 800,
+       "count": 2,
+       "paidCount": 0,
+       "openCount": 2
+      }
+     ],
+     "unassigned": 0
+    },
+    "fixedCosts": 2689,
+    "fixedCostsAvg": 2977.17,
+    "reserveNeeded": 288.17,
+    "wealthBuilding": 800,
+    "wealthBuildingAvg": 800,
+    "wealthFromNet": 800,
+    "freeAfterFixed": null,
+    "freeAfterFixedAvg": null,
+    "savingsRate": null,
+    "planned": 2689,
+    "actual": 0,
+    "openFromPrevious": []
+   }
+  },
+  "forecast": {
+   "months": [
+    {
+     "period": "2026-10",
+     "due": 3410.4,
+     "once": 0,
+     "regular": 3410.4,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Amex Gebühr",
+       "amount": 690
+      },
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2026-11",
+     "due": 2664,
+     "once": 0,
+     "regular": 2664,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2026-12",
+     "due": 3253.02,
+     "once": 240,
+     "regular": 3013.02,
+     "extra": 240,
+     "items": [
+      {
+       "name": "Baurechtszins",
+       "amount": 262.02
+      },
+      {
+       "name": "Reparatur Waschmaschine",
+       "amount": 240,
+       "once": true
+      },
+      {
+       "name": "Parqet",
+       "amount": 87
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-01",
+     "due": 2738,
+     "once": 0,
+     "regular": 2738,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-02",
+     "due": 4635,
+     "once": 0,
+     "regular": 4635,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Steuerberater",
+       "amount": 1260
+      },
+      {
+       "name": "Offi (Jahreskarte)",
+       "amount": 686
+      }
+     ],
+     "aboveAverage": true
+    },
+    {
+     "period": "2027-03",
+     "due": 2689,
+     "once": 0,
+     "regular": 2689,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-04",
+     "due": 2738,
+     "once": 0,
+     "regular": 2738,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-05",
+     "due": 2689,
+     "once": 0,
+     "regular": 2689,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-06",
+     "due": 2951.02,
+     "once": 0,
+     "regular": 2951.02,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Baurechtszins",
+       "amount": 262.02
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-07",
+     "due": 2738,
+     "once": 0,
+     "regular": 2738,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Depotentgelt",
+       "amount": 35
+      },
+      {
+       "name": "Entgelt Kontoführung",
+       "amount": 14
+      }
+     ],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-08",
+     "due": 2689,
+     "once": 0,
+     "regular": 2689,
+     "extra": 0,
+     "items": [],
+     "aboveAverage": false
+    },
+    {
+     "period": "2027-09",
+     "due": 2704,
+     "once": 0,
+     "regular": 2704,
+     "extra": 0,
+     "items": [
+      {
+       "name": "Amex Membership Rewards Turbo",
+       "amount": 15
+      }
+     ],
+     "aboveAverage": false
+    }
+   ],
+   "average": 2952.17,
+   "total": 35898.44,
+   "onceTotal": 240,
+   "peak": "2027-02",
+   "peakAboveAverage": 1682.83
+  },
+  "distribution": {
+   "total": 2952.17,
+   "rows": [
+    {
+     "category": "cat-wohnen",
+     "monthly": 1602,
+     "share": 0.5426516765633416,
+     "positions": [
+      [
+       "pos-miete",
+       1008
+      ],
+      [
+       "pos-lebensmittel",
+       480
+      ],
+      [
+       "pos-strom",
+       64
+      ],
+      [
+       "pos-internet",
+       23
+      ],
+      [
+       "pos-haushaltsversicherung",
+       17
+      ],
+      [
+       "pos-handy",
+       10
+      ]
+     ]
+    },
+    {
+     "category": "cat-immos",
+     "monthly": 1034.67,
+     "share": 0.3504777841384473,
+     "positions": [
+      [
+       "pos-kredit-1220",
+       735
+      ],
+      [
+       "pos-bk-1220",
+       169
+      ],
+      [
+       "pos-bk-1160",
+       87
+      ],
+      [
+       "pos-baurechtszins",
+       43.67
+      ]
+     ]
+    },
+    {
+     "category": "cat-banking",
+     "monthly": 180.08333333333334,
+     "share": 0.06100032631363822,
+     "positions": [
+      [
+       "pos-steuerberater",
+       105
+      ],
+      [
+       "pos-amex-gebuehr",
+       57.5
+      ],
+      [
+       "pos-depotentgelt",
+       11.666666666666666
+      ],
+      [
+       "pos-kontofuehrung",
+       4.666666666666667
+      ],
+      [
+       "pos-amex-mr-turbo",
+       1.25
+      ]
+     ]
+    },
+    {
+     "category": "cat-abos",
+     "monthly": 78.25,
+     "share": 0.026505926149239373,
+     "positions": [
+      [
+       "pos-gym",
+       35
+      ],
+      [
+       "pos-claude",
+       22
+      ],
+      [
+       "pos-spotify",
+       11
+      ],
+      [
+       "pos-parqet",
+       7.25
+      ],
+      [
+       "pos-icloud",
+       3
+      ]
+     ]
+    },
+    {
+     "category": "cat-mobilitaet",
+     "monthly": 57.166666666666664,
+     "share": 0.019364286835333557,
+     "positions": [
+      [
+       "pos-offi",
+       57.166666666666664
+      ]
+     ]
+    }
+   ]
+  },
+  "savings": {
+   "total": -1680,
+   "changes": [
+    [
+     "pos-kredit-1220",
+     "2027-01",
+     300
+    ],
+    [
+     "pos-offi",
+     "2026-02",
+     96
+    ],
+    [
+     "pos-miete",
+     "2026-01",
+     336
+    ],
+    [
+     "pos-gym",
+     "2026-01",
+     36
+    ],
+    [
+     "pos-strom",
+     "2025-12",
+     72
+    ],
+    [
+     "pos-lebensmittel",
+     "2025-09",
+     360
+    ],
+    [
+     "pos-bk-1220",
+     "2025-07",
+     168
+    ],
+    [
+     "pos-spotify",
+     "2025-06",
+     12
+    ],
+    [
+     "pos-handy",
+     "2025-04",
+     -60
+    ],
+    [
+     "pos-miete",
+     "2025-03",
+     360
+    ]
+   ]
+  }
+ },
+ "format": [
+  [
+   "€ 0",
+   "€ 0,00",
+   "€ 0",
+   "€ 0",
+   "0,0 %"
+  ],
+  [
+   "€ 3.368",
+   "€ 3.368,00",
+   "+€ 3.368",
+   "€ 3,4k",
+   "33,7 %"
+  ],
+  [
+   "€ 1.234,50",
+   "€ 1.234,50",
+   "+€ 1.234,50",
+   "€ 1,2k",
+   "12,3 %"
+  ],
+  [
+   "−€ 490",
+   "−€ 490,00",
+   "−€ 490",
+   "−€ 490",
+   "−4,9 %"
+  ],
+  [
+   "€ 0",
+   "€ 0,00",
+   "€ 0",
+   "€ 0",
+   "0,0 %"
+  ],
+  [
+   "€ 2.952,17",
+   "€ 2.952,17",
+   "+€ 2.952,17",
+   "€ 3k",
+   "29,5 %"
+  ]
+ ]
+}

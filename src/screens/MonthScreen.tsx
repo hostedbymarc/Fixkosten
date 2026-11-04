@@ -67,6 +67,7 @@ import { addPeriods, monthName, periodLabel } from '../lib/period';
 import { calendarMonth, localToday } from '../lib/activeMonth';
 import { driftHeroLights } from '../lib/aurora';
 import { MonthPicker } from '../components/MonthPicker';
+import { KontoInvite, KontoTile } from '../components/konto/KontoTile';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
@@ -244,6 +245,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
         </GlassGroup>
         </TileFit.Provider>
+        <KontoTile ds={ds} active={today} />
+        <KontoInvite />
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
 

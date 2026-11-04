@@ -29,6 +29,8 @@ export function InfoTip({ label, title, children, className = '', style, testId 
   const button = useRef<HTMLButtonElement>(null);
   const popover = useRef<HTMLDivElement>(null);
   const pointer = useRef('mouse');
+  // a tap on the popover moves the focus away from the icon: that blur does not close it
+  const downInPopover = useRef(false);
   const id = useId();
 
   // below the icon, or above when there is no room; clamped to the viewport
@@ -53,22 +55,34 @@ export function InfoTip({ label, title, children, className = '', style, testId 
     return () => window.removeEventListener('resize', place);
   }, [open]);
 
-  // Esc, a tap elsewhere or scrolling closes it
+  // Esc, a tap elsewhere or scrolling (the page or a sheet) closes it
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    // capture on window: runs before a sheet's own Esc handler, so Esc closes only the popover
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+    };
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
       if (!button.current?.contains(t) && !popover.current?.contains(t)) setOpen(false);
     };
-    const onScroll = () => setOpen(false);
-    document.addEventListener('keydown', onKey);
+    const openedAt = performance.now();
+    const onScroll = (e: Event) => {
+      // focusing the icon may scroll it into view: that scroll does not close it
+      if (performance.now() - openedAt < 200) return;
+      if (popover.current && e.target instanceof Node && popover.current.contains(e.target)) return;
+      setOpen(false);
+    };
+    window.addEventListener('keydown', onKey, true);
     document.addEventListener('pointerdown', onDown);
-    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
     return () => {
-      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       document.removeEventListener('pointerdown', onDown);
-      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll, { capture: true });
     };
   }, [open]);
 
@@ -77,7 +91,6 @@ export function InfoTip({ label, title, children, className = '', style, testId 
       <button
         ref={button}
         type="button"
-        aria-label={label}
         aria-describedby={open ? id : undefined}
         className={`focus-ring flex h-11 w-11 items-center justify-center rounded-full text-ink-mute hover:text-ink ${className}`}
         style={style}
@@ -86,13 +99,18 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         onPointerEnter={(e) => e.pointerType === 'mouse' && setOpen(true)}
         onPointerLeave={(e) => e.pointerType === 'mouse' && setOpen(false)}
         onFocus={(e) => e.currentTarget.matches(':focus-visible') && setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onBlur={() => {
+          if (downInPopover.current) return;
+          setOpen(false);
+        }}
         onClick={(e) => {
           // touch and keyboard toggle; a mouse already opened it on hover
           if (e.detail === 0 || pointer.current !== 'mouse') setOpen((v) => !v);
         }}
       >
         <InfoIcon size={15} />
+        {/* name as text, not aria-label: getByLabel/label lookups of the field next to it stay unique */}
+        <span className="sr-only">{label}</span>
       </button>
       {open &&
         createPortal(
@@ -103,6 +121,10 @@ export function InfoTip({ label, title, children, className = '', style, testId 
             className="pointer-events-auto fixed z-[60] rounded-xl border border-edge bg-surface px-3.5 py-3 text-left text-[13px] leading-5 shadow-sheet"
             style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, width: pos?.width ?? WIDTH, visibility: pos ? 'visible' : 'hidden' }}
             data-testid={`${testId}-popover`}
+            onPointerDown={() => {
+              downInPopover.current = true;
+              window.setTimeout(() => (downInPopover.current = false), 400);
+            }}
           >
             <p className="font-semibold text-ink">{title}</p>
             <div className="mt-1 flex flex-col gap-1 text-ink-soft">{children}</div>

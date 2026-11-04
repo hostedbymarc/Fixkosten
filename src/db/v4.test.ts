@@ -72,7 +72,7 @@ describe('migration v3 → v4 (realistic data)', () => {
     v3.close();
 
     const db = openDb();
-    expect(db.verno).toBe(4);
+    expect(db.verno).toBe(5);
     const after = await loadDataset(db);
 
     // untouched tables, record by record
@@ -83,7 +83,7 @@ describe('migration v3 → v4 (realistic data)', () => {
     expect(after.categories).toEqual(before.categories);
     expect(after.reminders).toEqual(before.reminders);
     expect(await db.meta.get('setupDone')).toEqual(metaBefore.find((m) => m.key === 'setupDone'));
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(5);
 
     // positions: only changedOn added to later entries
     expect(after.positions).toHaveLength(before.positions.length);
@@ -118,11 +118,11 @@ describe('migration v3 → v4 (realistic data)', () => {
     const handy = v3file.data.positions.find((p) => p.id === 'pos-handy')!;
     handy.history.push({ ...handy.history[0]!, validFrom: '2026-11', amount: 8 });
     const parsed = parseBackup(structuredClone(v3file));
-    expect(parsed.schemaVersion).toBe(4);
+    expect(parsed.schemaVersion).toBe(5);
     expect(parsed.data.positions.find((p) => p.id === 'pos-handy')!.history.map((e) => e.changedOn)).toEqual([undefined, '2026-11-01']);
     // the input object of the caller is not mutated beyond the parse
     expect(handy.history[1]!.changedOn).toBeUndefined();
     const db = openDb();
-    expect((await exportBackup(db)).schemaVersion).toBe(4);
+    expect((await exportBackup(db)).schemaVersion).toBe(5);
   });
 });

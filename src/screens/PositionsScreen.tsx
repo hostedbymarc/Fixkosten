@@ -3,6 +3,8 @@ import { Screen } from '../components/Screen';
 import { categoryColor } from '../lib/categoryColors';
 import { AmountChangeSheet } from '../components/AmountChangeSheet';
 import { CategoriesSheet } from '../components/CategoriesSheet';
+import { useKonto } from '../db/useKonto';
+import { accountOf } from '../lib/fixkostenkonto';
 import { Badge, formatIsoDate, planChangeLabel, planDescription } from '../components/Chips';
 import { OneOffSheet } from '../components/OneOffSheet';
 import { PositionDetailSheet } from '../components/PositionDetailSheet';
@@ -42,6 +44,7 @@ type Sheet =
 
 export function PositionsScreen({ ds }: { ds: Dataset }) {
   const today = useActiveMonth();
+  const konto = useKonto().settings.enabled;
   const toast = useToast();
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
@@ -124,6 +127,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
                       <PositionListRow
                         position={p}
                         today={today}
+                        girokonto={konto && accountOf(ds, p) === 'girokonto'}
                         handle={<DragHandle handle={handle} />}
                         onOpen={(e) => open({ kind: 'detail', id: p.id }, e)}
                         onEdit={() => setSheet({ kind: 'edit', id: p.id })}
@@ -214,6 +218,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
 function PositionListRow({
   position,
   today,
+  girokonto,
   handle,
   onOpen,
   onEdit,
@@ -221,6 +226,8 @@ function PositionListRow({
 }: {
   position: Position;
   today: string;
+  /** Fixkostenkonto mode: a small chip only for positions paid from the Girokonto */
+  girokonto?: boolean;
   handle: React.ReactNode;
   onOpen: (e: MouseEvent<HTMLElement>) => void;
   onEdit: () => void;
@@ -261,6 +268,11 @@ function PositionListRow({
               <Badge tone="accent">
                 {planChangeLabel(next)}
               </Badge>
+            </span>
+          )}
+          {girokonto && (
+            <span className="mt-1 block" data-testid="account-chip">
+              <Badge>Alltagskonto</Badge>
             </span>
           )}
         </span>

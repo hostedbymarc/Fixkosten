@@ -53,7 +53,7 @@ describe('live data: schema v1 (2776e95) → v4 in one step', () => {
     expect(before.some((p) => p.positionId === 'pos-depotentgelt')).toBe(false);
 
     const db = new FixkostenDB(name);
-    expect(db.verno).toBe(4);
+    expect(db.verno).toBe(5);
     const ds = await loadDataset(db);
 
     // payments, actuals and notes identical; status 'paid' added
@@ -89,7 +89,7 @@ describe('live data: schema v1 (2776e95) → v4 in one step', () => {
 
     // no import dialog on the live device
     expect(await needsSetup(db)).toBe(false);
-    expect((await db.meta.get('schemaVersion'))?.value).toBe(4);
+    expect((await db.meta.get('schemaVersion'))?.value).toBe(5);
 
     // control values exact
     expect(sumMonthlyEquivalent(ds, OCT, { kind: 'expense', frequency: 'monthly' })).toBe(2664);

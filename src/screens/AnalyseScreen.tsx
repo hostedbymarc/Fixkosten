@@ -9,6 +9,7 @@ import {
   TrendSection,
 } from '../components/analysis/sections';
 import { SavingsSection } from '../components/analysis/Savings';
+import { KontoSection } from '../components/konto/KontoSection';
 import { dataMonths, historyPeriods, type Range } from '../lib/analytics';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset } from '../lib/types';
@@ -71,6 +72,7 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
         )}
 
         <div className="grid min-w-0 grid-cols-1 gap-8">
+          <KontoSection ds={ds} today={today} />
           <TrendSection ds={ds} periods={periods} today={today} months={months} />
           <PlanActualSection ds={ds} periods={periods} today={today} />
           <OptimizationSection ds={ds} today={today} />

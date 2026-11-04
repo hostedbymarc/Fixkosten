@@ -4,6 +4,7 @@ import { localToday } from '../lib/activeMonth';
 import { archivedPeriod, compareEntries, currentPlan, entryKey, planForPeriod, planHistory } from '../lib/calc';
 import { addPeriods, periodLabel } from '../lib/period';
 import type {
+  Account,
   Category,
   ChangeLog,
   Dataset,
@@ -180,6 +181,8 @@ export interface PositionDraft {
   plan: PlanInput;
   /** switch „Von ‚Frei verfügbar‘ abziehen“ (one-time payments in Vermögensaufbau); missing = on */
   fromNet?: boolean;
+  /** paying account (schema v5); missing = default by category kind */
+  account?: Account;
 }
 
 /** Only an explicit „off“ is stored; „on“ is the default and leaves no field behind. */
@@ -242,6 +245,7 @@ export async function createPosition(db: FixkostenDB, draft: PositionDraft, star
       createdAt: new Date().toISOString(),
       sortOrder: (last?.sortOrder ?? -1) + 1,
       ...(storedFromNet(draft.fromNet) === false ? { fromNet: false } : {}),
+      ...(draft.account ? { account: draft.account } : {}),
     };
     await db.positions.add(position);
     await db.changeLog.add(log({ positionId: position.id, type: 'created', validFrom, to: position.history[0] }));
@@ -264,6 +268,17 @@ export async function updatePositionInfo(
     // undefined removes the field: „on“ is stored as no field at all
     await db.positions.update(id, next);
     await db.changeLog.add(log({ positionId: id, type: 'edited', from: before, to: next }));
+  });
+}
+
+/** Paying account (Fixkostenkonto / Girokonto); logged as 'edited' when it changes. */
+export async function setPositionAccount(db: FixkostenDB, id: string, account: Account): Promise<void> {
+  await db.transaction('rw', db.positions, db.changeLog, async () => {
+    const position = await db.positions.get(id);
+    if (!position) throw new RepoError('Position nicht gefunden.');
+    if (position.account === account) return;
+    await db.positions.update(id, { account });
+    await db.changeLog.add(log({ positionId: id, type: 'edited', from: { account: position.account }, to: { account } }));
   });
 }
 

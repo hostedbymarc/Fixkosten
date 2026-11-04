@@ -48,7 +48,9 @@ for (const file of [...files('src'), 'index.html']) {
       if (/new Date\(\)(?!\.toISOString\(\))/.test(line) && file !== 'src/lib/activeMonth.ts' && !/^\s*(\/\/|\*|\/\*)/.test(line)) {
         problems.push(`${file}:${i + 1}: new Date() außerhalb von activeMonth.ts – localToday()/activeMonth() verwenden → ${line.trim()}`);
       }
-      if (OLD_NAME.test(line) && !NAME_OK.some((ok) => ok.test(line)) && !/^\s*(\/\/|\*|\/\*)/.test(line)) {
+      // „Fixkostenkonto“ is a term of its own (the account), not the old app name
+      const named = line.replace(/fixkostenkonto/gi, '');
+      if (OLD_NAME.test(named) && !NAME_OK.some((ok) => ok.test(named)) && !/^\s*(\/\/|\*|\/\*)/.test(line)) {
         problems.push(`${file}:${i + 1}: alter App-Name → ${line.trim()}`);
       }
     });

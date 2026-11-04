@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { db } from '../db/db';
-import { changePlan, createPosition, updatePositionInfo, type PlanInput } from '../db/repo';
+import { changePlan, createPosition, setPositionAccount, updatePositionInfo, type PlanInput } from '../db/repo';
+import { defaultAccount } from '../db/migrations';
+import { useKonto } from '../db/useKonto';
+import { accountOf } from '../lib/fixkostenkonto';
 import {
   ALL_MONTHS,
   currentPlan,
@@ -11,7 +14,7 @@ import {
 } from '../lib/calc';
 import { amountToInput, formatAvg, parseAmount } from '../lib/format';
 import { monthOf, periodLabel, shortMonthName } from '../lib/period';
-import type { Dataset, Frequency, Period, Position } from '../lib/types';
+import type { Account, Dataset, Frequency, Period, Position } from '../lib/types';
 import { BottomSheet } from './BottomSheet';
 import { FREQUENCY_LABEL } from './Chips';
 import {
@@ -63,11 +66,18 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
   // inline errors appear once a field was edited; the save button stays disabled until valid
   const [dirty, setDirty] = useState({ name: false, amount: false, dueDate: false });
   const [saving, setSaving] = useState(false);
+  // Fixkostenkonto / Girokonto: only while the Fixkostenkonto mode is on; until touched it follows the category
+  const konto = useKonto().settings.enabled;
+  const [accountChoice, setAccountChoice] = useState<Account | null>(position?.account ?? null);
+  const categoryKind = categories.find((c) => c.id === categoryId)?.kind;
+  const account: Account = accountChoice ?? (position && !position.account ? accountOf(ds, position) : defaultAccount(categoryKind));
 
   const once = frequency === 'once';
   // „Von ‚Frei verfügbar‘ abziehen“: only one-time payments in a Vermögensaufbau category
   const savingsCategory = categories.find((c) => c.id === categoryId)?.kind === 'savings';
   const showFromNet = once && savingsCategory;
+  // money that does not come from the net salary never goes through the Fixkostenkonto
+  const showAccount = konto && !(showFromNet && !fromNet);
   // what calc does with it: a one-time payment counts in the month of its due date, into
   // Vermögensaufbau (savings category) or into that month's Fixkosten (expense category)
   const dueMonth = /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? dueDate.slice(0, 7) : onceOnly?.period;
@@ -120,11 +130,16 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
     setSaving(true);
     try {
       if (!position) {
-        const id = await createPosition(db, { name, categoryId, note, plan: nextPlan, fromNet: showFromNet ? fromNet : undefined }, validFrom);
+        const id = await createPosition(
+          db,
+          { name, categoryId, note, plan: nextPlan, fromNet: showFromNet ? fromNet : undefined, account: konto ? account : defaultAccount(categoryKind) },
+          validFrom,
+        );
         onSaved(id);
         return;
       }
       await updatePositionInfo(db, position.id, { name, categoryId, note, fromNet: showFromNet ? fromNet : undefined });
+      if (konto && accountChoice && accountChoice !== accountOf(ds, position)) await setPositionAccount(db, position.id, accountChoice);
       if (planChanged) {
         await changePlan(
           db,
@@ -196,6 +211,30 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
             ) : undefined
           }
         />
+        {showAccount && (
+          <div data-testid="account-field">
+            <Segmented<Account>
+              label="Von welchem Konto geht das weg?"
+              value={account}
+              onChange={setAccountChoice}
+              options={[
+                { value: 'fixkostenkonto', label: 'Fixkostenkonto' },
+                { value: 'girokonto', label: 'Alltagskonto' },
+              ]}
+              info={
+                <>
+                  <span className="block">
+                    <span className="font-semibold text-ink">Fixkostenkonto:</span> Ein zweites Konto nur für deine Rechnungen. Erbse sagt dir, wie viel du jeden Monat
+                    draufüberweist.
+                  </span>
+                  <span className="mt-1 block">
+                    <span className="font-semibold text-ink">Alltagskonto:</span> Dein normales Konto mit Karte. Zählt nicht zum Dauerauftrag.
+                  </span>
+                </>
+              }
+            />
+          </div>
+        )}
         {frequencies.length > 0 ? (
           <Segmented
             label="Häufigkeit"
@@ -225,7 +264,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
                 label="Von ‚Frei verfügbar‘ abziehen"
                 checked={fromNet}
                 onChange={setFromNet}
-                hint="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
+                info="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
                 testId="from-net"
               />
             )}
@@ -243,7 +282,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
               value={String(startMonth)}
               onChange={(v) => chooseStart(Number(v))}
               options={ALL_MONTHS.map((m) => ({ value: String(m), label: shortMonthName(m) }))}
-              hint="Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar."
+              info="Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar."
             />
             <MonthChips label="Fällig in" value={dueMonths} onChange={setDueMonths} error={errors.months} />
           </>
@@ -257,7 +296,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           onChange={(v) => setDueDayText(v.replace(/[^0-9]/g, '').slice(0, 2))}
           placeholder="1–31"
           error={errors.dueDay}
-          hint="31 = letzter Tag des Monats"
+          info="31 = letzter Tag des Monats"
         />
         )}
         <TextField label="Notiz" optional multiline value={note} onChange={setNote} placeholder="z. B. Vertrag bis 2027" />

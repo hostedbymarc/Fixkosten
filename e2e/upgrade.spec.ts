@@ -65,7 +65,7 @@ test('live upgrade 2776e95 (v1) → main (v4) in the same browser profile', asyn
   const latest = await page.evaluate(
     () => new Promise<number>((r) => { const q = indexedDB.open('fixkosten'); q.onsuccess = () => { r(q.result.version); q.result.close(); }; }),
   );
-  expect(latest).toBe(40);
+  expect(latest).toBe(50);
 
   // positions screen and backup work on the migrated data
   await goTo(page, 'positionen');
