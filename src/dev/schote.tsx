@@ -51,6 +51,9 @@ function setupCoverage(balance: number, opts: { firstDeposit: boolean; deposits:
   return { pod: podFromMonths(s.months), gap: s.gap };
 }
 
+/** month ends November … Oktober: in plus until April, from May below 0 */
+const MAY_ENDS = [1455, 310, 665, 1200, 900, 400, -240, -120, 300, 650, 1000, 750];
+
 const podOf = (ends: number[]): Pod => podFromMonths(ends.map((end, i) => ({ period: addPeriods(ACTIVE, i), end })));
 
 function Section({ title, children, id }: { title: string; children: ReactNode; id: string }) {
@@ -67,7 +70,8 @@ function PodSection() {
   const rows: { name: string; pod: Pod; gap: number }[] = [
     { name: 'leer', pod: podOf(DEBITS.map(() => -1)), gap: 0 },
     { name: 'ab Februar fehlt Geld', ...pods(0) },
-    { name: 'ab Mai fehlt Geld', ...pods(300) },
+    // first month below 0 is May: fixed month ends, the debits above never give that
+    { name: 'ab Mai fehlt Geld', pod: podOf(MAY_ENDS), gap: -Math.min(...MAY_ENDS) },
     { name: 'voll', ...pods(1200) },
   ];
   return (
@@ -104,14 +108,7 @@ function PodSection() {
 function tileProps(balance: number, setupDone = true): Omit<KontoTileProps, 'onOpen'> {
   const s = simulate(balance, true);
   const cushion = cushionMonths(s.lowest, ORDER);
-  return {
-    state: tileState({ setupDone, gap: s.gap, cushion }),
-    pod: podFromMonths(s.months),
-    order: ORDER,
-    day: DAY,
-    gap: s.gap,
-    cushion,
-  };
+  return { state: tileState({ setupDone, gap: s.gap, cushion }), pod: podFromMonths(s.months), order: ORDER, day: DAY, gap: s.gap, cushion };
 }
 
 function TilesSection() {
@@ -194,13 +191,7 @@ function SetupSection({ autoOpen }: { autoOpen: boolean }) {
   const initialResult = useMemo<Partial<SetupResult> | undefined>(() => {
     if (step !== 'plan') return undefined;
     const done = params.get('plan') === 'done';
-    return {
-      hasAccount: true,
-      balance: 0,
-      order: 'no',
-      orderDone: done,
-      gapDone: done,
-    };
+    return { hasAccount: true, balance: 0, order: 'no', orderDone: done, gapDone: done };
   }, [step]);
   return (
     <Section title="Einrichtung · 3 Fragen und „Dein Plan“" id="setup">
