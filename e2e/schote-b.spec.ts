@@ -113,12 +113,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           }
           await expect(pod).toHaveAttribute('data-full', 'true');
           expect(afterOrder).toBeLessThanOrEqual(12);
-          await expect(page.getByTestId('plan-pod-text')).toHaveText('Alles gedeckt bis September 2027');
+          await expect(page.getByTestId('plan-answer-text')).toHaveText('Alles gedeckt bis September 2027.');
           await tap(page.getByTestId('konto-setup-finish'));
           await expect(setup).toHaveCount(0);
 
           await expect(card).toHaveAttribute('data-state', /covered|cushion/);
-          await expect(card.getByTestId('tile-pod-text')).toHaveText('Gedeckt bis September 2027');
+          await expect(card.getByTestId('tile-answer-text')).toHaveText('Alles gedeckt bis September 2027.');
           await expect(card.getByTestId('konto-tile-sub')).toHaveText(/^Dauerauftrag €\s[\d.,]+ am 1\.$/);
           if (SHOTS.has(vp) && variant === 'ja') await shot(page, `${tag}-3-kachel-gedeckt`);
 
@@ -178,21 +178,25 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(sheet.getByTestId('konto-gap')).toHaveAttribute('data-gap', '');
         await expect(sheet.getByTestId('konto-gap')).toContainText(/^Ja\. Zahl einmalig €\s[\d.,]+ ein\./);
         await expect(sheet.getByTestId('sheet-pod')).not.toHaveAttribute('data-full');
+        // answer first in „Reicht es das ganze Jahr?“, then the pod
+        await expect(sheet.getByTestId('sheet-answer-text')).toHaveText(/^Ab \S+ \d{4} fehlt Geld\.$/);
         await sheet.getByTestId('konto-q-action').scrollIntoViewIfNeeded();
         if (SHOTS.has(vp)) await shot(page, `${tag}-6-sheet-luecke`);
         await page.keyboard.press('Escape');
         await expect(sheet).toHaveCount(0);
 
         await expect(card).toHaveAttribute('data-state', 'gap');
-        await expect(card.getByTestId('konto-tile-sub')).toHaveText(/^Noch €\s[\d.,]+ einzahlen, dann ist alles gedeckt$/);
+        await expect(card.getByTestId('tile-answer-text')).toHaveText(/^Ab \S+ \d{4} fehlt Geld\.$/);
+        await expect(card.getByTestId('tile-answer-action')).toHaveText(/^Zahl einmalig €\s[\d.,]+ ein, dann passt alles\.$/);
+        await expect(sheet.getByTestId('sheet-answer-text')).toHaveCount(0);
         const pod = card.getByTestId('tile-pod');
         const before = await covered(pod);
         expect(before).toBeLessThan(12);
         if (SHOTS.has(vp)) await shot(page, `${tag}-7-kachel-luecke`);
-        await tap(card.getByTestId('konto-tile-paid'));
+        await tap(card.getByTestId('tile-answer-paid'));
         await expect(card).toHaveAttribute('data-state', /covered|cushion/);
         await expect(pod).toHaveAttribute('data-full', 'true');
-        await expect(card.getByTestId('tile-pod-text')).toHaveText('Gedeckt bis September 2027');
+        await expect(card.getByTestId('tile-answer-text')).toHaveText('Alles gedeckt bis September 2027.');
         // afterwards quietly in the row of badges in the sheet
         await tap(page.getByTestId('konto-tile'));
         await expect(sheet.getByTestId('konto-milestone')).toHaveText(['Erste Schote voll']);
@@ -271,6 +275,6 @@ test.describe('Schote B · Bewegung reduzieren', () => {
     if (await page.getByTestId('plan-gap').count()) await page.getByTestId('plan-gap-done').tap();
     await expect(page.getByTestId('plan-pod')).toHaveAttribute('data-full', 'true');
     await expect(page.locator('.pod-snap')).toHaveCount(0);
-    await expect(page.getByTestId('plan-pod-text')).toHaveText('Alles gedeckt bis September 2027');
+    await expect(page.getByTestId('plan-answer-text')).toHaveText('Alles gedeckt bis September 2027.');
   });
 });

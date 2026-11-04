@@ -6,13 +6,14 @@ import type { Period } from './types';
 
 const months = (ends: number[], from: Period = '2026-11') => ends.map((end, i) => ({ period: addPeriods(from, i), end }));
 
-describe('Schote: 12 Plätze aus den Monatsend-Ständen', () => {
-  it('alle ≥ 0 → voll, „Gedeckt bis Oktober 2027“', () => {
+describe('Schote: 12 Plätze aus den Monatsend-Ständen, Akku-Logik', () => {
+  it('alle ≥ 0 → voll, „Alles gedeckt bis Oktober 2027.“', () => {
     const pod = podFromMonths(months([10, 0, 5, 300, 1, 2, 3, 4, 5, 6, 7, 0]));
     expect(pod.covered).toBe(12);
     expect(pod.full).toBe(true);
+    expect(pod.shortFrom).toBeNull();
     expect(pod.coveredUntil).toBe('2027-10');
-    expect(podText(pod)).toBe('Gedeckt bis Oktober 2027');
+    expect(podText(pod)).toBe('Alles gedeckt bis Oktober 2027.');
   });
 
   it('genau 0 ist gedeckt, −0,01 nicht', () => {
@@ -20,13 +21,29 @@ describe('Schote: 12 Plätze aus den Monatsend-Ständen', () => {
     expect(pod.slots.map((s) => s.covered)).toEqual([true, false]);
   });
 
-  it('Lücke → „8 von 12 Monaten gedeckt“, Plätze in Monatsreihenfolge', () => {
-    const pod = podFromMonths(months([100, 50, -20, -40, 10, 20, 30, 40, -5, -6, 70, 80]));
-    expect(pod.covered).toBe(8);
+  it('Minus im Februar, Plus ab Mai → nur November bis Jänner gefüllt', () => {
+    // Nov Dez Jän | Feb Mär Apr (−) | Mai … Okt wieder im Plus
+    const pod = podFromMonths(months([300, 200, 100, -50, -150, -40, 20, 80, 140, 200, 260, 320]));
+    expect(pod.slots.map((s) => s.covered)).toEqual([true, true, true, false, false, false, false, false, false, false, false, false]);
+    expect(pod.covered).toBe(3);
+    expect(pod.shortFrom).toBe('2027-02');
     expect(pod.full).toBe(false);
     expect(pod.coveredUntil).toBeNull();
-    expect(podText(pod)).toBe('8 von 12 Monaten gedeckt');
+    expect(podText(pod)).toBe('Ab Februar 2027 fehlt Geld.');
+  });
+
+  it('keine Lücken: nach dem ersten Minus bleibt alles leer', () => {
+    const pod = podFromMonths(months([100, 50, -20, -40, 10, 20, 30, 40, -5, -6, 70, 80]));
+    expect(pod.covered).toBe(2);
+    expect(pod.slots.findIndex((s) => !s.covered)).toBe(2);
+    expect(pod.slots.slice(2).every((s) => !s.covered)).toBe(true);
     expect(pod.slots[2]).toEqual({ period: '2027-01', covered: false });
+  });
+
+  it('schon der erste Monat im Minus → leer, „Ab November 2026 fehlt Geld.“', () => {
+    const pod = podFromMonths(months([-1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]));
+    expect(pod.covered).toBe(0);
+    expect(podText(pod)).toBe('Ab November 2026 fehlt Geld.');
   });
 
   it('keine Monate → nicht voll', () => {
@@ -62,7 +79,7 @@ describe('Texte', () => {
     }
   });
   it('Platzhalter werden gefüllt', () => {
-    expect(t('tile.gap.text', { betrag: '+€ 340' })).toBe('Noch +€ 340 einzahlen, dann ist alles gedeckt');
+    expect(t('pod.short.action', { betrag: '€ 340' })).toBe('Zahl einmalig € 340 ein, dann passt alles.');
     expect(t('setup.q3', { monat: 'November' })).toBe('Ist der Dauerauftrag für November schon eingegangen?');
   });
   it('Wörter zählen', () => {

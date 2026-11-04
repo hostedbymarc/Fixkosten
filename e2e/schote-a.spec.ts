@@ -41,14 +41,38 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
       test.use({ ...use, colorScheme: theme });
       test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
 
-      test('Schote: alle Zustände, Text sichtbar, Einrasten 8 → 12', async ({ page }) => {
+      test('Schote: Antwort zuerst, Akku-Logik, erster leerer Platz markiert, Legende, Einrasten 3 → 12', async ({ page }) => {
         await page.goto(url(theme, '&view=pod'));
-        const texts = page.getByTestId('dev-pod-large-text');
-        await expect(texts).toHaveText(['0 von 12 Monaten gedeckt', '8 von 12 Monaten gedeckt', '11 von 12 Monaten gedeckt', 'Gedeckt bis Oktober 2027']);
-        // never colour alone: an uncovered slot is a dashed slot with a minus
-        const eight = page.getByTestId('dev-pod-8-von-12').getByTestId('dev-pod-large');
-        await expect(eight.locator('[data-testid="pod-slot"]:not([data-covered]) .pod-empty svg')).toHaveCount(4);
-        await expect(eight.locator('[data-testid="pod-slot"][data-covered] .pea')).toHaveCount(8);
+        const answers = page.getByTestId('dev-pod-answer-text');
+        await expect(answers).toHaveText(['Ab November 2026 fehlt Geld.', 'Ab Februar 2027 fehlt Geld.', 'Ab Mai 2027 fehlt Geld.', 'Alles gedeckt bis Oktober 2027.']);
+        await expect(page.getByTestId('dev-pod-answer-action').first()).toHaveText('Zahl einmalig € 580 ein, dann passt alles.');
+        // the answer comes before the pod
+        const card = page.getByTestId('dev-pod-ab-Februar-fehlt-Geld');
+        const order = await card.evaluate((el) => {
+          const a = el.querySelector('[data-testid="dev-pod-answer"]')!;
+          const p = el.querySelector('[data-testid="dev-pod-large"]')!;
+          return a.compareDocumentPosition(p) & Node.DOCUMENT_POSITION_FOLLOWING;
+        });
+        expect(order).toBeTruthy();
+        // battery: Feb is the first month below 0 → only Nov, Dez, Jän; everything after stays empty (no gaps)
+        const eight = card.getByTestId('dev-pod-large');
+        await expect(eight.locator('[data-testid="pod-slot"][data-covered] .pea')).toHaveCount(3);
+        const flags = await eight.getByTestId('pod-slot').evaluateAll((els) => els.map((e) => e.hasAttribute('data-covered')));
+        expect(flags).toEqual([true, true, true, false, false, false, false, false, false, false, false, false]);
+        // empty slots: calm placeholder without a minus; only the first one is marked, with an icon (never colour alone)
+        await expect(eight.locator('.pod-empty')).toHaveCount(9);
+        await expect(eight.locator('.pod-empty svg')).toHaveCount(1);
+        await expect(eight.locator('[data-testid="pod-slot"]').nth(3)).toHaveAttribute('data-short', 'true');
+        await expect(eight.locator('[data-testid="pod-slot"]').nth(3).locator('.pod-short svg')).toHaveCount(1);
+        // the month from which money is missing, written out under its pea
+        await expect(eight.getByTestId('dev-pod-large-short')).toHaveText('Februar');
+        const shortBox = (await eight.getByTestId('dev-pod-large-short').boundingBox())!;
+        const podBox = (await eight.boundingBox())!;
+        expect(shortBox.x).toBeGreaterThanOrEqual(podBox.x - 0.5);
+        expect(shortBox.x + shortBox.width).toBeLessThanOrEqual(podBox.x + podBox.width + 0.5);
+        // legend, visible
+        await expect(eight.getByTestId('dev-pod-large-legend')).toHaveText('1 Erbse = 1 Monat mit genug Geld');
+        await expect(eight.getByTestId('dev-pod-large-legend')).toBeVisible();
         const months = eight.getByTestId('pod-month');
         await expect(months).toHaveText(['N', 'D', 'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O']);
         // the initials never overlap and stay inside the pod (iPhone SE too)
@@ -63,6 +87,11 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         const tapM = (n: number) => (use.hasTouch ? months.nth(n).tap() : months.nth(n).click());
         await tapM(3);
         await expect(eight.getByTestId('dev-pod-large-month')).toHaveText('Februar 2027: nicht gedeckt');
+        // the ambiguous initials (J, J, M, M, A, A) show their full name
+        for (const [n, name] of [[2, 'Januar 2027: gedeckt'], [4, 'März 2027: nicht gedeckt'], [6, 'Mai 2027: nicht gedeckt'], [7, 'Juni 2027: nicht gedeckt'], [5, 'April 2027: nicht gedeckt'], [9, 'August 2027: nicht gedeckt']] as const) {
+          await tapM(n);
+          await expect(eight.getByTestId('dev-pod-large-month')).toHaveText(name);
+        }
         await tapM(0);
         await expect(eight.getByTestId('dev-pod-large-month')).toHaveText('November 2026: gedeckt');
         await expect(months.nth(0)).toHaveAttribute('aria-pressed', 'true');
@@ -77,7 +106,7 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         // pea by pea: not all at once
         await expect(snapper).toHaveAttribute('data-full', 'true');
         await expect(snapper.locator('[data-testid="pod-slot"][data-covered]')).toHaveCount(12);
-        await expect(page.getByTestId('dev-pod-snapper-text')).toHaveText('Gedeckt bis Oktober 2027');
+        await expect(page.getByTestId('dev-pod-snapper-answer-text')).toHaveText('Alles gedeckt bis Oktober 2027.');
       });
 
       test('Kachel: 4 Zustände; „Erledigt, eingezahlt“ → Erbsen rasten ein → Gedeckt', async ({ page }) => {
@@ -86,9 +115,13 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         await expect(cards.nth(0)).toHaveAttribute('data-state', 'setup');
         await expect(cards.nth(0).getByTestId('konto-tile-progress')).toHaveText('0 von 3 Schritten');
         await expect(cards.nth(1)).toHaveAttribute('data-state', 'gap');
-        await expect(cards.nth(1).getByTestId('konto-tile-sub')).toHaveText('Noch € 580 einzahlen, dann ist alles gedeckt');
+        await expect(cards.nth(1).getByTestId('tile-answer-text')).toHaveText('Ab Februar 2027 fehlt Geld.');
+        await expect(cards.nth(1).getByTestId('tile-answer-action')).toHaveText('Zahl einmalig € 580 ein, dann passt alles.');
+        await expect(cards.nth(1).getByTestId('konto-tile-sub')).toHaveText('Dauerauftrag € 2.955 am 1.');
         await expect(cards.nth(2)).toHaveAttribute('data-state', 'covered');
-        await expect(cards.nth(2).getByTestId('tile-pod-text')).toHaveText('Gedeckt bis Oktober 2027');
+        await expect(cards.nth(2).getByTestId('tile-answer-text')).toHaveText('Alles gedeckt bis Oktober 2027.');
+        // the tile explains the pod in an ⓘ
+        await expect(cards.nth(2).getByTestId('konto-tile-legend')).toBeVisible();
         await expect(cards.nth(2).getByTestId('konto-tile-sub')).toHaveText('Dauerauftrag € 2.955 am 1.');
         await expect(cards.nth(3)).toHaveAttribute('data-state', 'cushion');
         await expect(cards.nth(3).getByTestId('konto-tile-cushion')).toHaveText('Polster: +1,4 Monate');
@@ -97,13 +130,13 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         if (SHOTS.has(name)) await shot(page, `${tag}-2-kachel`, true);
 
         const gap = cards.nth(1);
-        const paid = gap.getByTestId('konto-tile-paid');
+        const paid = gap.getByTestId('tile-answer-paid');
         const box = (await paid.boundingBox())!;
         expect(box.height).toBeGreaterThanOrEqual(44);
         await (use.hasTouch ? paid.tap() : paid.click());
         await expect(gap).toHaveAttribute('data-state', 'covered');
         await expect(gap.getByTestId('tile-pod')).toHaveAttribute('data-full', 'true');
-        await expect(gap.getByTestId('tile-pod-text')).toHaveText('Gedeckt bis Oktober 2027');
+        await expect(gap.getByTestId('tile-answer-text')).toHaveText('Alles gedeckt bis Oktober 2027.');
       });
 
       for (const variant of ['ja', 'noch-nicht', 'weiss-nicht'] as const) {
@@ -149,14 +182,16 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
           const covered = page.getByTestId('plan-pod').locator('[data-testid="pod-slot"][data-covered]');
           // before any point: no standing order on the account yet, balance 0 → nothing covered
           await expect(page.getByTestId('plan-pending')).toHaveText('Erledige die Punkte, dann füllt sich die Schote.');
-          await expect(page.getByTestId('plan-pod-text')).toHaveText('0 von 12 Monaten gedeckt');
+          await expect(page.getByTestId('plan-answer-text')).toHaveText('Ab November 2026 fehlt Geld.');
+          await expect(page.getByTestId('konto-setup-plan').locator('.pod-short svg')).toHaveCount(1);
+          await expect(page.getByTestId('plan-pod-legend')).toHaveText('1 Erbse = 1 Monat mit genug Geld');
           await expect(covered).toHaveCount(0);
           // balance 0 and November still coming (ja): gap € 580; no standing order this month: € 3.535
           const gap = variant === 'ja' ? '€ 580' : '€ 3.535';
           await expect(page.getByTestId('plan-order')).toContainText(
             variant === 'ja' ? 'Dauerauftrag prüfen: € 2.955 monatlich am 1.' : 'Dauerauftrag einrichten: € 2.955 monatlich am 1.',
           );
-          await expect(page.getByTestId('plan-gap')).toContainText(`Einmalig ${gap} überweisen`);
+          await expect(page.getByTestId('plan-gap-item')).toContainText(`Einmalig ${gap} überweisen`);
           // „Noch nicht“: the plan starts with opening the account, before the standing order
           const items = page.getByTestId('konto-setup-plan').locator('li');
           await expect(items).toHaveCount(variant === 'noch-nicht' ? 3 : 2);
@@ -171,18 +206,24 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
             await expect(page.getByTestId('plan-pending')).toHaveCount(0);
             await expect(covered).toHaveCount(0); // an account alone covers nothing yet
           }
-          // reward per step: the standing order covers 8 months right away (ja); without this month's
-          // deposit (Ich habe noch keinen) every month stays short until the one-time transfer
+          // reward per step: the standing order covers November to January right away (ja: February is the
+          // first month below 0, so the pod stops there); without this month's deposit (Ich habe noch keinen)
+          // November is already short until the one-time transfer
           await tap('plan-order-done');
-          await expect(covered).toHaveCount(variant === 'ja' ? 8 : 0);
-          await expect(page.getByTestId('plan-pod-text')).toHaveText(variant === 'ja' ? '8 von 12 Monaten gedeckt' : '0 von 12 Monaten gedeckt');
+          await expect(covered).toHaveCount(variant === 'ja' ? 3 : 0);
+          await expect(page.getByTestId('plan-answer-text')).toHaveText(variant === 'ja' ? 'Ab Februar 2027 fehlt Geld.' : 'Ab November 2026 fehlt Geld.');
+          // the one-time transfer is the last point: it comes right under the answer, before the pod
+          await expect(page.getByTestId('plan-gap')).toContainText(`Zahl einmalig ${gap} ein, dann passt alles.`);
+          await expect(page.getByTestId('plan-gap-done')).toHaveText('Erledigt, eingezahlt');
+          await expect(page.getByTestId('plan-gap-item')).toHaveCount(0);
           await expect(plan).not.toHaveAttribute('data-done');
           if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-4b-plan-dauerauftrag-erledigt`);
           await tap('plan-gap-done');
           await expect(plan).toHaveAttribute('data-done', 'true');
           await expect(page.getByTestId('plan-pod')).toHaveAttribute('data-full', 'true');
           await expect(covered).toHaveCount(12);
-          await expect(page.getByTestId('plan-pod-text')).toHaveText('Alles gedeckt bis Oktober 2027');
+          await expect(page.getByTestId('plan-answer-text')).toHaveText('Alles gedeckt bis Oktober 2027.');
+          await expect(page.getByTestId('plan-gap-item')).toHaveAttribute('data-done', 'true');
           await expectNoOverflow(page);
           if (SHOTS.has(name) && variant === 'ja') await shot(page, `${tag}-5-plan-erledigt`);
 
@@ -211,7 +252,7 @@ test.describe('Schote A · Bewegung reduzieren', () => {
     // at once, no pop class
     await expect(page.getByTestId('dev-pod-snapper').locator('[data-testid="pod-slot"][data-covered]')).toHaveCount(12, { timeout: 50 });
     await expect(page.getByTestId('dev-pod-snapper').locator('.pod-snap')).toHaveCount(0);
-    await expect(page.getByTestId('dev-pod-snapper-text')).toHaveText('Gedeckt bis Oktober 2027');
+    await expect(page.getByTestId('dev-pod-snapper-answer-text')).toHaveText('Alles gedeckt bis Oktober 2027.');
   });
 });
 

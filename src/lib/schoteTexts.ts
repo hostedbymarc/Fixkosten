@@ -4,8 +4,10 @@
 
 export const SCHOTE_TEXTS = {
   // · Schote
-  'pod.until': 'Gedeckt bis {monat}',
-  'pod.count': '{n} von {gesamt} Monaten gedeckt',
+  'pod.until': 'Alles gedeckt bis {monat}.',
+  'pod.short': 'Ab {monat} fehlt Geld.',
+  'pod.short.action': 'Zahl einmalig {betrag} ein, dann passt alles.',
+  'pod.legend': '1 Erbse = 1 Monat mit genug Geld',
   'pod.month.covered': '{monat}: gedeckt',
   'pod.month.open': '{monat}: nicht gedeckt',
 
@@ -13,7 +15,6 @@ export const SCHOTE_TEXTS = {
   'tile.title': 'Fixkostenkonto',
   'tile.setup.title': 'Fixkostenkonto einrichten',
   'tile.setup.progress': '{n} von 3 Schritten',
-  'tile.gap.text': 'Noch {betrag} einzahlen, dann ist alles gedeckt',
   'tile.gap.action': 'Erledigt, eingezahlt',
   'tile.order': 'Dauerauftrag {betrag} {tag}',
   'tile.cushion': 'Polster: {monate} Monate',
@@ -50,7 +51,6 @@ export const SCHOTE_TEXTS = {
   'plan.done': 'Erledigt',
   'plan.gap': 'Einmalig {betrag} überweisen',
   'plan.pending': 'Erledige die Punkte, dann füllt sich die Schote.',
-  'plan.full': 'Alles gedeckt bis {monat}',
   'plan.finish': 'Fertig',
 
   // · Phase B: monatlicher Erbsen-Check
