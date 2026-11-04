@@ -47,6 +47,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
 
       test('bestehende Installation: Einladungskarte → Aktivieren → Kachel → Sheet mit Startlücke', async ({ page }) => {
+    test.setTimeout(90_000); // setup plan + six full-page screenshots: ~28 s at 1440 px
         await importApp(page);
         // existing installation: four tiles as before, one invitation card, no Fixkostenkonto tile
         await expect(page.getByTestId('konto-invite')).toBeVisible();
