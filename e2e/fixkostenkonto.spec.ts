@@ -59,9 +59,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-invite')).toHaveCount(0);
         const tile = page.getByTestId('konto-tile');
         await expect(tile).toBeVisible();
-        // seed: every Fixkosten position on the Fixkostenkonto, Vermögensaufbau on the Girokonto → Ø pro Monat, rounded up to € 5
         const order = amountOf((await page.getByTestId('konto-tile-value').textContent())!);
-        expect(order).toBe(Math.ceil(avg / 5) * 5);
         await tile.scrollIntoViewIfNeeded();
         await shot(page, vp, scheme, '2-kachel');
 
@@ -70,6 +68,13 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(sheet).toBeVisible();
         await expect(sheet.getByTestId('konto-order-value')).toHaveText(/./);
         expect(amountOf((await sheet.getByTestId('konto-order-value').textContent())!)).toBe(order);
+        // D = all debits of the 12 months from next month on ÷ 12, rounded up to € 5. Without a change in
+        // those months (no hint line) that is the Ø pro Monat (seed: Fixkosten on the Fixkostenkonto).
+        const exactText = (await sheet.getByTestId('konto-order-exact').textContent())!;
+        const exact = amountOf(exactText.match(/€\s?[\d.,]+/)![0]);
+        expect(order).toBe(Math.ceil(Math.round(exact * 100) / 500) * 5);
+        if ((await sheet.getByTestId('konto-order-cause').count()) === 0) expect(exact).toBeCloseTo(avg, 2);
+        else await expect(sheet.getByTestId('konto-order-cause')).toHaveText(/^(Mehr|Weniger), weil /);
         // the assumption is in the ⓘ next to „Kontostand am Monatsende“
         const assumption = await openInfo(page, sheet.getByTestId('konto-assumption'));
         await expect(assumption).toContainText('vor allen Abbuchungen');

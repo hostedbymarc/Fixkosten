@@ -2,7 +2,7 @@
 |---|---|---|
 | „Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.“ | Monat · Hero „Abzüge vom Netto“ | wird Tooltip – war schon ein Tooltip, jetzt mit Esc/Scroll im Sheet |
 | „So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.“ | Monat · Kachel „Frei verfügbar“ (im Ø-Monat) | wird Tooltip – war schon ein Tooltip |
-| „So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: die Monatsanteile aller Rechnungen auf diesem Konto (Quartal ÷ 3, Halbjahr ÷ 6, Jahr ÷ 12), aufgerundet.“ | Monat · Kachel „Fixkostenkonto“ | wird Tooltip – neu (Auftrag: Erklärung des Dauerauftrags) |
+| „So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.“ | Monat · Kachel „Fixkostenkonto“ | wird Tooltip – neu (Auftrag: Erklärung des Dauerauftrags) |
 | „Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.“ | Fixkostenkonto-Sheet, Analyse · „Kontostand am Monatsende“ | wird Tooltip |
 | „Was heute auf deinem Fixkostenkonto liegt.“ | Fixkostenkonto-Sheet, Einstellungen · „Kontostand heute“ | wird Tooltip |
 | „Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.“ | Fixkostenkonto-Sheet · „Im Dauerauftrag“ | wird Tooltip – „Girokonto“ heißt in der Oberfläche jetzt „Alltagskonto“ |

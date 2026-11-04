@@ -10,7 +10,7 @@ import { KontoSheet, useKontoOverview } from './KontoSheet';
 
 /** Explanation of the standing order, in the tile's tooltip. */
 export const STANDING_ORDER_INFO =
-  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: die Monatsanteile aller Rechnungen auf diesem Konto (Quartal ÷ 3, Halbjahr ÷ 6, Jahr ÷ 12), aufgerundet.';
+  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.';
 
 /**
  * Bento tile „Fixkostenkonto · Dauerauftrag € X / Monat“ (mode on only), for the active month.
