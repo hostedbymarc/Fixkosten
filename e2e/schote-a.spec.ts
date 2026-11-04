@@ -88,7 +88,7 @@ for (const [name, use] of Object.entries(VIEWPORTS)) {
         await tapM(3);
         await expect(eight.getByTestId('dev-pod-large-month')).toHaveText('Februar 2027: nicht gedeckt');
         // the ambiguous initials (J, J, M, M, A, A) show their full name
-        for (const [n, name] of [[2, 'Januar 2027: gedeckt'], [4, 'März 2027: nicht gedeckt'], [6, 'Mai 2027: nicht gedeckt'], [7, 'Juni 2027: nicht gedeckt'], [5, 'April 2027: nicht gedeckt'], [9, 'August 2027: nicht gedeckt']] as const) {
+        for (const [n, name] of [[2, 'Jänner 2027: gedeckt'], [4, 'März 2027: nicht gedeckt'], [6, 'Mai 2027: nicht gedeckt'], [7, 'Juni 2027: nicht gedeckt'], [5, 'April 2027: nicht gedeckt'], [9, 'August 2027: nicht gedeckt']] as const) {
           await tapM(n);
           await expect(eight.getByTestId('dev-pod-large-month')).toHaveText(name);
         }
