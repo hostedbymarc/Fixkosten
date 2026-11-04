@@ -301,19 +301,18 @@ describe('Neue und geänderte Paare (korrekt-ruhig)', () => {
 
 // Oberer Rand (top-fade): iOS paints the status bar itself (status-bar-style „default“): dark glyphs
 // on a light bar, light glyphs on a dark bar; the bar is --nebel-base. Where Safari lets the page show
-// under the bar, the glyphs sit on the scrim (--nebel-base, 0.6 at the top) over whatever scrolls there.
+// under the bar, the glyphs sit on the flat layer #root::before (--nebel-base, covering, safe area high)
+// over whatever scrolls there: the same colour as the bar.
 const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const GLYPH = { Hell: [0, 0, 0] as RGB, Dunkel: [255, 255, 255] as RGB };
-const UNDER_BAR = ['--nebel-base', '--glass-opaque', '--c-accent', '--c-surface'];
 export function statusBarRows() {
   return (['Hell', 'Dunkel'] as const).flatMap((theme) => {
     const v = theme === 'Hell' ? light : dark;
     const base = rgb(v, '--nebel-base');
-    const scrim: RGBA = [...base, 0.6];
+    const layer: RGBA = [...base, 1];
     return [
       { theme, what: 'Statusleiste (iOS, deckend) = Basisfarbe', value: contrast(GLYPH[theme], base) },
-      ...UNDER_BAR.map((t) => ({ theme, what: `Safari unter der Leiste: Scrim 0,6 über \`${t}\``, value: contrast(GLYPH[theme], over(scrim, rgb(v, t))) })),
-      { theme, what: `Scrim 0,6 über der Nebel-Mitte`, value: contrast(GLYPH[theme], over(scrim, over(color(v, '--nebel-1'), base))) },
+      { theme, what: 'Safari unter der Leiste: deckende Basisfarbe über `--c-accent`', value: contrast(GLYPH[theme], over(layer, rgb(v, '--c-accent'))) },
     ];
   });
 }
@@ -331,7 +330,7 @@ describe('Oberer Rand: Statusleiste lesbar (top-fade)', () => {
   it('theme-color je Theme = Basisfarbe (Hell und Dunkel)', () => {
     expect(html).toContain(`content="${resolve(light, '--nebel-base')}" media="(prefers-color-scheme: light)"`);
     expect(html).toContain(`content="${resolve(dark, '--nebel-base')}" media="(prefers-color-scheme: dark)"`);
-    // the channel token used by the scrim is the same colour
+    // the channel token used by the layer behind the status bar is the same colour
     for (const v of [light, dark]) expect(resolve(v, '--nebel-base-rgb').split(' ').map(Number)).toEqual(rgb(v, '--nebel-base'));
   });
 });
