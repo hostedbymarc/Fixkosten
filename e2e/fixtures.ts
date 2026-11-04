@@ -348,7 +348,14 @@ export async function openInfo(page: Page, button: Locator): Promise<Locator> {
   const pop = page.getByRole('tooltip');
   // a tap or hover during a sheet's slide-in can miss the moving button: trigger again only if nothing opened
   await expect(async () => {
-    if (!(await pop.isVisible())) await (isTouchProject() ? button.tap() : button.hover());
+    if (!(await pop.isVisible())) {
+      if (isTouchProject()) await button.tap();
+      else {
+        // a second hover on the same spot fires no pointerenter: leave first, then come back
+        await page.mouse.move(0, 0);
+        await button.hover();
+      }
+    }
     await expect(pop).toBeVisible({ timeout: 1500 });
   }).toPass({ timeout: 8000 });
   return pop;
