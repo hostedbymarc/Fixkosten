@@ -44,9 +44,15 @@ export function KontoSetupSheet({ state, day, onAnswers, onClose, onFinish, init
   const balance = parseAmount(balanceText);
   const balanceError = balanceText.trim() !== '' && balance === null ? 'Bitte einen Betrag eingeben' : null;
   const total = hasAccount ? 3 : 2;
+  // the answers just saved: „Dein Plan“ shows once the stored state has them, never the state from before
+  const [saved, setSaved] = useState<SetupAnswers | null>(null);
+  const ready =
+    !saved || (state.setupDone && state.hasAccount === saved.hasAccount && Math.round(state.balance * 100) === Math.round(saved.balance * 100));
 
   async function save(amount: number, orderRuns: boolean | null) {
-    await onAnswers({ hasAccount, balance: amount, orderRuns });
+    const answers = { hasAccount, balance: amount, orderRuns };
+    setSaved(answers);
+    await onAnswers(answers);
     setStep('plan');
   }
   // after the amount: with an account the standing order question, without it straight to the plan
@@ -106,7 +112,9 @@ export function KontoSetupSheet({ state, day, onAnswers, onClose, onFinish, init
           </Question>
         )}
 
-        {step === 'plan' && (
+        {step === 'plan' && !ready && <div className="min-h-[240px]" aria-busy="true" data-testid="konto-setup-saving" />}
+
+        {step === 'plan' && ready && (
           <div className="flex flex-col gap-5" data-testid="konto-setup-plan" data-done={state.status === 'covered' || undefined}>
             {state.status === 'covered' ? (
               <PlanSuccess state={state} />
