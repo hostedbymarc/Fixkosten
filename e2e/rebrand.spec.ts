@@ -37,17 +37,22 @@ test.describe('Rebrand „Erbse“: Name und Icons', () => {
     for (const meta of await app.locator('meta[name="theme-color"]').all()) await expect(meta).toHaveAttribute('content', base);
     const manifest = await (await app.request.get('/manifest.webmanifest')).json();
     expect(manifest).toMatchObject({ name: 'Erbse', short_name: 'Erbse', start_url: '/', theme_color: '#5A7A2E', background_color: '#F4F5F1' });
-    for (const icon of [...manifest.icons.map((i: { src: string }) => i.src), '/apple-touch-icon.png', '/favicon.png', '/favicon.svg']) {
+    for (const icon of [...manifest.icons.map((i: { src: string }) => i.src), '/apple-touch-icon.png', '/favicon.svg']) {
       expect((await app.request.get(icon)).status(), icon).toBe(200);
     }
   });
 
-  test('sidebar shows the logo and „Erbse“', async ({ app }) => {
+  test('sidebar head: only the three peas, labelled „Erbse“, no square, no word mark', async ({ app }) => {
     test.skip(!isSidebarLayout(app), 'sidebar only from 1024 px');
-    await expect(app.getByTestId('sidebar')).toContainText('Erbse');
-    // Luxe 2: the logo is the <Logo> component (square with three <Pea>s)
-    await expect(app.getByTestId('sidebar').getByTestId('logo')).toHaveCount(1);
-    await expect(app.getByTestId('sidebar').getByTestId('logo').locator('.pea')).toHaveCount(3);
+    const mark = app.getByTestId('sidebar').getByTestId('logo');
+    await expect(mark).toHaveCount(1);
+    await expect(mark).toHaveAttribute('aria-label', 'Erbse');
+    await expect(mark.locator('.pea')).toHaveCount(3);
+    await expect(mark.locator('rect')).toHaveCount(0);
+    await expect(app.getByTestId('sidebar').getByText('Erbse', { exact: true })).toHaveCount(0);
+    // brand tokens: the peas stand out from the sidebar in light and dark
+    const colours = await mark.locator('.pea').evaluateAll((els) => els.map((e) => getComputedStyle(e).getPropertyValue('--pea-c').trim()));
+    expect(colours).toEqual(['var(--pea-1)', 'var(--pea-2)', 'var(--pea-3)']);
   });
 
   test('glass surfaces fall back to opaque with reduced transparency', async ({ app }) => {

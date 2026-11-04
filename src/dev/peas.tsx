@@ -1,7 +1,6 @@
 // Dev-only page /dev/peas/ (dev/peas/index.html is not part of the production build): every <Pea>
 // size × colour × state, the open check, the FAB and the logo – light and dark side by side (two
-// frames of this page with ?theme=…). ?icon=<px>[&bleed=1] renders only the logo for
-// scripts/make-icons.mjs.
+// frames of this page with ?theme=…). ?icon=<px> renders only the logo at that size.
 import '@fontsource-variable/inter';
 import '../index.css';
 import { createRoot } from 'react-dom/client';
@@ -22,13 +21,13 @@ const COLOURS: { name: string; c: string }[] = [
 ];
 const STATES: PeaState[] = ['default', 'checked', 'pressed'];
 
-function Icon({ size, bleed }: { size: number; bleed: boolean }) {
+function Icon({ size }: { size: number }) {
   document.documentElement.style.background = 'transparent';
   document.body.style.background = 'transparent';
   return (
     <div style={{ width: size, height: size }} data-testid="icon-root">
       <style>{'body::before, body::after, #root::before { display: none !important; }'}</style>
-      <Logo size={size} bleed={bleed} icon />
+      <Logo size={size} />
     </div>
   );
 }
@@ -96,5 +95,5 @@ function Both() {
 
 const icon = params.get('icon');
 createRoot(document.getElementById('root')!).render(
-  icon ? <Icon size={Number(icon)} bleed={params.get('bleed') === '1'} /> : theme ? <Sheet /> : <Both />,
+  icon ? <Icon size={Number(icon)} /> : theme ? <Sheet /> : <Both />,
 );
