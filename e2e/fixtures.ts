@@ -378,13 +378,14 @@ export async function checkRadio(radio: Locator) {
 }
 
 /**
- * Fixkostenkonto: after „Aktivieren“ the tile asks for the setup first. This answers both questions
- * (balance 0, standing order not running yet) and does every point of „Dein Plan“ (standing order,
- * one-time transfer); then the tile shows „Alles gedeckt bis …“ and opens the sheet.
+ * „Fixkosten einplanen“: after „Aktivieren“ the tile asks for the setup first. This answers every
+ * question (own account, 0 set aside, standing order not running yet) and does every point of „Dein
+ * Plan“ (standing order, one-time amount); then the tile shows „Alles eingeplant bis …“ and opens the sheet.
  */
 export async function setUpKonto(page: Page) {
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
   await page.getByTestId('konto-tile').click();
+  await page.getByTestId('konto-setup-account-yes').click();
   await page.getByTestId('konto-setup-balance').fill('0');
   await page.getByTestId('konto-setup-next').click();
   await page.getByTestId('konto-setup-order-no').click();

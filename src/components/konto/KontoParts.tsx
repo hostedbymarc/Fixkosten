@@ -177,7 +177,7 @@ export function causeText(cause: StandingOrderCause): string {
 }
 
 /**
- * „Kontostand heute“, „Dauerauftrag für diesen Monat schon eingegangen?“, rounding. Saved right away:
+ * „Schon zur Seite gelegt“, „Dauerauftrag für … schon eingegangen?“ (without account: „Für … schon zur Seite gelegt?“), rounding. Saved right away:
  * a balance typed here is a new anchor, the answer is this month's check.
  */
 export function KontoInputs({ settings, active, balance, showRounding = true }: { settings: KontoSettings; active: Period; balance?: number; showRounding?: boolean }) {
