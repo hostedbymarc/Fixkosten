@@ -1,17 +1,64 @@
 import { format as formatDateFns, parseISO } from 'date-fns';
+import { COUNTRY_FORMAT, DEFAULT_COUNTRY, type Country } from './country';
 
-const eur2 = new Intl.NumberFormat('de-AT', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const eur0 = new Intl.NumberFormat('de-AT', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
+// The one place money is formatted. The country (Einstellungen → Land) picks locale and currency:
+// AT de-AT € (the default, as always), DE de-DE €, CH de-CH CHF. Every function below reads the
+// formatters of the current country; nothing else in the app writes a currency sign.
+
+/** The euro sign, for glyph metrics only (src/components/fitText.ts). */
+export const EURO_SIGN = '€';
+
+interface Formatters {
+  country: Country;
+  money2: Intl.NumberFormat;
+  money0: Intl.NumberFormat;
+  pct1: Intl.NumberFormat;
+  compact: Intl.NumberFormat;
+  symbol: string;
+  /** symbol before the number ('€ 12', 'CHF 12') or after it ('12 €') */
+  prefix: boolean;
+}
+
+function buildFormatters(country: Country): Formatters {
+  const { locale, currency } = COUNTRY_FORMAT[country];
+  const money = (digits: number) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const money2 = money(2);
+  const parts = money2.formatToParts(1);
+  const symbolIndex = parts.findIndex((p) => p.type === 'currency');
+  const integerIndex = parts.findIndex((p) => p.type === 'integer');
+  return {
+    country,
+    money2,
+    money0: money(0),
+    pct1: new Intl.NumberFormat(locale, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    compact: new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }),
+    symbol: parts[symbolIndex]?.value ?? currency,
+    prefix: symbolIndex < integerIndex,
+  };
+}
+
+let fmt = buildFormatters(DEFAULT_COUNTRY);
+
+/** Switches every formatter to the country's locale and currency (App, on start and on change). */
+export function setFormatCountry(country: Country): void {
+  if (fmt.country !== country) fmt = buildFormatters(country);
+}
+
+export function formatCountry(): Country {
+  return fmt.country;
+}
+
+/** '€' / 'CHF': the sign in front of an amount input. */
+export function currencySymbol(): string {
+  return fmt.symbol;
+}
+
+/** '€ 2.952' → '2.952' (also '2.952 €', 'CHF 2'952'): an amount without its currency sign. */
+export function withoutCurrency(text: string): string {
+  const sym = fmt.symbol.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`^${sym}\\s|\\s${sym}$`), '');
+}
 
 /**
  * The one minus sign of the app (U+2212 MINUS SIGN): every negative amount, delta and
@@ -31,8 +78,8 @@ export function formatEUR(value: number, opts: { fixed?: boolean } = {}): string
   // negative: typographic minus, no space before '€' ('−€ 490', never '-€ 490')
   if (cents < 0) return `${MINUS}${formatEUR(-cents / 100, opts)}`;
   const normalized = cents / 100 || 0; // avoid '-0'
-  if (!opts.fixed && cents % 100 === 0) return eur0.format(normalized);
-  return eur2.format(normalized);
+  if (!opts.fixed && cents % 100 === 0) return fmt.money0.format(normalized);
+  return fmt.money2.format(normalized);
 }
 
 /**
@@ -80,7 +127,7 @@ export function formatDayMonth(day: number, month: number): string {
  * Returns null for anything that is not a finite number.
  */
 export function parseAmount(input: string): number | null {
-  let s = input.replace(/[€\s  ]/g, '').replace(/^[\u2212\u2010-\u2014]/, '-'); // any minus or dash counts as minus
+  let s = input.replace(/CHF|Fr\./gi, '').replace(/[€\s  '’]/g, '').replace(/^[\u2212\u2010-\u2014]/, '-'); // any minus or dash counts as minus
   if (s === '' || s === '-') return null;
   if (s.includes(',')) {
     s = s.replace(/\./g, '').replace(',', '.');
@@ -99,25 +146,24 @@ export function amountToInput(value: number): string {
   return (cents / 100).toFixed(2).replace('.', ',');
 }
 
-const pct1 = new Intl.NumberFormat('de-AT', {
-  style: 'percent',
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-
 /** 0.16 → '16,0 %' */
 export function formatPercent(ratio: number): string {
-  return withMinus(pct1.format(ratio));
+  return withMinus(fmt.pct1.format(ratio));
 }
 
-const compact = new Intl.NumberFormat('de-AT', { maximumFractionDigits: 1 });
+/** Axis label without the currency: '3,4k', '850', '−1,2k' */
+export function formatCompactNumber(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 && Math.round(abs) !== 0 ? MINUS : '';
+  return `${sign}${abs >= 1000 ? `${fmt.compact.format(abs / 1000)}k` : String(Math.round(abs))}`;
+}
 
-/** Axis label: '€ 3,4k', '€ 850', '−€ 1,2k' */
+/** Axis label: '€ 3,4k', '€ 850', '−€ 1,2k' (DE '3,4k €', CH 'CHF 3.4k') */
 export function formatCompactEUR(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 && Math.round(abs) !== 0 ? MINUS : '';
-  const body = abs >= 1000 ? `${compact.format(abs / 1000)}k` : String(Math.round(abs));
-  return `${sign}€ ${body}`;
+  const body = formatCompactNumber(abs);
+  return fmt.prefix ? `${sign}${fmt.symbol} ${body}` : `${sign}${body} ${fmt.symbol}`;
 }
 
 /** Axis label for ratios: 0.16 → '16 %' */

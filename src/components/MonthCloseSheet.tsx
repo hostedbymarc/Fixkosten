@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { freeAfterFixedAvgWith, freeAfterFixedWith, monthCloseFor } from '../lib/calc';
-import { amountToInput, formatAvg, formatEUR, parseAmount } from '../lib/format';
+import { amountToInput, currencySymbol, formatAvg, formatEUR, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel } from '../lib/period';
 import type { Dataset, Period } from '../lib/types';
 import type { MonthCloseInput } from '../db/repo';
@@ -45,7 +45,7 @@ function AmountField({
           invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
         }`}
       >
-        <span className="mr-2 text-[20px] text-ink-mute">€</span>
+        <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
         <input
           id={id}
           inputMode="decimal"

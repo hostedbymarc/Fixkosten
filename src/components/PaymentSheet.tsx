@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { gap, type DueItem } from '../lib/calc';
-import { amountToInput, formatDate, formatDelta, formatEUR, parseAmount } from '../lib/format';
+import { amountToInput, currencySymbol, formatDate, formatDelta, formatEUR, parseAmount } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { BottomSheet } from './BottomSheet';
 
@@ -56,7 +56,7 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff, onEd
               invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
             }`}
           >
-            <span className="mr-2 text-[20px] text-ink-mute">€</span>
+            <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
             <input
               id={amountId}
               inputMode="decimal"

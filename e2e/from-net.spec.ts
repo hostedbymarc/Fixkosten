@@ -1,4 +1,4 @@
-import { animationsDone, eur, expect, isTouchProject, test } from './fixtures';
+import { animationsDone, eur, expect, isTouchProject, openInfo, test } from './fixtures';
 import { withMieteNotFromNet } from '../tests/fixtures/live';
 import { importLive, OKT_TODAY } from './live';
 import { expectClean } from './measure';
@@ -21,7 +21,12 @@ test.describe('Schalter „Von ‚Frei verfügbar‘ abziehen“ (Einmalige im V
     const sw = sheet.getByRole('switch', { name: SWITCH_LABEL });
     await expect(sw).toBeVisible();
     await expect(sw).toHaveAttribute('aria-checked', 'true');
-    await expect(sheet.getByTestId('from-net')).toContainText(HINT);
+    // the hint is in the ⓘ next to the switch label (Tooltips statt Erklärtexte)
+    const info = await openInfo(page, sheet.getByTestId('from-net').getByRole('button', { name: `Erklärung: ${SWITCH_LABEL}` }));
+    await expect(info).toContainText(HINT);
+    await page.keyboard.press('Escape');
+    await expect(info).toHaveCount(0);
+    await expect(sheet).toBeVisible(); // Esc closes the tooltip, not the sheet
     const box = (await sw.boundingBox())!;
     expect(box.height).toBeGreaterThanOrEqual(32);
     await expectClean(page, '[role="dialog"]');

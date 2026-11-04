@@ -8,6 +8,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
+import { COUNTRY_KEY, toCountry } from './lib/country';
+import { setFormatCountry } from './lib/format';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
 import { hideSplash, splashRemoved } from './lib/entrance';
 import { startGlassBudget } from './lib/glassBudget';
@@ -131,6 +133,9 @@ export function App() {
   useEffect(() => traceImport('livequery-setup', { setup }), [setup]);
   useEffect(() => traceImport('livequery-dataset', { loaded: !!ds }), [ds]);
   const start = useLiveQuery(async () => toMonthStart((await db.meta.get(MONTH_START_KEY))?.value), []);
+  // Land: currency and number format of every amount (src/lib/format.ts); AT until one is chosen
+  const country = useLiveQuery(async () => toCountry((await db.meta.get(COUNTRY_KEY))?.value), []);
+  if (country) setFormatCountry(country);
   const [now, setNow] = useState(localToday);
   const active = start === undefined ? null : activeMonth(now, start);
   const [shown, setShown] = useState<Period | null>(null);
@@ -196,13 +201,14 @@ export function App() {
   const month = useMemo(() => (start === undefined || !active ? null : { start, active }), [start, active]);
 
   // behind the splash: nothing to show yet
-  if (setup === undefined || start === undefined || !active || !period) return null;
+  if (setup === undefined || start === undefined || country === undefined || !active || !period) return null;
   if (setup) return splashGone ? <SetupDialog /> : null;
 
   return (
     <ActiveMonthContext.Provider value={month!}>
       <ToastProvider>
-        <div className="relative min-h-dvh lg:pl-[240px]">
+        {/* a new country re-renders every screen with its format (rare: Einstellungen → Land) */}
+        <div key={country} className="relative min-h-dvh lg:pl-[240px]">
           <Sidebar route={route} />
           <main
             className="pt-safe px-safe"
