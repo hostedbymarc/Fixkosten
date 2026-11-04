@@ -345,9 +345,19 @@ export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>
  * Explanations live in these tooltips, not as visible text below a field.
  */
 export async function openInfo(page: Page, button: Locator): Promise<Locator> {
-  await (isTouchProject() ? button.tap() : button.hover());
   const pop = page.getByRole('tooltip');
-  await expect(pop).toBeVisible();
+  // a tap or hover during a sheet's slide-in can miss the moving button: trigger again only if nothing opened
+  await expect(async () => {
+    if (!(await pop.isVisible())) {
+      if (isTouchProject()) await button.tap();
+      else {
+        // a second hover on the same spot fires no pointerenter: leave first, then come back
+        await page.mouse.move(0, 0);
+        await button.hover();
+      }
+    }
+    await expect(pop).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 8000 });
   return pop;
 }
 
@@ -365,4 +375,24 @@ export async function checkRadio(radio: Locator) {
     if (!(await radio.isChecked())) await radio.click();
     await expect(radio).toBeChecked({ timeout: 1000 });
   }).toPass({ timeout: 10_000 });
+}
+
+/**
+ * „Fixkosten einplanen“: after „Aktivieren“ the tile asks for the setup first. This answers every
+ * question (own account, 0 set aside, standing order not running yet) and does every point of „Dein
+ * Plan“ (standing order, one-time amount); then the tile shows „Alles eingeplant bis …“ and opens the sheet.
+ */
+export async function setUpKonto(page: Page) {
+  await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
+  await page.getByTestId('konto-tile').click();
+  await page.getByTestId('konto-setup-account-yes').click();
+  await page.getByTestId('konto-setup-balance').fill('0');
+  await page.getByTestId('konto-setup-next').click();
+  await page.getByTestId('konto-setup-order-no').click();
+  await page.getByTestId('plan-order-done').click();
+  const gap = page.getByTestId('plan-gap-done');
+  if (await gap.count()) await gap.click();
+  await page.getByTestId('konto-setup-finish').click();
+  await expect(page.getByTestId('konto-setup')).toHaveCount(0);
+  await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
 }

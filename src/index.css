@@ -753,47 +753,6 @@ button:active > .pea[data-pressable] {
   box-shadow: var(--pea-open-inset);
 }
 
-/* Logo (src/components/Logo.tsx): the square has Soft-3D volume of its own – a soft light at the
-   top in an opaque gradient, an inner shadow at the bottom, a coloured shadow below. */
-.logo {
-  position: relative;
-  display: inline-block;
-  flex-shrink: 0;
-  width: 1em;
-  height: 1em;
-  font-size: var(--logo-size, 28px);
-  border-radius: 28.57%;
-  background-color: var(--logo-bottom);
-  background-image: radial-gradient(
-    ellipse 120% 90% at 38% 0%,
-    color-mix(in oklab, var(--logo-top), var(--pea-light) 18%) 0%,
-    var(--logo-top) 38%,
-    var(--logo-bottom) 100%
-  );
-  box-shadow:
-    inset 0 0.04em 0.06em var(--logo-edge),
-    inset 0 -0.06em 0.14em color-mix(in oklab, var(--logo-bottom), var(--pea-dark) 35%),
-    0 0.08em 0.24em -0.04em color-mix(in oklab, var(--logo-bottom) 45%, transparent),
-    0 0.02em 0.04em var(--pea-contact);
-}
-.logo[data-icon] {
-  box-shadow:
-    inset 0 0.04em 0.06em var(--logo-edge),
-    inset 0 -0.06em 0.14em color-mix(in oklab, var(--logo-bottom), var(--pea-dark) 35%);
-}
-.logo[data-bleed] {
-  border-radius: 0;
-  box-shadow: none;
-}
-.logo[data-flat] {
-  background-image: none;
-  background-color: var(--logo-flat);
-  box-shadow: none;
-}
-.logo-pea {
-  position: absolute;
-}
-
 /* Hero, Luxe 2: two soft colour fields (brand-300, butter) drift slowly inside the tile for 20 s after
    the screen comes in, then rest (src/screens/MonthScreen.tsx, Web Animations with id „ambient“) – box-shadow
    glows of zero-size elements, clipped to the tile (no gradient into transparency); a diagonal light

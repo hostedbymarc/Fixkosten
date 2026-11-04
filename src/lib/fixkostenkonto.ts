@@ -35,7 +35,7 @@ export function accountOf(ds: Dataset, position: Position): Account {
  * Fixkostenkonto and it comes from the net salary (a one-time Vermögensaufbau payment with
  * „Von ‚Frei verfügbar‘ abziehen“ off never does).
  */
-function onKonto(ds: Dataset, position: Position, period: Period): boolean {
+export function onKonto(ds: Dataset, position: Position, period: Period): boolean {
   const kind = kindOfCategory(ds, position.categoryId);
   if (!kind || accountOf(ds, position) !== 'fixkostenkonto') return false;
   return countsFromNet(kind, position, planForPeriod(position, period));

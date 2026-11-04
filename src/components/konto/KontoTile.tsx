@@ -1,20 +1,26 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { db } from '../../db/db';
+import { adoptLegacyBalance, finishSetup, markMilestones } from '../../db/kontoActions';
 import { writeKonto } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
-import { formatEUR } from '../../lib/format';
+import { localToday } from '../../lib/activeMonth';
+import { newMilestones, orderDay, type KontoState } from '../../lib/kontoBalance';
+import { MILESTONE_TEXT, t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
-import { InfoTip } from '../InfoTip';
+import { useMonthStart } from '../../lib/useToday';
 import { Pea } from '../Pea';
-import { KontoSheet, useKontoOverview } from './KontoSheet';
+import { useToast } from '../Toast';
+import { KontoSetupSheet } from './KontoSetupSheet';
+import { KontoSheet, useKontoState } from './KontoSheet';
+import { KontoTileView, ORDER_INFO } from './KontoTileView';
 
 /** Explanation of the standing order, in the tile's tooltip. */
-export const STANDING_ORDER_INFO =
-  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.';
+export const STANDING_ORDER_INFO = ORDER_INFO;
 
 /**
- * Bento tile „Fixkostenkonto · Dauerauftrag € X / Monat“ (mode on only), for the active month.
- * Below: covered or the Startlücke. Opens the sheet.
+ * The tile „Fixkosten einplanen“ (internally: Fixkostenkonto) on the month screen (mode on only), directly below the hero. Status
+ * „setup“ opens the setup (or „Dein Plan“ once both questions are answered), otherwise the sheet.
+ * Every change of balance, account or positions shows at once (live query + kontoState).
  */
 export function KontoTile({ ds, active }: { ds: Dataset; active: Period }) {
   const { settings } = useKonto();
@@ -23,53 +29,58 @@ export function KontoTile({ ds, active }: { ds: Dataset; active: Period }) {
 }
 
 function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
-  const overview = useKontoOverview(ds, active);
-  const [open, setOpen] = useState(false);
+  const { settings } = useKonto();
+  const state = useKontoState(ds, active);
+  const start = useMonthStart();
+  const [open, setOpen] = useState<'sheet' | 'setup' | null>(null);
   const button = useRef<HTMLButtonElement>(null);
-  const gap = Math.round(overview.simulation.gap * 100) > 0;
+  // the plan has its own success moment: the toast waits until it is closed
+  useMilestoneToasts(state, open === 'setup');
+  // data from PR #39: the stored balance becomes the anchor once
+  useEffect(() => {
+    if (settings.setupDone && !settings.anchor) void adoptLegacyBalance(db, localToday());
+  }, [settings.setupDone, settings.anchor]);
   return (
     <>
-      {/* the ⓘ is its own button next to (not inside) the tile button; the tile button covers the whole card */}
-      <div className="glass glass-tile tone-pea surface press relative flex min-w-0 items-center gap-4 p-4 md:p-5 xl:p-6" data-testid="konto-tile-card">
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center">
-            <span className="truncate text-[13px] font-medium leading-5 text-ink-mute">Fixkostenkonto</span>
-            <InfoTip label="Erklärung: Dauerauftrag" title="Dauerauftrag" className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
-              <p>{STANDING_ORDER_INFO}</p>
-            </InfoTip>
-          </div>
-          <button
-            ref={button}
-            type="button"
-            onClick={() => setOpen(true)}
-            className="focus-ring block w-full min-w-0 rounded-lg text-left after:absolute after:inset-0 after:rounded-[inherit] after:content-['']"
-            data-testid="konto-tile"
-            aria-label={`Fixkostenkonto: Dauerauftrag ${formatEUR(overview.order.amount)} pro Monat${gap ? `, Startlücke ${formatEUR(overview.simulation.gap)}` : ', gedeckt'} – Details öffnen`}
-          >
-            <span className="block text-ink">
-              <span className="text-[15px] font-medium text-ink-soft">Dauerauftrag </span>
-              <span className="num text-[24px] font-semibold tracking-[-0.02em] md:text-[28px]" data-testid="konto-tile-value">
-                {formatEUR(overview.order.amount)}
-              </span>
-              <span className="text-[15px] font-medium text-ink-soft"> / Monat</span>
-            </span>
-            <span className="mt-1 block text-[12px] leading-4 text-ink-mute lg:text-[13px]" data-testid="konto-tile-sub">
-              {gap ? (
-                <>
-                  Einmalig <span className="num font-semibold text-ink">{formatEUR(overview.simulation.gap)}</span> einzahlen, dann reicht es 12 Monate
-                </>
-              ) : (
-                'Gedeckt für die nächsten 12 Monate'
-              )}
-            </span>
-          </button>
-        </div>
-        <span className="shrink-0 text-[14px] font-semibold text-accent-ink" aria-hidden="true">
-          Details
-        </span>
-      </div>
-      {open && <KontoSheet ds={ds} active={active} onClose={() => setOpen(false)} returnFocusTo={button.current} />}
+      <KontoTileView state={state} day={orderDay(start)} onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')} buttonRef={button} />
+      {open === 'sheet' && <KontoSheet ds={ds} active={active} onClose={() => setOpen(null)} returnFocusTo={button.current} />}
+      {open === 'setup' && <KontoSetup ds={ds} active={active} restart={!settings.setupDone} onClose={() => setOpen(null)} />}
     </>
+  );
+}
+
+/** A milestone reached for the first time: a short toast with a pea, once; afterwards only the badge in the sheet. */
+function useMilestoneToasts(state: KontoState, paused: boolean) {
+  const { settings } = useKonto();
+  const toast = useToast();
+  const fresh = newMilestones(settings, state.status, state.streak);
+  const key = fresh.join(',');
+  useEffect(() => {
+    if (paused || !settings.setupDone || fresh.length === 0) return;
+    toast({ message: t('milestone.toast', { meilenstein: t(MILESTONE_TEXT[fresh[fresh.length - 1]!]) }), icon: <Pea size={22} className="anim-check" /> });
+    void markMilestones(db, fresh);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, settings.setupDone, paused]);
+}
+
+/**
+ * The setup sheet. `restart` (not set up, „Einrichtung ändern“): the questions; otherwise
+ * „Dein Plan“ straight away. The caller decides, from settings it already has loaded. Numbers and status: kontoState, like everywhere else.
+ */
+export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Dataset; active: Period; restart: boolean; onClose: () => void; onDone?: () => void }) {
+  const { settings } = useKonto();
+  const start = useMonthStart();
+  const state = useKontoState(ds, active);
+  return (
+    <KontoSetupSheet
+      state={state}
+      day={orderDay(start)}
+      initialStep={restart ? 'account' : 'plan'}
+      initial={settings.setupDone ? { balance: state.balance, hasAccount: settings.hasAccount !== false } : undefined}
+      onAnswers={(answers) => finishSetup(db, answers, { active, now: localToday() })}
+      onClose={onClose}
+      onFinish={onDone ?? onClose}
+    />
   );
 }
 
@@ -81,14 +92,18 @@ export function KontoInvite() {
   const { stored } = useKonto();
   if (stored !== null) return null;
   return (
-    <section className="glass surface flex flex-col gap-3 p-4 md:flex-row md:items-center md:p-5" aria-labelledby="konto-invite-title" data-testid="konto-invite">
+    <section
+      className="glass surface flex flex-col gap-3 p-4 md:flex-row md:items-center md:p-5"
+      aria-labelledby="konto-invite-title"
+      data-testid="konto-invite"
+    >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <Pea size={28} className="mt-0.5 shrink-0" />
         <p className="min-w-0 text-[15px] leading-snug text-ink">
           <span id="konto-invite-title" className="font-semibold">
-            Neu: Fixkostenkonto.
+            {t('invite.title')}
           </span>{' '}
-          Erbse rechnet deinen Dauerauftrag aus.
+          {t('invite.text')}
         </p>
       </div>
       <div className="flex shrink-0 gap-2">

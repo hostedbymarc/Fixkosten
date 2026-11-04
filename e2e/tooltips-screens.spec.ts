@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, setUpKonto, test, TODAY } from './fixtures';
 
 // Vorher/Nachher screenshots of every tab and the sheets with explanatory texts, light and dark.
 // PHASE=vorher|nachher (default nachher). iPhone 15 and desktop only; the shots are the result.
@@ -31,6 +31,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
+      await setUpKonto(page);
       await shot(page, '1-monat');
 
       await page.getByTestId('konto-tile').click();

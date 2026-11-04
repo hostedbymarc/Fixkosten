@@ -12,7 +12,7 @@ import type { Table, Transaction } from 'dexie';
 import { traceImport } from '../lib/importTrace';
 import { SCHEMA_VERSION, type FixkostenDB } from './db';
 import { COUNTRY_KEY, isCountry, type Country } from '../lib/country';
-import { KONTO_KEY, readCountryRaw, readKontoRaw, toKontoSettings, writeCountry, type KontoSettings } from './settings';
+import { KONTO_KEY, readCountryRaw, readKontoRaw, storedKonto, toKontoSettings, writeCountry, type StoredKontoSettings } from './settings';
 import { upgradePaymentV3, upgradePositionV3, upgradePositionV4, upgradePositionV5 } from './migrations';
 
 /** Oldest backup version that can still be imported (migrated on the fly). */
@@ -38,7 +38,7 @@ export interface BackupFile {
     /** Einstellungen → „Neuer Monat beginnt am“ (src/lib/activeMonth.ts) */
     monthStartDay?: MonthStart;
     /** Fixkostenkonto (schema v5); only present once it was set on the exporting device */
-    fixkostenkonto?: KontoSettings;
+    fixkostenkonto?: StoredKontoSettings;
     /** country (schema v5): currency, number format, templates; only present once chosen */
     country?: Country;
   };
@@ -143,7 +143,7 @@ export function parseBackup(raw: unknown): BackupFile {
   if (raw.settings !== undefined) {
     const settings = isObject(raw.settings) ? raw.settings : {};
     const clean: Record<string, unknown> = settings.monthStartDay === undefined ? {} : { monthStartDay: toMonthStart(settings.monthStartDay) };
-    if (settings.fixkostenkonto !== undefined) clean.fixkostenkonto = toKontoSettings(settings.fixkostenkonto);
+    if (settings.fixkostenkonto !== undefined) clean.fixkostenkonto = storedKonto(toKontoSettings(settings.fixkostenkonto));
     if (isCountry(settings.country)) clean.country = settings.country;
     raw.settings = clean;
   }
@@ -185,7 +185,7 @@ async function importSettings(db: FixkostenDB, backup: BackupFile, keepWhenMissi
   else if (!keepWhenMissing) await writeMonthStart(db, 1);
   // Fixkostenkonto and country: taken over when the file has them, otherwise this device keeps its own
   const konto = backup.settings?.fixkostenkonto;
-  if (konto !== undefined) await db.meta.put({ key: KONTO_KEY, value: toKontoSettings(konto) });
+  if (konto !== undefined) await db.meta.put({ key: KONTO_KEY, value: storedKonto(toKontoSettings(konto)) });
   const country = backup.settings?.country;
   if (country !== undefined) await writeCountry(db, country);
   // undo: back to exactly the snapshot, also where it had none
@@ -264,7 +264,7 @@ export async function exportBackup(db: FixkostenDB): Promise<BackupFile> {
     data: { categories, positions, payments, oneOffs, monthClose, changeLog, reminders },
     settings: {
       monthStartDay: await readMonthStart(db),
-      ...(konto ? { fixkostenkonto: konto } : {}),
+      ...(konto ? { fixkostenkonto: storedKonto(konto) } : {}),
       ...(country ? { country } : {}),
     },
   };
