@@ -8,7 +8,7 @@ import { importLive, OKT_TODAY } from './live';
 // the bar is modelled from that rule: a band of the sampled colour above the page (home-screen app,
 // safe area 0) or over the safe area (Safari, safe area 59 px). Measured: vertical brightness
 // profiles in 5 columns over the top 400 px, the step from the bar into the page, the Kanten-Kennzahl
-// of PR #27 and the scrim's own contribution while content scrolls under it.
+// of PR #27 and the flat layer behind the bar (safe area high, covers only what scrolls under it).
 
 const COLUMNS = [0.1, 0.3, 0.5, 0.7, 0.9];
 const MAX_STEP = 1.5;
@@ -51,19 +51,6 @@ async function profiles(page: Page, png: Buffer, rows: number): Promise<number[]
     },
     [png.toString('base64'), COLUMNS, rows, left] as const,
   );
-}
-
-/** Alpha per row of the scrim bitmap (0…1). */
-async function scrimRows(page: Page, variable: string): Promise<number[]> {
-  return page.evaluate(async (name) => {
-    const url = getComputedStyle(document.documentElement).getPropertyValue(name).trim().slice(5, -2);
-    const img = await createImageBitmap(await (await fetch(url)).blob());
-    const c = new OffscreenCanvas(img.width, img.height);
-    const g = c.getContext('2d')!;
-    g.drawImage(img, 0, 0);
-    const d = g.getImageData(0, 0, 1, img.height).data;
-    return Array.from({ length: img.height }, (_, y) => d[y * 4 + 3]! / 255);
-  }, variable);
 }
 
 const maxStep = (p: number[]) => p.slice(1).reduce((m, v, i) => Math.max(m, Math.abs(v - p[i]!)), 0);
@@ -148,58 +135,49 @@ for (const scheme of ['light', 'dark'] as const) {
       }
     });
 
-    test('gescrollt: eine Karte gleitet unter der Statusleiste weich aus (Beitrag der Scrim-Ebene ohne Stufe)', async ({ page }) => {
+    test('gescrollt: eine Karte unter der Statusleiste ist nur in der Safe Area verdeckt, darunter unverändert', async ({ page }) => {
       await importLive(page, OKT_TODAY);
       await settle(page);
-      // a card scrolled under the bar: an opaque card surface over the top 120 px (below the scrim)
+      // a card scrolled under the bar: an opaque card surface over the top 120 px (below the layer)
       await page.addStyleTag({
-        content: `${NO_GLYPHS} body::after { display: none !important; } #root::after { content: ''; position: fixed; inset: 0 0 auto 0; height: 120px; z-index: 10; background: var(--glass-opaque); }`,
+        content: `:root { --safe-top: 59px !important; } ${NO_GLYPHS} body::after { display: none !important; } #root::after { content: ''; position: fixed; inset: 0 0 auto 0; height: 120px; z-index: 10; background: var(--glass-opaque); }`,
       });
       await page.evaluate(() => window.scrollTo(0, 400));
       await page.waitForTimeout(150);
-      const withScrim = await profiles(page, await page.screenshot({ scale: 'css' }), 120);
+      const withLayer = await profiles(page, await page.screenshot({ scale: 'css' }), 120);
       await page.addStyleTag({ content: NO_SCRIM });
       await page.waitForTimeout(100);
       const without = await profiles(page, await page.screenshot({ scale: 'css' }), 120);
-      let strongest = 0;
-      for (const [i, p] of withScrim.entries()) {
+      for (const [i, p] of withLayer.entries()) {
         const effect = p.map((v, y) => v - without[i]![y]!);
-        strongest = Math.max(strongest, ...effect.map(Math.abs));
-        expect(maxStep(effect), `column ${COLUMNS[i]! * 100} %: scrim contribution (row ${stepRow(effect)})`).toBeLessThanOrEqual(MAX_STEP);
-        expect(Math.abs(effect.at(-1)!), 'scrim ends at 0 below safe area + 48 px').toBeLessThanOrEqual(0.5);
+        // below the safe area the layer adds nothing: no band, no fade over the content
+        expect(Math.max(...effect.slice(60).map(Math.abs)), `column ${COLUMNS[i]! * 100} %: below the safe area`).toBeLessThanOrEqual(0.5);
+        // inside it the card is covered by the flat base colour
+        expect(Math.abs(effect[30]!), `column ${COLUMNS[i]! * 100} %: covered inside the safe area`).toBeGreaterThan(0.5);
+        expect(maxStep(p.slice(0, 58)), `column ${COLUMNS[i]! * 100} %: flat inside the safe area`).toBeLessThanOrEqual(MAX_STEP);
       }
-      // the scrim is really there over scrolled content
-      expect(strongest).toBeGreaterThan(0.5);
     });
 
-    test('eine Scrim-Ebene: ease-out, max. 0,6, ≥ 8 Stopps im Rückfall-Verlauf, über Inhalt und unter Menüs/Tab-Leiste/Sheets', async ({ page }) => {
+    test('eine Ebene hinter der Statusleiste: flach, genau Safe Area hoch, über Inhalt und unter Menüs/Tab-Leiste/Sheets', async ({ page }) => {
       await importLive(page, OKT_TODAY);
-      const r = await page.evaluate(() => {
-        const cs = getComputedStyle(document.getElementById('root')!, '::before');
-        // the declared fallback gradient (before src/lib/nebel.ts has drawn the bitmap)
-        let declared = '';
-        for (const sheet of document.styleSheets)
-          for (const rule of sheet.cssRules)
-            if (rule instanceof CSSStyleRule && rule.selectorText === '#root::before' && rule.style.backgroundImage) declared ||= rule.style.backgroundImage;
-        return { position: cs.position, top: cs.top, height: parseFloat(cs.height), z: cs.zIndex, pe: cs.pointerEvents, image: cs.backgroundImage, declared };
-      });
-      expect(r.position).toBe('fixed');
-      expect(r.top).toBe('0px');
-      expect(r.height).toBe(48); // safe area 0 here
-      expect(r.pe).toBe('none');
-      expect(Number(r.z)).toBeGreaterThan(0);
-      expect(Number(r.z)).toBeLessThan(20);
-      expect(r.image.startsWith('url("data:image/png')).toBe(true);
-      expect(r.declared).not.toMatch(/transparent/);
-      expect(r.declared.match(/rgb\(/g)?.length, 'stops in the fallback gradient').toBeGreaterThanOrEqual(8);
-      // the bitmap: monotonic, ≤ 0.6, ends at 0, ease-out (the first half loses more than the second)
-      const a = await scrimRows(page, '--scrim-image');
-      expect(a[0]!).toBeLessThanOrEqual(0.6 + 1 / 255);
-      expect(a[0]!).toBeGreaterThan(0.55);
-      expect(a.at(-1)).toBe(0);
-      for (let i = 1; i < a.length; i++) expect(a[i]!).toBeLessThanOrEqual(a[i - 1]!);
-      const mid = a[Math.floor(a.length / 2)]!;
-      expect(a[0]! - mid).toBeGreaterThan(3 * mid);
+      const read = () =>
+        page.evaluate(() => {
+          const cs = getComputedStyle(document.getElementById('root')!, '::before');
+          const base = getComputedStyle(document.documentElement).getPropertyValue('--nebel-base-rgb').trim().split(/\s+/).join(', ');
+          return { position: cs.position, top: cs.top, height: parseFloat(cs.height) || 0, z: cs.zIndex, pe: cs.pointerEvents, image: cs.backgroundImage, colour: cs.backgroundColor, base: `rgb(${base})` };
+        });
+      for (const safe of [0, 59]) {
+        if (safe) await page.addStyleTag({ content: `:root { --safe-top: ${safe}px !important; }` });
+        const r = await read();
+        expect(r.position).toBe('fixed');
+        expect(r.top).toBe('0px');
+        expect(r.height, 'exactly the safe area').toBe(safe);
+        expect(r.pe).toBe('none');
+        expect(Number(r.z)).toBeGreaterThan(0);
+        expect(Number(r.z)).toBeLessThan(20);
+        expect(r.image, 'no gradient').toBe('none');
+        expect(r.colour, 'the flat base colour').toBe(r.base);
+      }
       // no other element paints the top edge (one place, no per-screen copies)
       const top = await page.evaluate(() =>
         [...document.querySelectorAll('#root *')].filter((el) => {
@@ -211,74 +189,51 @@ for (const scheme of ['light', 'dark'] as const) {
     });
 
     for (const reduced of [false, true]) {
-      test(`Ruhezustand${reduced ? ' (Transparenz reduzieren)' : ''}: Text unter der Scrim bleibt ≥ 4,5:1 (alle Screens)`, async ({ page }) => {
+      test(`Ruhezustand${reduced ? ' (Transparenz reduzieren)' : ''}: kein Text unter der Ebene der Statusleiste (alle Screens, Safe Area 0 und 59 px)`, async ({ page }) => {
         if (reduced) {
           const cdp = await page.context().newCDPSession(page);
           await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }, { name: 'prefers-color-scheme', value: scheme }] });
         }
         await importLive(page, OKT_TODAY);
-        for (const route of ['monat', 'positionen', 'analyse', 'einstellungen']) {
-          await page.evaluate((r) => (location.hash = `#/${r}`), route);
-          await page.waitForTimeout(500);
-          const worst = await page.evaluate((solid) => {
-            const parse = (c: string) => (c.match(/[\d.]+/g) ?? []).map(Number);
-            const base = parse(getComputedStyle(document.documentElement).getPropertyValue('--nebel-base-rgb').trim().replace(/ /g, ','));
-            const mix = (a: number[], b: number[], t: number) => a.slice(0, 3).map((v, i) => v * (1 - t) + b[i]! * t);
-            const lin = (c: number) => ((c /= 255) <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-            const lum = (c: number[]) => 0.2126 * lin(c[0]!) + 0.7152 * lin(c[1]!) + 0.0722 * lin(c[2]!);
-            const ratio = (a: number[], b: number[]) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
-            const height = parseFloat(getComputedStyle(document.getElementById('root')!, '::before').height);
-            const alpha = (y: number) => {
-              const t = Math.min(1, Math.max(0, y / height));
-              return solid ? (1 - t) ** 3 : 0.6 * (1 - t) ** 3;
-            };
-            let min = Infinity;
-            let at = '';
-            const walker = document.createTreeWalker(document.querySelector('main')!, NodeFilter.SHOW_TEXT);
-            for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-              if (!n.textContent!.trim()) continue;
-              const range = document.createRange();
-              range.selectNodeContents(n);
-              const r = range.getBoundingClientRect();
-              if (!r.height || r.top >= height) continue;
-              const el = n.parentElement!;
-              const fgc = parse(getComputedStyle(el).color);
-              const fg = (fgc[3] ?? 1) < 1 ? mix(base, fgc, fgc[3]!) : fgc;
-              // background under the text: the nearest painted ancestor over the base colour
-              let bg = base;
-              for (let e: Element | null = el; e; e = e.parentElement) {
-                const c = parse(getComputedStyle(e).backgroundColor);
-                if ((c[3] ?? 1) > 0) {
-                  bg = mix(base, c, c[3] ?? 1);
-                  break;
-                }
+        for (const safe of [0, 59]) {
+          if (safe) await page.addStyleTag({ content: `:root { --safe-top: ${safe}px !important; }` });
+          for (const route of ['monat', 'positionen', 'analyse', 'einstellungen']) {
+            await page.evaluate((r) => (location.hash = `#/${r}`), route);
+            await page.waitForTimeout(500);
+            await page.evaluate(() => window.scrollTo(0, 0));
+            const covered = await page.evaluate(() => {
+              const height = parseFloat(getComputedStyle(document.getElementById('root')!, '::before').height) || 0;
+              const hits: string[] = [];
+              const walker = document.createTreeWalker(document.querySelector('main')!, NodeFilter.SHOW_TEXT);
+              for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+                // inactive tabs stay mounted, hidden (visibility: hidden): nobody sees their text
+                if (!n.textContent!.trim() || !n.parentElement!.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+                const range = document.createRange();
+                range.selectNodeContents(n);
+                const r = range.getBoundingClientRect();
+                if (r.height && r.top < height) hits.push(`${n.textContent!.trim().slice(0, 24)} @ ${r.top.toFixed(0)} px`);
               }
-              const a = alpha(r.top); // the line box top: stricter than the glyphs
-              const value = ratio(mix(fg, base, a), mix(bg, base, a));
-              if (value < min) [min, at] = [value, `${n.textContent!.trim().slice(0, 24)} @ ${r.top.toFixed(0)} px`];
-            }
-            return { min, at };
-          }, reduced);
-          if (worst.at) expect(worst.min, `${route}: ${worst.at}`).toBeGreaterThanOrEqual(4.5);
+              return hits;
+            });
+            expect(covered, `${route}, safe area ${safe} px`).toEqual([]);
+          }
         }
       });
     }
 
-    test('Transparenz reduzieren: Scrim deckend in der Basisfarbe hinter der Statusleiste, unten weicher Verlauf', async ({ page }) => {
+    test('Transparenz reduzieren: dieselbe deckende Ebene in der Basisfarbe, ohne Verlauf', async ({ page }) => {
       await page.emulateMedia({ colorScheme: scheme });
       const cdp = await page.context().newCDPSession(page);
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }, { name: 'prefers-color-scheme', value: scheme }] });
       await importLive(page, OKT_TODAY);
       await settle(page);
-      const r = await page.evaluate(() => [
-        getComputedStyle(document.getElementById('root')!, '::before').backgroundImage,
-        getComputedStyle(document.documentElement).getPropertyValue('--scrim-image-solid').trim(),
-      ]);
-      expect(r[0]).toBe(r[1]);
-      const a = await scrimRows(page, '--scrim-image-solid');
-      expect(a[0]).toBe(1); // covering at the top (safe area 0 here: just the first row)
-      expect(a.at(-1)).toBe(0);
-      for (let i = 1; i < a.length; i++) expect(a[i]!).toBeLessThanOrEqual(a[i - 1]!);
+      await page.addStyleTag({ content: ':root { --safe-top: 59px !important; }' });
+      const r = await page.evaluate(() => {
+        const cs = getComputedStyle(document.getElementById('root')!, '::before');
+        return { image: cs.backgroundImage, height: parseFloat(cs.height) };
+      });
+      expect(r.image).toBe('none');
+      expect(r.height).toBe(59);
       await page.addStyleTag({ content: BACKGROUND_ONLY });
       await page.evaluate(() => window.scrollTo(0, 400));
       await page.waitForTimeout(150);

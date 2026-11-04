@@ -154,13 +154,14 @@ body::after {
 
 /* Oberer Rand – the one place for the status bar area (no per-screen copies).
    iOS paints the status bar itself as a flat colour sampled from the page (body background =
-   --nebel-base; no fixed element with a colour sits at the top edge), and theme-color carries the
-   same colour for browsers that still read it. The Nebel bitmap fades to exactly that colour at
-   the bar's lower edge (src/lib/nebel.ts), so there is no step. Above everything that scrolls lies
-   this scrim: --nebel-base, 0.6 at the top, ease-out (0.6 · (1 − t)³) to 0 over safe area + 48 px,
-   so content glides out softly under the bar. Over the faded Nebel it is invisible at rest.
-   src/lib/nebel.ts draws the same curve as a bitmap (--scrim-image: no gradient dithering, safe in
-   iOS captures); the 9-stop gradient here is the same curve until that has run. */
+   --nebel-base), and theme-color carries the same colour for browsers that still read it. The
+   background (Nebel, Aurora-Mesh) is exactly that colour under the bar, so there is no step.
+   Behind the status bar lies this flat layer in the base colour: exactly env(safe-area-inset-top)
+   high, no gradient, above everything that scrolls. At rest nothing lies under it (the content
+   starts below the safe area, .pt-safe), so it is invisible; content scrolled under the bar is
+   covered there. With safe area 0 (home-screen app, Safari upright) it has no height at all: it
+   never reaches over the hero (Hotfix: the earlier 48 px fade below the safe area lay over the
+   Aurora as a white, soft band and covered the hero). */
 #root::before {
   content: '';
   position: fixed;
@@ -168,44 +169,9 @@ body::after {
   left: 0;
   right: 0;
   z-index: 15; /* above the page content, below menus (20), tab bar (30), sheets (40), toasts (50) */
-  height: calc(var(--safe-top) + 48px);
+  height: var(--safe-top);
   pointer-events: none;
-  background-repeat: no-repeat; /* no wrap-around sampling at the lower edge */
-  background-size: 100% 100%;
-  background-image: var(
-    --scrim-image,
-    linear-gradient(
-      rgb(var(--nebel-base-rgb) / 0.6) 0%,
-      rgb(var(--nebel-base-rgb) / 0.402) 12.5%,
-      rgb(var(--nebel-base-rgb) / 0.253) 25%,
-      rgb(var(--nebel-base-rgb) / 0.146) 37.5%,
-      rgb(var(--nebel-base-rgb) / 0.075) 50%,
-      rgb(var(--nebel-base-rgb) / 0.032) 62.5%,
-      rgb(var(--nebel-base-rgb) / 0.009) 75%,
-      rgb(var(--nebel-base-rgb) / 0.001) 87.5%,
-      rgb(var(--nebel-base-rgb) / 0) 100%
-    )
-  );
-}
-/* Transparenz reduzieren: covering base colour behind the status bar, then the same ease-out fade */
-@media (prefers-reduced-transparency: reduce) {
-  #root::before {
-    background-image: var(
-      --scrim-image-solid,
-      linear-gradient(
-        rgb(var(--nebel-base-rgb)) 0,
-        rgb(var(--nebel-base-rgb)) var(--safe-top),
-        rgb(var(--nebel-base-rgb) / 0.67) calc(var(--safe-top) + 6px),
-        rgb(var(--nebel-base-rgb) / 0.42) calc(var(--safe-top) + 12px),
-        rgb(var(--nebel-base-rgb) / 0.244) calc(var(--safe-top) + 18px),
-        rgb(var(--nebel-base-rgb) / 0.125) calc(var(--safe-top) + 24px),
-        rgb(var(--nebel-base-rgb) / 0.053) calc(var(--safe-top) + 30px),
-        rgb(var(--nebel-base-rgb) / 0.016) calc(var(--safe-top) + 36px),
-        rgb(var(--nebel-base-rgb) / 0.002) calc(var(--safe-top) + 42px),
-        rgb(var(--nebel-base-rgb) / 0) calc(var(--safe-top) + 48px)
-      )
-    );
-  }
+  background: rgb(var(--nebel-base-rgb));
 }
 
 /* Print / PDF. The screen stays untouched (iOS „Ganze Seite“ uses the screen CSS, see the Nebel above).
