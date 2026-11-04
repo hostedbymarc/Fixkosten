@@ -1,6 +1,6 @@
-# Schote · Übersicht (Phase A, zur Freigabe)
+# Schote · Übersicht
 
-Basis: Stand von PR #39 (noch nicht gemergt). Nach dem Merge wird dieser Branch auf `main` umgesetzt.
+Basis: `main` nach dem Merge von PR #39. Die Schote rechnet mit dem neuen Dauerauftrag (alle Abbuchungen der 12 Monate ab dem Folgemonat ÷ 12).
 
 ## 1. Neue Datenfelder (Phase B, rein additiv und optional)
 
@@ -83,6 +83,20 @@ Alle neuen Texte mit Wortzahl je Satz stehen in [`TEXTE.md`](TEXTE.md), generier
 7. **Polster:** wie vorgeschlagen.
 8. **Installationen aus #39 mit Kontostand** gelten als eingerichtet. Beim ersten Start wird ihr Kontostand zum Anker.
 9. **Monatskürzel** sind Knöpfe. Antippen zeigt den vollen Monatsnamen mit „gedeckt“ / „nicht gedeckt“ unter der Schote, in der Zeile statt darüber, sodass nichts überdeckt wird. Jedes Kürzel ist so breit wie seine Erbse. Der Test prüft, dass sie sich nicht überlappen, auch auf dem iPhone SE.
+
+## 4b. Änderungen nach deinem STOPP (zur Freigabe)
+
+1. **Akku-Logik:** Die Erbsen füllen sich von links bis vor den ersten Monat, dessen Stand am Monatsende unter 0 ist. Ab diesem Monat bleibt alles leer, auch wenn spätere Monate wieder im Plus wären (`podFromMonths`, Test „Minus im Februar, Plus ab Mai → nur November bis Jänner gefüllt“).
+2. **Antwort zuerst** (`PodAnswer`), in Kachel, Sheet und „Dein Plan“:
+   - Gedeckt: „Alles gedeckt bis Oktober 2027.“
+   - Lücke: „Ab Februar 2027 fehlt Geld.“, darunter „Zahl einmalig € Y ein, dann passt alles.“ und „Erledigt, eingezahlt“.
+   - „n von 12 Monaten gedeckt“ gibt es nicht mehr.
+   - Im Sheet steht der Knopf bei „Muss ich jetzt etwas tun?“ direkt darüber. Unter „Reicht es das ganze Jahr?“ stehen nur die zwei Sätze, damit es keinen zweiten Knopf gibt.
+   - In „Dein Plan“ sind die Plan-Punkte die Handlung. Wenn nur noch die einmalige Überweisung offen ist, rückt sie direkt unter den Satz.
+3. **Leere Plätze:** heller, ruhiger Platzhalter in Erbsenform ohne Minus. Nur der erste leere Platz hat einen dezenten roten Ring mit „!“-Icon.
+4. **Legende:** „1 Erbse = 1 Monat mit genug Geld“ steht unter der großen Schote. In der Kachel ist es ein ⓘ neben der Schote.
+5. **Monatskürzel:** Jedes Kürzel zeigt beim Antippen den vollen Monat, auch J/J, M/M und A/A. Der Monat, ab dem Geld fehlt, steht ausgeschrieben unter seiner Erbse.
+6. **Dev-Seite:** Zuerst kommen die vier Kachel-Zustände wie in der App, mit Beispielzahlen und je einer Überschrift. Danach folgen Einrichtung und „Dein Plan“. Der Katalog „groß und kompakt“ steht am Ende.
 
 ## 5. Kontostand-Modell (Phase B)
 
