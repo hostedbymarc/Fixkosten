@@ -345,9 +345,12 @@ export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>
  * Explanations live in these tooltips, not as visible text below a field.
  */
 export async function openInfo(page: Page, button: Locator): Promise<Locator> {
-  await (isTouchProject() ? button.tap() : button.hover());
   const pop = page.getByRole('tooltip');
-  await expect(pop).toBeVisible();
+  // a tap or hover during a sheet's slide-in can miss the moving button: trigger again only if nothing opened
+  await expect(async () => {
+    if (!(await pop.isVisible())) await (isTouchProject() ? button.tap() : button.hover());
+    await expect(pop).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 8000 });
   return pop;
 }
 
