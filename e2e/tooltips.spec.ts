@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { liveBackup } from '../tests/fixtures/live';
-import { animationsDone, appSettled, expandAll, expect, goTo, test } from './fixtures';
+import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test } from './fixtures';
 import { NEVER_IN_TOOLTIP, TOOLTIP_TEXTS } from './help-texts';
 import { OKT_TODAY } from './live';
 
@@ -59,6 +59,9 @@ async function exercise(page: Page, button: Locator, mode: Mode, seen: Collector
   const name = (await button.getAttribute('aria-label')) ?? '';
 
   if (mode.tap) {
+    // a click() earlier left the emulated mouse somewhere: after scrolling, the ⓘ can lie under it and
+    // open by hover – no mouse on a phone, so move it out of the way
+    await page.mouse.move(0, 0);
     await button.tap();
     await expect(pop, `${name}: tap opens`).toBeVisible();
     await expect(button).toHaveAttribute('aria-describedby', (await pop.getAttribute('id'))!);
@@ -172,7 +175,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(setup).toBeVisible();
       await exercise(page, info(page, 'Daten importieren'), mode, seen);
       await page.getByTestId('setup-new').click();
-      await exercise(page, info(page, 'Wo wohnst du?'), mode, seen);
+      await exercise(page, info(page, 'In welcher Währung zahlst du?'), mode, seen);
       await page.getByTestId('setup-next').click();
       await exercise(page, info(page, 'Was zahlst du nicht monatlich?'), mode, seen);
 
@@ -183,21 +186,34 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
+      // setup without an own account: „Dein Plan“ has the ⓘ „Mit einem eigenen Konto …“
+      await page.getByTestId('konto-tile').click();
+      await page.getByTestId('konto-setup-account-no').click();
+      await page.getByTestId('konto-setup-nothing').click();
+      const setupSheet = page.getByTestId('bottom-sheet');
+      await expect(page.getByTestId('konto-setup-plan')).toBeVisible();
+      await animationsDone(page, 'bottom-sheet');
+      await page.waitForTimeout(300); // the sheet settles to the plan's height
+      await exercise(page, info(setupSheet, 'Monatsbetrag zur Seite legen'), mode, seen, setupSheet);
+      await page.getByTestId('plan-order-done').click();
+      if (await page.getByTestId('plan-gap-done').count()) await page.getByTestId('plan-gap-done').click();
+      await page.getByTestId('konto-setup-finish').click();
+      await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
 
       // --- Monat
       await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
       if (await info(page, 'im Ø-Monat').count()) await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
-      await exercise(page, info(page, 'Dauerauftrag'), mode, seen);
+      await exercise(page, info(page, 'Monatsbetrag'), mode, seen);
 
       // --- Fixkostenkonto-Sheet
       await page.getByTestId('konto-tile').click();
       const kontoSheet = page.getByTestId('bottom-sheet');
       await animationsDone(page, 'bottom-sheet');
-      await exercise(page, info(kontoSheet, 'Kontostand am Monatsende'), mode, seen, kontoSheet);
+      await exercise(page, info(kontoSheet, 'Stand am Monatsende'), mode, seen, kontoSheet);
       await kontoSheet.getByTestId('konto-settings-inline').locator('summary').click();
-      await exercise(page, info(kontoSheet, 'Kontostand heute'), mode, seen, kontoSheet);
-      await kontoSheet.getByTestId('konto-positions').locator('summary').click();
-      await exercise(page, info(kontoSheet, 'Im Dauerauftrag'), mode, seen, kontoSheet);
+      await exercise(page, info(kontoSheet, 'Schon zur Seite gelegt'), mode, seen, kontoSheet);
+      await kontoSheet.getByTestId('konto-positions').locator('summary').first().click();
+      await exercise(page, info(kontoSheet, 'Eingeplante Rechnungen'), mode, seen, kontoSheet);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
 
@@ -238,11 +254,11 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
 
       // --- Analyse
       await goTo(page, 'analyse');
-      await exercise(page, info(page.getByTestId('konto-analyse'), 'Kontostand am Monatsende'), mode, seen);
+      await exercise(page, info(page.getByTestId('konto-analyse'), 'Stand am Monatsende'), mode, seen);
 
       // --- Einstellungen
       await goTo(page, 'einstellungen');
-      for (const name of ['Neuer Monat beginnt am', 'Fixkostenkonto verwenden', 'Kontostand heute', 'Design', 'Erbse wie eine App öffnen', 'Sicherung', 'Land und Währung']) {
+      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
         await exercise(page, info(page, name), mode, seen);
       }
 
@@ -266,6 +282,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(page.getByTestId('hero')).toBeVisible();
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
+      await setUpKonto(page);
       const pop = page.getByRole('tooltip');
       const open = async (button: Locator) => (tap ? button.tap() : button.hover());
       // the tile ⓘ moved to the very right edge, then to the bottom right corner (over the tab bar)

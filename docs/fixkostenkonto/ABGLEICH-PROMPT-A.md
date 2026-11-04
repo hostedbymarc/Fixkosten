@@ -72,7 +72,7 @@ Stand: Branch `claude/fixkostenkonto-sprint-kiayqr` (PR #39), nach der Umsetzung
 | Screenshots im PR | ✅ | `docs/screenshots/fixkostenkonto/` (140) |
 | Netlify Deploy Preview | ✅ | deploy-preview-39 |
 | WebKit | – | nicht gefordert; in der Umgebung nicht installiert. Manuell auf dem iPhone (Safari) prüfen. |
-| Merge-SHA ausgeben | – | nicht gemergt |
+| Merge-SHA ausgeben | ✅ | `46433c0a1d20860eca6f45327f258b47886b01c8` (Squash nach `main`, 4. 11. 2026) |
 
 ## Bekannt auf `main`: `fullpage` „Monat November“
 

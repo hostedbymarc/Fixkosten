@@ -4,7 +4,7 @@
 | „So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.“ | Monat · Kachel „Frei verfügbar“ (im Ø-Monat) | wird Tooltip – war schon ein Tooltip |
 | „So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.“ | Monat · Kachel „Fixkostenkonto“ | wird Tooltip – neu (Auftrag: Erklärung des Dauerauftrags) |
 | „Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.“ | Fixkostenkonto-Sheet, Analyse · „Kontostand am Monatsende“ | wird Tooltip |
-| „Was heute auf deinem Fixkostenkonto liegt.“ | Fixkostenkonto-Sheet, Einstellungen · „Kontostand heute“ | wird Tooltip |
+| „Was heute auf deinem Fixkostenkonto liegt.“ | Fixkostenkonto-Sheet · „Kontostand heute“ | wird Tooltip |
 | „Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.“ | Fixkostenkonto-Sheet · „Im Dauerauftrag“ | wird Tooltip – „Girokonto“ heißt in der Oberfläche jetzt „Alltagskonto“ |
 | „Fixkostenkonto: Ein zweites Konto nur für deine Rechnungen. Erbse sagt dir, wie viel du jeden Monat draufüberweist.“ / „Alltagskonto: Dein normales Konto mit Karte. Zählt nicht zum Dauerauftrag.“ | Bearbeiten-Dialog · „Von welchem Konto geht das weg?“ | wird Tooltip – neu (Text aus dem Auftrag) |
 | „Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.“ | Bearbeiten-Dialog (einmalig, Vermögensaufbau) · „Von ‚Frei verfügbar‘ abziehen“ | wird Tooltip |

@@ -3,7 +3,7 @@ import { BackupError, importIntoEmpty, readBackupFile } from '../db/backup';
 import { db } from '../db/db';
 import { completeOnboarding } from '../db/onboarding';
 import { calendarMonth } from '../lib/activeMonth';
-import { COUNTRIES, COUNTRY_FORMAT, COUNTRY_LABEL, countryFromLanguage, type Country } from '../lib/country';
+import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, countryFromLanguage, currencyOf, type Country, type Currency } from '../lib/country';
 import { FREQUENCY_LABEL } from './Chips';
 import { formatEUR, parseAmount, setFormatCountry } from '../lib/format';
 import { addPeriods, monthOf, shortMonthName } from '../lib/period';
@@ -30,7 +30,7 @@ export function SetupDialog() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<Step>('start');
-  const [country, setCountry] = useState<Country>(() => countryFromLanguage(typeof navigator === 'undefined' ? undefined : navigator.languages?.length ? navigator.languages : navigator.language));
+  const [country, setCountry] = useState<Country>(() => countryFromLanguage(browserLanguages()));
   useEffect(() => () => traceImport('setup-dialog-closed'), []);
 
   async function onFile(file: File | undefined) {
@@ -52,15 +52,15 @@ export function SetupDialog() {
 
   const titles: Record<Step, string> = {
     start: 'Daten importieren',
-    country: 'Wo wohnst du?',
+    country: 'In welcher Währung zahlst du?',
     templates: 'Was zahlst du nicht monatlich?',
   };
   // the explanation of each step lives in the ⓘ next to its title
   const infos: Record<Step, string> = {
     start:
       'Deine Fixkosten liegen nur auf diesem Gerät. Wähle eine Sicherung (JSON), um deinen Stand zu übernehmen, richte Erbse neu ein oder starte mit einer leeren App.',
-    country: 'Davon hängen Währung und Vorlagen ab. Du kannst das Land später in den Einstellungen ändern.',
-    templates: 'Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus deinen Dauerauftrag fürs Fixkostenkonto.',
+    country: 'Erbse zeigt alle Beträge in dieser Währung. Du kannst sie später in den Einstellungen ändern.',
+    templates: 'Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus, wie viel du monatlich zur Seite legst.',
   };
 
   return (
@@ -157,23 +157,22 @@ export function SetupDialog() {
 function CountryStep({ country, onChange, onBack, onNext }: { country: Country; onChange: (c: Country) => void; onBack: () => void; onNext: () => void }) {
   return (
     <>
-      <div role="radiogroup" aria-label="Land" className="mt-5 flex flex-col gap-2" data-testid="setup-countries">
-        {COUNTRIES.map((c) => {
-          const on = c === country;
+      <div role="radiogroup" aria-label="Währung" className="mt-5 flex flex-col gap-2" data-testid="setup-countries">
+        {CURRENCIES.map((c: Currency) => {
+          const on = c === currencyOf(country);
           return (
             <button
               key={c}
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => onChange(c)}
-              className={`focus-ring flex min-h-[52px] items-center justify-between rounded-2xl border px-4 text-left text-[16px] ${
+              onClick={() => onChange(countryForCurrency(c, browserLanguages()))}
+              className={`focus-ring flex min-h-[52px] items-center rounded-2xl border px-4 text-left text-[16px] ${
                 on ? 'border-accent-ink bg-accent-soft font-semibold text-ink' : 'border-edge bg-field font-medium text-ink hover:border-zinc-300'
               }`}
-              data-testid={`setup-country-${c}`}
+              data-testid={`setup-currency-${c}`}
             >
-              <span>{COUNTRY_LABEL[c]}</span>
-              <span className="text-[14px] text-ink-mute">{COUNTRY_FORMAT[c].currency}</span>
+              {CURRENCY_LABEL[c]}
             </button>
           );
         })}

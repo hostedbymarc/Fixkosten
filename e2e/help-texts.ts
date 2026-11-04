@@ -19,24 +19,24 @@ export const HELP_TEXTS: HelpText[] = [
   // ---- Tooltip: definitions, assumptions, explanations
   { texts: ['Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.'], screen: 'Monat · Hero „Abzüge vom Netto“', placement: 'tooltip', note: 'war schon ein Tooltip, jetzt mit Esc/Scroll im Sheet' },
   { texts: ['So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.'], screen: 'Monat · Kachel „Frei verfügbar“ (im Ø-Monat)', placement: 'tooltip', note: 'war schon ein Tooltip' },
-  { texts: ['So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.'], screen: 'Monat · Kachel „Fixkostenkonto“', placement: 'tooltip', note: 'neu (Auftrag: Erklärung des Dauerauftrags)' },
-  { texts: ['Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.'], screen: 'Fixkostenkonto-Sheet, Analyse · „Kontostand am Monatsende“', placement: 'tooltip' },
-  { texts: ['Was heute auf deinem Fixkostenkonto liegt.'], screen: 'Fixkostenkonto-Sheet, Einstellungen · „Kontostand heute“', placement: 'tooltip' },
-  { texts: ['Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.'], screen: 'Fixkostenkonto-Sheet · „Im Dauerauftrag“', placement: 'tooltip', note: '„Girokonto“ heißt in der Oberfläche jetzt „Alltagskonto“' },
+  { texts: ['So viel legst du jeden Monat zur Seite. Alle Abbuchungen der nächsten 12 Monate, geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.'], screen: 'Monat · Kachel „Fixkosten einplanen“', placement: 'tooltip', note: 'Erklärung des Monatsbetrags' },
+  { texts: ['Mit einem eigenen Konto und Dauerauftrag passiert das automatisch.'], screen: 'Dein Plan (ohne Konto) · „Leg jeden Monat … zur Seite“', placement: 'tooltip', note: 'neu (Text aus dem Auftrag)' },
+  { texts: ['Annahme: Der Monatsbetrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.'], screen: 'Sheet „Fixkosten einplanen“, Analyse · „Stand am Monatsende“', placement: 'tooltip' },
+  { texts: ['Was heute für deine Fixkosten bereitliegt.'], screen: 'Sheet „Fixkosten einplanen“ · „Schon zur Seite gelegt“', placement: 'tooltip' },
+  { texts: ['Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.'], screen: 'Sheet „Fixkosten einplanen“ · „Eingeplante Rechnungen“', placement: 'tooltip', note: '„Girokonto“ heißt in der Oberfläche jetzt „Alltagskonto“' },
   { texts: ['Fixkostenkonto: Ein zweites Konto nur für deine Rechnungen. Erbse sagt dir, wie viel du jeden Monat draufüberweist.', 'Alltagskonto: Dein normales Konto mit Karte. Zählt nicht zum Dauerauftrag.'], screen: 'Bearbeiten-Dialog · „Von welchem Konto geht das weg?“', placement: 'tooltip', note: 'neu (Text aus dem Auftrag)' },
   { texts: ['Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.'], screen: 'Bearbeiten-Dialog (einmalig, Vermögensaufbau) · „Von ‚Frei verfügbar‘ abziehen“', placement: 'tooltip' },
   { texts: ['Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar.'], screen: 'Bearbeiten-Dialog · „Startmonat“', placement: 'tooltip' },
   { texts: ['31 = letzter Tag des Monats'], screen: 'Bearbeiten-Dialog · „Fälligkeitstag“', placement: 'tooltip' },
   { texts: ['Wird abgezogen.', 'Kommt in diesem Monat dazu.'], screen: 'Einmalbetrag-Sheet · „Betrag“', placement: 'tooltip' },
   { texts: ['Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt.'], screen: 'Einstellungen · „Neuer Monat beginnt am“', placement: 'tooltip' },
-  { texts: ['Erbse rechnet aus, welchen Dauerauftrag dein Fixkostenkonto braucht und ob es jeden Monat reicht. Ohne Banklogin.'], screen: 'Einstellungen · „Fixkostenkonto verwenden“', placement: 'tooltip' },
-  { texts: ['Bestimmt Währung und Zahlenformat. Die Beträge selbst bleiben unverändert.'], screen: 'Einstellungen · „Land und Währung“', placement: 'tooltip' },
+  { texts: ['Erbse rechnet aus, wie viel du monatlich zur Seite legst. Und ob es jeden Monat reicht. Ohne Banklogin.'], screen: 'Einstellungen · „Fixkosten einplanen“', placement: 'tooltip' },
   { texts: ['Folgt deinem Gerät: hell oder dunkel, je nach Systemeinstellung.', 'Immer hell, auch wenn dein Gerät dunkel ist.', 'Immer dunkel, angenehm am Abend.'], screen: 'Einstellungen · „Design“', placement: 'tooltip' },
   { texts: ['In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.'], screen: 'Einstellungen · „Erbse wie eine App öffnen“', placement: 'tooltip' },
   { texts: ['Deine Daten liegen nur auf diesem Gerät. Eine Sicherung (JSON) kannst du auf einem anderen Gerät oder nach dem Löschen der Website-Daten wieder importieren.'], screen: 'Einstellungen · „Sicherung“', placement: 'tooltip' },
   { texts: ['Deine Fixkosten liegen nur auf diesem Gerät. Wähle eine Sicherung (JSON), um deinen Stand zu übernehmen, richte Erbse neu ein oder starte mit einer leeren App.'], screen: 'Einrichtung · Start', placement: 'tooltip' },
-  { texts: ['Davon hängen Währung und Vorlagen ab. Du kannst das Land später in den Einstellungen ändern.'], screen: 'Einrichtung · Land', placement: 'tooltip' },
-  { texts: ['Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus deinen Dauerauftrag fürs Fixkostenkonto.'], screen: 'Einrichtung · Vorlagen', placement: 'tooltip' },
+  { texts: ['Erbse zeigt alle Beträge in dieser Währung. Du kannst sie später in den Einstellungen ändern.'], screen: 'Einrichtung · Währung', placement: 'tooltip' },
+  { texts: ['Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus, wie viel du monatlich zur Seite legst.'], screen: 'Einrichtung · Vorlagen', placement: 'tooltip' },
 
   // ---- entfällt: doppelt
   { texts: ['Zählt zum Dauerauftrag aufs Fixkostenkonto.', 'Zählt nicht zum Dauerauftrag.'], screen: 'Bearbeiten-Dialog · unter dem Konto-Umschalter', placement: 'entfällt', note: 'steht jetzt im Tooltip des Umschalters' },
@@ -45,7 +45,7 @@ export const HELP_TEXTS: HelpText[] = [
   // ---- sichtbar: warnings and errors (never in a tooltip)
   { texts: ['Damit dein Konto nie ins Minus rutscht, zahl einmalig'], screen: 'Fixkostenkonto-Sheet, Analyse', placement: 'sichtbar', kind: 'Warnung' },
   { texts: ['Tiefster Stand ohne Einzahlung:'], screen: 'Fixkostenkonto-Sheet, Analyse', placement: 'sichtbar', kind: 'Warnung' },
-  { texts: ['Dein Kontostand steigt in 12 Monaten um'], screen: 'Fixkostenkonto-Sheet, Analyse', placement: 'sichtbar', kind: 'Warnung', note: 'Dauerauftrag höher als nötig' },
+  { texts: ['Dein Stand steigt in 12 Monaten um'], screen: 'Sheet „Fixkosten einplanen“, Analyse', placement: 'sichtbar', kind: 'Warnung', note: 'Monatsbetrag höher als nötig' },
   { texts: ['einzahlen, dann reicht es 12 Monate'], screen: 'Monat · Kachel „Fixkostenkonto“ (Startlücke)', placement: 'sichtbar', kind: 'Warnung' },
   { texts: ['Vor dem Import wird der aktuelle Stand als Sicherheitskopie gemerkt – der Import lässt sich danach rückgängig machen.'], screen: 'Import-Sheet', placement: 'sichtbar', kind: 'Warnung', note: 'Datenverlust' },
   { texts: ['Einträge aus der Datei gewinnen bei Konflikten; alles, was nur auf diesem Gerät ist, bleibt erhalten.', 'Danach sind auf diesem Gerät genau die Daten aus der Datei.'], screen: 'Import-Sheet · Zusammenführen / Ersetzen', placement: 'sichtbar', kind: 'Warnung', note: 'Datenverlust' },
@@ -70,7 +70,7 @@ export const HELP_TEXTS: HelpText[] = [
   { texts: ['Verlauf ab 3 Monaten', 'In den nächsten 2 Monaten keine Sonderzahlungen.', 'Noch nichts abgehakt.'], screen: 'Analyse, Monat, Positionsdetail', placement: 'sichtbar', kind: 'Status' },
   { texts: ['Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.'], screen: 'Analyse · Sparquote', placement: 'sichtbar', kind: 'Aktion', note: 'Leerzustand mit „Netto eintragen“' },
   { texts: ['Keine archivierten Positionen. Archivieren geht in „Positionen“ per Wischen nach links oder über das ⋯-Menü.'], screen: 'Einstellungen · Archiv', placement: 'sichtbar', kind: 'Status', note: 'Leerzustand' },
-  { texts: ['Neu: Fixkostenkonto. Erbse rechnet deinen Dauerauftrag aus.'], screen: 'Monat · Einladungskarte', placement: 'sichtbar', kind: 'Aktion' },
+  { texts: ['Neu: Fixkosten einplanen. Erbse sagt dir, wie viel du monatlich zur Seite legst.'], screen: 'Monat · Einladungskarte', placement: 'sichtbar', kind: 'Aktion' },
 ];
 
 /** Warnings and errors: they must never be inside a tooltip. Values in `…` are cut off. */

@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
+import { answerMonthCheck, setAnchor } from '../../db/kontoActions';
 import { writeKonto, type KontoSettings } from '../../db/settings';
+import { localToday } from '../../lib/activeMonth';
+import { depositDone } from '../../lib/kontoBalance';
 import { ROUNDING_CHOICES, type KontoMonth, type KontoOverview, type Rounding, type StandingOrderCause } from '../../lib/fixkostenkonto';
-import { amountToInput, formatAvg, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
+import { amountToInput, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
+import { axisPeriodLabel } from '../../lib/analytics';
+import { t } from '../../lib/kontoTexts';
 import { monthName, periodLabel } from '../../lib/period';
 import type { Period } from '../../lib/types';
 import { AlertIcon } from '../Icons';
 import { AmountField, Segmented } from '../form';
 
 /** The assumption of the simulation, visible wherever its numbers are. */
-export const KONTO_ASSUMPTION = 'Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.';
+export const KONTO_ASSUMPTION = t('sheet.assumption');
 
 /** Signed amount, never colour only: '−€ 120' with the alert icon when below 0. */
 export function SignedBalance({ value, className = '' }: { value: number; className?: string }) {
@@ -22,53 +27,25 @@ export function SignedBalance({ value, className = '' }: { value: number; classN
   );
 }
 
-/** „Damit dein Konto nie ins Minus rutscht, zahl einmalig € Y ein.“ / „Dein Konto ist gedeckt.“ */
-export function GapMessage({ overview, active }: { overview: KontoOverview; active: Period }) {
-  const { simulation } = overview;
-  const gap = Math.round(simulation.gap * 100) > 0;
-  return (
-    <div
-      className={`rounded-2xl px-3 py-3 text-[15px] leading-snug ${gap ? 'bg-warn-soft text-ink' : 'bg-paid-soft text-ink'}`}
-      data-testid="konto-gap"
-      data-gap={gap || undefined}
-      role="status"
-    >
-      {gap ? (
-        <>
-          <p className="flex items-start gap-2 font-semibold">
-            <AlertIcon size={18} className="mt-0.5 shrink-0 text-warn-icon" aria-hidden="true" />
-            <span>
-              Damit dein Konto nie ins Minus rutscht, zahl einmalig{' '}
-              <span className="num whitespace-nowrap" data-testid="konto-gap-value">
-                {formatEUR(simulation.gap)}
-              </span>{' '}
-              ein.
-            </span>
-          </p>
-          {simulation.lowestPeriod && (
-            <p className="mt-1 pl-[26px] text-[13px] text-ink-soft">
-              Tiefster Stand ohne Einzahlung: <SignedBalance value={simulation.lowest} /> Ende {monthName(simulation.lowestPeriod)}
-              {simulation.lowestPeriod.slice(0, 4) !== active.slice(0, 4) ? ` ${simulation.lowestPeriod.slice(0, 4)}` : ''}.
-            </p>
-          )}
-        </>
-      ) : (
-        <p className="font-semibold" data-testid="konto-covered">
-          Dein Konto ist gedeckt.
-        </p>
-      )}
-    </div>
-  );
-}
-
 /** Hint when the balance keeps growing: the standing order is higher than needed. */
 export function RisingHint({ overview }: { overview: KontoOverview }) {
   if (!overview.simulation.rising) return null;
   return (
     <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="konto-rising">
-      Dein Kontostand steigt in 12 Monaten um <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(overview.simulation.surplus)}</span>.
-      Der Dauerauftrag ist höher als nötig, z. B. durch die Rundung.
+      {withBold(t('sheet.rising', { betrag: '\u0000' }), formatEUR(overview.simulation.surplus))}
     </p>
+  );
+}
+
+/** A text with one bold amount in place of the \u0000 placeholder. */
+function withBold(text: string, amount: string) {
+  const [before, after] = text.split('\u0000');
+  return (
+    <>
+      {before}
+      <span className="num whitespace-nowrap font-semibold text-ink">{amount}</span>
+      {after}
+    </>
   );
 }
 
@@ -115,7 +92,10 @@ export function MonthBreakdown({ month, active }: { month: KontoMonth; active: P
   );
 }
 
-/** Month list as text: every month with its end balance; tap opens the breakdown. Also the table alternative to the chart. */
+/**
+ * Month list as a table: Monat · Einzahlung · Abbuchungen · Stand, with signs (+ in, − out); tap opens
+ * the breakdown. Also the table alternative to the chart.
+ */
 export function MonthList({
   overview,
   active,
@@ -127,35 +107,56 @@ export function MonthList({
   selected: Period | null;
   onSelect: (p: Period | null) => void;
 }) {
+  const months = overview.simulation.months;
+  // one format for each column, so the amounts line up (cents only where one of them has some)
+  const deposits = formatEURSet(...months.map((m) => m.deposit));
+  const debits = formatEURSet(...months.map((m) => m.debits));
+  const row = 'grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-x-2.5 sm:gap-x-4';
   return (
-    <ul className="divide-y divide-line" data-testid="konto-month-list">
-      {overview.simulation.months.map((m) => {
-        const open = selected === m.period;
-        return (
-          <li key={m.period}>
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => onSelect(open ? null : m.period)}
-              className="focus-ring flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-1 text-left text-[14px] hover:bg-zinc-50"
-              data-testid="konto-month-row"
-              data-period={m.period}
-            >
-              <span className="text-ink">{periodLabel(m.period)}</span>
-              <span className="flex items-center gap-3">
-                <span className="num text-[12px] text-ink-mute">{formatEUR(m.debits)} ab</span>
-                <SignedBalance value={m.end} className="font-semibold" />
-              </span>
-            </button>
-            {open && (
-              <div className="px-1 pb-3">
-                <MonthBreakdown month={m} active={active} />
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <div data-testid="konto-month-list">
+      <div className={`${row} px-1 pb-1 text-[11px] font-medium text-ink-mute sm:text-[12px]`} aria-hidden="true" data-testid="konto-month-head">
+        <span>Monat</span>
+        <span className="text-right">{t('sheet.col.deposit')}</span>
+        <span className="text-right">{t('sheet.col.debits')}</span>
+        <span className="min-w-[72px] text-right">{t('sheet.col.end')}</span>
+      </div>
+      <ul className="divide-y divide-line border-t border-line">
+        {months.map((m, i) => {
+          const open = selected === m.period;
+          const deposit = Math.round(m.deposit * 100) > 0 ? `+${deposits[i]}` : deposits[i];
+          const debit = Math.round(m.debits * 100) > 0 ? `${MINUS}${debits[i]}` : debits[i];
+          return (
+            <li key={m.period}>
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-label={`${periodLabel(m.period)}: Einzahlung ${deposit}, Abbuchungen ${debit}, Stand ${formatEUR(m.end)}`}
+                onClick={() => onSelect(open ? null : m.period)}
+                className={`focus-ring ${row} min-h-11 w-full rounded-xl px-1 text-left text-[13px] hover:bg-zinc-50 sm:text-[14px]`}
+                data-testid="konto-month-row"
+                data-period={m.period}
+              >
+                <span className="min-w-0 truncate text-ink">{axisPeriodLabel(m.period)}</span>
+                <span className="num text-right text-ink-soft" data-testid="konto-month-deposit">
+                  {deposit}
+                </span>
+                <span className="num text-right text-ink-soft" data-testid="konto-month-debits">
+                  {debit}
+                </span>
+                <span className="min-w-[72px] text-right">
+                  <SignedBalance value={m.end} className="justify-end font-semibold" />
+                </span>
+              </button>
+              {open && (
+                <div className="px-1 pb-3">
+                  <MonthBreakdown month={m} active={active} />
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -175,59 +176,44 @@ export function causeText(cause: StandingOrderCause): string {
   }
 }
 
-/** „Dauerauftrag € X / Monat“ with the exact sum, the rounding and its largest reason. */
-export function StandingOrderHeadline({ overview }: { overview: KontoOverview }) {
-  const { order } = overview;
-  return (
-    <div data-testid="konto-order">
-      <p className="text-[13px] font-medium text-ink-mute">Dauerauftrag</p>
-      <p className="num text-[30px] font-semibold leading-tight tracking-[-0.02em] text-ink">
-        <span data-testid="konto-order-value">{formatEUR(order.amount)}</span>
-        <span className="text-[16px] font-medium text-ink-mute"> / Monat</span>
-      </p>
-      <p className="text-[13px] text-ink-mute" data-testid="konto-order-exact">
-        Abbuchungen {periodLabel(order.from)} bis {periodLabel(order.to)} ÷ 12 = <span className="num">{formatAvg(order.exact)}</span>, aufgerundet auf{' '}
-        {formatEUR(order.rounding)}
-      </p>
-      {order.cause && (
-        <p className="mt-1 text-[13px] text-ink-soft" data-testid="konto-order-cause">
-          {causeText(order.cause)}
-        </p>
-      )}
-    </div>
-  );
-}
-
-/** „Kontostand heute“, „Dauerauftrag für diesen Monat schon eingegangen?“, rounding. Saved right away. */
-export function KontoInputs({ settings, active, showRounding = true }: { settings: KontoSettings; active: Period; showRounding?: boolean }) {
-  const [text, setText] = useState(amountToInput(settings.balance));
+/**
+ * „Schon zur Seite gelegt“, „Dauerauftrag für … schon eingegangen?“ (without account: „Für … schon zur Seite gelegt?“), rounding. Saved right away:
+ * a balance typed here is a new anchor, the answer is this month's check.
+ */
+export function KontoInputs({ settings, active, balance, showRounding = true }: { settings: KontoSettings; active: Period; balance?: number; showRounding?: boolean }) {
+  const shown = balance ?? settings.balance;
+  const [text, setText] = useState(amountToInput(shown));
   const [dirty, setDirty] = useState(false);
   // a change from elsewhere (import, the other screen) shows up unless the field is being edited
   useEffect(() => {
-    if (!dirty) setText(amountToInput(settings.balance));
-  }, [settings.balance, dirty]);
+    if (!dirty) setText(amountToInput(shown));
+  }, [shown, dirty]);
   const parsed = text.trim() === '' ? 0 : parseAmount(text);
-  const received = settings.receivedFor === active;
+  const received = depositDone(settings, active);
   return (
     <div className="flex flex-col gap-4" data-testid="konto-inputs">
       <AmountField
-        label="Kontostand heute"
+        label={t('settings.balance')}
         value={text}
         onChange={(v) => {
           setText(v);
           setDirty(true);
           const value = v.trim() === '' ? 0 : parseAmount(v);
-          if (value !== null) void writeKonto(db, { balance: value });
+          if (value !== null) void setAnchor(db, value, localToday());
         }}
         placeholder="0"
         error={parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.250,00' : null}
-        info="Was heute auf deinem Fixkostenkonto liegt."
+        info={t('sheet.balance.info')}
         testId="konto-balance"
       />
       <Segmented<'yes' | 'no'>
-        label={`Dauerauftrag für ${monthName(active)} schon eingegangen?`}
+        label={t(settings.hasAccount === false ? 'sheet.received.plan' : 'sheet.received', { monat: monthName(active) })}
         value={received ? 'yes' : 'no'}
-        onChange={(v) => void writeKonto(db, { receivedFor: v === 'yes' ? active : null })}
+        onChange={(v) =>
+          void answerMonthCheck(db, active, v === 'yes', localToday()).then(() =>
+            writeKonto(db, { receivedFor: v === 'yes' ? active : null, ...(v === 'yes' && settings.orderStartsAfter === active ? { orderStartsAfter: null } : {}) }),
+          )
+        }
         options={[
           { value: 'yes', label: 'Ja' },
           { value: 'no', label: 'Nein' },
@@ -235,7 +221,7 @@ export function KontoInputs({ settings, active, showRounding = true }: { setting
       />
       {showRounding && (
         <Segmented<string>
-          label="Dauerauftrag aufrunden auf"
+          label={t('sheet.rounding')}
           value={String(settings.rounding)}
           onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
           options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}

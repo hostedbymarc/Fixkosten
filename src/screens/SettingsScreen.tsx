@@ -4,10 +4,14 @@ import { FEATURE_REMINDERS } from '../lib/features';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ConfirmSheet } from '../components/ConfirmSheet';
 import { Segmented, SelectField, SwitchField } from '../components/form';
-import { KontoInputs } from '../components/konto/KontoParts';
+import { useKontoState } from '../components/konto/KontoSheet';
+import { KontoSetup } from '../components/konto/KontoTile';
+import { orderDay } from '../lib/kontoBalance';
+import { t } from '../lib/kontoTexts';
+import { KontoStatusLine } from '../components/konto/KontoStatusView';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
-import { COUNTRIES, COUNTRY_FORMAT, COUNTRY_LABEL, DEFAULT_COUNTRY, toCountry } from '../lib/country';
+import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, currencyOf, DEFAULT_COUNTRY, type Currency } from '../lib/country';
 import { InfoTip } from '../components/InfoTip';
 import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
@@ -61,7 +65,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
       <div className="flex max-w-2xl flex-col gap-6">
         <AppearanceSection />
         <MonthSection />
-        <KontoSection />
+        <KontoSection ds={ds} />
         <CountrySection />
 
         <section aria-labelledby="archive-title">
@@ -336,45 +340,117 @@ function AppearanceSection() {
   );
 }
 
-/** Fixkostenkonto: on/off, „Kontostand heute“, „schon eingegangen?“, rounding (meta, carried by backups). */
-function KontoSection() {
+/**
+ * Fixkostenkonto: the switch with a visible sentence for each state; when on, a summary (balance and
+ * since when, standing order, rounding) and „Einrichtung ändern“, which opens the setup again.
+ */
+function KontoSection({ ds }: { ds: Dataset }) {
   const { settings } = useKonto();
   const active = useActiveMonth();
+  const start = useMonthStart();
+  const state = useKontoState(ds, active);
+  const [setup, setSetup] = useState(false);
+  const asOf = settings.anchor ? formatDate(settings.anchor.at.slice(0, 10)) : null;
   return (
     <section aria-labelledby="konto-title">
       <h2 id="konto-title" className="section-title mb-2 px-1">
-        Fixkostenkonto
+        {t('settings.title')}
       </h2>
       <div className="glass flex flex-col gap-4 p-4" data-testid="konto-settings">
         <SwitchField
-          label="Fixkostenkonto verwenden"
+          label={t('settings.switch')}
           checked={settings.enabled}
           onChange={(v) => void writeKonto(db, { enabled: v, ...(v ? {} : { inviteDismissed: true }) })}
-          info="Erbse rechnet aus, welchen Dauerauftrag dein Fixkostenkonto braucht und ob es jeden Monat reicht. Ohne Banklogin."
+          hint={<span data-testid="konto-enabled-text">{t(settings.enabled ? 'settings.on' : 'settings.off')}</span>}
+          info={t('settings.info')}
           testId="konto-enabled"
         />
-        {settings.enabled && <KontoInputs settings={settings} active={active} />}
+        {settings.enabled && (
+          <>
+            {settings.setupDone && (
+              <div className="flex flex-col gap-3 border-t border-line pt-3">
+                {/* the same status, standing order and gap as tile, sheet and „Dein Plan“ (kontoState) */}
+                <KontoStatusLine state={state} withAction={false} testId="settings-status" />
+                <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 text-[15px]" data-testid="konto-summary">
+                  <dt className="text-ink-soft">{t('settings.balance')}</dt>
+                  <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-balance">
+                    {formatEUR(state.balance)}
+                  </dd>
+                  {asOf && (
+                    <>
+                      <dt className="sr-only">Stand</dt>
+                      <dd className="col-span-2 -mt-1.5 text-[13px] text-ink-mute" data-testid="konto-summary-asof">
+                        {t('settings.asOf', { datum: asOf })}
+                      </dd>
+                    </>
+                  )}
+                  <dt className="text-ink-soft">{t(state.hasAccount ? 'settings.order' : 'settings.monthly')}</dt>
+                  <dd className="num text-right font-semibold text-ink">
+                    <span data-testid="konto-summary-order">{formatEUR(state.order)}</span> {orderDay(start)}
+                  </dd>
+                  {state.gap > 0 && (
+                    <>
+                      <dt className="text-ink-soft">{t('settings.gap')}</dt>
+                      <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-gap">
+                        {formatEUR(state.gap)}
+                      </dd>
+                    </>
+                  )}
+                  <dt className="text-ink-soft">{t('settings.rounding')}</dt>
+                  <dd className="num text-right text-ink" data-testid="konto-summary-rounding">
+                    {formatEUR(settings.rounding)}
+                  </dd>
+                </dl>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setSetup(true)}
+              className="focus-ring h-11 self-start rounded-xl px-4 text-[15px] font-semibold text-accent-ink glass-inset bg-surface hover:bg-accent-soft"
+              data-testid="konto-setup-edit"
+            >
+              {settings.setupDone ? t('settings.edit') : t('status.setup')}
+            </button>
+          </>
+        )}
       </div>
+      {setup && (
+        <KontoSetup
+          ds={ds}
+          active={active}
+          restart
+          onClose={() => setSetup(false)}
+          onDone={() => {
+            setSetup(false);
+            window.location.hash = '#monat';
+          }}
+        />
+      )}
     </section>
   );
 }
 
-/** Land: currency and number format (CH: CHF), templates of the setup. Stored in meta, carried by backups. */
+/**
+ * Währung: Euro or Schweizer Franken. The internal country (number format, templates) follows from it
+ * and the browser language (src/lib/country.ts). Stored in meta, carried by backups.
+ */
 function CountrySection() {
   const stored = useLiveQuery(() => readCountryRaw(db), []);
-  const country = stored ?? DEFAULT_COUNTRY;
+  const currency = currencyOf(stored ?? DEFAULT_COUNTRY);
   return (
     <section aria-labelledby="country-title">
       <h2 id="country-title" className="section-title mb-2 px-1">
-        Land
+        Währung
       </h2>
       <div className="glass flex flex-col gap-2 p-4" data-testid="country-settings">
-        <SelectField
-          label="Land und Währung"
-          value={country}
-          onChange={(v) => void writeCountry(db, toCountry(v))}
-          options={COUNTRIES.map((c) => ({ value: c, label: `${COUNTRY_LABEL[c]} · ${COUNTRY_FORMAT[c].currency}` }))}
-          info="Bestimmt Währung und Zahlenformat. Die Beträge selbst bleiben unverändert."
+        <Segmented<Currency>
+          label="Währung"
+          value={currency}
+          onChange={(c) => {
+            if (c !== currency) void writeCountry(db, countryForCurrency(c, browserLanguages()));
+          }}
+          options={CURRENCIES.map((c) => ({ value: c, label: CURRENCY_LABEL[c] }))}
+          gridClass="grid-cols-1 sm:grid-cols-2"
         />
       </div>
     </section>

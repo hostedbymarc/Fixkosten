@@ -1,9 +1,10 @@
 import { useKonto } from '../../db/useKonto';
 import { shortPeriodLabel } from '../../lib/analytics';
 import { formatEUR } from '../../lib/format';
+import { t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
-import { GapMessage } from './KontoParts';
-import { KontoSimulationView, useKontoOverview } from './KontoSheet';
+import { KontoSimulationView, useKontoState } from './KontoSheet';
+import { KontoStatusLine } from './KontoStatusView';
 
 /** Analysis section „Fixkostenkonto“: the balance simulation of the next 12 months (mode on only). */
 export function KontoSection({ ds, today }: { ds: Dataset; today: Period }) {
@@ -13,24 +14,26 @@ export function KontoSection({ ds, today }: { ds: Dataset; today: Period }) {
 }
 
 function KontoSectionOn({ ds, today }: { ds: Dataset; today: Period }) {
-  const overview = useKontoOverview(ds, today);
+  const state = useKontoState(ds, today);
+  const { overview } = state;
   const months = overview.simulation.months;
   return (
     <section aria-labelledby="konto-analyse-title" data-testid="konto-analyse" className="min-w-0">
       <h2 id="konto-analyse-title" className="section-title px-1">
-        Fixkostenkonto
+        {t('settings.title')}
       </h2>
       <p className="num mb-3 px-1 text-[12px] text-ink-mute">
         {months[0] && months[months.length - 1] ? `${shortPeriodLabel(months[0].period)} – ${shortPeriodLabel(months[months.length - 1]!.period)}` : ''}
       </p>
       <div className="glass flex min-w-0 flex-col gap-4 p-4">
         <div className="mb-1 min-w-0">
-          <p className="text-[13px] font-medium text-ink-mute">Dauerauftrag</p>
+          <p className="text-[13px] font-medium text-ink-mute">{t(state.hasAccount ? 'settings.order' : 'settings.monthly')}</p>
           <p className="num truncate text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink" data-testid="konto-analyse-order">
-            {formatEUR(overview.order.amount)} / Monat
+            {formatEUR(state.order)} / Monat
           </p>
         </div>
-        <GapMessage overview={overview} active={today} />
+        {/* the same status as tile and sheet (kontoState) */}
+        <KontoStatusLine state={state} testId="analyse-status" />
         <KontoSimulationView overview={overview} active={today} chartHeight={240} />
       </div>
     </section>
