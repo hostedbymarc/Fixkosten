@@ -71,7 +71,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // D = all debits of the 12 months from next month on ÷ 12, rounded up to € 5. Without a change in
         // those months (no hint line) that is the Ø pro Monat (seed: Fixkosten on the Fixkostenkonto).
         const exactText = (await sheet.getByTestId('konto-order-exact').textContent())!;
-        const exact = amountOf(exactText.match(/€\s?[\d.,]+/)![0]);
+        const exact = amountOf(exactText.match(/€\s?\d[\d.]*(,\d+)?/)![0]);
         expect(order).toBe(Math.ceil(Math.round(exact * 100) / 500) * 5);
         if ((await sheet.getByTestId('konto-order-cause').count()) === 0) expect(exact).toBeCloseTo(avg, 2);
         else await expect(sheet.getByTestId('konto-order-cause')).toHaveText(/^(Mehr|Weniger), weil /);
@@ -188,7 +188,7 @@ test('Position aufs Alltagskonto: Dauerauftrag sinkt um ihren Monatsanteil', asy
   await page.getByTestId('konto-tile').click();
   const exact = async () => {
     const text = (await page.getByTestId('konto-order-exact').textContent())!;
-    return amountOf(text.match(/€\s?[\d.,]+/)![0]);
+    return amountOf(text.match(/€\s?\d[\d.]*(,\d+)?/)![0]);
   };
   const before = await exact();
   await page.keyboard.press('Escape');
