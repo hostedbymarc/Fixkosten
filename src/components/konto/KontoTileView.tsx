@@ -4,7 +4,7 @@ import { podText, type Pod, type TileState } from '../../lib/schote';
 import { t } from '../../lib/schoteTexts';
 import { InfoTip } from '../InfoTip';
 import { Pea, PeaOpen } from '../Pea';
-import { PeaPod } from './PeaPod';
+import { PeaPod, PodAnswer } from './PeaPod';
 
 /** Explanation of the standing order (the ⓘ next to the title). */
 export const ORDER_INFO =
@@ -50,10 +50,11 @@ export function KontoTileView(props: KontoTileProps) {
   if (props.state === 'setup') return <SetupTile {...props} />;
   const { state, pod, order, gap, cushion, streak, onOpen, onPaid, buttonRef, day } = props;
   const text = podText(pod);
+  const orderText = t('tile.order', { betrag: formatEUR(order), tag: day }).replace(/\.$/, '');
   const label =
     state === 'gap'
-      ? `Fixkostenkonto: ${text}. ${t('tile.gap.text', { betrag: formatEUR(gap) })}. Details öffnen`
-      : `Fixkostenkonto: ${text}. ${t('tile.order', { betrag: formatEUR(order), tag: day }).replace(/\.$/, '')}. Details öffnen`;
+      ? `Fixkostenkonto: ${text} ${t('pod.short.action', { betrag: formatEUR(gap) })} ${orderText}. Details öffnen`
+      : `Fixkostenkonto: ${text} ${orderText}. Details öffnen`;
   return (
     <section className="glass glass-tile tone-pea surface press relative min-w-0 p-4 md:p-5 xl:p-6" data-testid="konto-tile-card" data-state={state}>
       <div className="flex min-w-0 items-center gap-2">
@@ -64,30 +65,23 @@ export function KontoTileView(props: KontoTileProps) {
         <span className="flex-1" />
         {streak && <StreakBadge streak={streak} />}
       </div>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={onOpen}
-        className="mt-2 block w-full min-w-0 rounded-lg text-left outline-none after:absolute after:inset-0 after:rounded-[20px] after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-focus"
-        data-testid="konto-tile"
-        aria-label={label}
-      >
+      {/* answer first, then the pod */}
+      <div className="mt-2">
+        <PodAnswer pod={pod} gap={gap} onPaid={state === 'gap' ? onPaid : undefined} size="compact" testId="tile-answer" />
+      </div>
+      <div className="mt-3 flex min-w-0 items-center gap-1">
         <PeaPod pod={pod} size="compact" testId="tile-pod" />
-        <span className="mt-1 block text-[13px] leading-5 text-ink-soft lg:text-[14px]" data-testid="konto-tile-sub">
-          {state === 'gap' ? (
-            <>
-              Noch <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(gap)}</span> einzahlen, dann ist alles gedeckt
-            </>
-          ) : (
-            <>
-              Dauerauftrag <span className="num whitespace-nowrap font-semibold text-ink" data-testid="konto-tile-value">
-                {formatEUR(order)}
-              </span>{' '}
-              {day}
-            </>
-          )}
-        </span>
-      </button>
+        <InfoTip label="Erklärung: Schote" title="Schote" className="relative z-10 -my-3 shrink-0" testId="konto-tile-legend">
+          <p>{t('pod.legend')}.</p>
+        </InfoTip>
+      </div>
+      <p className="mt-1 text-[13px] leading-5 text-ink-soft lg:text-[14px]" data-testid="konto-tile-sub">
+        Dauerauftrag{' '}
+        <span className="num whitespace-nowrap font-semibold text-ink" data-testid="konto-tile-value">
+          {formatEUR(order)}
+        </span>{' '}
+        {day}
+      </p>
       {state === 'cushion' && cushion !== null && (
         <p className="mt-2" data-testid="konto-tile-cushion">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-paid-soft px-2.5 py-1 text-[12px] font-semibold text-paid-ink">
@@ -96,16 +90,15 @@ export function KontoTileView(props: KontoTileProps) {
           </span>
         </p>
       )}
-      {state === 'gap' && onPaid && (
-        <button
-          type="button"
-          onClick={onPaid}
-          className="focus-ring relative z-10 mt-3 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto"
-          data-testid="konto-tile-paid"
-        >
-          {t('tile.gap.action')}
-        </button>
-      )}
+      {/* the whole card opens the sheet; the ⓘ and „Erledigt, eingezahlt“ sit above this layer (z-10) */}
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={onOpen}
+        className="absolute inset-0 rounded-[20px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        data-testid="konto-tile"
+        aria-label={label}
+      />
     </section>
   );
 }

@@ -9,7 +9,7 @@ import { MILESTONE_TEXT, t } from '../../lib/schoteTexts';
 import { useMonthStart } from '../../lib/useToday';
 import { AlertIcon } from '../Icons';
 import { Pea } from '../Pea';
-import { PeaPod } from './PeaPod';
+import { PeaPod, PodAnswer } from './PeaPod';
 import { useKonto } from '../../db/useKonto';
 import { type KontoOverview } from '../../lib/fixkostenkonto';
 import { kontoState, type KontoState } from '../../lib/kontoBalance';
@@ -95,6 +95,8 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
         </Question>
 
         <Question title={t('sheet.q3')} testId="konto-q-year">
+          {/* answer first; the button for the one-time transfer is the one in „Muss ich jetzt etwas tun?“ */}
+          <PodAnswer pod={state.pod} gap={state.gap} testId="sheet-answer" />
           <PeaPod pod={state.pod} size="large" testId="sheet-pod" />
           <KontoSimulationView overview={overview} active={active} />
         </Question>

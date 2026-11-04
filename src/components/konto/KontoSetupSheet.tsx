@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from 'react';
 import { amountToInput, formatEUR, parseAmount } from '../../lib/format';
-import { periodLabel } from '../../lib/period';
-import { podText, type Pod } from '../../lib/schote';
+import { type Pod } from '../../lib/schote';
 import { t } from '../../lib/schoteTexts';
 import { BottomSheet } from '../BottomSheet';
 import { AmountField } from '../form';
 import { Pea, PeaOpen } from '../Pea';
-import { PeaPod } from './PeaPod';
+import { PeaPod, PodAnswer } from './PeaPod';
 
 /** Answer to „Ist der Dauerauftrag für November schon eingegangen?“ */
 export type OrderAnswer = 'yes' | 'no' | 'none';
@@ -234,16 +233,33 @@ function Plan({
     }
   }
 
-  const until = now.pod.coveredUntil;
+  // answer first: the sentence, then the action. While other points are open the action is the list
+  // below; once the one-time transfer is the only point left, it comes right under the sentence.
+  const gapLast = gap > 0 && !r.gapDone && r.orderDone && (r.hasAccount || r.accountDone);
+  const gapAction = gapLast ? (
+    <div className="mt-1" data-testid="plan-gap">
+      <p className="pod-answer-action">
+        Zahl einmalig <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(gap)}</span> ein, dann passt alles.
+      </p>
+      <button
+        type="button"
+        onClick={() => set({ gapDone: true })}
+        className="focus-ring mt-2 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto"
+        data-testid="plan-gap-done"
+      >
+        {t('tile.gap.action')}
+      </button>
+    </div>
+  ) : (
+    <></>
+  );
   return (
     <div className="flex flex-col gap-5" data-testid="konto-setup-plan" data-done={allDone || undefined}>
       <div>
-        <PeaPod pod={now.pod} size="large" hideText testId="plan-pod" />
-        <p className="pod-text" data-testid="plan-pod-text" aria-live="polite">
-          {allDone && until ? t('plan.full', { monat: periodLabel(until) }) : podText(now.pod)}
-        </p>
+        <PodAnswer pod={now.pod} gap={gap} action={gapAction} testId="plan-answer" />
+        <PeaPod pod={now.pod} size="large" testId="plan-pod" />
         {!anyDone && (
-          <p className="mt-1 text-[14px] leading-snug text-ink-soft" data-testid="plan-pending">
+          <p className="mt-2 text-[14px] leading-snug text-ink-soft" data-testid="plan-pending">
             {t('plan.pending')}
           </p>
         )}
@@ -267,8 +283,8 @@ function Plan({
             {copied ? t('plan.copied') : t('plan.copy')}
           </button>
         </PlanItem>
-        {gap > 0 && (
-          <PlanItem done={r.gapDone} onDone={() => set({ gapDone: !r.gapDone })} testId="plan-gap">
+        {gap > 0 && !gapLast && (
+          <PlanItem done={r.gapDone} onDone={() => set({ gapDone: !r.gapDone })} testId="plan-gap-item">
             Einmalig <span className="num whitespace-nowrap font-semibold">{formatEUR(gap)}</span> überweisen
           </PlanItem>
         )}

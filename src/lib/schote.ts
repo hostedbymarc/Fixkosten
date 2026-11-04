@@ -1,9 +1,11 @@
-// The pea pod („Schote“): 12 slots = the next 12 months of the Fixkostenkonto. A month is covered
-// when its month-end balance is ≥ 0. Everything here is derived from the month-end balances of
+// The pea pod („Schote“): 12 slots = the next 12 months of the Fixkostenkonto. It fills like a
+// battery: from the left up to the first month whose month-end balance is below 0. That month and
+// everything after it stay empty, even when a later month is back in the plus – no gaps in the row. Everything here is derived from the month-end balances of
 // simulateKonto (src/lib/fixkostenkonto.ts); nothing is stored.
 
 import type { MonthStart } from './activeMonth';
 import { periodLabel } from './period';
+import { t } from './schoteTexts';
 import type { Period } from './types';
 
 export interface PodSlot {
@@ -13,8 +15,10 @@ export interface PodSlot {
 
 export interface Pod {
   slots: PodSlot[];
-  /** number of covered months */
+  /** number of covered months (= index of the first short month) */
   covered: number;
+  /** first month whose month-end balance is below 0, or null */
+  shortFrom: Period | null;
   /** every slot covered */
   full: boolean;
   /** last month of the pod when every slot is covered, else null */
@@ -25,24 +29,23 @@ const cents = (v: number) => Math.round(v * 100);
 
 /** Pod from the month-end balances (one per month, in order). */
 export function podFromMonths(months: { period: Period; end: number }[]): Pod {
-  const slots = months.map((m) => ({
-    period: m.period,
-    covered: cents(m.end) >= 0,
-  }));
-  const covered = slots.filter((s) => s.covered).length;
+  const first = months.findIndex((m) => cents(m.end) < 0);
+  const covered = first === -1 ? months.length : first;
+  const slots = months.map((m, i) => ({ period: m.period, covered: i < covered }));
   const full = slots.length > 0 && covered === slots.length;
   return {
     slots,
     covered,
+    shortFrom: first === -1 ? null : months[first]!.period,
     full,
     coveredUntil: full ? (slots.at(-1)?.period ?? null) : null,
   };
 }
 
-/** The sentence next to the pod; the screen reader reads the same. */
+/** The answer above every pod: „Alles gedeckt bis Oktober 2027.“ / „Ab Februar 2027 fehlt Geld.“ */
 export function podText(pod: Pod): string {
-  if (pod.coveredUntil) return `Gedeckt bis ${periodLabel(pod.coveredUntil)}`;
-  return `${pod.covered} von ${pod.slots.length} Monaten gedeckt`;
+  if (pod.shortFrom) return t('pod.short', { monat: periodLabel(pod.shortFrom) });
+  return t('pod.until', { monat: periodLabel(pod.coveredUntil ?? pod.slots.at(-1)?.period ?? '') });
 }
 
 /**

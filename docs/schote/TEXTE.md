@@ -1,13 +1,14 @@
 | Bereich | Schlüssel | Text | Wörter je Satz |
 |---|---|---|---|
-| Schote | `pod.until` | Gedeckt bis {monat} | 3 |
-| Schote | `pod.count` | {n} von {gesamt} Monaten gedeckt | 5 |
+| Schote | `pod.until` | Alles gedeckt bis {monat}. | 4 |
+| Schote | `pod.short` | Ab {monat} fehlt Geld. | 4 |
+| Schote | `pod.short.action` | Zahl einmalig {betrag} ein, dann passt alles. | 7 |
+| Schote | `pod.legend` | 1 Erbse = 1 Monat mit genug Geld | 7 |
 | Schote | `pod.month.covered` | {monat}: gedeckt | 2 |
 | Schote | `pod.month.open` | {monat}: nicht gedeckt | 3 |
 | Kachel | `tile.title` | Fixkostenkonto | 1 |
 | Kachel | `tile.setup.title` | Fixkostenkonto einrichten | 2 |
 | Kachel | `tile.setup.progress` | {n} von 3 Schritten | 4 |
-| Kachel | `tile.gap.text` | Noch {betrag} einzahlen, dann ist alles gedeckt | 7 |
 | Kachel | `tile.gap.action` | Erledigt, eingezahlt | 2 |
 | Kachel | `tile.order` | Dauerauftrag {betrag} {tag} | 3 |
 | Kachel | `tile.cushion` | Polster: {monate} Monate | 3 |
@@ -40,7 +41,6 @@
 | Dein Plan | `plan.done` | Erledigt | 1 |
 | Dein Plan | `plan.gap` | Einmalig {betrag} überweisen | 3 |
 | Dein Plan | `plan.pending` | Erledige die Punkte, dann füllt sich die Schote. | 8 |
-| Dein Plan | `plan.full` | Alles gedeckt bis {monat} | 4 |
 | Dein Plan | `plan.finish` | Fertig | 1 |
 | Erbsen-Check (B) | `check.month` | Neuer Monat. Ist dein Dauerauftrag eingegangen? | 2 · 4 |
 | Erbsen-Check (B) | `check.month.again` | Ist dein Dauerauftrag für {monat} eingegangen? | 6 |
