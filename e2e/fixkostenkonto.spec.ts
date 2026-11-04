@@ -2,9 +2,9 @@ import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import { animationsDone, appSettled, expect, FIXTURE, goTo, openInfo, setUpKonto, test, TODAY } from './fixtures';
 
-// Fixkostenkonto sprint: onboarding AT/DE/CH, activation through the invitation card, sheet with
-// Startlücke, analysis section – on iPhone SE, iPhone 15, iPad portrait/landscape and desktop 1440,
-// light and dark. Runs in the desktop project only; every viewport is its own context below.
+// „Fixkosten einplanen“ (internally Fixkostenkonto): onboarding with the currency only (Euro with
+// de-AT / de-DE, Franken), activation through the invitation card, sheet with the one-time amount,
+// analysis section – on iPhone SE, iPhone 15, iPad portrait/landscape and desktop 1440, light and dark. Runs in the desktop project only; every viewport is its own context below.
 
 const DIR = 'docs/screenshots/fixkostenkonto';
 mkdirSync(DIR, { recursive: true });
@@ -47,11 +47,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
 
       test('bestehende Installation: Einladungskarte → Aktivieren → Kachel → Sheet mit Startlücke', async ({ page }) => {
-    test.setTimeout(90_000); // setup plan + six full-page screenshots: ~28 s at 1440 px
+        test.setTimeout(90_000); // setup plan + six full-page screenshots: ~28 s at 1440 px
         await importApp(page);
         // existing installation: four tiles as before, one invitation card, no Fixkostenkonto tile
         await expect(page.getByTestId('konto-invite')).toBeVisible();
-        await expect(page.getByTestId('konto-invite')).toContainText('Neu: Fixkostenkonto. Erbse rechnet deinen Dauerauftrag aus.');
+        await expect(page.getByTestId('konto-invite')).toContainText('Neu: Fixkosten einplanen. Erbse sagt dir, wie viel du monatlich zur Seite legst.');
         await expect(page.getByTestId('konto-tile')).toHaveCount(0);
         const avg = amountOf((await page.getByTestId('kpi-value').textContent())!);
         await shot(page, vp, scheme, '1-einladung');
@@ -77,7 +77,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(order).toBe(Math.ceil(Math.round(exact * 100) / 500) * 5);
         if ((await sheet.getByTestId('konto-order-cause').count()) === 0) expect(exact).toBeCloseTo(avg, 2);
         else await expect(sheet.getByTestId('konto-order-cause')).toHaveText(/^(Mehr|Weniger), weil /);
-        // the assumption is in the ⓘ next to „Kontostand am Monatsende“
+        // the assumption is in the ⓘ next to „Stand am Monatsende“
         const assumption = await openInfo(page, sheet.getByTestId('konto-assumption'));
         await expect(assumption).toContainText('vor allen Abbuchungen');
         await page.keyboard.press('Escape');
@@ -102,10 +102,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(detail).toContainText('Abbuchungen');
         await expect(detail).toContainText('Stand am Monatsende');
 
-        // Kontostand heute high enough → covered
+        // „Schon zur Seite gelegt“ high enough → planned
         await sheet.getByTestId('konto-settings-inline').locator('summary').click();
         await sheet.getByTestId('konto-balance').fill('20000');
-        await expect(sheet.getByTestId('sheet-status-text')).toHaveText(/^Alles gedeckt bis \S+ \d{4}\.$/);
+        await expect(sheet.getByTestId('sheet-status-text')).toHaveText(/^Alles eingeplant bis \S+ \d{4}\.$/);
         await sheet.getByTestId('konto-balance').fill('0');
         await shot(page, vp, scheme, '4-sheet-eingaben');
         await page.keyboard.press('Escape');
@@ -139,45 +139,55 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-tile')).toBeVisible();
       });
 
-      for (const country of ['AT', 'DE', 'CH'] as const) {
-        test(`Onboarding ${country}: Land → Vorlage mit eigenem Betrag → Monat mit Kachel`, async ({ page }) => {
-          await page.clock.setFixedTime(TODAY);
-          await page.goto('/');
-          await expect(page.getByTestId('setup-dialog')).toBeVisible();
-          if (country === 'AT') await shot(page, vp, scheme, '7-onboarding-start');
-          await page.getByTestId('setup-new').click();
-          await page.getByTestId(`setup-country-${country}`).click();
-          await expect(page.getByTestId(`setup-country-${country}`)).toHaveAttribute('aria-checked', 'true');
-          if (country === 'AT') await shot(page, vp, scheme, '8-onboarding-land');
-          await page.getByTestId('setup-next').click();
-          const first = page.getByTestId('setup-template').first();
-          await first.getByTestId('setup-template-toggle').click();
-          const amount = first.getByTestId('setup-template-amount');
-          // the amount is ALWAYS empty: nothing is made up
-          await expect(amount).toHaveValue('');
-          await expect(page.getByTestId('setup-finish')).toBeDisabled();
-          await amount.fill(country === 'CH' ? '335' : '120');
-          await expect(page.getByTestId('setup-finish')).toBeEnabled();
-          await shot(page, vp, scheme, `9-onboarding-vorlagen-${country}`);
-          await page.getByTestId('setup-finish').click();
+      for (const [country, currency, locale] of [
+        ['AT', 'EUR', 'de-AT'],
+        ['DE', 'EUR', 'de-DE'],
+        ['CH', 'CHF', 'de-AT'],
+      ] as const) {
+        test.describe(`Sprache ${locale}`, () => {
+          test.use({ locale });
+          test(`Onboarding ${country}: Währung ${currency} → Vorlage mit eigenem Betrag → Monat mit Kachel`, async ({ page }) => {
+            await page.clock.setFixedTime(TODAY);
+            await page.goto('/');
+            await expect(page.getByTestId('setup-dialog')).toBeVisible();
+            if (country === 'AT') await shot(page, vp, scheme, '7-onboarding-start');
+            await page.getByTestId('setup-new').click();
+            // only the currency: exactly two options, no country
+            await expect(page.getByTestId('setup-countries').getByRole('radio')).toHaveText(['Euro (€)', 'Schweizer Franken (CHF)']);
+            await expect(page.getByText(/Österreich|Deutschland|Schweiz\b/)).toHaveCount(0);
+            await page.getByTestId(`setup-currency-${currency}`).click();
+            await expect(page.getByTestId(`setup-currency-${currency}`)).toHaveAttribute('aria-checked', 'true');
+            if (country === 'AT') await shot(page, vp, scheme, '8-onboarding-waehrung');
+            await page.getByTestId('setup-next').click();
+            const first = page.getByTestId('setup-template').first();
+            await first.getByTestId('setup-template-toggle').click();
+            const amount = first.getByTestId('setup-template-amount');
+            // the amount is ALWAYS empty: nothing is made up
+            await expect(amount).toHaveValue('');
+            await expect(page.getByTestId('setup-finish')).toBeDisabled();
+            await amount.fill(country === 'CH' ? '335' : '120');
+            await expect(page.getByTestId('setup-finish')).toBeEnabled();
+            await shot(page, vp, scheme, `9-onboarding-vorlagen-${country}`);
+            await page.getByTestId('setup-finish').click();
 
-          await expect(page.getByTestId('setup-dialog')).toHaveCount(0);
-          await appSettled(page);
-          const tile = page.getByTestId('konto-tile');
-          await expect(tile).toBeVisible();
-          await expect(page.getByTestId('konto-invite')).toHaveCount(0);
-          await setUpKonto(page);
-          const value = (await page.getByTestId('konto-tile-value').textContent())!;
-          // annual or quarterly template → monthly share, rounded up to 5
-          if (country === 'CH') {
-            expect(value).toMatch(/^CHF\s30$/); // Serafe 335 / 12 = 27,92 → 30
-          } else if (country === 'DE') {
-            expect(value).toMatch(/^40\s€$/); // Rundfunkbeitrag 120 / 3 = 40
-          } else {
-            expect(value).toMatch(/^€\s40$/); // ORF-Beitrag 120 / 3 = 40
-          }
-          await tile.scrollIntoViewIfNeeded();
-          await shot(page, vp, scheme, `10-onboarding-fertig-${country}`);
+            await expect(page.getByTestId('setup-dialog')).toHaveCount(0);
+            await appSettled(page);
+            const tile = page.getByTestId('konto-tile');
+            await expect(tile).toBeVisible();
+            await expect(page.getByTestId('konto-invite')).toHaveCount(0);
+            await setUpKonto(page);
+            const value = (await page.getByTestId('konto-tile-value').textContent())!;
+            // annual or quarterly template → monthly share, rounded up to 5
+            if (country === 'CH') {
+              expect(value).toMatch(/^CHF\s30$/); // Serafe 335 / 12 = 27,92 → 30
+            } else if (country === 'DE') {
+              expect(value).toMatch(/^40\s€$/); // Rundfunkbeitrag 120 / 3 = 40
+            } else {
+              expect(value).toMatch(/^€\s40$/); // ORF-Beitrag 120 / 3 = 40
+            }
+            await tile.scrollIntoViewIfNeeded();
+            await shot(page, vp, scheme, `10-onboarding-fertig-${country}`);
+          });
         });
       }
     });

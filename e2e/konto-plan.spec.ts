@@ -1,17 +1,18 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, openInfo, test, TODAY } from './fixtures';
 
-// Fixkostenkonto · Überarbeitung #40 (seed data, today 5 October 2026 → active month October):
-// - one truth: Dauerauftrag, Startlücke and status are identical in tile, sheet, „Dein Plan“ and settings
-// - status only in words, three states; never „gedeckt“ while a point of the plan is open
-// - setup in two questions, both answer variants; „Dein Plan“ as a checklist with progress
+// „Fixkosten einplanen“ (seed data, today 5 October 2026 → active month October):
+// - for everyone: with an own account (standing order) and without („Nein, ich plane nur“)
+// - one truth: monthly amount, one-time amount and status identical in tile, sheet, „Dein Plan“, settings
+// - status only in words, three states; never „eingeplant“ while a point of the plan is open
+// - setup one question per screen; „Dein Plan“ with a progress bar, the next point primary
 // - sheet: month list with Einzahlung · Abbuchungen · Stand and signs, folds closed by default
-// - monthly check and series unchanged
+// - monthly check (with and without account) and series
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to
-// docs/screenshots/fixkostenkonto-plan/. Runs in the desktop project; every viewport is its own context.
+// docs/screenshots/fixkosten-einplanen/. Runs in the desktop project; every viewport is its own context.
 
-const DIR = 'docs/screenshots/fixkostenkonto-plan';
+const DIR = 'docs/screenshots/fixkosten-einplanen';
 mkdirSync(DIR, { recursive: true });
 
 const VIEWPORTS = {
@@ -51,126 +52,140 @@ async function openOn(page: Page, date: Date) {
 
 const text = async (l: Locator) => ((await l.textContent()) ?? '').replace(/\s+/g, ' ').trim();
 
-/** The three numbers and the status sentence as each place shows them. */
+/** The status sentence, the action sentence and the two amounts as each place shows them. */
 interface Seen {
   status: string;
+  action: string | null;
   order: string;
   gap: string | null;
 }
 
-async function seenInTile(page: Page): Promise<Seen> {
-  const card = page.getByTestId('konto-tile-card');
-  const status = await text(card.getByTestId('tile-status-text'));
-  const action = card.getByTestId('tile-status-action');
+async function seenIn(scope: Locator, prefix: string, order: Locator): Promise<Seen> {
+  const action = scope.getByTestId(`${prefix}-action`);
+  const actionText = (await action.count()) ? await text(action) : null;
   return {
-    status,
-    order: await text(card.getByTestId('konto-tile-value')),
-    gap: (await action.count()) ? euros(await text(action))[0]! : null,
+    status: await text(scope.getByTestId(`${prefix}-text`)),
+    action: actionText,
+    order: await text(order),
+    gap: actionText ? euros(actionText)[0]! : null,
   };
 }
+
+const seenInTile = (page: Page) => {
+  const card = page.getByTestId('konto-tile-card');
+  return seenIn(card, 'tile-status', card.getByTestId('konto-tile-value'));
+};
 
 async function seenInSheet(page: Page, tap: (l: Locator) => Promise<void>): Promise<Seen> {
   await tap(page.getByTestId('konto-tile'));
   const sheet = page.getByTestId('konto-sheet');
   await expect(sheet).toBeVisible();
-  const action = sheet.getByTestId('sheet-status-action');
-  const seen = {
-    status: await text(sheet.getByTestId('sheet-status-text')),
-    order: await text(sheet.getByTestId('konto-order-value')),
-    gap: (await action.count()) ? euros(await text(action))[0]! : null,
-  };
+  const seen = await seenIn(sheet, 'sheet-status', sheet.getByTestId('konto-order-value'));
   await page.keyboard.press('Escape');
   await expect(sheet).toHaveCount(0);
   return seen;
 }
 
 async function seenInPlan(page: Page): Promise<Seen> {
-  const gapValue = page.getByTestId('plan-gap-value');
-  return {
-    status: await text(page.getByTestId('plan-status-text')),
-    order: await text(page.getByTestId('plan-order-value')),
-    gap: (await gapValue.count()) ? await text(gapValue) : null,
-  };
+  const seen = await seenIn(page.getByTestId('konto-setup'), 'plan-status', page.getByTestId('plan-order-value'));
+  // the plan's point says the same sentence as the status line
+  if (seen.action) {
+    await expect(page.getByTestId('plan-gap')).toContainText(seen.action);
+    expect(await text(page.getByTestId('plan-gap-value'))).toBe(seen.gap);
+  }
+  return seen;
 }
 
 async function seenInSettings(page: Page): Promise<Seen> {
   await goTo(page, 'einstellungen');
-  const gap = page.getByTestId('konto-summary-gap');
-  const seen = {
-    status: await text(page.getByTestId('settings-status-text')),
-    order: await text(page.getByTestId('konto-summary-order')),
-    gap: (await gap.count()) ? await text(gap) : null,
-  };
+  const seen = await seenIn(page.getByTestId('konto-settings'), 'settings-status', page.getByTestId('konto-summary-order'));
+  if (seen.gap) await expect(page.getByTestId('konto-summary-gap')).toHaveText(seen.gap);
   await goTo(page, 'monat');
   return seen;
 }
 
+const GAP_STATUS = /^Ab \S+ \d{4} reicht das Geld nicht\.$/;
+const GAP_ACTION = /^Leg (bis \d{1,2}\. \S+ \d{4}|jetzt) einmalig €\s[\d.]+,\d{2} zur Seite\.$/;
+const COVERED = 'Alles eingeplant bis September 2027.';
+/** the point in „Dein Plan“ also holds its „Erledigt“ button */
+const GAP_POINT = new RegExp(GAP_ACTION.source.replace(/\$$/, ''));
+
 for (const [vp, use] of Object.entries(VIEWPORTS)) {
   for (const scheme of ['light', 'dark'] as const) {
     const tag = `${vp}-${scheme === 'light' ? 'hell' : 'dunkel'}`;
-    test.describe(`Fixkostenkonto-Plan · ${vp} · ${scheme}`, () => {
+    test.describe(`Fixkosten einplanen · ${vp} · ${scheme}`, () => {
       test.use({ ...use, colorScheme: scheme });
       test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
       // four places, reloads and screenshots in one test
       test.setTimeout(120_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('Variante A (Kontostand, Dauerauftrag läuft): eine Wahrheit an allen vier Stellen, nie „gedeckt“ bei offenem Punkt', async ({ page }) => {
+      test('mit Konto (Betrag, Dauerauftrag läuft): eine Wahrheit an allen vier Stellen, nie „eingeplant“ bei offenem Punkt', async ({ page }) => {
         await startApp(page);
         const card = page.getByTestId('konto-tile-card');
         await expect(card).toHaveAttribute('data-state', 'setup');
-        await expect(card.getByTestId('tile-status-text')).toHaveText('Fixkostenkonto einrichten');
-        await expect(card.getByTestId('tile-status-progress')).toHaveText('0 von 3 erledigt');
+        await expect(card.getByTestId('tile-status-text')).toHaveText('Fixkosten einplanen');
+        await expect(card.getByTestId('tile-status-progress')).toHaveText('0 von 2 erledigt');
+        await expect(card.getByTestId('tile-status-bar')).toHaveAttribute('aria-valuenow', '0');
         await card.scrollIntoViewIfNeeded();
-        await shot(page, `${tag}-1-kachel-einrichten`);
+        await shot(page, `${tag}-01-kachel-einplanen`);
 
-        // two questions
+        // one question per screen
         await tap(page.getByTestId('konto-tile'));
         const setup = page.getByTestId('konto-setup');
-        await expect(setup).toHaveAttribute('data-step', 'balance');
-        await expect(page.getByTestId('konto-setup-question')).toHaveText('Wie viel liegt heute auf deinem Fixkostenkonto?');
-        await expect(page.getByTestId('konto-setup-no-account')).toHaveText('Ich habe noch keins');
+        await expect(setup).toHaveAttribute('data-step', 'account');
+        await expect(page.getByTestId('konto-setup-question')).toHaveText('Hast du ein eigenes Konto für Fixkosten?');
+        await expect(page.getByTestId('konto-setup-progress')).toContainText('Frage 1 von 3');
+        await shot(page, `${tag}-02-frage-konto`);
+        await tap(page.getByTestId('konto-setup-account-yes'));
+        await expect(page.getByTestId('konto-setup-question')).toHaveText('Wie viel hast du heute schon für Fixkosten zur Seite gelegt?');
+        await expect(page.getByTestId('konto-setup-nothing')).toHaveText('Noch nichts');
         await page.getByTestId('konto-setup-balance').fill('184,21');
-        await shot(page, `${tag}-2-frage-1`);
+        await shot(page, `${tag}-03-frage-betrag`);
         await tap(page.getByTestId('konto-setup-next'));
         await expect(page.getByTestId('konto-setup-question')).toHaveText('Läuft dein Dauerauftrag schon?');
-        await shot(page, `${tag}-3-frage-2`);
+        await expect(page.getByTestId('konto-setup-progress')).toContainText('Frage 3 von 3');
         await tap(page.getByTestId('konto-setup-order-yes'));
 
-        // „Dein Plan“: account there, standing order to check, one-time transfer
+        // „Dein Plan“: standing order to check (primary), one-time amount (secondary)
         await expect(setup).toHaveAttribute('data-step', 'plan');
-        await expect(page.getByTestId('plan-account')).toHaveAttribute('data-done', 'true');
-        await expect(page.getByTestId('plan-account')).toContainText('Fixkostenkonto ist da');
-        await expect(page.getByTestId('plan-order')).toContainText(/^Dauerauftrag prüfen: €\s[\d.]+ monatlich am 1\./);
-        await expect(page.getByTestId('plan-gap')).toContainText(/^Einmalig €\s[\d.]+,\d{2} einzahlen/);
-        await expect(page.getByTestId('plan-status-text')).toHaveText('Fixkostenkonto einrichten');
-        await expect(page.getByTestId('plan-status-progress')).toHaveText('1 von 3 erledigt');
-        await shot(page, `${tag}-4-dein-plan`);
-        const planOpen = await seenInPlan(page);
+        await expect(page.getByTestId('plan-account')).toHaveCount(0);
+        await expect(page.getByTestId('plan-order')).toContainText(/^Dauerauftrag prüfen: €\s[\d.]+ monatlich am 1\. auf dein Fixkostenkonto/);
+        await expect(page.getByTestId('plan-order-copy')).toHaveText('Betrag kopieren');
+        await expect(page.getByTestId('plan-gap')).toContainText(GAP_POINT);
+        await expect(page.getByTestId('plan-order-done')).toHaveAttribute('data-primary', 'true');
+        await expect(page.getByTestId('plan-gap-done')).not.toHaveAttribute('data-primary');
+        await expect(page.getByTestId('plan-status-text')).toHaveText('Fixkosten einplanen');
+        await expect(page.getByTestId('plan-status-progress')).toHaveText('0 von 2 erledigt');
+        await shot(page, `${tag}-04-plan-mit-konto`);
+        const planOpen = await seenIn(setup, 'plan-status', page.getByTestId('plan-order-value'));
+        const gapOpen = await text(page.getByTestId('plan-gap-value'));
 
-        // closed with points open: the same status everywhere, never „gedeckt“
+        // closed with points open: the same status everywhere, never „eingeplant“
         await page.keyboard.press('Escape');
         await expect(setup).toHaveCount(0);
         await expect(card).toHaveAttribute('data-state', 'setup');
-        await expect(card.getByTestId('tile-status-progress')).toHaveText('1 von 3 erledigt');
-        await expect(page.getByText(/Alles gedeckt/)).toHaveCount(0);
+        await expect(card.getByTestId('tile-status-progress')).toHaveText('0 von 2 erledigt');
+        await expect(page.getByText(/Alles eingeplant/)).toHaveCount(0);
         await goTo(page, 'einstellungen');
-        await expect(page.getByTestId('settings-status-text')).toHaveText('Fixkostenkonto einrichten');
-        await expect(page.getByTestId('settings-status-progress')).toHaveText('1 von 3 erledigt');
+        await expect(page.getByTestId('settings-status-text')).toHaveText('Fixkosten einplanen');
+        await expect(page.getByTestId('settings-status-progress')).toHaveText('0 von 2 erledigt');
         await expect(page.getByTestId('konto-summary-order')).toHaveText(planOpen.order);
-        await expect(page.getByTestId('konto-summary-gap')).toHaveText(planOpen.gap!);
+        await expect(page.getByTestId('konto-summary-gap')).toHaveText(gapOpen);
         await goTo(page, 'analyse');
-        await expect(page.getByTestId('analyse-status-text')).toHaveText('Fixkostenkonto einrichten');
+        await expect(page.getByTestId('analyse-status-text')).toHaveText('Fixkosten einplanen');
         await goTo(page, 'monat');
 
-        // the tile opens „Dein Plan“ again; standing order checked → only the gap is left
+        // the tile opens „Dein Plan“ again; standing order checked → only the one-time amount is left
         await tap(page.getByTestId('konto-tile'));
         await expect(setup).toHaveAttribute('data-step', 'plan');
         await tap(page.getByTestId('plan-order-done'));
         await expect(page.getByTestId('plan-order')).toHaveAttribute('data-done', 'true');
         await expect(page.getByTestId('plan-order').locator('.anim-check')).toHaveCount(1); // the pop
+        await expect(page.getByTestId('plan-gap-done')).toHaveAttribute('data-primary', 'true');
         await expect(page.getByTestId('plan-status-progress')).toHaveCount(0);
-        await expect(page.getByTestId('plan-status-text')).toHaveText(/^Im \S+ \d{4} fehlen €\s[\d.]+,\d{2}\.$/);
+        await expect(page.getByTestId('plan-status-text')).toHaveText(GAP_STATUS);
+        await expect(page.getByTestId('plan-status-action')).toHaveText(GAP_ACTION);
         const plan = await seenInPlan(page);
         await page.keyboard.press('Escape');
 
@@ -182,19 +197,17 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(sheet).toEqual(plan);
         expect(settings).toEqual(plan);
         expect(planOpen.order).toBe(plan.order);
-        expect(planOpen.gap).toBe(plan.gap);
-        // „Im Februar 2027 fehlen € 865,79.“ and „Zahl einmalig € 865,79 ein, dann passt alles.“: one amount
-        expect(euros(plan.status)).toEqual([plan.gap]);
-        await expect(card.getByTestId('tile-status-action')).toHaveText(`Zahl einmalig ${plan.gap} ein, dann passt alles.`);
+        expect(gapOpen).toBe(plan.gap);
+        await expect(card.getByTestId('tile-status-paid')).toHaveText('Erledigt, zur Seite gelegt');
         await card.scrollIntoViewIfNeeded();
-        await shot(page, `${tag}-5-kachel-luecke`);
+        await shot(page, `${tag}-05-kachel-luecke`);
 
         // sheet: status first, folds closed, month list with columns and signs
         await tap(page.getByTestId('konto-tile'));
         const s = page.getByTestId('konto-sheet');
         for (const id of ['konto-months', 'konto-positions', 'konto-settings-inline']) await expect(s.getByTestId(id)).not.toHaveAttribute('open');
-        await expect(s.getByTestId('konto-settings-inline').locator('summary')).toHaveText(/Kontostand und Rundung/);
-        await shot(page, `${tag}-6-sheet`);
+        await expect(s.getByTestId('konto-settings-inline').locator('summary')).toHaveText(/Zur Seite gelegt und Rundung/);
+        await shot(page, `${tag}-06-sheet`);
         await s.getByTestId('konto-months').locator('summary').click();
         await expect(s.getByTestId('konto-month-head')).toHaveText(/Monat\s*Einzahlung\s*Abbuchungen\s*Stand/);
         const rows = s.getByTestId('konto-month-row');
@@ -202,7 +215,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(rows.nth(0).getByTestId('konto-month-deposit')).toHaveText('€ 0'); // October: arrived at the start
         await expect(rows.nth(1).getByTestId('konto-month-deposit')).toHaveText(`+${plan.order}`);
         await expect(rows.nth(1).getByTestId('konto-month-debits')).toHaveText(/^−€\s[\d.]+/);
-        await expect(s.getByText(/€\s?[\d.,]+ ab\b/)).toHaveCount(0);
         // the four columns fit: nothing in the list sticks out of it, the page has no horizontal scroll
         const fits = await s.getByTestId('konto-month-list').evaluate((el) => {
           const right = el.getBoundingClientRect().right + 0.5;
@@ -210,19 +222,17 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         });
         expect(fits).toBe(true);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-        await s.getByTestId('konto-months').scrollIntoViewIfNeeded();
-        await shot(page, `${tag}-7-sheet-monate`);
         await page.keyboard.press('Escape');
 
-        // „Erledigt, eingezahlt“ on the tile → covered, everywhere
+        // „Erledigt, zur Seite gelegt“ on the tile → planned, everywhere
         await tap(card.getByTestId('tile-status-paid'));
         await expect(card).toHaveAttribute('data-state', 'covered');
-        await expect(card.getByTestId('tile-status-text')).toHaveText('Alles gedeckt bis September 2027.');
-        await expect(page.getByRole('status').filter({ hasText: 'Geschafft: Zum ersten Mal alles gedeckt' })).toBeVisible();
+        await expect(card.getByTestId('tile-status-text')).toHaveText(COVERED);
+        await expect(page.getByRole('status').filter({ hasText: 'Geschafft: Zum ersten Mal alles eingeplant' })).toBeVisible();
         await card.scrollIntoViewIfNeeded();
-        await shot(page, `${tag}-8-kachel-gedeckt`);
+        await shot(page, `${tag}-07-kachel-eingeplant`);
         const coveredTile = await seenInTile(page);
-        expect(coveredTile).toEqual({ status: 'Alles gedeckt bis September 2027.', order: plan.order, gap: null });
+        expect(coveredTile).toEqual({ status: COVERED, action: null, order: plan.order, gap: null });
         expect(await seenInSheet(page, tap)).toEqual(coveredTile);
         expect(await seenInSettings(page)).toEqual(coveredTile);
         await page.reload();
@@ -230,55 +240,77 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(card).toHaveAttribute('data-state', 'covered');
       });
 
-      test('Variante B („Ich habe noch keins“, Nein): 0 von 3, Pop je Punkt, Erfolgs-Moment', async ({ page }) => {
+      test('ohne Konto („Nein, ich plane nur“, „Noch nichts“): 0 von 2, jede Reihenfolge, Erfolgs-Moment, Monats-Check', async ({ page }) => {
         await startApp(page);
         await tap(page.getByTestId('konto-tile'));
-        await tap(page.getByTestId('konto-setup-no-account'));
-        await expect(page.getByTestId('konto-setup-question')).toHaveText('Läuft dein Dauerauftrag schon?');
-        await tap(page.getByTestId('konto-setup-order-no'));
-        await expect(page.getByTestId('plan-status-progress')).toHaveText('0 von 3 erledigt');
-        await expect(page.getByTestId('plan-account')).toContainText('Fixkostenkonto eröffnen');
-        await expect(page.getByTestId('plan-order')).toContainText(/^Dauerauftrag einrichten: €\s[\d.]+ monatlich am 1\./);
+        await tap(page.getByTestId('konto-setup-account-no'));
+        await expect(page.getByTestId('konto-setup-progress')).toContainText('Frage 2 von 2');
+        await tap(page.getByTestId('konto-setup-nothing'));
+        // no standing order question: straight to the plan
+        await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'plan');
+        await expect(page.getByTestId('plan-status-progress')).toHaveText('0 von 2 erledigt');
+        await expect(page.getByTestId('plan-status-bar')).toHaveAttribute('aria-valuenow', '0');
+        await expect(page.getByTestId('plan-order')).toContainText(/^Leg jeden Monat €\s[\d.]+ für Fixkosten zur Seite\./);
+        await expect(page.getByTestId('plan-order-copy')).toHaveCount(0);
+        await expect(page.getByText(/Dauerauftrag|Fixkostenkonto/)).toHaveCount(0);
+        const info = await openInfo(page, page.getByTestId('plan-order-info'));
+        await expect(info).toHaveText(/Mit einem eigenen Konto und Dauerauftrag passiert das automatisch\./);
+        await page.keyboard.press('Escape');
+        await expect(page.getByTestId('plan-gap')).toContainText(GAP_POINT);
         const gap = await text(page.getByTestId('plan-gap-value'));
-        await shot(page, `${tag}-9-plan-ohne-konto`);
+        await shot(page, `${tag}-08-plan-ohne-konto`);
 
-        // the transfer first: still not „gedeckt“, account and standing order are open
+        // the secondary point first: allowed, still not „eingeplant“ (the monthly amount is open)
+        await expect(page.getByTestId('plan-gap-done')).not.toHaveAttribute('data-primary');
         await tap(page.getByTestId('plan-gap-done'));
         await expect(page.getByTestId('plan-gap')).toHaveAttribute('data-done', 'true');
-        await expect(page.getByTestId('plan-gap')).toContainText('Keine Einzahlung nötig');
-        await expect(page.getByTestId('plan-status-progress')).toHaveText('1 von 3 erledigt');
-        await expect(page.getByTestId('plan-status-text')).toHaveText('Fixkostenkonto einrichten');
+        await expect(page.getByTestId('plan-gap')).toContainText('Kein Extra-Betrag nötig.');
+        await expect(page.getByTestId('plan-gap').locator('.anim-check')).toHaveCount(1);
+        await expect(page.getByTestId('plan-status-progress')).toHaveText('1 von 2 erledigt');
+        await expect(page.getByTestId('plan-status-bar')).toHaveAttribute('aria-valuenow', '1');
+        await expect(page.getByTestId('plan-status-text')).toHaveText('Fixkosten einplanen');
         await expect(page.getByTestId('plan-success')).toHaveCount(0);
-        await tap(page.getByTestId('plan-account-done'));
-        await expect(page.getByTestId('plan-account').locator('.anim-check')).toHaveCount(1);
-        await expect(page.getByTestId('plan-status-progress')).toHaveText('2 von 3 erledigt');
-        await shot(page, `${tag}-10-plan-2-von-3`);
-        await expect(page.getByText(/Alles gedeckt/)).toHaveCount(0);
+        await expect(page.getByText(/Alles eingeplant/)).toHaveCount(0);
+        await shot(page, `${tag}-09-plan-1-von-2`);
         await tap(page.getByTestId('plan-order-done'));
 
         // all done: the success moment, then „Fertig“
-        await expect(page.getByTestId('plan-success')).toHaveText('Alles gedeckt bis September 2027.');
+        await expect(page.getByTestId('plan-success')).toHaveText(COVERED);
         await expect(page.getByTestId('plan-success').locator('.anim-check')).toHaveCount(1);
-        await shot(page, `${tag}-11-erfolg`);
+        await shot(page, `${tag}-10-erfolg`);
         await expect(page.getByRole('status').filter({ hasText: 'Geschafft:' })).toHaveCount(0); // no toast over the success moment
         await tap(page.getByTestId('konto-setup-finish'));
         await expect(page.getByTestId('konto-setup')).toHaveCount(0);
-        await expect(page.getByRole('status').filter({ hasText: 'Geschafft: Zum ersten Mal alles gedeckt' })).toBeVisible();
+        await expect(page.getByRole('status').filter({ hasText: 'Geschafft: Zum ersten Mal alles eingeplant' })).toBeVisible();
         const card = page.getByTestId('konto-tile-card');
         await expect(card).toHaveAttribute('data-state', 'covered');
+        await expect(card.getByTestId('konto-tile-sub')).toHaveText(/^Monatlich €\s[\d.]+ am 1\.$/);
         await goTo(page, 'einstellungen');
         await expect(page.getByTestId('konto-summary-balance')).toHaveText(gap);
-        await expect(page.getByTestId('settings-status-text')).toHaveText('Alles gedeckt bis September 2027.');
+        await expect(page.getByTestId('konto-summary')).toContainText('Schon zur Seite gelegt');
+        await expect(page.getByTestId('konto-summary')).toContainText('Monatlich zur Seite');
+        await expect(page.getByTestId('settings-status-text')).toHaveText(COVERED);
+        await expect(page.getByTestId('konto-enabled-text')).toHaveText(
+          'Erbse sagt dir, wie viel du monatlich zur Seite legst. Und warnt, bevor es knapp wird.',
+        );
         await page.getByTestId('konto-settings').scrollIntoViewIfNeeded();
-        await shot(page, `${tag}-12-einstellungen`);
+        await shot(page, `${tag}-11-einstellungen`);
         // „Einrichtung ändern“ starts with question 1 again
         await tap(page.getByTestId('konto-setup-edit'));
-        await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'balance');
+        await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'account');
+        await page.keyboard.press('Escape');
+
+        // monthly check without an account
+        await goTo(page, 'monat');
+        await openOn(page, day('2026-11-02'));
+        await expect(page.getByTestId('konto-check-title')).toHaveText(/^Neuer Monat\. Hast du €\s[\d.]+ zur Seite gelegt\?$/);
+        await shot(page, `${tag}-12-check-ohne-konto`);
       });
 
-      test('Monats-Check über den Monatswechsel und Serie (wie gebaut); „Anderer Betrag“ = neuer Anker', async ({ page }) => {
+      test('Monats-Check mit Konto über den Monatswechsel und Serie; „Anderer Betrag“ = neuer Anker', async ({ page }) => {
         await startApp(page);
         await tap(page.getByTestId('konto-tile'));
+        await tap(page.getByTestId('konto-setup-account-yes'));
         await page.getByTestId('konto-setup-balance').fill('5000');
         await tap(page.getByTestId('konto-setup-next'));
         await tap(page.getByTestId('konto-setup-order-yes')); // October: arrived
@@ -313,25 +345,51 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-summary-balance')).toHaveText('€ 777');
         await expect(page.getByTestId('konto-summary-asof')).toHaveText('Stand vom 04.01.2027');
       });
+
+      test('Einstellungen „Währung“ und (iPad, Desktop) Seitenmenü-Kopf', async ({ page }) => {
+        await startApp(page);
+        await goTo(page, 'einstellungen');
+        const currency = page.getByTestId('country-settings');
+        await expect(page.getByRole('heading', { name: 'Währung' })).toBeVisible();
+        await expect(currency.getByRole('radio')).toHaveText(['Euro (€)', 'Schweizer Franken (CHF)']);
+        await expect(currency.getByRole('radio', { name: 'Euro (€)' })).toHaveAttribute('aria-checked', 'true');
+        await expect(page.getByText('Land und Währung')).toHaveCount(0);
+        await currency.scrollIntoViewIfNeeded();
+        await shot(page, `${tag}-13-waehrung`);
+        await currency.getByRole('radio', { name: 'Schweizer Franken (CHF)' }).click();
+        await expect(currency.getByRole('radio', { name: 'Schweizer Franken (CHF)' })).toHaveAttribute('aria-checked', 'true');
+        await goTo(page, 'monat');
+        await expect(page.getByTestId('kpi-value').first()).toHaveText(/^CHF\s/);
+        const sidebar = page.getByTestId('sidebar');
+        if (await sidebar.isVisible()) {
+          await expect(sidebar.getByTestId('logo')).toHaveAttribute('aria-label', 'Erbse');
+          await expect(sidebar.getByText('Erbse', { exact: true })).toHaveCount(0);
+          await sidebar.screenshot({ path: `${DIR}/${tag}-14-seitenmenue.png` });
+        }
+      });
     });
   }
 }
 
-test.describe('Fixkostenkonto-Plan · Neuer Monat beginnt am 25.', () => {
+test.describe('Fixkosten einplanen · Neuer Monat beginnt am 25.', () => {
   test.use(VIEWPORTS['iphone-15']);
   test.setTimeout(90_000);
   test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
-  test('Tag im Plan, in der Kachel und in den Einstellungen: „am 25.“; ab dem 25. ist der Folgemonat aktiv', async ({ page }) => {
+  test('Tag im Plan, in der Kachel und in den Einstellungen: „am 25.“; Datum der Lücke; ab dem 25. ist der Folgemonat aktiv', async ({ page }) => {
     await startApp(page);
     await goTo(page, 'einstellungen');
     await page.getByLabel('Neuer Monat beginnt am').selectOption('25');
     await expect(page.getByTestId('active-month')).toHaveText(/Oktober 2026/);
     await goTo(page, 'monat');
     await page.getByTestId('konto-tile').tap();
+    await page.getByTestId('konto-setup-account-yes').tap();
     await page.getByTestId('konto-setup-balance').fill('0');
     await page.getByTestId('konto-setup-next').tap();
     await page.getByTestId('konto-setup-order-no').tap();
     await expect(page.getByTestId('plan-order')).toContainText(/monatlich am 25\./);
+    // a one-time amount before a later month: the day before the 25th
+    const gapText = await text(page.getByTestId('plan-gap'));
+    if (/^Leg bis/.test(gapText)) expect(gapText).toMatch(/^Leg bis 24\. /);
     await page.getByTestId('plan-order-done').tap();
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('konto-tile-sub')).toHaveText(/am 25\.$/);
@@ -354,5 +412,30 @@ test.describe('Fixkostenkonto-Plan · Neuer Monat beginnt am 25.', () => {
     await expect(page.getByTestId('konto-summary-order')).toBeVisible();
     await expect(page.getByTestId('konto-summary-order').locator('..')).toHaveText(/am 25\.$/);
     expect(gapTile).toBeTruthy();
+  });
+});
+
+test.describe('Icons (Stand rebrand-erbse)', () => {
+  test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'einmal, im Projekt desktop'));
+  test('alle Icons auf einer Seite, hell und dunkel', async ({ page }) => {
+    await page.goto('/');
+    const icons = ['/favicon.svg', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png'];
+    for (const icon of icons) expect((await page.request.get(icon)).status(), icon).toBe(200);
+    const cells = icons
+      .map(
+        (src) =>
+          `<figure style="margin:0;text-align:center"><img src="${src}" width="128" height="128" style="display:block;margin:0 auto 8px"><figcaption>${src.slice(1)}</figcaption></figure>`,
+      )
+      .join('');
+    for (const [name, bg, ink] of [
+      ['hell', 'whitesmoke', 'black'],
+      ['dunkel', 'black', 'white'],
+    ] as const) {
+      await page.setContent(
+        `<body style="margin:0;padding:24px;background:${bg};color:${ink};font:14px system-ui"><div style="display:flex;gap:24px;flex-wrap:wrap">${cells.replaceAll('src="/', `src="${new URL(page.url()).origin}/`)}</div></body>`,
+      );
+      await page.waitForFunction(() => [...document.images].every((i) => i.complete && i.naturalWidth > 0));
+      await page.screenshot({ path: `${DIR}/icons-${name}.png`, fullPage: true });
+    }
   });
 });
