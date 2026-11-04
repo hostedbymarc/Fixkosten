@@ -19,6 +19,8 @@ Basis: `main` mit #41 (`176ce44`). Die Schote ist entfernt. Alle Zahlen kommen a
 - Sheet, Kachel und Einstellungen rechneten mit dem gespeicherten Stand (`kontoState`).
 - Dazu kam die Rundung: Sie ist im Sheet änderbar, „Dein Plan“ zeigte den Wert von vorher.
 - Jetzt speichert die Einrichtung zuerst. Der Plan liest denselben Stand wie alle anderen.
+- Beim Öffnen von Sheet oder Einstellungen blitzte kurz „einrichten“ auf. Grund: Standardwerte vor dem Laden.
+- Jetzt startet jede Stelle mit dem zuletzt gelesenen Stand (`useKonto`). Der E2E-Vergleich fand das.
 
 ## Punkt 6 · Tag ≠ 1
 
