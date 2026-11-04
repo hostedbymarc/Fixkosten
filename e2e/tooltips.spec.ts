@@ -59,6 +59,9 @@ async function exercise(page: Page, button: Locator, mode: Mode, seen: Collector
   const name = (await button.getAttribute('aria-label')) ?? '';
 
   if (mode.tap) {
+    // a click() earlier left the emulated mouse somewhere: after scrolling, the ⓘ can lie under it and
+    // open by hover – no mouse on a phone, so move it out of the way
+    await page.mouse.move(0, 0);
     await button.tap();
     await expect(pop, `${name}: tap opens`).toBeVisible();
     await expect(button).toHaveAttribute('aria-describedby', (await pop.getAttribute('id'))!);
@@ -188,7 +191,9 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.getByTestId('konto-setup-account-no').click();
       await page.getByTestId('konto-setup-nothing').click();
       const setupSheet = page.getByTestId('bottom-sheet');
+      await expect(page.getByTestId('konto-setup-plan')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
+      await page.waitForTimeout(300); // the sheet settles to the plan's height
       await exercise(page, info(setupSheet, 'Monatsbetrag zur Seite legen'), mode, seen, setupSheet);
       await page.getByTestId('plan-order-done').click();
       if (await page.getByTestId('plan-gap-done').count()) await page.getByTestId('plan-gap-done').click();
