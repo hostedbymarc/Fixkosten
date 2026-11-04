@@ -18,7 +18,8 @@ const KontoChart = lazy(() => import('./KontoChart'));
 /** kontoState (the one truth: balance, standing order, gap, status, plan, series) – recomputed on every change of the data or the settings. */
 export function useKontoState(ds: Dataset, active: Period): KontoState {
   const { settings } = useKonto();
-  return useMemo(() => kontoState(ds, active, settings), [ds, active, settings]);
+  const start = useMonthStart();
+  return useMemo(() => kontoState(ds, active, settings, start), [ds, active, settings, start]);
 }
 
 
@@ -30,8 +31,8 @@ export function KontoSimulationView({ overview, active, chartHeight }: { overvie
     <div className="flex flex-col gap-3" data-testid="konto-simulation">
       <div>
         <div className="flex items-center">
-          <p className="text-[13px] font-medium text-ink-mute">Kontostand am Monatsende</p>
-          <InfoTip label="Erklärung: Kontostand am Monatsende" title="Kontostand am Monatsende" className="-my-3 -ml-1.5" testId="konto-assumption">
+          <p className="text-[13px] font-medium text-ink-mute">{t('sheet.chart')}</p>
+          <InfoTip label={`Erklärung: ${t('sheet.chart')}`} title={t('sheet.chart')} className="-my-3 -ml-1.5" testId="konto-assumption">
             <p>{KONTO_ASSUMPTION}</p>
           </InfoTip>
         </div>
@@ -64,7 +65,7 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
   const day = orderDay(useMonthStart());
   const milestones = reachedMilestones(settings, state.status, state.streak);
   return (
-    <BottomSheet title="Fixkostenkonto" onClose={onClose} returnFocusTo={returnFocusTo}>
+    <BottomSheet title={t('sheet.title')} onClose={onClose} returnFocusTo={returnFocusTo}>
       <div className="flex flex-col gap-6" data-testid="konto-sheet">
         <div className="flex flex-col gap-4">
           <KontoStatusLine state={state} testId="sheet-status" />
@@ -111,7 +112,7 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
         )}
 
         <div className="flex flex-col">
-          <Fold summary={`Im Dauerauftrag (${overview.order.positions.length})`} testId="konto-positions">
+          <Fold summary={t('sheet.positions', { n: overview.order.positions.length })} testId="konto-positions">
             <ul className="divide-y divide-line text-[14px]">
               {overview.order.positions.map(({ position, monthly }) => (
                 <li key={position.id} className="flex min-h-11 items-center justify-between gap-3">
@@ -125,7 +126,7 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
                 Abbuchungen {periodLabel(overview.order.from)} bis {periodLabel(overview.order.to)} ÷ 12 ={' '}
                 <span className="num">{formatAvg(overview.order.exact)}</span>, aufgerundet auf {formatEUR(overview.order.rounding)}
               </p>
-              <InfoTip label="Erklärung: Im Dauerauftrag" title="Im Dauerauftrag" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
+              <InfoTip label="Erklärung: Eingeplante Rechnungen" title="Eingeplante Rechnungen" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
                 <p>Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.</p>
               </InfoTip>
             </div>

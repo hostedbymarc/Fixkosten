@@ -4,11 +4,10 @@ import { streakBadge, type KontoState } from '../../lib/kontoBalance';
 import { t } from '../../lib/kontoTexts';
 import { InfoTip } from '../InfoTip';
 import { Pea } from '../Pea';
-import { KontoStatusLine, progressText, statusText } from './KontoStatusView';
+import { gapActionText, KontoStatusLine, progressText, statusText } from './KontoStatusView';
 
-/** Explanation of the standing order (the ⓘ next to the title). */
-export const ORDER_INFO =
-  'So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.';
+/** Explanation of the monthly amount (the ⓘ next to the title). */
+export const ORDER_INFO = t('tile.info');
 
 export interface KontoTileProps {
   state: KontoState;
@@ -20,19 +19,19 @@ export interface KontoTileProps {
 }
 
 /**
- * The Fixkostenkonto tile on the month screen, directly below the hero. Three states, only in words:
- * setup („Fixkostenkonto einrichten“, „1 von 3 erledigt“) · gap („Im Februar 2027 fehlen € 865,79.“
- * with „Erledigt, eingezahlt“) · covered („Alles gedeckt bis Oktober 2027.“ with a tick).
+ * The tile „Fixkosten einplanen“ on the month screen, directly below the hero. Three states, only in
+ * words: setup („Fixkosten einplanen“, bar „0 von 2 erledigt“) · gap („Ab Februar 2027 reicht das Geld
+ * nicht.“, „Leg bis … einmalig … zur Seite.“, „Erledigt, zur Seite gelegt“) · covered („Alles eingeplant bis Oktober 2027.“ with a tick).
  * The whole card opens the sheet or the setup; the ⓘ and the action button sit above it.
  */
 export function KontoTileView({ state, day, onOpen, buttonRef }: KontoTileProps) {
   const setup = state.status === 'setup';
   const streak = setup ? null : streakBadge(state.streak);
   const label = [
-    `Fixkostenkonto: ${statusText(state)}`,
+    `${t('tile.title')}: ${statusText(state)}`,
     setup ? progressText(state) : null,
-    state.status === 'gap' ? t('status.gap.action', { betrag: formatEUR(state.gap) }) : null,
-    setup ? null : t('tile.order', { betrag: formatEUR(state.order), tag: day }),
+    state.status === 'gap' ? gapActionText(state) : null,
+    setup ? null : t(state.hasAccount ? 'tile.order' : 'tile.monthly', { betrag: formatEUR(state.order), tag: day }),
     setup ? 'Einrichtung öffnen' : 'Details öffnen',
   ]
     .filter(Boolean)
@@ -45,7 +44,7 @@ export function KontoTileView({ state, day, onOpen, buttonRef }: KontoTileProps)
     >
       <div className="flex min-w-0 items-center gap-2">
         <span className="truncate text-[13px] font-medium leading-5 text-ink-mute">{t('tile.title')}</span>
-        <InfoTip label="Erklärung: Dauerauftrag" title="Dauerauftrag" className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
+        <InfoTip label={`Erklärung: ${t('tile.info.title')}`} title={t('tile.info.title')} className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
           <p>{ORDER_INFO}</p>
         </InfoTip>
         <span className="flex-1" />
@@ -56,14 +55,14 @@ export function KontoTileView({ state, day, onOpen, buttonRef }: KontoTileProps)
       </div>
       {!setup && (
         <p className="mt-2 text-[13px] leading-5 text-ink-soft lg:text-[14px]" data-testid="konto-tile-sub">
-          Dauerauftrag{' '}
+          {state.hasAccount ? 'Dauerauftrag' : 'Monatlich'}{' '}
           <span className="num whitespace-nowrap font-semibold text-ink" data-testid="konto-tile-value">
             {formatEUR(state.order)}
           </span>{' '}
           {day}
         </p>
       )}
-      {/* the whole card opens the sheet; the ⓘ and „Erledigt, eingezahlt“ sit above this layer (z-10) */}
+      {/* the whole card opens the sheet; the ⓘ and „Erledigt, zur Seite gelegt“ sit above this layer (z-10) */}
       <button
         ref={buttonRef}
         type="button"

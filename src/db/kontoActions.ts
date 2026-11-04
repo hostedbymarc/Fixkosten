@@ -11,42 +11,43 @@ export const session = { setUp: false };
 
 const upsertCheck = (checks: KontoCheck[], check: KontoCheck) => [...checks.filter((c) => c.period !== check.period), check];
 
-/** The two answers of the setup. */
+/** The answers of the setup. */
 export interface SetupAnswers {
-  /** „Kontostand heute“; 0 with „Ich habe noch keins“ */
-  balance: number;
-  /** false: „Ich habe noch keins“ → „Fixkostenkonto eröffnen“ comes into the plan */
+  /** „Hast du ein eigenes Konto für Fixkosten?“ – false: „Nein, ich plane nur“ */
   hasAccount: boolean;
-  /** „Läuft dein Dauerauftrag schon?“ */
-  orderRuns: boolean;
+  /** „Wie viel hast du heute schon für Fixkosten zur Seite gelegt?“; 0 with „Noch nichts“ */
+  balance: number;
+  /** „Läuft dein Dauerauftrag schon?“ – only asked with an own account (null otherwise) */
+  orderRuns: boolean | null;
 }
 
 /**
- * Both questions answered: saved at once, „Dein Plan“ then reads everything from the stored state
+ * All questions answered: saved at once, „Dein Plan“ then reads everything from the stored state
  * (kontoState) – the same numbers as tile, sheet and settings.
- * This month brings no further deposit in either case: a running standing order arrived at the start
- * of the month (it is in the balance), a new one starts next month.
+ * This month brings nothing more in every case: a running standing order arrived at the start of the
+ * month (it is in the amount), a new one – or setting aside by hand – starts next month.
  */
 export async function finishSetup(db: FixkostenDB, a: SetupAnswers, ctx: { active: Period; now: Date }): Promise<void> {
   const at = ctx.now.toISOString();
   const current = await readKonto(db);
   const amount = Math.round(a.balance * 100) / 100;
-  const checks = a.orderRuns
+  const runs = a.hasAccount && a.orderRuns === true;
+  const checks = runs
     ? upsertCheck(current.checks, { period: ctx.active, deposited: true, answeredAt: at })
     : current.checks.filter((c) => c.period !== ctx.active);
   await writeKonto(db, {
     enabled: true,
     hasAccount: a.hasAccount,
-    orderRuns: a.orderRuns,
+    orderRuns: a.hasAccount ? a.orderRuns : null,
     balance: amount,
     anchor: { amount, at },
     balanceUnknown: false,
     balanceCheckedOn: dayKey(ctx.now),
     checks,
-    receivedFor: a.orderRuns ? ctx.active : null,
-    orderStartsAfter: a.orderRuns ? null : ctx.active,
+    receivedFor: runs ? ctx.active : null,
+    orderStartsAfter: runs ? null : ctx.active,
     plan: { accountDone: false, orderDone: false, gapDone: false },
-    setupSteps: 2,
+    setupSteps: a.hasAccount ? 3 : 2,
     setupDone: true,
   });
   session.setUp = true;

@@ -19,6 +19,8 @@ const NAME_OK = [
   /\b(der|die|den|deiner|[Dd]eine|keine|zu den)\s+Fixkosten\b/, // the German word as a term
   /Fixkosten oder Sparplan/,
   /Monatliche Fixkosten/,
+  /Fixkosten einplanen/, // feature name (sprint fixkosten-einplanen), not the old app name
+  /\b(für|Konto für)\s+Fixkosten\b/, // „für Fixkosten zur Seite legen“
   /Ø Fixkosten/, // tooltip „im Ø-Monat“
   /\} Fixkosten \+ \$\{/, // hero „€ 5.649 Fixkosten + € 800 Vermögensaufbau“
 ];

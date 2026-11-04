@@ -18,7 +18,8 @@ const SECONDARY = `${BUTTON} text-ink-soft hover:bg-zinc-100`;
 
 /**
  * Monats-Check, on top of the month screen: at most one card.
- * - „Neuer Monat. Ist dein Dauerauftrag eingegangen?“ Ja / Noch nicht (asks again on a later day)
+ * - „Neuer Monat. Ist dein Dauerauftrag eingegangen?“ (without an account: „Hast du € X zur Seite gelegt?“)
+ *   Ja / Noch nicht (asks again on a later day)
  * - every 3 months „Stimmt dein Kontostand noch? € Z“ Stimmt / Anderer Betrag (new anchor)
  * - after „Weiß ich gerade nicht“: the balance, on the next start
  */
@@ -35,13 +36,19 @@ function Card({ card, ds, active, again, onLater }: { card: 'month' | 'balance' 
   const [editing, setEditing] = useState(card === 'remind');
   const [text, setText] = useState('');
   const amount = parseAmount(text);
+  const plan = !state.hasAccount;
+  const betrag = formatEUR(state.order);
   const title =
     card === 'month'
-      ? again
-        ? t('check.month.again', { monat: monthName(active) })
-        : t('check.month')
+      ? plan
+        ? again
+          ? t('check.month.plan.again', { monat: monthName(active), betrag })
+          : t('check.month.plan', { betrag })
+        : again
+          ? t('check.month.again', { monat: monthName(active) })
+          : t('check.month')
       : card === 'balance'
-        ? t('check.balance', { betrag: formatEUR(state.balance) })
+        ? t(plan ? 'check.balance.plan' : 'check.balance', { betrag: formatEUR(state.balance) })
         : t('check.balance.remind');
   return (
     <section className="glass surface flex flex-col gap-3 p-4 md:p-5" aria-labelledby="konto-check-title" data-testid="konto-check" data-card={card}>

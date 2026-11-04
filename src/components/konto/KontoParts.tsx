@@ -14,7 +14,7 @@ import { AlertIcon } from '../Icons';
 import { AmountField, Segmented } from '../form';
 
 /** The assumption of the simulation, visible wherever its numbers are. */
-export const KONTO_ASSUMPTION = 'Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.';
+export const KONTO_ASSUMPTION = t('sheet.assumption');
 
 /** Signed amount, never colour only: '−€ 120' with the alert icon when below 0. */
 export function SignedBalance({ value, className = '' }: { value: number; className?: string }) {
@@ -32,9 +32,20 @@ export function RisingHint({ overview }: { overview: KontoOverview }) {
   if (!overview.simulation.rising) return null;
   return (
     <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="konto-rising">
-      Dein Kontostand steigt in 12 Monaten um <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(overview.simulation.surplus)}</span>.
-      Der Dauerauftrag ist höher als nötig, z. B. durch die Rundung.
+      {withBold(t('sheet.rising', { betrag: '\u0000' }), formatEUR(overview.simulation.surplus))}
     </p>
+  );
+}
+
+/** A text with one bold amount in place of the \u0000 placeholder. */
+function withBold(text: string, amount: string) {
+  const [before, after] = text.split('\u0000');
+  return (
+    <>
+      {before}
+      <span className="num whitespace-nowrap font-semibold text-ink">{amount}</span>
+      {after}
+    </>
   );
 }
 
@@ -182,7 +193,7 @@ export function KontoInputs({ settings, active, balance, showRounding = true }: 
   return (
     <div className="flex flex-col gap-4" data-testid="konto-inputs">
       <AmountField
-        label="Kontostand heute"
+        label={t('settings.balance')}
         value={text}
         onChange={(v) => {
           setText(v);
@@ -192,11 +203,11 @@ export function KontoInputs({ settings, active, balance, showRounding = true }: 
         }}
         placeholder="0"
         error={parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.250,00' : null}
-        info="Was heute auf deinem Fixkostenkonto liegt."
+        info={t('sheet.balance.info')}
         testId="konto-balance"
       />
       <Segmented<'yes' | 'no'>
-        label={`Dauerauftrag für ${monthName(active)} schon eingegangen?`}
+        label={t(settings.hasAccount === false ? 'sheet.received.plan' : 'sheet.received', { monat: monthName(active) })}
         value={received ? 'yes' : 'no'}
         onChange={(v) =>
           void answerMonthCheck(db, active, v === 'yes', localToday()).then(() =>
@@ -210,7 +221,7 @@ export function KontoInputs({ settings, active, balance, showRounding = true }: 
       />
       {showRounding && (
         <Segmented<string>
-          label="Dauerauftrag aufrunden auf"
+          label={t('sheet.rounding')}
           value={String(settings.rounding)}
           onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
           options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}

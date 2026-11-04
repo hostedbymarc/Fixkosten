@@ -18,7 +18,7 @@ import { KontoTileView, ORDER_INFO } from './KontoTileView';
 export const STANDING_ORDER_INFO = ORDER_INFO;
 
 /**
- * The Fixkostenkonto tile on the month screen (mode on only), directly below the hero. Status
+ * The tile „Fixkosten einplanen“ (internally: Fixkostenkonto) on the month screen (mode on only), directly below the hero. Status
  * „setup“ opens the setup (or „Dein Plan“ once both questions are answered), otherwise the sheet.
  * Every change of balance, account or positions shows at once (live query + kontoState).
  */
@@ -64,7 +64,7 @@ function useMilestoneToasts(state: KontoState, paused: boolean) {
 }
 
 /**
- * The setup sheet. `restart` (not set up, „Einrichtung ändern“): the two questions; otherwise
+ * The setup sheet. `restart` (not set up, „Einrichtung ändern“): the questions; otherwise
  * „Dein Plan“ straight away. The caller decides, from settings it already has loaded. Numbers and status: kontoState, like everywhere else.
  */
 export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Dataset; active: Period; restart: boolean; onClose: () => void; onDone?: () => void }) {
@@ -75,7 +75,7 @@ export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Datas
     <KontoSetupSheet
       state={state}
       day={orderDay(start)}
-      initialStep={restart ? 'balance' : 'plan'}
+      initialStep={restart ? 'account' : 'plan'}
       initial={settings.setupDone ? { balance: state.balance, hasAccount: settings.hasAccount !== false } : undefined}
       onAnswers={(answers) => finishSetup(db, answers, { active, now: localToday() })}
       onClose={onClose}
@@ -101,9 +101,9 @@ export function KontoInvite() {
         <Pea size={28} className="mt-0.5 shrink-0" />
         <p className="min-w-0 text-[15px] leading-snug text-ink">
           <span id="konto-invite-title" className="font-semibold">
-            Neu: Fixkostenkonto.
+            {t('invite.title')}
           </span>{' '}
-          Erbse rechnet deinen Dauerauftrag aus.
+          {t('invite.text')}
         </p>
       </div>
       <div className="flex shrink-0 gap-2">

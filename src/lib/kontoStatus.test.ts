@@ -5,7 +5,7 @@ import { finishSetup, setAnchor, setPlan } from '../db/kontoActions';
 import { readKonto, toKontoSettings, type KontoSettings } from '../db/settings';
 import { activeMonth } from './activeMonth';
 import { orderWindow, simulateKonto, standingOrder } from './fixkostenkonto';
-import { kontoState, orderDay, planSteps, statusOf } from './kontoBalance';
+import { kontoState, lastDayBefore, orderDay, periodStartDate, planSteps, statusOf } from './kontoBalance';
 import { KONTO_TEXTS, sentences, wordCount } from './kontoTexts';
 import type { Category, Dataset, Position } from './types';
 
@@ -40,12 +40,13 @@ afterEach(async () => {
 });
 const stateOf = async (db: FixkostenDB) => kontoState(DATA, ACTIVE, await readKonto(db));
 
-describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote', () => {
+describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote, „zur Seite legen“ statt „einzahlen“', () => {
   for (const [id, text] of Object.entries(KONTO_TEXTS)) {
     it(id, () => {
       for (const s of sentences(text)) expect(wordCount(s), s).toBeLessThanOrEqual(12);
       expect(text).not.toMatch(/Schote|Erbsen?\s*=|\b1 Erbse\b/i);
       expect(text).not.toMatch(/\b(Sie|Ihr|Ihnen)\b/);
+      expect(text).not.toMatch(/einzahlen|eingezahlt|gedeckt|Fixkostenkonto eröffnen/i);
     });
   }
 });
@@ -68,12 +69,14 @@ describe('„Gedeckt“ nie, solange ein Plan-Punkt offen ist', () => {
               plan: { accountDone, orderDone, gapDone: false },
             });
             it(`Konto ${hasAccount} · läuft ${orderRuns} · erledigt ${accountDone}/${orderDone} · Stand ${amount}`, () => {
+              // the old point „Konto eröffnen“ (accountDone) is gone: it never changes the status
               const st = kontoState(DATA, ACTIVE, s);
               const open = st.plan.some((p) => !p.done);
               if (open) expect(st.status).not.toBe('covered');
               if (st.plan.some((p) => p.id !== 'gap' && !p.done)) expect(st.status).toBe('setup');
               expect(st.planDone).toBe(st.plan.filter((p) => p.done).length);
-              expect(st.plan).toHaveLength(3);
+              expect(st.plan.map((p) => p.id)).toEqual(['order', 'gap']);
+              if (hasAccount !== null && !orderDone) expect(st.status).toBe('setup');
             });
           }
   it('nicht eingerichtet: auch mit großem Kontostand nie gedeckt', () => {
@@ -83,66 +86,143 @@ describe('„Gedeckt“ nie, solange ein Plan-Punkt offen ist', () => {
   });
 });
 
-describe('Einrichtung in beiden Antwort-Varianten (gespeichert, dann eine Wahrheit)', () => {
-  it('Variante A: Kontostand 0, Dauerauftrag läuft → 2 von 3, dann „Erledigt“ und Lücke → gedeckt', async () => {
+describe('Einrichtung in beiden Varianten (mit und ohne eigenes Konto; gespeichert, dann eine Wahrheit)', () => {
+  it('mit Konto: Stand 0, Dauerauftrag läuft → 0 von 2, „Erledigt“ und Lücke → eingeplant', async () => {
     const db = await newDb();
-    await finishSetup(db, { balance: 0, hasAccount: true, orderRuns: true }, { active: ACTIVE, now: NOW });
+    await finishSetup(db, { hasAccount: true, balance: 0, orderRuns: true }, { active: ACTIVE, now: NOW });
     let st = await stateOf(db);
     // November: no further deposit (it arrived at the start of the month), Miete 1000 → −1000 …
     expect(st.overview.simulation.months[0]!.deposit).toBe(0);
     expect(st.order).toBe(1050);
+    expect(st.hasAccount).toBe(true);
     expect(st.plan.map((p) => [p.id, p.done, p.isNew])).toEqual([
-      ['account', true, false],
       ['order', false, false],
       ['gap', false, false],
     ]);
     expect(st.status).toBe('setup');
-    expect(st.planDone).toBe(1);
+    expect(st.planDone).toBe(0);
     await setPlan(db, { orderDone: true });
     st = await stateOf(db);
     expect(st.status).toBe('gap');
-    // Nov −1000; Dec +50 → −950; Jan −900; Feb −1450 → gap 1450 in Februar
+    // Nov −1000; Dec +50 → −950; Jan −900; Feb −1450 → one-time amount 1450, first minus already in November
     expect(st.gap).toBe(1450);
     expect(st.gapMonth).toBe('2027-02');
+    expect(st.gapFrom).toBe('2026-11');
     await setAnchor(db, st.balance + st.gap, new Date('2026-11-04T09:05:00.000Z'));
     st = await stateOf(db);
     expect(st.status).toBe('covered');
-    expect(st.planDone).toBe(3);
+    expect(st.planDone).toBe(2);
   });
 
-  it('Variante B: „Ich habe noch keins“, Dauerauftrag läuft nicht → Konto eröffnen und einrichten im Plan', async () => {
+  it('mit Konto, Dauerauftrag läuft nicht: „Dauerauftrag einrichten“ (neu), diesen Monat kommt nichts', async () => {
     const db = await newDb();
-    await finishSetup(db, { balance: 0, hasAccount: false, orderRuns: false }, { active: ACTIVE, now: NOW });
+    await finishSetup(db, { hasAccount: true, balance: 500, orderRuns: false }, { active: ACTIVE, now: NOW });
     const s = await readKonto(db);
     expect(s.orderStartsAfter).toBe(ACTIVE);
+    expect(s.orderRuns).toBe(false);
+    const st = kontoState(DATA, ACTIVE, s);
+    expect(st.plan[0]).toMatchObject({ id: 'order', isNew: true, done: false });
+    expect(st.overview.simulation.months[0]!.deposit).toBe(0);
+  });
+
+  it('ohne Konto („Nein, ich plane nur“), „Noch nichts“: zwei Punkte, Dauerauftrag nicht gefragt', async () => {
+    const db = await newDb();
+    await finishSetup(db, { hasAccount: false, balance: 0, orderRuns: null }, { active: ACTIVE, now: NOW });
+    const s = await readKonto(db);
+    expect(s.hasAccount).toBe(false);
+    expect(s.orderRuns).toBeNull();
+    expect(s.orderStartsAfter).toBe(ACTIVE);
     let st = kontoState(DATA, ACTIVE, s);
+    expect(st.hasAccount).toBe(false);
     expect(st.plan.map((p) => [p.id, p.done, p.isNew])).toEqual([
-      ['account', false, true],
-      ['order', false, true],
+      ['order', false, false],
       ['gap', false, false],
     ]);
     expect(st.planDone).toBe(0);
     expect(st.status).toBe('setup');
-    // paying the gap first does not make it „gedeckt“: account and standing order are still open
+    // setting the one-time amount aside first does not make it „eingeplant“: the monthly amount is still open
     await setAnchor(db, st.balance + st.gap, new Date('2026-11-04T09:05:00.000Z'));
     st = await stateOf(db);
     expect(st.gap).toBe(0);
     expect(st.planDone).toBe(1);
     expect(st.status).toBe('setup');
-    await setPlan(db, { accountDone: true });
-    expect((await stateOf(db)).status).toBe('setup');
     await setPlan(db, { orderDone: true });
     expect((await stateOf(db)).status).toBe('covered');
   });
 
-  it('Kontostand mit Cent-Betrag: Lücke auf den Cent wie überall', async () => {
+  it('Betrag mit Cent: Lücke auf den Cent wie überall', async () => {
     const db = await newDb();
-    await finishSetup(db, { balance: 184.21, hasAccount: true, orderRuns: false }, { active: ACTIVE, now: NOW });
+    await finishSetup(db, { hasAccount: true, balance: 184.21, orderRuns: false }, { active: ACTIVE, now: NOW });
     await setPlan(db, { orderDone: true });
     const st = await stateOf(db);
-    // Nov 184,21 − 1000 = −815,79; Feb lowest −815,79 − 450 − … : the gap keeps the cents
     expect(st.gap).toBe(Math.round(-st.overview.simulation.lowest * 100) / 100);
     expect(Math.round(st.gap * 100) % 100).toBe(79);
+  });
+});
+
+describe('Lücke: „Leg bis {Datum} einmalig € Y zur Seite.“', () => {
+  // Strom 100 monthly, Versicherung 1200 in March → monthly amount 200; with 100 set aside and the
+  // deposit of November already in: Nov 0, Dec +100, Jan +200, Feb +300, Mar −700 (first minus),
+  // Apr −600 … the lowest is March, but take a later, deeper one: Kfz 900 in May
+  const D2 = ds([pos('strom', 100), pos('vers', 1200, [3]), pos('kfz', 900, [5])]);
+  const settings = (patch: Partial<KontoSettings> = {}) =>
+    toKontoSettings({
+      enabled: true,
+      balance: 0,
+      rounding: 1,
+      setupDone: true,
+      hasAccount: true,
+      orderRuns: true,
+      receivedFor: ACTIVE,
+      plan: { accountDone: false, orderDone: true, gapDone: false },
+      anchor: { amount: 0, at: '2026-11-03T10:00:00.000Z' },
+      ...patch,
+    });
+
+  it('erster Minus-Monat und tiefster Monat sind verschieden: Datum vom ersten, Betrag vom tiefsten', () => {
+    const st = kontoState(D2, ACTIVE, settings());
+    const months = st.overview.simulation.months;
+    const firstMinus = months.find((m) => Math.round(m.end * 100) < 0)!;
+    expect(st.gapFrom).toBe(firstMinus.period);
+    expect(st.gapMonth).toBe(st.overview.simulation.lowestPeriod);
+    expect(st.gapFrom).not.toBe(st.gapMonth);
+    expect(st.gapFrom! < st.gapMonth!).toBe(true);
+    // amount = the lowest balance, not the first minus
+    expect(st.gap).toBe(Math.round(-st.overview.simulation.lowest * 100) / 100);
+    expect(st.gap).toBeGreaterThan(-firstMinus.end);
+    // date = last day before the first minus month begins (start day 1: last day of the month before)
+    const by = st.gapBy!;
+    const [y, m] = st.gapFrom!.split('-').map(Number) as [number, number];
+    expect([by.getFullYear(), by.getMonth() + 1, by.getDate()]).toEqual([m === 1 ? y - 1 : y, m === 1 ? 12 : m - 1, new Date(y, m - 1, 0).getDate()]);
+  });
+
+  it('mit „Neuer Monat beginnt am 25.“: das Datum ist der 24. des Vormonats', () => {
+    const st = kontoState(D2, ACTIVE, settings(), 25);
+    const [y, m] = st.gapFrom!.split('-').map(Number) as [number, number];
+    expect(st.gapBy).toEqual(new Date(y, m - 2, 24));
+  });
+
+  it('periodStartDate / lastDayBefore: Tag 1, 25, Monatsletzter, Jahreswechsel', () => {
+    expect(periodStartDate('2027-02', 1)).toEqual(new Date(2027, 1, 1));
+    expect(lastDayBefore('2027-02', 1)).toEqual(new Date(2027, 0, 31));
+    expect(periodStartDate('2027-02', 25)).toEqual(new Date(2027, 0, 25));
+    expect(lastDayBefore('2027-02', 25)).toEqual(new Date(2027, 0, 24));
+    expect(periodStartDate('2027-03', 'last')).toEqual(new Date(2027, 1, 28));
+    expect(lastDayBefore('2027-01', 15)).toEqual(new Date(2026, 11, 14));
+    // the same rule as activeMonth: from the start day on, the period is active
+    for (const start of [1, 15, 25, 28, 'last'] as const) {
+      const d = periodStartDate('2027-04', start);
+      expect(activeMonth(d, start)).toBe('2027-04');
+      expect(activeMonth(lastDayBefore('2027-04', start), start)).toBe('2027-03');
+    }
+  });
+
+  it('keine Lücke: kein Datum, kein Monat', () => {
+    const st = kontoState(D2, ACTIVE, settings({ anchor: { amount: 5000, at: '2026-11-03T10:00:00.000Z' } }));
+    expect(st.gap).toBe(0);
+    expect(st.gapFrom).toBeNull();
+    expect(st.gapBy).toBeNull();
+    expect(st.status).toBe('covered');
   });
 });
 

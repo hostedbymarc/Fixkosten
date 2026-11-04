@@ -11,7 +11,7 @@ import { t } from '../lib/kontoTexts';
 import { KontoStatusLine } from '../components/konto/KontoStatusView';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
-import { COUNTRIES, COUNTRY_FORMAT, COUNTRY_LABEL, DEFAULT_COUNTRY, toCountry } from '../lib/country';
+import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, currencyOf, DEFAULT_COUNTRY, type Currency } from '../lib/country';
 import { InfoTip } from '../components/InfoTip';
 import { Logo } from '../components/Logo';
 import { ImportSheet } from '../components/ImportSheet';
@@ -354,15 +354,15 @@ function KontoSection({ ds }: { ds: Dataset }) {
   return (
     <section aria-labelledby="konto-title">
       <h2 id="konto-title" className="section-title mb-2 px-1">
-        Fixkostenkonto
+        {t('settings.title')}
       </h2>
       <div className="glass flex flex-col gap-4 p-4" data-testid="konto-settings">
         <SwitchField
-          label="Fixkostenkonto verwenden"
+          label={t('settings.switch')}
           checked={settings.enabled}
           onChange={(v) => void writeKonto(db, { enabled: v, ...(v ? {} : { inviteDismissed: true }) })}
           hint={<span data-testid="konto-enabled-text">{t(settings.enabled ? 'settings.on' : 'settings.off')}</span>}
-          info="Erbse rechnet aus, welchen Dauerauftrag dein Fixkostenkonto braucht und ob es jeden Monat reicht. Ohne Banklogin."
+          info={t('settings.info')}
           testId="konto-enabled"
         />
         {settings.enabled && (
@@ -384,7 +384,7 @@ function KontoSection({ ds }: { ds: Dataset }) {
                       </dd>
                     </>
                   )}
-                  <dt className="text-ink-soft">{t('settings.order')}</dt>
+                  <dt className="text-ink-soft">{t(state.hasAccount ? 'settings.order' : 'settings.monthly')}</dt>
                   <dd className="num text-right font-semibold text-ink">
                     <span data-testid="konto-summary-order">{formatEUR(state.order)}</span> {orderDay(start)}
                   </dd>
@@ -430,22 +430,27 @@ function KontoSection({ ds }: { ds: Dataset }) {
   );
 }
 
-/** Land: currency and number format (CH: CHF), templates of the setup. Stored in meta, carried by backups. */
+/**
+ * Währung: Euro or Schweizer Franken. The internal country (number format, templates) follows from it
+ * and the browser language (src/lib/country.ts). Stored in meta, carried by backups.
+ */
 function CountrySection() {
   const stored = useLiveQuery(() => readCountryRaw(db), []);
-  const country = stored ?? DEFAULT_COUNTRY;
+  const currency = currencyOf(stored ?? DEFAULT_COUNTRY);
   return (
     <section aria-labelledby="country-title">
       <h2 id="country-title" className="section-title mb-2 px-1">
-        Land
+        Währung
       </h2>
       <div className="glass flex flex-col gap-2 p-4" data-testid="country-settings">
-        <SelectField
-          label="Land und Währung"
-          value={country}
-          onChange={(v) => void writeCountry(db, toCountry(v))}
-          options={COUNTRIES.map((c) => ({ value: c, label: `${COUNTRY_LABEL[c]} · ${COUNTRY_FORMAT[c].currency}` }))}
-          info="Bestimmt Währung und Zahlenformat. Die Beträge selbst bleiben unverändert."
+        <Segmented<Currency>
+          label="Währung"
+          value={currency}
+          onChange={(c) => {
+            if (c !== currency) void writeCountry(db, countryForCurrency(c, browserLanguages()));
+          }}
+          options={CURRENCIES.map((c) => ({ value: c, label: CURRENCY_LABEL[c] }))}
+          gridClass="grid-cols-1 sm:grid-cols-2"
         />
       </div>
     </section>

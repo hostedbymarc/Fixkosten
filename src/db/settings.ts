@@ -41,7 +41,7 @@ export interface KontoSettings {
   // ---- Einrichtung und Plan (all optional in storage; defaults below) ----
   /** balance anchor; none: `balance` without corrections (data from PR #39) */
   anchor: KontoAnchor | null;
-  /** false: „Ich habe noch keins“ in the setup (null: not asked) */
+  /** „Hast du ein eigenes Konto für Fixkosten?“ – false: „Nein, ich plane nur“ (null: not asked) */
   hasAccount: boolean | null;
   /** answer to „Läuft dein Dauerauftrag schon?“ (null: not asked) */
   orderRuns: boolean | null;
