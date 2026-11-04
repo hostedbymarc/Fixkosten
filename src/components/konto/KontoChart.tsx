@@ -87,7 +87,7 @@ export default function KontoChart({
     <div
       style={{ height }}
       role="img"
-      aria-label={`Liniendiagramm: Kontostand am Monatsende, ${first ? shortPeriodLabel(first.period) : ''} bis ${last ? shortPeriodLabel(last.period) : ''}${
+      aria-label={`Liniendiagramm: Stand am Monatsende, ${first ? shortPeriodLabel(first.period) : ''} bis ${last ? shortPeriodLabel(last.period) : ''}${
         negatives ? `, ${negatives} ${negatives === 1 ? 'Monat' : 'Monate'} unter 0` : ', nie unter 0'
       }`}
       data-testid="konto-chart"
@@ -129,7 +129,7 @@ export default function KontoChart({
             isAnimationActive={false}
             dot={(p: DotProps) => <BalanceDot key={p.payload?.period} {...p} selected={selected} onSelect={onSelect} />}
             activeDot={false}
-            name="Kontostand"
+            name="Stand"
           />
         </LineChart>
       </ResponsiveContainer>

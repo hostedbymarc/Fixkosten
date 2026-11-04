@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { countryFromLanguage } from './country';
+import { countryForCurrency, countryFromLanguage, CURRENCIES, CURRENCY_LABEL, currencyOf } from './country';
 import { currencySymbol, formatAvg, formatCompactEUR, formatDelta, formatEUR, parseAmount, setFormatCountry, withoutCurrency } from './format';
 
 const plain = (s: string) => s.replace(/[  ]/g, ' ');
@@ -38,5 +38,24 @@ describe('Währung je Land (zentral in format.ts)', () => {
     expect(countryFromLanguage('de-AT')).toBe('AT');
     expect(countryFromLanguage(['en-US'])).toBe('AT');
     expect(countryFromLanguage(undefined)).toBe('AT');
+  });
+});
+
+describe('Nur Währung sichtbar: das Land folgt aus Währung und Browsersprache', () => {
+  it('genau zwei Optionen: Euro (€) und Schweizer Franken (CHF)', () => {
+    expect(CURRENCIES.map((c) => CURRENCY_LABEL[c])).toEqual(['Euro (€)', 'Schweizer Franken (CHF)']);
+  });
+  it('CHF → CH, egal welche Sprache', () => {
+    for (const lang of ['de-AT', 'de-DE', 'de-CH', 'en-US']) expect(countryForCurrency('CHF', lang)).toBe('CH');
+  });
+  it('Euro: de-AT → AT (AT-Vorlagen zuerst), de-DE → DE, sonst AT', () => {
+    expect(countryForCurrency('EUR', 'de-AT')).toBe('AT');
+    expect(countryForCurrency('EUR', ['de-DE', 'de'])).toBe('DE');
+    expect(countryForCurrency('EUR', 'de-CH')).toBe('AT');
+    expect(countryForCurrency('EUR', 'en-US')).toBe('AT');
+    expect(countryForCurrency('EUR', [])).toBe('AT');
+  });
+  it('zurück zur Währung: AT und DE sind Euro, CH ist Franken', () => {
+    expect([currencyOf('AT'), currencyOf('DE'), currencyOf('CH')]).toEqual(['EUR', 'EUR', 'CHF']);
   });
 });

@@ -49,48 +49,53 @@ export function depositDone(s: Pick<KontoSettings, 'receivedFor' | 'checks' | 'o
 
 /**
  * The three states, only in words:
- * - setup: not set up, or a point of „Dein Plan“ other than the one-time transfer is still open
- * - gap: only the one-time transfer is missing („Im Februar 2027 fehlen € 865,79.“)
- * - covered: everything done, no month below 0 („Alles gedeckt bis Oktober 2027.“)
+ * - setup: not set up, or the monthly amount („Dauerauftrag einrichten“ / „Leg jeden Monat … zur Seite“) is still open
+ * - gap: only the one-time amount is missing („Ab Februar 2027 reicht das Geld nicht.“)
+ * - covered: everything done, no month below 0 („Alles eingeplant bis Oktober 2027.“)
  * „covered“ never comes while a point of the plan is open.
  */
 export type KontoStatus = 'setup' | 'gap' | 'covered';
 
-export type PlanStepId = 'account' | 'order' | 'gap';
+/** 'order': the monthly amount (standing order, or set aside by hand); 'gap': the one-time amount */
+export type PlanStepId = 'order' | 'gap';
 
 export interface PlanStep {
   id: PlanStepId;
   done: boolean;
-  /** account: a new account to open (false: there is one); order: set up new (false: check the running one) */
+  /** order: a new standing order to set up (false: check the running one, or set aside by hand) */
   isNew: boolean;
 }
 
 export interface KontoState {
   overview: KontoOverview;
-  /** expected balance today */
+  /** expected amount set aside today („Schon zur Seite gelegt“) */
   balance: number;
-  /** the rounded standing order (= overview.order.amount) */
+  /** the rounded monthly amount (= overview.order.amount) */
   order: number;
-  /** Startlücke in euros, whole cents; 0 = nothing missing */
+  /** false: „Nein, ich plane nur“ – no own account, the money is set aside by hand */
+  hasAccount: boolean;
+  /** one-time amount in euros, whole cents; 0 = nothing missing. = the lowest balance below 0 */
   gap: number;
+  /** first month that ends below 0: „Ab Februar 2027 reicht das Geld nicht.“ */
+  gapFrom: Period | null;
+  /** last day before gapFrom begins (with „Neuer Monat beginnt am“): „Leg bis 24. Jänner 2027 …“ */
+  gapBy: Date | null;
   /** month of the lowest balance: there exactly `gap` is missing */
   gapMonth: Period | null;
-  /** last month of the simulation: „Alles gedeckt bis …“ */
+  /** last month of the simulation: „Alles eingeplant bis …“ */
   coveredUntil: Period;
-  /** always three points: account, standing order, one-time transfer */
+  /** always two points: the monthly amount, the one-time amount */
   plan: PlanStep[];
   planDone: number;
   status: KontoStatus;
   streak: Streak;
 }
 
-/** Points of „Dein Plan“. Data from PR #39 (set up, never asked): account and standing order count as there. */
+/** Points of „Dein Plan“. Data from PR #39 (set up, never asked): the standing order counts as there. */
 export function planSteps(s: KontoSettings, gap: number): PlanStep[] {
   const legacy = s.setupDone && s.hasAccount === null;
-  const hasAccount = s.hasAccount !== false;
   return [
-    { id: 'account', isNew: !hasAccount, done: s.setupDone && (hasAccount || s.plan.accountDone) },
-    { id: 'order', isNew: !legacy && s.orderRuns === false, done: s.setupDone && (legacy || s.plan.orderDone) },
+    { id: 'order', isNew: s.hasAccount === true && s.orderRuns === false, done: s.setupDone && (legacy || s.plan.orderDone) },
     { id: 'gap', isNew: false, done: s.setupDone && cents(gap) <= 0 },
   ];
 }
@@ -100,17 +105,38 @@ export function statusOf(setupDone: boolean, plan: PlanStep[]): KontoStatus {
   return plan.find((p) => p.id === 'gap')!.done ? 'covered' : 'gap';
 }
 
-export function kontoState(ds: Dataset, active: Period, s: KontoSettings): KontoState {
+/**
+ * First day of a period with „Neuer Monat beginnt am“: start 1 → the 1st of that month; otherwise
+ * the start day of the month before (from that day on the period is active), capped at its last day.
+ */
+export function periodStartDate(period: Period, start: MonthStart): Date {
+  const [y, m] = period.split('-').map(Number) as [number, number];
+  if (start === 1) return new Date(y, m - 1, 1);
+  const lastDay = new Date(y, m - 1, 0).getDate();
+  return new Date(y, m - 2, start === 'last' ? lastDay : Math.min(start, lastDay));
+}
+
+/** The last day before `period` begins: until then the one-time amount must be set aside. */
+export function lastDayBefore(period: Period, start: MonthStart): Date {
+  const d = periodStartDate(period, start);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+}
+
+export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start: MonthStart = 1): KontoState {
   const balance = expectedBalance(ds, s);
   const overview = kontoOverview(ds, active, { balance, receivedFor: depositDone(s, active) ? active : null, rounding: s.rounding });
   const sim = overview.simulation;
   const gap = cents(sim.gap) > 0 ? cents(sim.gap) / 100 : 0;
+  const gapFrom = gap > 0 ? (sim.months.find((m) => cents(m.end) < 0)?.period ?? sim.lowestPeriod) : null;
   const plan = planSteps(s, gap);
   return {
     overview,
     balance,
     order: overview.order.amount,
+    hasAccount: s.hasAccount !== false,
     gap,
+    gapFrom,
+    gapBy: gapFrom ? lastDayBefore(gapFrom, start) : null,
     gapMonth: gap > 0 ? sim.lowestPeriod : null,
     coveredUntil: sim.months.at(-1)?.period ?? active,
     plan,
@@ -164,7 +190,7 @@ export function streakBadge(streak: Streak): number | 'new' | null {
 // ---------------------------------------------------------------------------
 // Meilensteine
 
-/** Reached milestones: „Zum ersten Mal alles gedeckt“ (once seen, it stays), series of 3, 6 and 12 months. */
+/** Reached milestones: „Zum ersten Mal alles eingeplant“ (once seen, it stays), series of 3, 6 and 12 months. */
 export function reachedMilestones(s: Pick<KontoSettings, 'milestonesShown'>, status: KontoStatus, streak: Streak): Milestone[] {
   const reached = new Set<Milestone>(s.milestonesShown);
   if (status === 'covered') reached.add('firstPod');
