@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { SetupAnswers } from '../../db/kontoActions';
 import { amountToInput, parseAmount } from '../../lib/format';
 import type { KontoState } from '../../lib/kontoBalance';
@@ -46,11 +46,18 @@ export function KontoSetupSheet({ state, day, onAnswers, onClose, onFinish, init
   const total = hasAccount ? 3 : 2;
   // the answers just saved: „Dein Plan“ shows once the stored state has them, never the state from before
   const [saved, setSaved] = useState<SetupAnswers | null>(null);
-  const ready =
-    !saved || (state.setupDone && state.hasAccount === saved.hasAccount && Math.round(state.balance * 100) === Math.round(saved.balance * 100));
+  const arrived =
+    !!saved && state.setupDone && state.hasAccount === saved.hasAccount && Math.round(state.balance * 100) === Math.round(saved.balance * 100);
+  // once there, it stays (a later „Erledigt“ changes the amount on purpose)
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    if (arrived) setSeen(true);
+  }, [arrived]);
+  const ready = !saved || seen || arrived;
 
   async function save(amount: number, orderRuns: boolean | null) {
     const answers = { hasAccount, balance: amount, orderRuns };
+    setSeen(false);
     setSaved(answers);
     await onAnswers(answers);
     setStep('plan');
