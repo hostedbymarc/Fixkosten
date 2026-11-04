@@ -1,49 +1,52 @@
-// Every write of the Schote: setup, monthly check, new anchor, milestones. All through the one meta
-// entry of the Fixkostenkonto (src/db/settings.ts); the schema does not change.
+// Every write of the Fixkostenkonto: setup, plan, monthly check, new anchor, milestones. All through
+// the one meta entry (src/db/settings.ts); the schema does not change.
 
-import type { SetupResult } from '../components/konto/KontoSetupSheet';
 import { dayKey } from '../lib/kontoBalance';
 import type { Period } from '../lib/types';
 import type { FixkostenDB } from './db';
 import { readKonto, writeKonto, type KontoCheck, type Milestone } from './settings';
 
-/** Set once the setup was finished in this session: „Weiß ich gerade nicht“ reminds on the next start only. */
+/** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
 
 const upsertCheck = (checks: KontoCheck[], check: KontoCheck) => [...checks.filter((c) => c.period !== check.period), check];
 
-/** A setup question was answered. */
-export async function saveSetupProgress(db: FixkostenDB, steps: number): Promise<void> {
-  const current = await readKonto(db);
-  if (steps > current.setupSteps) await writeKonto(db, { setupSteps: steps });
+/** The two answers of the setup. */
+export interface SetupAnswers {
+  /** „Kontostand heute“; 0 with „Ich habe noch keins“ */
+  balance: number;
+  /** false: „Ich habe noch keins“ → „Fixkostenkonto eröffnen“ comes into the plan */
+  hasAccount: boolean;
+  /** „Läuft dein Dauerauftrag schon?“ */
+  orderRuns: boolean;
 }
 
 /**
- * „Fertig“ in „Dein Plan“: the balance becomes the anchor (plus the one-time transfer when it is
- * done), the answer to „schon eingegangen?“ becomes this month's check.
+ * Both questions answered: saved at once, „Dein Plan“ then reads everything from the stored state
+ * (kontoState) – the same numbers as tile, sheet and settings.
+ * This month brings no further deposit in either case: a running standing order arrived at the start
+ * of the month (it is in the balance), a new one starts next month.
  */
-export async function finishSetup(db: FixkostenDB, r: SetupResult, ctx: { active: Period; gap: number; now: Date }): Promise<void> {
+export async function finishSetup(db: FixkostenDB, a: SetupAnswers, ctx: { active: Period; now: Date }): Promise<void> {
   const at = ctx.now.toISOString();
   const current = await readKonto(db);
-  const amount = Math.round((r.balance + (r.gapDone ? ctx.gap : 0)) * 100) / 100;
-  let checks = current.checks;
-  // „Ja“: already on the balance (same moment as the anchor → not counted twice); „Nein“: asked again from tomorrow
-  if (r.order === 'yes') checks = upsertCheck(checks, { period: ctx.active, deposited: true, answeredAt: at });
-  if (r.order === 'no') checks = upsertCheck(checks, { period: ctx.active, deposited: false, answeredAt: at });
-  if (r.order === 'none') checks = checks.filter((c) => c.period !== ctx.active);
+  const amount = Math.round(a.balance * 100) / 100;
+  const checks = a.orderRuns
+    ? upsertCheck(current.checks, { period: ctx.active, deposited: true, answeredAt: at })
+    : current.checks.filter((c) => c.period !== ctx.active);
   await writeKonto(db, {
     enabled: true,
-    hasAccount: r.hasAccount,
+    hasAccount: a.hasAccount,
+    orderRuns: a.orderRuns,
     balance: amount,
     anchor: { amount, at },
-    balanceUnknown: r.balanceUnknown,
-    balanceCheckedOn: r.balanceUnknown ? null : dayKey(ctx.now),
+    balanceUnknown: false,
+    balanceCheckedOn: dayKey(ctx.now),
     checks,
-    receivedFor: r.order === 'yes' ? ctx.active : null,
-    snoozedOn: r.order === 'no' ? dayKey(ctx.now) : current.snoozedOn,
-    orderStartsAfter: r.order === 'none' ? ctx.active : null,
-    plan: { accountDone: r.accountDone, orderDone: r.orderDone, gapDone: r.gapDone },
-    setupSteps: 3,
+    receivedFor: a.orderRuns ? ctx.active : null,
+    orderStartsAfter: a.orderRuns ? null : ctx.active,
+    plan: { accountDone: false, orderDone: false, gapDone: false },
+    setupSteps: 2,
     setupDone: true,
   });
   session.setUp = true;
@@ -69,7 +72,7 @@ export async function confirmBalance(db: FixkostenDB, now: Date): Promise<void> 
   await writeKonto(db, { balanceCheckedOn: dayKey(now) });
 }
 
-/** A point of „Dein Plan“ done later (sheet „Muss ich jetzt etwas tun?“). */
+/** „Erledigt“ on a point of „Dein Plan“ (the one-time transfer is a new anchor instead, see setAnchor). */
 export async function setPlan(db: FixkostenDB, patch: Partial<{ accountDone: boolean; orderDone: boolean; gapDone: boolean }>): Promise<void> {
   const current = await readKonto(db);
   await writeKonto(db, { plan: { ...current.plan, ...patch } });

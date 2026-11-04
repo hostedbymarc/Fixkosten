@@ -368,20 +368,20 @@ export async function checkRadio(radio: Locator) {
 }
 
 /**
- * Fixkostenkonto „Schote“: after „Aktivieren“ the tile asks for the setup first. This answers it
- * (own account, balance 0, standing order still to come, every point of „Dein Plan“ done); then the
- * tile shows the pod and opens the sheet.
+ * Fixkostenkonto: after „Aktivieren“ the tile asks for the setup first. This answers both questions
+ * (balance 0, standing order not running yet) and does every point of „Dein Plan“ (standing order,
+ * one-time transfer); then the tile shows „Alles gedeckt bis …“ and opens the sheet.
  */
 export async function setUpKonto(page: Page) {
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
   await page.getByTestId('konto-tile').click();
-  await page.getByTestId('konto-setup-has-account').click();
   await page.getByTestId('konto-setup-balance').fill('0');
   await page.getByTestId('konto-setup-next').click();
   await page.getByTestId('konto-setup-order-no').click();
   await page.getByTestId('plan-order-done').click();
-  if (await page.getByTestId('plan-gap').count()) await page.getByTestId('plan-gap-done').click();
+  const gap = page.getByTestId('plan-gap-done');
+  if (await gap.count()) await gap.click();
   await page.getByTestId('konto-setup-finish').click();
   await expect(page.getByTestId('konto-setup')).toHaveCount(0);
-  await expect(page.getByTestId('konto-tile-card')).not.toHaveAttribute('data-state', 'setup');
+  await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
 }

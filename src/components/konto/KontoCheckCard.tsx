@@ -6,7 +6,7 @@ import { localToday } from '../../lib/activeMonth';
 import { formatEUR, parseAmount } from '../../lib/format';
 import { dueCard } from '../../lib/kontoBalance';
 import { monthName } from '../../lib/period';
-import { t } from '../../lib/schoteTexts';
+import { t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
 import { AmountField } from '../form';
 import { Pea } from '../Pea';
@@ -17,7 +17,7 @@ const PRIMARY = `${BUTTON} bg-accent text-white hover:bg-accent-hover disabled:o
 const SECONDARY = `${BUTTON} text-ink-soft hover:bg-zinc-100`;
 
 /**
- * Erbsen-Check, on top of the month screen: at most one card.
+ * Monats-Check, on top of the month screen: at most one card.
  * - „Neuer Monat. Ist dein Dauerauftrag eingegangen?“ Ja / Noch nicht (asks again on a later day)
  * - every 3 months „Stimmt dein Kontostand noch? € Z“ Stimmt / Anderer Betrag (new anchor)
  * - after „Weiß ich gerade nicht“: the balance, on the next start

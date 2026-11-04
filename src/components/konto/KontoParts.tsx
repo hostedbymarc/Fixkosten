@@ -5,7 +5,9 @@ import { writeKonto, type KontoSettings } from '../../db/settings';
 import { localToday } from '../../lib/activeMonth';
 import { depositDone } from '../../lib/kontoBalance';
 import { ROUNDING_CHOICES, type KontoMonth, type KontoOverview, type Rounding, type StandingOrderCause } from '../../lib/fixkostenkonto';
-import { amountToInput, formatAvg, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
+import { amountToInput, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
+import { axisPeriodLabel } from '../../lib/analytics';
+import { t } from '../../lib/kontoTexts';
 import { monthName, periodLabel } from '../../lib/period';
 import type { Period } from '../../lib/types';
 import { AlertIcon } from '../Icons';
@@ -22,45 +24,6 @@ export function SignedBalance({ value, className = '' }: { value: number; classN
       {negative && <AlertIcon size={14} />}
       {formatEUR(value)}
     </span>
-  );
-}
-
-/** „Damit dein Konto nie ins Minus rutscht, zahl einmalig € Y ein.“ / „Dein Konto ist gedeckt.“ */
-export function GapMessage({ overview, active }: { overview: KontoOverview; active: Period }) {
-  const { simulation } = overview;
-  const gap = Math.round(simulation.gap * 100) > 0;
-  return (
-    <div
-      className={`rounded-2xl px-3 py-3 text-[15px] leading-snug ${gap ? 'bg-warn-soft text-ink' : 'bg-paid-soft text-ink'}`}
-      data-testid="konto-gap"
-      data-gap={gap || undefined}
-      role="status"
-    >
-      {gap ? (
-        <>
-          <p className="flex items-start gap-2 font-semibold">
-            <AlertIcon size={18} className="mt-0.5 shrink-0 text-warn-icon" aria-hidden="true" />
-            <span>
-              Damit dein Konto nie ins Minus rutscht, zahl einmalig{' '}
-              <span className="num whitespace-nowrap" data-testid="konto-gap-value">
-                {formatEUR(simulation.gap)}
-              </span>{' '}
-              ein.
-            </span>
-          </p>
-          {simulation.lowestPeriod && (
-            <p className="mt-1 pl-[26px] text-[13px] text-ink-soft">
-              Tiefster Stand ohne Einzahlung: <SignedBalance value={simulation.lowest} /> Ende {monthName(simulation.lowestPeriod)}
-              {simulation.lowestPeriod.slice(0, 4) !== active.slice(0, 4) ? ` ${simulation.lowestPeriod.slice(0, 4)}` : ''}.
-            </p>
-          )}
-        </>
-      ) : (
-        <p className="font-semibold" data-testid="konto-covered">
-          Dein Konto ist gedeckt.
-        </p>
-      )}
-    </div>
   );
 }
 
@@ -118,7 +81,10 @@ export function MonthBreakdown({ month, active }: { month: KontoMonth; active: P
   );
 }
 
-/** Month list as text: every month with its end balance; tap opens the breakdown. Also the table alternative to the chart. */
+/**
+ * Month list as a table: Monat · Einzahlung · Abbuchungen · Stand, with signs (+ in, − out); tap opens
+ * the breakdown. Also the table alternative to the chart.
+ */
 export function MonthList({
   overview,
   active,
@@ -130,35 +96,56 @@ export function MonthList({
   selected: Period | null;
   onSelect: (p: Period | null) => void;
 }) {
+  const months = overview.simulation.months;
+  // one format for each column, so the amounts line up (cents only where one of them has some)
+  const deposits = formatEURSet(...months.map((m) => m.deposit));
+  const debits = formatEURSet(...months.map((m) => m.debits));
+  const row = 'grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-x-2.5 sm:gap-x-4';
   return (
-    <ul className="divide-y divide-line" data-testid="konto-month-list">
-      {overview.simulation.months.map((m) => {
-        const open = selected === m.period;
-        return (
-          <li key={m.period}>
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => onSelect(open ? null : m.period)}
-              className="focus-ring flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-1 text-left text-[14px] hover:bg-zinc-50"
-              data-testid="konto-month-row"
-              data-period={m.period}
-            >
-              <span className="text-ink">{periodLabel(m.period)}</span>
-              <span className="flex items-center gap-3">
-                <span className="num text-[12px] text-ink-mute">{formatEUR(m.debits)} ab</span>
-                <SignedBalance value={m.end} className="font-semibold" />
-              </span>
-            </button>
-            {open && (
-              <div className="px-1 pb-3">
-                <MonthBreakdown month={m} active={active} />
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <div data-testid="konto-month-list">
+      <div className={`${row} px-1 pb-1 text-[11px] font-medium text-ink-mute sm:text-[12px]`} aria-hidden="true" data-testid="konto-month-head">
+        <span>Monat</span>
+        <span className="text-right">{t('sheet.col.deposit')}</span>
+        <span className="text-right">{t('sheet.col.debits')}</span>
+        <span className="min-w-[72px] text-right">{t('sheet.col.end')}</span>
+      </div>
+      <ul className="divide-y divide-line border-t border-line">
+        {months.map((m, i) => {
+          const open = selected === m.period;
+          const deposit = Math.round(m.deposit * 100) > 0 ? `+${deposits[i]}` : deposits[i];
+          const debit = Math.round(m.debits * 100) > 0 ? `${MINUS}${debits[i]}` : debits[i];
+          return (
+            <li key={m.period}>
+              <button
+                type="button"
+                aria-expanded={open}
+                aria-label={`${periodLabel(m.period)}: Einzahlung ${deposit}, Abbuchungen ${debit}, Stand ${formatEUR(m.end)}`}
+                onClick={() => onSelect(open ? null : m.period)}
+                className={`focus-ring ${row} min-h-11 w-full rounded-xl px-1 text-left text-[13px] hover:bg-zinc-50 sm:text-[14px]`}
+                data-testid="konto-month-row"
+                data-period={m.period}
+              >
+                <span className="min-w-0 truncate text-ink">{axisPeriodLabel(m.period)}</span>
+                <span className="num text-right text-ink-soft" data-testid="konto-month-deposit">
+                  {deposit}
+                </span>
+                <span className="num text-right text-ink-soft" data-testid="konto-month-debits">
+                  {debit}
+                </span>
+                <span className="min-w-[72px] text-right">
+                  <SignedBalance value={m.end} className="justify-end font-semibold" />
+                </span>
+              </button>
+              {open && (
+                <div className="px-1 pb-3">
+                  <MonthBreakdown month={m} active={active} />
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -176,29 +163,6 @@ export function causeText(cause: StandingOrderCause): string {
     case 'once':
       return `${more}, weil ${cause.name} im ${month} einmalig ${formatEUR(cause.amount)} kostet.`;
   }
-}
-
-/** „Dauerauftrag € X / Monat“ with the exact sum, the rounding and its largest reason. */
-export function StandingOrderHeadline({ overview }: { overview: KontoOverview }) {
-  const { order } = overview;
-  return (
-    <div data-testid="konto-order">
-      <p className="text-[13px] font-medium text-ink-mute">Dauerauftrag</p>
-      <p className="num text-[30px] font-semibold leading-tight tracking-[-0.02em] text-ink">
-        <span data-testid="konto-order-value">{formatEUR(order.amount)}</span>
-        <span className="text-[16px] font-medium text-ink-mute"> / Monat</span>
-      </p>
-      <p className="text-[13px] text-ink-mute" data-testid="konto-order-exact">
-        Abbuchungen {periodLabel(order.from)} bis {periodLabel(order.to)} ÷ 12 = <span className="num">{formatAvg(order.exact)}</span>, aufgerundet auf{' '}
-        {formatEUR(order.rounding)}
-      </p>
-      {order.cause && (
-        <p className="mt-1 text-[13px] text-ink-soft" data-testid="konto-order-cause">
-          {causeText(order.cause)}
-        </p>
-      )}
-    </div>
-  );
 }
 
 /**
