@@ -7,13 +7,15 @@
 // 660 px high, the base colour below (every blob reaches 0 above 660 px).
 //
 // Oberer Rand: iOS paints the status bar as a flat colour sampled from the page (the body
-// background, --nebel-base). The Nebel therefore is exactly that colour under the bar and the scrim
-// (safe area + 48 px) and flows in below on an ease-out curve over TOP_FADE px: no step, no band.
+// background, --nebel-base). The Nebel therefore is exactly that colour under the bar (the flat layer
+// #root::before, safe area high) and flows in below on an ease-out curve over TOP_FADE px: no step, no band.
 
 /** Height of the Nebel band in CSS px; below it the page is the plain base colour. */
 export const NEBEL_HEIGHT = 660;
-/** Length of the fade from the bar colour into the Nebel, below the scrim (CSS px). */
+/** Length of the fade from the bar colour into the Nebel (CSS px). */
 export const TOP_FADE = 440;
+/** Plain bar colour below the safe area before the fade starts (CSS px; unchanged geometry). */
+const FLAT_BELOW_BAR = 48;
 // Both bitmaps are 1:1 in CSS px: a scaled bitmap in a fixed layer may be drawn without smoothing or
 // from a blurred mip level in Chrome; at 1:1 every CSS px row carries its own value.
 /** Bell-shaped fade (≈ e^(−4.6 t²)): share of the token alpha at t = 0, 0.15, … 0.9, 1. */
@@ -87,9 +89,9 @@ export function paintNebel(width: number, style: CSSStyleDeclaration, safeTop = 
   if (!ctx) return null;
   const base = rgba(ctx, style.getPropertyValue('--nebel-base'));
   const blobs = BLOBS.map((b) => ({ ...b, cx: b.x * width, rx: b.rx(width), colour: rgba(ctx, style.getPropertyValue(b.token)) }));
-  // the bar colour over the safe area and the scrim (only one layer changes per row there), then the
+  // the bar colour over the safe area and FLAT_BELOW_BAR px below it, then the
   // Nebel comes in as 1 − (1 − u)² over TOP_FADE px (ease-out, flat join)
-  const fadeStart = safeTop + SCRIM_FADE;
+  const fadeStart = safeTop + FLAT_BELOW_BAR;
   const fadeEnd = fadeStart + TOP_FADE;
   const img = ctx.createImageData(w, h);
   const px = img.data;
@@ -133,40 +135,6 @@ export function paintNebel(width: number, style: CSSStyleDeclaration, safeTop = 
   return canvas.toDataURL('image/png');
 }
 
-/** Height of the scrim below the safe area (CSS px). */
-export const SCRIM_FADE = 48;
-/** Scrim opacity at the top (Uhrzeit/Akku); never a covering block. */
-export const SCRIM_MAX = 0.6;
-
-/**
- * Scrim opacity at depth y (CSS px from the top): ease-out SCRIM_MAX · (1 − t)³ over safe area + 48 px.
- * `solid` (Transparenz reduzieren): fully covering over the safe area, then (1 − t)³ over 48 px.
- */
-export function scrimAlpha(y: number, safeTop: number, solid = false): number {
-  if (solid) return y <= safeTop ? 1 : (1 - Math.min(1, (y - safeTop) / SCRIM_FADE)) ** 3;
-  return SCRIM_MAX * (1 - Math.min(1, y / (safeTop + SCRIM_FADE))) ** 3;
-}
-
-/** The scrim as a bitmap (base colour, alpha per row) at 1:1 in CSS px: no gradient dithering, and
- *  never scaled (a strip stretched across the width is drawn from a blurred mip level in Chrome). */
-function paintScrim(width: number, style: CSSStyleDeclaration, safeTop: number, solid: boolean): string | null {
-  const canvas = document.createElement('canvas');
-  const height = safeTop + SCRIM_FADE;
-  canvas.width = Math.max(1, Math.round(width));
-  canvas.height = Math.round(height);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-  const base = rgba(ctx, style.getPropertyValue('--nebel-base'));
-  // first row = top, last row = exactly 0: the bitmap ends without a residue at the lower edge
-  const img = ctx.createImageData(canvas.width, canvas.height);
-  for (let j = 0; j < canvas.height; j++) {
-    const a = Math.round(255 * scrimAlpha((j / (canvas.height - 1)) * height, safeTop, solid));
-    for (let i = 0; i < canvas.width; i++) img.data.set([base[0], base[1], base[2], a], (j * canvas.width + i) * 4);
-  }
-  ctx.putImageData(img, 0, 0);
-  return canvas.toDataURL('image/png');
-}
-
 /** Paints the Nebel now (before the first render) and again on resize and theme changes. */
 export function initNebel() {
   const root = document.documentElement;
@@ -184,10 +152,6 @@ export function initNebel() {
     key = nextKey;
     const url = paintNebel(window.innerWidth, style, safeTop);
     if (url) root.style.setProperty('--nebel-image', `url("${url}")`);
-    for (const [name, solid] of [['--scrim-image', false], ['--scrim-image-solid', true]] as const) {
-      const scrim = paintScrim(window.innerWidth, style, safeTop, solid);
-      if (scrim) root.style.setProperty(name, `url("${scrim}")`);
-    }
     // browsers that still colour the status bar from theme-color get the same colour as the page top
     const bar = style.getPropertyValue('--nebel-base').trim();
     if (bar) document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', bar));
