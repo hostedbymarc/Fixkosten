@@ -68,7 +68,7 @@ Stand: Branch `claude/fixkostenkonto-sprint-kiayqr` (PR #39), nach der Umsetzung
 | Bestandsaufnahme im PR, kein offener STOPP | ✅ | PR #39 |
 | grep Hex / „€“ | ✅ | `check-colors`; „€“ nur in `format.ts` |
 | `pnpm build` | ✅ | |
-| Playwright 5 Viewports | ✅ | iPhone SE, iPhone 15, iPad hoch/quer, Desktop 1440 × hell/dunkel; `fullpage` ist schon auf `main` flaky |
+| Playwright 5 Viewports | ✅ | Gesamtlauf auf `d4d8539` (6 Chromium-Projekte): 1337 ✅, 1 ❌. Rot nur `fullpage` „Monat November“ Pro Max hell, schon auf `main` rot. |
 | Screenshots im PR | ✅ | `docs/screenshots/fixkostenkonto/` (140) |
 | Netlify Deploy Preview | ✅ | deploy-preview-39 |
 | WebKit | – | nicht gefordert; in der Umgebung nicht installiert. Manuell auf dem iPhone (Safari) prüfen. |
