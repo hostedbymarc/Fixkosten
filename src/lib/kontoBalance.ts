@@ -74,6 +74,8 @@ export interface KontoState {
   order: number;
   /** false: „Nein, ich plane nur“ – no own account, the money is set aside by hand */
   hasAccount: boolean;
+  /** the setup questions are answered and stored */
+  setupDone: boolean;
   /** one-time amount in euros, whole cents; 0 = nothing missing. = the lowest balance below 0 */
   gap: number;
   /** first month that ends below 0: „Ab Februar 2027 reicht das Geld nicht.“ */
@@ -134,6 +136,7 @@ export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start:
     balance,
     order: overview.order.amount,
     hasAccount: s.hasAccount !== false,
+    setupDone: s.setupDone,
     gap,
     gapFrom,
     gapBy: gapFrom ? lastDayBefore(gapFrom, start) : null,

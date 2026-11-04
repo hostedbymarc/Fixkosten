@@ -52,7 +52,8 @@ test.describe('Rebrand „Erbse“: Name und Icons', () => {
     await expect(app.getByTestId('sidebar').getByText('Erbse', { exact: true })).toHaveCount(0);
     // brand tokens: the peas stand out from the sidebar in light and dark
     const colours = await mark.locator('.pea').evaluateAll((els) => els.map((e) => getComputedStyle(e).getPropertyValue('--pea-c').trim()));
-    expect(colours).toEqual(['var(--pea-1)', 'var(--pea-2)', 'var(--pea-3)']);
+    const tokens = await app.evaluate(() => [1, 2, 3].map((i) => getComputedStyle(document.documentElement).getPropertyValue(`--pea-${i}`).trim()));
+    expect(colours).toEqual(tokens);
   });
 
   test('glass surfaces fall back to opaque with reduced transparency', async ({ app }) => {
