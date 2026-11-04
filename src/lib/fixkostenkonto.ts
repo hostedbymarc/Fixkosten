@@ -46,34 +46,127 @@ function onKonto(ds: Dataset, position: Position, period: Period): boolean {
 // ---------------------------------------------------------------------------
 
 export interface StandingOrder {
-  /** Σ monthly shares (monthly full, quarterly ÷3, semiannual ÷6, annual ÷12), exact to fractions of a cent */
+  /** Σ all Fixkostenkonto debits of the 12 months from the next month on ÷ 12, exact to fractions of a cent */
   exact: number;
   /** `exact` rounded UP to the rounding step */
   amount: number;
   rounding: Rounding;
-  /** positions that make up the standing order, largest share first */
+  /** first and last month of the window (the 12 months from the month after the active one) */
+  from: Period;
+  to: Period;
+  /** positions that make up the standing order (their 12-month total ÷ 12), largest share first */
   positions: { position: Position; monthly: number }[];
+  /** the position that moves the standing order most away from today's monthly shares, or null */
+  cause: StandingOrderCause | null;
 }
 
 /**
- * The monthly standing order: the monthly shares of every recurring position paid from the
- * Fixkostenkonto that is active in `period`, rounded up to 1, 5 or 10. One-time payments and
- * one-offs are not part of it (they show up in the simulation and the Startlücke).
+ * Why the standing order differs from today's monthly shares, for its largest reason:
+ * - change: a planned change (new amount `amount` from `period`)
+ * - start: a position that starts in `period`
+ * - end: a position whose last month is `period`
+ * - once: a one-time payment (or Einmalbetrag) in `period`
  */
-export function standingOrder(ds: Dataset, period: Period, rounding: Rounding = DEFAULT_ROUNDING): StandingOrder {
+export interface StandingOrderCause {
+  kind: 'change' | 'start' | 'end' | 'once';
+  name: string;
+  period: Period;
+  /** change: the new amount; once: the one-time amount */
+  amount: number;
+  /** effect on the standing order per month (+ more, − less) */
+  monthly: number;
+}
+
+/** The 12 months the standing order covers: the month after the active one and the 11 after it. */
+export function orderWindow(active: Period): Period[] {
+  return Array.from({ length: 12 }, (_, i) => addPeriods(active, i + 1));
+}
+
+/**
+ * The monthly standing order: every debit on the Fixkostenkonto in the 12 months from the next
+ * month on, divided by 12 and rounded up to 1, 5 or 10. That covers positions that start or end
+ * in those months, planned changes and one-time payments; skipped months count nothing. Without
+ * any of these it equals the sum of today's monthly shares (`monthlyEquivalent`).
+ */
+export function standingOrder(ds: Dataset, active: Period, rounding: Rounding = DEFAULT_ROUNDING): StandingOrder {
+  const window = orderWindow(active);
+  // cents per position over the window, and what each one-time debit and plan change was
+  const totals = new Map<string, number>();
+  const onceOf = new Map<string, { period: Period; cents: number }>();
+  const addTo = (id: string, cents: number) => totals.set(id, (totals.get(id) ?? 0) + cents);
+  for (const period of window) {
+    for (const i of dueItems(ds, period)) {
+      if (!i.due || i.status === 'skipped' || !i.fromNet || !onKonto(ds, i.position, period)) continue;
+      const cents = toCents(i.status === 'paid' ? i.payment!.actualAmount : i.planned);
+      addTo(i.position.id, cents);
+      if (i.plan?.frequency === 'once') {
+        const prev = onceOf.get(i.position.id);
+        if (!prev || cents > prev.cents) onceOf.set(i.position.id, { period, cents });
+      }
+    }
+    for (const o of ds.oneOffs) {
+      if (o.period !== period || !o.positionId) continue;
+      const position = ds.positions.find((p) => p.id === o.positionId);
+      if (!position || !onKonto(ds, position, period)) continue;
+      addTo(position.id, toCents(o.amount));
+      const key = `${position.id}#oneoff`;
+      const prev = onceOf.get(key);
+      if (!prev || toCents(o.amount) > prev.cents) onceOf.set(key, { period, cents: toCents(o.amount) });
+    }
+  }
+  const totalCents = [...totals.values()].reduce((a, b) => a + b, 0);
   const positions = ds.positions
-    .filter((p) => {
-      const plan = planForPeriod(p, period);
-      return plan !== null && plan.frequency !== 'once' && isActiveInPeriod(p, period) && onKonto(ds, p, period);
-    })
-    .map((position) => ({ position, monthly: monthlyEquivalent(position, period) }))
-    .filter((p) => p.monthly > 0)
+    .filter((p) => (totals.get(p.id) ?? 0) > 0)
+    .map((position) => ({ position, monthly: (totals.get(position.id) ?? 0) / 1200 }))
     .sort((a, b) => b.monthly - a.monthly || a.position.sortOrder - b.position.sortOrder);
-  // monthlyEquivalent = integer numerator (cents × due months) ÷ 1200 = euros: sum the numerators, divide once
-  const numerator = positions.reduce((acc, p) => acc + Math.round(p.monthly * 1200), 0);
-  const step = rounding * 1200; // one rounding step in numerator units
-  const amount = numerator <= 0 ? 0 : (Math.ceil(numerator / step) * step) / 1200;
-  return { exact: numerator / 1200, amount, rounding, positions };
+  // 12 months × rounding step in cents
+  const step = rounding * 100 * 12;
+  const amount = totalCents <= 0 ? 0 : (Math.ceil(totalCents / step) * step) / 1200;
+  return { exact: totalCents / 1200, amount, rounding, from: window[0]!, to: window[11]!, positions, cause: largestCause(ds, active, window, totals, onceOf) };
+}
+
+/** Today's monthly share of a recurring position on the Fixkostenkonto, in cents × 12 (0 if it is not one today). */
+function steadyCents(ds: Dataset, position: Position, active: Period): number {
+  const plan = planForPeriod(position, active);
+  if (!plan || plan.frequency === 'once' || !isActiveInPeriod(position, active) || !onKonto(ds, position, active)) return 0;
+  return Math.round(monthlyEquivalent(position, active) * 1200);
+}
+
+function largestCause(
+  ds: Dataset,
+  active: Period,
+  window: Period[],
+  totals: Map<string, number>,
+  onceOf: Map<string, { period: Period; cents: number }>,
+): StandingOrderCause | null {
+  let best: { position: Position; diff: number } | null = null;
+  for (const position of ds.positions) {
+    const diff = (totals.get(position.id) ?? 0) - steadyCents(ds, position, active);
+    // below 1 € a month it is not worth a line (rounding of cents)
+    if (Math.abs(diff) < 1200) continue;
+    if (!best || Math.abs(diff) > Math.abs(best.diff)) best = { position, diff };
+  }
+  if (!best) return null;
+  const { position, diff } = best;
+  const monthly = diff / 1200;
+  const once = onceOf.get(position.id) ?? onceOf.get(`${position.id}#oneoff`);
+  const steady = steadyCents(ds, position, active);
+  if (once && (steady === 0 || onceOf.has(`${position.id}#oneoff`)))
+    return { kind: 'once', name: position.name, period: once.period, amount: once.cents / 100, monthly };
+  if (steady === 0) {
+    const first = window.find((p) => isActiveInPeriod(position, p)) ?? window[0]!;
+    return { kind: 'start', name: position.name, period: first, amount: 0, monthly };
+  }
+  const base = planForPeriod(position, active);
+  const changed = window.find((p) => isActiveInPeriod(position, p) && planForPeriod(position, p) !== base);
+  if (changed) {
+    const plan = planForPeriod(position, changed)!;
+    return { kind: 'change', name: position.name, period: changed, amount: plan.amount, monthly };
+  }
+  // no new plan, less than today: it ends (archived or paused) – its last active month
+  const stop = window.findIndex((p) => !isActiveInPeriod(position, p));
+  const last = stop <= 0 ? active : window[stop - 1]!;
+  return { kind: 'end', name: position.name, period: last, amount: 0, monthly };
 }
 
 // ---------------------------------------------------------------------------
@@ -213,16 +306,8 @@ export interface KontoOverview {
   simulation: KontoSimulation;
 }
 
-export function kontoOverview(
-  ds: Dataset,
-  active: Period,
-  settings: { balance: number; receivedFor: Period | null; rounding: Rounding },
-): KontoOverview {
+export function kontoOverview(ds: Dataset, active: Period, settings: { balance: number; receivedFor: Period | null; rounding: Rounding }): KontoOverview {
   const order = standingOrder(ds, active, settings.rounding);
-  const simulation = simulateKonto(ds, active, {
-    balance: settings.balance,
-    receivedThisMonth: settings.receivedFor === active,
-    deposit: order.amount,
-  });
+  const simulation = simulateKonto(ds, active, { balance: settings.balance, receivedThisMonth: settings.receivedFor === active, deposit: order.amount });
   return { order, simulation };
 }

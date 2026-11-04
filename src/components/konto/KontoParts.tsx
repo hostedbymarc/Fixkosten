@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
 import { writeKonto, type KontoSettings } from '../../db/settings';
-import { ROUNDING_CHOICES, type KontoMonth, type KontoOverview, type Rounding } from '../../lib/fixkostenkonto';
+import { ROUNDING_CHOICES, type KontoMonth, type KontoOverview, type Rounding, type StandingOrderCause } from '../../lib/fixkostenkonto';
 import { amountToInput, formatAvg, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
 import { monthName, periodLabel } from '../../lib/period';
 import type { Period } from '../../lib/types';
@@ -9,8 +9,7 @@ import { AlertIcon } from '../Icons';
 import { AmountField, Segmented } from '../form';
 
 /** The assumption of the simulation, visible wherever its numbers are. */
-export const KONTO_ASSUMPTION =
-  'Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.';
+export const KONTO_ASSUMPTION = 'Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.';
 
 /** Signed amount, never colour only: '−€ 120' with the alert icon when below 0. */
 export function SignedBalance({ value, className = '' }: { value: number; className?: string }) {
@@ -67,8 +66,8 @@ export function RisingHint({ overview }: { overview: KontoOverview }) {
   if (!overview.simulation.rising) return null;
   return (
     <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="konto-rising">
-      Dein Kontostand steigt in 12 Monaten um <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(overview.simulation.surplus)}</span>. Der
-      Dauerauftrag ist höher als nötig, z. B. durch die Rundung oder Positionen, die auslaufen.
+      Dein Kontostand steigt in 12 Monaten um <span className="num whitespace-nowrap font-semibold text-ink">{formatEUR(overview.simulation.surplus)}</span>.
+      Der Dauerauftrag ist höher als nötig, z. B. durch die Rundung.
     </p>
   );
 }
@@ -117,7 +116,17 @@ export function MonthBreakdown({ month, active }: { month: KontoMonth; active: P
 }
 
 /** Month list as text: every month with its end balance; tap opens the breakdown. Also the table alternative to the chart. */
-export function MonthList({ overview, active, selected, onSelect }: { overview: KontoOverview; active: Period; selected: Period | null; onSelect: (p: Period | null) => void }) {
+export function MonthList({
+  overview,
+  active,
+  selected,
+  onSelect,
+}: {
+  overview: KontoOverview;
+  active: Period;
+  selected: Period | null;
+  onSelect: (p: Period | null) => void;
+}) {
   return (
     <ul className="divide-y divide-line" data-testid="konto-month-list">
       {overview.simulation.months.map((m) => {
@@ -150,7 +159,23 @@ export function MonthList({ overview, active, selected, onSelect }: { overview: 
   );
 }
 
-/** „Dauerauftrag € X / Monat“ with the exact sum and the rounding. */
+/** The hint line under the standing order: its largest reason, in one sentence. */
+export function causeText(cause: StandingOrderCause): string {
+  const more = cause.monthly > 0 ? 'Mehr' : 'Weniger';
+  const month = periodLabel(cause.period);
+  switch (cause.kind) {
+    case 'change':
+      return `${more}, weil ${cause.name} ab ${month} ${formatEUR(cause.amount)} kostet.`;
+    case 'start':
+      return `${more}, weil ${cause.name} ab ${month} dazukommt.`;
+    case 'end':
+      return `${more}, weil ${cause.name} nach ${month} endet.`;
+    case 'once':
+      return `${more}, weil ${cause.name} im ${month} einmalig ${formatEUR(cause.amount)} kostet.`;
+  }
+}
+
+/** „Dauerauftrag € X / Monat“ with the exact sum, the rounding and its largest reason. */
 export function StandingOrderHeadline({ overview }: { overview: KontoOverview }) {
   const { order } = overview;
   return (
@@ -161,9 +186,14 @@ export function StandingOrderHeadline({ overview }: { overview: KontoOverview })
         <span className="text-[16px] font-medium text-ink-mute"> / Monat</span>
       </p>
       <p className="text-[13px] text-ink-mute" data-testid="konto-order-exact">
-        genau <span className="num">{formatAvg(order.exact)}</span> aus {order.positions.length}{' '}
-        {order.positions.length === 1 ? 'Position' : 'Positionen'}, aufgerundet auf {formatEUR(order.rounding)}
+        Abbuchungen {periodLabel(order.from)} bis {periodLabel(order.to)} ÷ 12 = <span className="num">{formatAvg(order.exact)}</span>, aufgerundet auf{' '}
+        {formatEUR(order.rounding)}
       </p>
+      {order.cause && (
+        <p className="mt-1 text-[13px] text-ink-soft" data-testid="konto-order-cause">
+          {causeText(order.cause)}
+        </p>
+      )}
     </div>
   );
 }
