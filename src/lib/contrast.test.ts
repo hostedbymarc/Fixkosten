@@ -177,6 +177,9 @@ const PAIRS: Pair[] = [
   { fg: '--c-check-open', on: GLASSY, min: 3 },
   { fg: '--c-warn-icon', on: [...GLASSY, 'warn-soft'], min: 3 },
   { fg: '--chart-accent', on: GLASSY, min: 3 },
+  // „Fixkosten einplanen“: the edge of the progress track against the tile; the brand mark in the sidebar
+  { fg: '--c-track-edge', on: GLASSY, min: 3 },
+  { fg: '--c-mark', on: ['Glas clear (Tab-Leiste, Sidebar)'], min: 3 },
   // tab bar and sidebar: labels on the clear glass, the active one on the indicator pill
   { fg: '--c-ink-mute', on: ['Glas clear (Tab-Leiste, Sidebar)'], min: 4.5 },
   { fg: '--c-ink-soft', on: ['Glas clear (Tab-Leiste, Sidebar)'], min: 4.5 },
@@ -207,6 +210,27 @@ describe('Kontrast der Tokens (WCAG)', () => {
 
   it('both dark blocks are identical', () => {
     expect(darkMedia).toEqual(darkAttr);
+  });
+});
+
+describe('Fortschrittsspur „Fixkosten einplanen“: auch bei 0 % sichtbar', () => {
+  it('Hell: Fläche brand-100, deckend', () => {
+    expect(resolve(light, '--track-rgb')).toBe(resolve(light, '--brand-100'));
+    expect(Number(resolve(light, '--track-alpha'))).toBe(1);
+  });
+  it('Dunkel: helle Fläche mit 12 % Deckkraft', () => {
+    expect(resolve(dark, '--track-rgb')).toBe('255 255 255');
+    expect(Number(resolve(dark, '--track-alpha'))).toBe(0.12);
+  });
+  it.each([
+    ['Hell', light],
+    ['Dunkel', dark],
+  ] as const)('%s: Rand der Spur ≥ 3:1 gegen die Kachel, Füllung hebt sich vom Rand ab', (_, v) => {
+    for (const tile of surfaces(v).Glas) {
+      expect(contrast(rgb(v, '--c-track-edge'), tile)).toBeGreaterThanOrEqual(3);
+      const fill = over([...(resolve(v, '--track-rgb').split(' ').map(Number) as RGB), Number(resolve(v, '--track-alpha'))], tile);
+      expect(fill).not.toEqual(tile);
+    }
   });
 });
 

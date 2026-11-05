@@ -5,7 +5,7 @@ import { localToday } from '../../lib/activeMonth';
 import { amountToInput, formatEUR } from '../../lib/format';
 import type { KontoState, PlanStep } from '../../lib/kontoBalance';
 import { t } from '../../lib/kontoTexts';
-import { periodLabel, toPeriod } from '../../lib/period';
+import { monthName, periodLabel, toPeriod } from '../../lib/period';
 import { AlertIcon } from '../Icons';
 import { InfoTip } from '../InfoTip';
 import { Pea, PeaOpen } from '../Pea';
@@ -24,25 +24,29 @@ export function progressText(state: KontoState): string {
   return t('status.progress', { n: state.planDone, gesamt: state.plan.length });
 }
 
-/** „24. Jänner 2027“ */
-export function dayLabel(d: Date): string {
-  return `${d.getDate()}. ${periodLabel(toPeriod(d))}`;
+/** „24. Jänner“; with the year only when the day is a year or more away („24. Jänner 2028“). */
+export function dayLabel(d: Date, today: Date = localToday()): string {
+  const months = (d.getFullYear() - today.getFullYear()) * 12 + d.getMonth() - today.getMonth();
+  return months < 12 ? `${d.getDate()}. ${monthName(toPeriod(d))}` : `${d.getDate()}. ${periodLabel(toPeriod(d))}`;
 }
 
 /** The deadline has passed (the money is missing in the active month): „jetzt“ instead of a date. */
-function deadlinePassed(by: Date | null): boolean {
+export function deadlinePassed(by: Date | null): boolean {
   if (!by) return true;
   const today = localToday();
   return by < new Date(today.getFullYear(), today.getMonth(), today.getDate());
 }
 
-/** „Leg bis 24. Jänner 2027 einmalig € 865,79 zur Seite.“ (tile, sheet, settings) */
+/** „Leg bis 24. Jänner einmalig € 865,79 zur Seite.“ (tile, sheet, settings) */
 export function gapActionText(state: KontoState): string {
   const betrag = formatEUR(state.gap);
   return deadlinePassed(state.gapBy) ? t('status.gap.actionNow', { betrag }) : t('status.gap.action', { datum: dayLabel(state.gapBy!), betrag });
 }
 
-/** Thin progress bar in brand green: „1 von 2 erledigt“ (plan and tile). */
+/**
+ * Thin progress bar in brand green: „1 von 2 erledigt“ (plan, tile, sheet, settings). The track is always
+ * visible, also at 0 % (.progress-track); bar and text sit left-aligned in one line.
+ */
 export function PlanProgress({ state, testId, className = '' }: { state: KontoState; testId: string; className?: string }) {
   const total = state.plan.length;
   return (
@@ -53,7 +57,7 @@ export function PlanProgress({ state, testId, className = '' }: { state: KontoSt
         aria-valuemax={total}
         aria-valuenow={state.planDone}
         aria-label={progressText(state)}
-        className="h-1.5 w-full max-w-[160px] overflow-hidden rounded-full bg-accent-soft"
+        className="progress-track h-2 w-full max-w-[160px] overflow-hidden rounded-full"
         data-testid={`${testId}-bar`}
       >
         <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${(state.planDone / total) * 100}%` }} />
@@ -85,12 +89,13 @@ export function KontoStatusLine({
   const small = size === 'regular' ? 'text-[15px]' : 'text-[14px]';
   return (
     <div data-testid={testId} data-status={state.status} role="status">
-      <p className={`flex items-center gap-2 font-semibold leading-snug text-ink ${big}`}>
+      {/* setup: the heading above already says „Fixkosten einplanen“ – the status stays for screen readers only */}
+      <p className={state.status === 'setup' ? 'sr-only' : `flex items-center gap-2 font-semibold leading-snug text-ink ${big}`}>
         {state.status === 'gap' && <AlertIcon size={18} className="shrink-0 text-over" aria-hidden="true" />}
         {state.status === 'covered' && <Pea size={20} state="checked" className="shrink-0" />}
         <span data-testid={`${testId}-text`}>{statusText(state)}</span>
       </p>
-      {state.status === 'setup' && <PlanProgress state={state} testId={testId} className="mt-2" />}
+      {state.status === 'setup' && <PlanProgress state={state} testId={testId} />}
       {state.status === 'gap' && (
         <>
           <p className={`mt-1 leading-snug text-ink-soft ${small}`} data-testid={`${testId}-action`}>
@@ -104,7 +109,7 @@ export function KontoStatusLine({
 }
 
 /** „Erledigt, zur Seite gelegt“: the one-time amount is set aside → a new anchor, the gap is 0. */
-function PaidButton({ state, testId }: { state: KontoState; testId: string }) {
+export function PaidButton({ state, testId }: { state: KontoState; testId: string }) {
   return (
     <button
       type="button"
@@ -114,6 +119,62 @@ function PaidButton({ state, testId }: { state: KontoState; testId: string }) {
     >
       {t('status.gap.done')}
     </button>
+  );
+}
+
+/** The next open plan point as one sentence with amount and date (tile): „Dauerauftrag einrichten: € 2.912 am 25.“ */
+export function nextTaskText(state: KontoState, day: string): string | null {
+  const next = state.plan.find((p) => !p.done);
+  if (!state.setupDone || !next) return null;
+  if (next.id === 'gap') return gapActionText(state);
+  const betrag = formatEUR(state.order);
+  if (!state.hasAccount) return t('tile.next.monthly', { betrag, tag: day });
+  return t(next.isNew ? 'tile.next.order.new' : 'tile.next.order.check', { betrag, tag: day });
+}
+
+/**
+ * The tile once the questions are answered but plan points are open: the next task with its amount and
+ * date and its „Erledigt“, then the bar „x von 2 erledigt“. A gap also says from when the money is short.
+ */
+export function NextTask({ state, day, testId }: { state: KontoState; day: string; testId: string }) {
+  const next = state.plan.find((p) => !p.done)!;
+  const text = nextTaskText(state, day)!;
+  const amount = formatEUR(next.id === 'gap' ? state.gap : state.order);
+  const [before, after] = text.split(amount);
+  return (
+    <div data-testid={testId} data-status={state.status} data-next={next.id} role="status">
+      {state.status !== 'gap' && (
+        <p className="sr-only" data-testid={`${testId}-text`}>
+          {statusText(state)}
+        </p>
+      )}
+      <p className="text-[16px] font-semibold leading-snug text-ink" data-testid={`${testId}-action`}>
+        {before}
+        <span className="num whitespace-nowrap" data-testid={`${testId}-amount`}>
+          {amount}
+        </span>
+        {after}
+      </p>
+      {state.status === 'gap' && (
+        <p className="mt-1 flex items-center gap-1.5 text-[13px] leading-5 text-ink-soft" data-testid={`${testId}-warn`}>
+          <AlertIcon size={15} className="shrink-0 text-over" aria-hidden="true" />
+          <span data-testid={`${testId}-text`}>{statusText(state)}</span>
+        </p>
+      )}
+      {next.id === 'gap' ? (
+        <PaidButton state={state} testId={`${testId}-paid`} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => void setPlan(db, { orderDone: true })}
+          className="focus-ring relative z-10 mt-2 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto"
+          data-testid={`${testId}-done`}
+        >
+          {t('plan.done')}
+        </button>
+      )}
+      <PlanProgress state={state} testId={testId} className="mt-3" />
+    </div>
   );
 }
 

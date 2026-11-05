@@ -384,7 +384,7 @@ export async function checkRadio(radio: Locator) {
  */
 export async function setUpKonto(page: Page) {
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
-  await page.getByTestId('konto-tile').click();
+  await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
   await page.getByTestId('konto-setup-account-yes').click();
   await page.getByTestId('konto-setup-balance').fill('0');
   await page.getByTestId('konto-setup-next').click();

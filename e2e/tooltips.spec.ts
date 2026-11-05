@@ -187,7 +187,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
       // setup without an own account: „Dein Plan“ has the ⓘ „Mit einem eigenen Konto …“
-      await page.getByTestId('konto-tile').click();
+      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       await page.getByTestId('konto-setup-account-no').click();
       await page.getByTestId('konto-setup-nothing').click();
       const setupSheet = page.getByTestId('bottom-sheet');
@@ -206,7 +206,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await exercise(page, info(page, 'Monatsbetrag'), mode, seen);
 
       // --- Fixkostenkonto-Sheet
-      await page.getByTestId('konto-tile').click();
+      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       const kontoSheet = page.getByTestId('bottom-sheet');
       await animationsDone(page, 'bottom-sheet');
       await exercise(page, info(kontoSheet, 'Stand am Monatsende'), mode, seen, kontoSheet);
@@ -299,7 +299,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
         await style.evaluate((el) => (el as Element).remove());
       }
       // in a sheet: the ⓘ at the right edge of the sheet
-      await page.getByTestId('konto-tile').click();
+      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       await animationsDone(page, 'bottom-sheet');
       const sheet = page.getByTestId('bottom-sheet');
       await page.addStyleTag({

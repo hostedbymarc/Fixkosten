@@ -8,7 +8,7 @@ import { useKontoState } from '../components/konto/KontoSheet';
 import { KontoSetup } from '../components/konto/KontoTile';
 import { orderDay } from '../lib/kontoBalance';
 import { t } from '../lib/kontoTexts';
-import { KontoStatusLine } from '../components/konto/KontoStatusView';
+import { dayLabel, deadlinePassed, KontoStatusLine } from '../components/konto/KontoStatusView';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
 import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, currencyOf, DEFAULT_COUNTRY, type Currency } from '../lib/country';
@@ -391,8 +391,12 @@ function KontoSection({ ds }: { ds: Dataset }) {
                   {state.gap > 0 && (
                     <>
                       <dt className="text-ink-soft">{t('settings.gap')}</dt>
-                      <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-gap">
-                        {formatEUR(state.gap)}
+                      <dd className="num text-right font-semibold text-ink">
+                        {/* „€ 1.087,34 bis 24. Jänner“ – the same date as tile and plan */}
+                        <span data-testid="konto-summary-gap">{formatEUR(state.gap)}</span>{' '}
+                        <span className="font-normal text-ink-soft" data-testid="konto-summary-gap-by">
+                          {deadlinePassed(state.gapBy) ? t('settings.gap.now') : t('settings.gap.by', { datum: dayLabel(state.gapBy!) })}
+                        </span>
                       </dd>
                     </>
                   )}
