@@ -136,7 +136,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // no question answered: the small heading, one sentence, „Jetzt starten“ – no repeated title
         await expect(card).toHaveAttribute('data-view', 'start');
         await expect(card.getByTestId('tile-status-text')).toHaveText('Fixkosten einplanen');
-        await expect(card.getByTestId('tile-status-text')).not.toBeVisible();
+        // screen readers only (sr-only: 1 × 1 px)
+        expect((await card.getByTestId('tile-status-text').boundingBox())!.width).toBeLessThanOrEqual(1);
         await expect(card.getByText('Fixkosten einplanen', { exact: true })).toHaveCount(2); // heading + screen-reader status
         await expect(card.getByTestId('konto-tile-start')).toHaveText('Jetzt starten');
         await card.scrollIntoViewIfNeeded();
