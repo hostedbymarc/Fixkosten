@@ -23,6 +23,7 @@ const VIEWPORTS = {
   'desktop-1440': { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false },
 } as const;
 
+const CORNER = { x: 12, y: 12 };
 const day = (iso: string) => new Date(`${iso}T09:00:00+01:00`);
 const EURO = /€\s?[\d.]+(?:,\d{2})?/g;
 const euros = (text: string) => text.match(EURO) ?? [];
@@ -75,8 +76,8 @@ async function seenIn(scope: Locator, prefix: string, order: Locator): Promise<S
 async function seenInTile(page: Page): Promise<Seen> {
   const card = page.getByTestId('konto-tile-card');
   const value = card.getByTestId('konto-tile-value');
-  const seen = await seenIn(card, 'tile-status', value.or(card.getByTestId('tile-status')).first());
-  return (await value.count()) ? seen : { ...seen, order: '' };
+  if (await value.count()) return seenIn(card, 'tile-status', value);
+  return { ...(await seenIn(card, 'tile-status', card.getByTestId('tile-status'))), order: '' };
 }
 
 async function seenInSheet(page: Page, tap: (l: Locator) => Promise<void>): Promise<Seen> {
@@ -127,7 +128,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
       // four places, reloads and screenshots in one test
       test.setTimeout(120_000);
-      const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
+      // the card itself is tapped in its top left corner: its middle may be the task's „Erledigt“
+      const tap = (l: Locator) => {
+        const position = /konto-tile'\)$/.test(l.toString()) ? CORNER : undefined;
+        return use.hasTouch ? l.tap({ position }) : l.click({ position });
+      };
 
       test('mit Konto (Betrag, Dauerauftrag läuft): eine Wahrheit an allen vier Stellen, nie „eingeplant“ bei offenem Punkt', async ({ page }) => {
         await startApp(page);
@@ -402,7 +407,7 @@ test.describe('Fixkosten einplanen · Neuer Monat beginnt am 25.', () => {
     await page.getByLabel('Neuer Monat beginnt am').selectOption('25');
     await expect(page.getByTestId('active-month')).toHaveText(/Oktober 2026/);
     await goTo(page, 'monat');
-    await page.getByTestId('konto-tile').tap();
+    await page.getByTestId('konto-tile').tap({ position: { x: 12, y: 12 } });
     await page.getByTestId('konto-setup-account-yes').tap();
     await page.getByTestId('konto-setup-balance').fill('0');
     await page.getByTestId('konto-setup-next').tap();
@@ -416,7 +421,7 @@ test.describe('Fixkosten einplanen · Neuer Monat beginnt am 25.', () => {
     await expect(page.getByTestId('tile-status-action')).toHaveText(/^Leg (bis 24\. |jetzt)/);
     const gapTile = euros(await text(page.getByTestId('tile-status-action')))[0];
     // the sheet's list starts with the active month and has no deposit there (the order starts next month)
-    await page.getByTestId('konto-tile').tap();
+    await page.getByTestId('konto-tile').tap({ position: { x: 12, y: 12 } });
     const s = page.getByTestId('konto-sheet');
     await s.getByTestId('konto-months').locator('summary').click();
     await expect(s.getByTestId('konto-month-row').first()).toHaveAttribute('data-period', '2026-10');
@@ -425,7 +430,7 @@ test.describe('Fixkosten einplanen · Neuer Monat beginnt am 25.', () => {
     // 25 October: November is active; the gap is computed for the new window
     await openOn(page, new Date('2026-10-25T09:00:00+02:00'));
     await expect(page.getByTestId('konto-tile-card')).toBeVisible();
-    await page.getByTestId('konto-tile').tap();
+    await page.getByTestId('konto-tile').tap({ position: { x: 12, y: 12 } });
     await s.getByTestId('konto-months').locator('summary').click();
     await expect(s.getByTestId('konto-month-row').first()).toHaveAttribute('data-period', '2026-11');
     await page.keyboard.press('Escape');

@@ -34,7 +34,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await setUpKonto(page);
       await shot(page, '1-monat');
 
-      await page.getByTestId('konto-tile').click();
+      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       await expect(page.getByTestId('konto-sheet')).toBeVisible();
       await page.getByTestId('konto-settings-inline').locator('summary').click();
       await shot(page, '2-fixkostenkonto-sheet', false);
