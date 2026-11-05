@@ -42,7 +42,8 @@ export function KontoTileView({ state, day, onOpen, buttonRef }: KontoTileProps)
     covered ? t(state.hasAccount ? 'tile.order' : 'tile.monthly', { betrag: formatEUR(state.order), tag: day }) : null,
     state.status === 'setup' ? 'Einrichtung öffnen' : 'Details öffnen',
   ]
-    .filter(Boolean)
+    .filter((part): part is string => Boolean(part))
+    .map((part) => part.replace(/\.$/, '')) // sentences end with „.“ already: no „am 1.. 0 von 2“
     .join('. ');
   return (
     <section

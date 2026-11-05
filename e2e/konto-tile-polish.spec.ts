@@ -120,6 +120,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(card.getByTestId('tile-status-done')).toHaveText('Erledigt');
         await expect(card.getByTestId('tile-status-progress')).toHaveText('0 von 2 erledigt');
         await expect(card.getByTestId('tile-status-bar')).toHaveAttribute('aria-valuenow', '0');
+        await expect(card.getByTestId('konto-tile')).toHaveAttribute('aria-label', `Fixkosten einplanen. Dauerauftrag einrichten: ${order} am 1. 0 von 2 erledigt. Einrichtung öffnen`);
         // bar and text left-aligned in one line, the bar starts where the task text starts (no indent)
         const [bar, label, action] = await Promise.all(
           ['tile-status-bar', 'tile-status-progress', 'tile-status-action'].map(async (id) => (await card.getByTestId(id).boundingBox())!),
