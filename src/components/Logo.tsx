@@ -1,6 +1,3 @@
-import type { CSSProperties } from 'react';
-import { Pea } from './Pea';
-
 /**
  * Erbse mark: rounded square in the brand colour with three flat white peas, opacity 100 / 85 / 70 %
  * (state of sprint rebrand-erbse, commit afaa0bc). Colours come from tokens (currentColor = brand).
@@ -27,19 +24,29 @@ export function Brand() {
   );
 }
 
-/** The three peas of the sidebar head: brand tokens (lighter in dark mode), the same ones the splash lands in. */
-const MARK = ['var(--pea-1)', 'var(--pea-2)', 'var(--pea-3)'] as const;
-
 /**
- * Sidebar head on iPad and desktop: only the three peas as the brand mark, no square, no word mark.
- * The splash's peas fly into it (data-testid="logo", src/lib/entrance.ts).
+ * Sidebar head on iPad and desktop: the brand mark alone – the three overlapping peas of the app icon,
+ * same geometry (r 3.4 at cx 9 / 14 / 19 on 28 px), flat, opacity 100 / 85 / 70 % from left to right.
+ * Colour: the token --c-mark (brand, a lighter brand tone in dark mode). No square, no word mark.
+ * The splash's peas fly into it (data-testid="logo", data-span="1": the peas fill the whole width; src/lib/entrance.ts).
  */
-export function PeaMark({ size = 14 }: { size?: number }) {
+export function PeaMark({ height = 18 }: { height?: number }) {
+  // the icon's 28 × 28 grid, cropped to the three circles (x 5.6 … 22.4, y 10.6 … 17.4)
+  const width = (height * 16.8) / 6.8;
   return (
-    <span role="img" aria-label="Erbse" className="flex items-center" style={{ gap: `${size * 0.3}px` } as CSSProperties} data-testid="logo">
-      {MARK.map((c) => (
-        <Pea key={c} size={size} color={c} />
-      ))}
-    </span>
+    <svg
+      role="img"
+      aria-label="Erbse"
+      width={width}
+      height={height}
+      viewBox="5.6 10.6 16.8 6.8"
+      className="shrink-0 text-mark"
+      data-testid="logo"
+      data-span="1"
+    >
+      <circle cx="9" cy="14" r="3.4" fill="currentColor" />
+      <circle cx="14" cy="14" r="3.4" fill="currentColor" opacity=".85" />
+      <circle cx="19" cy="14" r="3.4" fill="currentColor" opacity=".7" />
+    </svg>
   );
 }

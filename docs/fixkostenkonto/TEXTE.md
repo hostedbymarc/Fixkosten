@@ -12,6 +12,10 @@
 | Kachel | `tile.monthly` | Monatlich {betrag} {tag} | 3 |
 | Kachel | `tile.info.title` | Monatsbetrag | 1 |
 | Kachel | `tile.info` | So viel legst du jeden Monat zur Seite. Alle Abbuchungen der nächsten 12 Monate, geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin. | 8 · 10 · 7 |
+| Kachel | `tile.start` | Jetzt starten | 2 |
+| Kachel | `tile.next.order.new` | Dauerauftrag einrichten: {betrag} {tag} | 4 |
+| Kachel | `tile.next.order.check` | Dauerauftrag prüfen: {betrag} {tag} | 4 |
+| Kachel | `tile.next.monthly` | Leg monatlich {tag} {betrag} zur Seite. | 6 |
 | Kachel | `tile.streak` | {n} Monate in Folge | 4 |
 | Kachel | `tile.streak.new` | Neue Serie startet. | 3 |
 | Einladung | `invite.title` | Neu: Fixkosten einplanen. | 3 |
@@ -86,5 +90,7 @@
 | Einstellungen | `settings.order` | Dauerauftrag | 1 |
 | Einstellungen | `settings.monthly` | Monatlich zur Seite | 3 |
 | Einstellungen | `settings.gap` | Einmalig zur Seite legen | 4 |
+| Einstellungen | `settings.gap.by` | bis {datum} | 2 |
+| Einstellungen | `settings.gap.now` | jetzt | 1 |
 | Einstellungen | `settings.rounding` | Rundung | 1 |
 | Einstellungen | `settings.edit` | Einrichtung ändern | 2 |

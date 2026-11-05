@@ -199,7 +199,7 @@ test('Position aufs Alltagskonto: Dauerauftrag sinkt um ihren Monatsanteil', asy
   await importApp(page);
   await page.getByTestId('konto-invite-enable').click();
   await setUpKonto(page);
-  await page.getByTestId('konto-tile').click();
+  await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
   const exact = async () => {
     const text = (await page.getByTestId('konto-order-exact').textContent())!;
     return amountOf(text.match(/€\s?\d[\d.]*(,\d+)?/)![0]);
@@ -217,7 +217,7 @@ test('Position aufs Alltagskonto: Dauerauftrag sinkt um ihren Monatsanteil', asy
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip')).toHaveText('Alltagskonto');
   await goTo(page, 'monat');
-  await page.getByTestId('konto-tile').click();
+  await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
   await expect.poll(exact).toBeLessThan(before);
   const miete = 1008; // seed: Miete € 1.008 monthly
   expect(Math.round((before - (await exact())) * 100) / 100).toBe(miete);

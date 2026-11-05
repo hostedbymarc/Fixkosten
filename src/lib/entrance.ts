@@ -76,8 +76,9 @@ export function hideSplash(): Promise<void> {
     ms = SPLASH_FLIP_MS;
     const from = stage.getBoundingClientRect();
     const to = logo.getBoundingClientRect();
-    // the peas span 60 % of the logo's width and ~86 % of the stage's
-    const scale = (to.width * 0.6) / (from.width * 0.86);
+    // the peas span ~86 % of the stage's width and 60 % of a square logo's (data-span: the sidebar mark, all of it)
+    const span = Number(logo.dataset.span ?? 0.6);
+    const scale = (to.width * span) / (from.width * 0.86);
     const dx = to.left + to.width / 2 - (from.left + from.width / 2);
     const dy = to.top + to.height / 2 - (from.top + from.height / 2);
     stage.animate(
