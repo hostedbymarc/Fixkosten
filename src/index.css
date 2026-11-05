@@ -259,6 +259,15 @@ body::after {
 }
 
 @layer components {
+  /* progress bar of „Fixkosten einplanen“: the track is visible at 0 % too (light brand-100, dark white
+     at 12 %), its 1 px edge (--c-track-edge) has ≥ 3:1 against the tile (src/lib/contrast.test.ts) */
+  .progress-track {
+    background-color: rgb(var(--track-rgb) / var(--track-alpha));
+    box-shadow: inset 0 0 0 1px rgb(var(--c-track-edge));
+  }
+}
+
+@layer components {
   /* Liquid Glass – THE material, defined only here (no copies per component):
      .glass        cards, hero, tiles, banner, toasts' content cards (radius 24, tiles 20 via .glass-tile)
      .glass-strong sheets, dialogs, menus, toasts (fill .72)

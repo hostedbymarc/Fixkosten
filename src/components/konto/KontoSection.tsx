@@ -4,9 +4,8 @@ import { formatEUR } from '../../lib/format';
 import { t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
 import { KontoSimulationView, useKontoState } from './KontoSheet';
-import { KontoStatusLine } from './KontoStatusView';
 
-/** Analysis section „Fixkostenkonto“: the balance simulation of the next 12 months (mode on only). */
+/** Analysis section „Fixkosten einplanen“: the monthly amount, the chart and the month list of the next 12 months (mode on only, no setup progress). */
 export function KontoSection({ ds, today }: { ds: Dataset; today: Period }) {
   const { settings } = useKonto();
   if (!settings.enabled) return null;
@@ -32,8 +31,6 @@ function KontoSectionOn({ ds, today }: { ds: Dataset; today: Period }) {
             {formatEUR(state.order)} / Monat
           </p>
         </div>
-        {/* the same status as tile and sheet (kontoState) */}
-        <KontoStatusLine state={state} testId="analyse-status" />
         <KontoSimulationView overview={overview} active={today} chartHeight={240} />
       </div>
     </section>
