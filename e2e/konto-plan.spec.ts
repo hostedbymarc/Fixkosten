@@ -71,10 +71,13 @@ async function seenIn(scope: Locator, prefix: string, order: Locator): Promise<S
   };
 }
 
-const seenInTile = (page: Page) => {
+/** The tile shows the monthly amount only once everything is planned; before that the next task is its content. */
+async function seenInTile(page: Page): Promise<Seen> {
   const card = page.getByTestId('konto-tile-card');
-  return seenIn(card, 'tile-status', card.getByTestId('konto-tile-value'));
-};
+  const value = card.getByTestId('konto-tile-value');
+  const seen = await seenIn(card, 'tile-status', value.or(card.getByTestId('tile-status')).first());
+  return (await value.count()) ? seen : { ...seen, order: '' };
+}
 
 async function seenInSheet(page: Page, tap: (l: Locator) => Promise<void>): Promise<Seen> {
   await tap(page.getByTestId('konto-tile'));
@@ -99,13 +102,19 @@ async function seenInPlan(page: Page): Promise<Seen> {
 async function seenInSettings(page: Page): Promise<Seen> {
   await goTo(page, 'einstellungen');
   const seen = await seenIn(page.getByTestId('konto-settings'), 'settings-status', page.getByTestId('konto-summary-order'));
-  if (seen.gap) await expect(page.getByTestId('konto-summary-gap')).toHaveText(seen.gap);
+  if (seen.gap) {
+    // „€ 1.087,34 bis 24. Jänner“: the amount with the same date as the action sentence
+    await expect(page.getByTestId('konto-summary-gap')).toHaveText(seen.gap);
+    const by = /^Leg (bis .+|jetzt) einmalig/.exec(seen.action!)![1]!;
+    await expect(page.getByTestId('konto-summary-gap-by')).toHaveText(by);
+  }
   await goTo(page, 'monat');
   return seen;
 }
 
 const GAP_STATUS = /^Ab \S+ \d{4} reicht das Geld nicht\.$/;
-const GAP_ACTION = /^Leg (bis \d{1,2}\. \S+ \d{4}|jetzt) einmalig €\s[\d.]+,\d{2} zur Seite\.$/;
+// „bis 24. Jänner“: the date without the year (within the 12 months shown)
+const GAP_ACTION = /^Leg (bis \d{1,2}\. [A-Za-zäÄ]+|jetzt) einmalig €\s[\d.]+,\d{2} zur Seite\.$/;
 const COVERED = 'Alles eingeplant bis September 2027.';
 /** the point in „Dein Plan“ also holds its „Erledigt“ button */
 const GAP_POINT = new RegExp(GAP_ACTION.source.replace(/\$$/, ''));
@@ -124,9 +133,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await startApp(page);
         const card = page.getByTestId('konto-tile-card');
         await expect(card).toHaveAttribute('data-state', 'setup');
+        // no question answered: the small heading, one sentence, „Jetzt starten“ – no repeated title
+        await expect(card).toHaveAttribute('data-view', 'start');
         await expect(card.getByTestId('tile-status-text')).toHaveText('Fixkosten einplanen');
-        await expect(card.getByTestId('tile-status-progress')).toHaveText('0 von 2 erledigt');
-        await expect(card.getByTestId('tile-status-bar')).toHaveAttribute('aria-valuenow', '0');
+        await expect(card.getByTestId('tile-status-text')).not.toBeVisible();
+        await expect(card.getByText('Fixkosten einplanen', { exact: true })).toHaveCount(2); // heading + screen-reader status
+        await expect(card.getByTestId('konto-tile-start')).toHaveText('Jetzt starten');
         await card.scrollIntoViewIfNeeded();
         await shot(page, `${tag}-01-kachel-einplanen`);
 
@@ -165,6 +177,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('Escape');
         await expect(setup).toHaveCount(0);
         await expect(card).toHaveAttribute('data-state', 'setup');
+        // questions answered, points open: the next task with amount, date and „Erledigt“, then the bar
+        await expect(card).toHaveAttribute('data-view', 'task');
+        await expect(card.getByTestId('tile-status-action')).toHaveText(`Dauerauftrag prüfen: ${planOpen.order} am 1.`);
+        await expect(card.getByTestId('tile-status-done')).toHaveText('Erledigt');
         await expect(card.getByTestId('tile-status-progress')).toHaveText('0 von 2 erledigt');
         await expect(page.getByText(/Alles eingeplant/)).toHaveCount(0);
         await goTo(page, 'einstellungen');
@@ -172,8 +188,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('settings-status-progress')).toHaveText('0 von 2 erledigt');
         await expect(page.getByTestId('konto-summary-order')).toHaveText(planOpen.order);
         await expect(page.getByTestId('konto-summary-gap')).toHaveText(gapOpen);
+        // the analysis shows amount, chart and month list only, no setup progress
         await goTo(page, 'analyse');
-        await expect(page.getByTestId('analyse-status-text')).toHaveText('Fixkosten einplanen');
+        await expect(page.getByTestId('konto-analyse-order')).toBeVisible();
+        await expect(page.getByTestId('konto-analyse').getByText(/von 2 erledigt/)).toHaveCount(0);
+        await expect(page.getByTestId('analyse-status')).toHaveCount(0);
         await goTo(page, 'monat');
 
         // the tile opens „Dein Plan“ again; standing order checked → only the one-time amount is left
@@ -193,12 +212,13 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const tile = await seenInTile(page);
         const sheet = await seenInSheet(page, tap);
         const settings = await seenInSettings(page);
-        expect(tile).toEqual(plan);
+        expect(tile).toEqual({ ...plan, order: '' }); // the tile shows the task, not the monthly amount
         expect(sheet).toEqual(plan);
         expect(settings).toEqual(plan);
         expect(planOpen.order).toBe(plan.order);
         expect(gapOpen).toBe(plan.gap);
         await expect(card.getByTestId('tile-status-paid')).toHaveText('Erledigt, zur Seite gelegt');
+        await expect(card.getByTestId('tile-status-progress')).toHaveText('1 von 2 erledigt');
         await card.scrollIntoViewIfNeeded();
         await shot(page, `${tag}-05-kachel-luecke`);
 
@@ -392,7 +412,7 @@ test.describe('Fixkosten einplanen · Neuer Monat beginnt am 25.', () => {
     if (/^Leg bis/.test(gapText)) expect(gapText).toMatch(/^Leg bis 24\. /);
     await page.getByTestId('plan-order-done').tap();
     await page.keyboard.press('Escape');
-    await expect(page.getByTestId('konto-tile-sub')).toHaveText(/am 25\.$/);
+    await expect(page.getByTestId('tile-status-action')).toHaveText(/^Leg (bis 24\. |jetzt)/);
     const gapTile = euros(await text(page.getByTestId('tile-status-action')))[0];
     // the sheet's list starts with the active month and has no deposit there (the order starts next month)
     await page.getByTestId('konto-tile').tap();

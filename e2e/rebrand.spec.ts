@@ -42,18 +42,29 @@ test.describe('Rebrand „Erbse“: Name und Icons', () => {
     }
   });
 
-  test('sidebar head: only the three peas, labelled „Erbse“, no square, no word mark', async ({ app }) => {
+  test('sidebar head: the three overlapping peas of the app icon, flat, labelled „Erbse“, no square, no word mark', async ({ app }) => {
     test.skip(!isSidebarLayout(app), 'sidebar only from 1024 px');
     const mark = app.getByTestId('sidebar').getByTestId('logo');
     await expect(mark).toHaveCount(1);
     await expect(mark).toHaveAttribute('aria-label', 'Erbse');
-    await expect(mark.locator('.pea')).toHaveCount(3);
     await expect(mark.locator('rect')).toHaveCount(0);
     await expect(app.getByTestId('sidebar').getByText('Erbse', { exact: true })).toHaveCount(0);
-    // brand tokens: the peas stand out from the sidebar in light and dark
-    const colours = await mark.locator('.pea').evaluateAll((els) => els.map((e) => getComputedStyle(e).getPropertyValue('--pea-c').trim()));
-    const tokens = await app.evaluate(() => [1, 2, 3].map((i) => getComputedStyle(document.documentElement).getPropertyValue(`--pea-${i}`).trim()));
-    expect(colours).toEqual(tokens);
+    // the icon's geometry: r 3.4 at cx 9 / 14 / 19 (they overlap: 5 < 2 × 3.4), opacity 100 / 85 / 70 %
+    const circles = await mark.locator('circle').evaluateAll((els) =>
+      els.map((e) => ({ cx: e.getAttribute('cx'), r: e.getAttribute('r'), opacity: getComputedStyle(e).opacity, fill: getComputedStyle(e).fill, filter: getComputedStyle(e).filter })),
+    );
+    expect(circles.map((c) => [c.cx, c.r, c.opacity])).toEqual([
+      ['9', '3.4', '1'],
+      ['14', '3.4', '0.85'],
+      ['19', '3.4', '0.7'],
+    ]);
+    // flat: one colour, no gradient, no filter or shadow; the colour is the token --c-mark (brand, lighter in dark mode)
+    const mk = await app.evaluate(() => `rgb(${getComputedStyle(document.documentElement).getPropertyValue('--c-mark').trim().replace(/ /g, ', ')})`);
+    for (const c of circles) {
+      expect(c.filter).toBe('none');
+      expect(c.fill).toBe(mk);
+    }
+    expect(await mark.evaluate((el) => getComputedStyle(el).filter + getComputedStyle(el).boxShadow)).toBe('nonenone');
   });
 
   test('glass surfaces fall back to opaque with reduced transparency', async ({ app }) => {

@@ -19,6 +19,10 @@ export const KONTO_TEXTS = {
   'tile.info.title': 'Monatsbetrag',
   'tile.info':
     'So viel legst du jeden Monat zur Seite. Alle Abbuchungen der nächsten 12 Monate, geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.',
+  'tile.start': 'Jetzt starten',
+  'tile.next.order.new': 'Dauerauftrag einrichten: {betrag} {tag}',
+  'tile.next.order.check': 'Dauerauftrag prüfen: {betrag} {tag}',
+  'tile.next.monthly': 'Leg monatlich {tag} {betrag} zur Seite.',
   'tile.streak': '{n} Monate in Folge',
   'tile.streak.new': 'Neue Serie startet.',
   'invite.title': 'Neu: Fixkosten einplanen.',
@@ -105,6 +109,8 @@ export const KONTO_TEXTS = {
   'settings.order': 'Dauerauftrag',
   'settings.monthly': 'Monatlich zur Seite',
   'settings.gap': 'Einmalig zur Seite legen',
+  'settings.gap.by': 'bis {datum}',
+  'settings.gap.now': 'jetzt',
   'settings.rounding': 'Rundung',
   'settings.edit': 'Einrichtung ändern',
 } as const;

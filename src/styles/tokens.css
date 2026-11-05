@@ -37,6 +37,12 @@
   --c-accent-soft-hover: var(--brand-200);
   --c-accent-strong: var(--brand-700);
   --c-focus: var(--brand-600);
+  /* brand mark in the sidebar (three overlapping peas) and the progress bar of „Fixkosten einplanen“:
+     the track is always visible (brand-100), its 1 px edge has ≥ 3:1 against the tile (contrast.test.ts) */
+  --c-mark: var(--brand-500);
+  --c-track-edge: var(--brand-500);
+  --track-rgb: var(--brand-100);
+  --track-alpha: 1;
 
   --c-paid: var(--brand-500);
   --c-paid-soft: var(--brand-100);
@@ -251,6 +257,10 @@
     --c-accent-soft-hover: 50 66 34;
     --c-accent-strong: var(--brand-200);
     --c-focus: var(--brand-300);
+    --c-mark: var(--brand-300);
+    --c-track-edge: var(--brand-400);
+    --track-rgb: 255 255 255;
+    --track-alpha: 0.12;
     --c-paid: var(--brand-500);
     --c-paid-soft: 38 50 26;
     --c-paid-ink: var(--brand-200);
@@ -419,6 +429,10 @@
   --c-accent-soft-hover: 50 66 34;
   --c-accent-strong: var(--brand-200);
   --c-focus: var(--brand-300);
+  --c-mark: var(--brand-300);
+  --c-track-edge: var(--brand-400);
+  --track-rgb: 255 255 255;
+  --track-alpha: 0.12;
   --c-paid: var(--brand-500);
   --c-paid-soft: 38 50 26;
   --c-paid-ink: var(--brand-200);

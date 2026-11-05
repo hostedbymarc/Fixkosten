@@ -43,6 +43,8 @@ export default {
           strong: c('accent-strong'),
         },
         focus: c('focus'),
+        mark: c('mark'),
+        'track-edge': c('track-edge'),
         paid: { DEFAULT: c('paid'), soft: c('paid-soft'), ink: c('paid-ink'), on: c('on-paid') },
         'check-open': c('check-open'),
         warn: { DEFAULT: c('warn'), icon: c('warn-icon'), soft: c('warn-soft') },
