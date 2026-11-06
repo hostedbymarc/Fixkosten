@@ -3,9 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <!-- status bar = page top: --nebel-base of src/styles/tokens.css per theme (src/lib/nebel.ts keeps it in sync) -->
-    <meta name="theme-color" content="#f4f5f1" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#121612" media="(prefers-color-scheme: dark)" />
+    <!-- status bar = page top: --nebel-base of src/styles/tokens.css per theme, filled in by the build
+         (src/lib/bootSplash.ts); src/lib/nebel.ts keeps it in sync with the chosen appearance -->
+    <meta name="theme-color" content="%BOOT_THEME_LIGHT%" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="%BOOT_THEME_DARK%" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -15,8 +16,12 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!-- opaque, full-bleed PNG: iOS rounds the corners itself -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- iOS start images of the installed app (scripts/make-startup-images.mjs, from the start screen below) -->
+    <!-- boot:startup-images -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>Erbse</title>
+    <!-- the start screen's stylesheet, inline: base colour, mesh and logo before anything has loaded -->
+    <!-- boot:css -->
     <script>
       // Appearance before first paint (see src/lib/theme.ts): no flash of the wrong theme.
       (function () {
@@ -28,39 +33,27 @@
     </script>
   </head>
   <body>
-    <!-- Lade-Animation „Squish & Merge“ (styles in src/index.css, exit in src/lib/entrance.ts): shows
-         only when loading takes longer than 300 ms. Three peas drop in and squash on landing, glide
-         together and merge into one drop (SVG gooey filter on the silhouettes, only while they merge),
-         spring apart, then squash in a wave until the data is there. The soft light of each pea is its
-         own layer above the silhouettes and follows them (same animations). Only transform/opacity. -->
+    <!-- Start screen and loading animation (layout inline above, motion in src/index.css, exit in
+         src/lib/entrance.ts). Static and visible from the first paint: the base colour, the mesh of the
+         Monat screen and the flat logo (three overlapping peas, the app icon's geometry). When the app
+         starts (src/main.tsx: .splash-live) the same peas wave in place until the data is there, then
+         fly into the sidebar logo or fade. Only transform and opacity. -->
     <div id="splash" aria-hidden="true">
-      <div class="splash-bg"></div>
-      <svg class="splash-filters" width="0" height="0" focusable="false">
-        <filter id="splash-goo" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
-          <feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9" />
-        </filter>
-      </svg>
+      <div class="splash-bg"><div class="splash-mesh"></div></div>
       <div class="splash-stage">
-        <div class="splash-goo"><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-1); --pea-size: 36px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-2); --pea-size: 34px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-body" style="--pea-c: var(--pea-3); --pea-size: 32px"></span></span></span></div>
-        <div class="splash-lights"><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-1); --pea-size: 36px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-2); --pea-size: 34px"></span></span></span><span class="splash-slot"><span class="splash-drop"><span class="splash-light" style="--pea-c: var(--pea-3); --pea-size: 32px"></span></span></span></div>
+        <svg class="splash-mark" viewBox="5.6 10.6 16.8 6.8" focusable="false">
+          <circle cx="9" cy="14" r="3.4" fill="currentColor" />
+          <circle cx="14" cy="14" r="3.4" fill="currentColor" opacity=".85" />
+          <circle cx="19" cy="14" r="3.4" fill="currentColor" opacity=".7" />
+        </svg>
       </div>
     </div>
     <script>
-      // the gooey filter exists only while the peas merge (phase 2: 840–1380 ms after the start)
-      (function () {
-        var s = document.getElementById('splash');
-        if (!s || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        setTimeout(function () { s.classList.add('splash-merging'); }, 840);
-        setTimeout(function () { s.classList.remove('splash-merging'); }, 1380);
-      })();
-    </script>
-    <script>
-      // never stay in front of the app (e.g. when the script below fails to load)
+      // never stay forever when the app script fails to load (a slow first load keeps the logo longer)
       setTimeout(function () {
         var s = document.getElementById('splash');
-        if (s) s.remove();
-      }, 8000);
+        if (s && !s.classList.contains('splash-live')) s.remove();
+      }, 15000);
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
