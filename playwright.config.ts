@@ -58,6 +58,10 @@ export default defineConfig({
     locale: 'de-AT',
     timezoneId: 'Europe/Vienna',
     trace: 'retain-on-failure',
+    // the app registers a service worker (fix-white-start): tests run against the network, never its
+    // cache – page.route() sees every request and a reload loads the build under test.
+    // e2e/start-screen.spec.ts switches it on for the offline start.
+    serviceWorkers: 'block',
   },
   // perf.spec.ts runs in its own project after all others: no other test competes for the CPU
   projects: [

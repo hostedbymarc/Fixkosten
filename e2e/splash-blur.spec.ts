@@ -116,7 +116,7 @@ test.describe('Splash und Blur entzerrt', () => {
     await page.reload();
     await appSettled(page);
     const w = await readWatch(page);
-    // the splash is short with data (it only shows after 300 ms): a few frames are enough to sample
+    // the splash is short with data: a few frames are enough to sample
     expect(w.frames).toBeGreaterThanOrEqual(3);
     expect(w.violations).toEqual([]);
     await expect(page.locator('html')).not.toHaveAttribute('data-splash');

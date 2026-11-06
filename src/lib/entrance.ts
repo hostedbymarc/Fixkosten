@@ -1,4 +1,4 @@
-// Lade-Animation: the splash at app start (markup in index.html, styles in index.css) and the
+// Lade-Animation: the splash at app start (markup and layout in index.html, motion in index.css) and the
 // entrance of every screen (tab change, first screen after the splash).
 //
 // Both only animate opacity and transform with fill „backwards“: when they end nothing is left on
@@ -7,8 +7,6 @@
 
 import { testFlag } from './importTrace';
 
-/** The splash only shows when loading takes longer than this (index.css: splash-show delay). */
-export const SPLASH_SHOW_AFTER_MS = 300;
 /** Web Animations created here carry this id (tests wait for them). */
 export const ENTRANCE_ID = 'entrance';
 
@@ -76,9 +74,9 @@ export function hideSplash(): Promise<void> {
     ms = SPLASH_FLIP_MS;
     const from = stage.getBoundingClientRect();
     const to = logo.getBoundingClientRect();
-    // the peas span ~86 % of the stage's width and 60 % of a square logo's (data-span: the sidebar mark, all of it)
+    // the start screen's logo fills the stage's width; the sidebar mark too (data-span), a square logo 60 %
     const span = Number(logo.dataset.span ?? 0.6);
-    const scale = (to.width * span) / (from.width * 0.86);
+    const scale = (to.width * span) / from.width;
     const dx = to.left + to.width / 2 - (from.left + from.width / 2);
     const dy = to.top + to.height / 2 - (from.top + from.height / 2);
     stage.animate(

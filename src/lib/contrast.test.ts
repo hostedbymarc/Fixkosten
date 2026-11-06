@@ -5,6 +5,7 @@
 // CONTRAST_REPORT=<file> writes the measured table as Markdown (used for the PR).
 import { readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { renderBootHtml } from './bootSplash';
 
 type RGB = [number, number, number];
 type RGBA = [number, number, number, number];
@@ -327,7 +328,8 @@ describe('Neue und geänderte Paare (korrekt-ruhig)', () => {
 // on a light bar, light glyphs on a dark bar; the bar is --nebel-base. Where Safari lets the page show
 // under the bar, the glyphs sit on the flat layer #root::before (--nebel-base, covering, safe area high)
 // over whatever scrolls there: the same colour as the bar.
-const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+// index.html as the build fills it in (theme-color from the tokens, src/lib/bootSplash.ts)
+const html = renderBootHtml(readFileSync(new URL('../../index.html', import.meta.url), 'utf8'), css);
 const GLYPH = { Hell: [0, 0, 0] as RGB, Dunkel: [255, 255, 255] as RGB };
 export function statusBarRows() {
   return (['Hell', 'Dunkel'] as const).flatMap((theme) => {
