@@ -91,68 +91,108 @@ function themeVars(t: BootTheme): string {
   return `--boot-base:${t.base};--boot-mark:${rgb(t.mark)};--boot-mesh:${meshLayers(t)};`;
 }
 
-/** Logo of the start screen: 112 px wide (the stage of the loading animation), height from the icon's grid. */
-export const BOOT_MARK_WIDTH = 112;
-export const BOOT_MARK_HEIGHT = (BOOT_MARK_WIDTH * 6.8) / 16.8;
+/**
+ * Logo of the start screen: the app icon's three overlapping peas (r 3.4 at cx 9 / 14 / 19 on the
+ * 28 grid: 16.8 × 6.8 units), flat, opacity 100 / 85 / 70 %. 48 px wide on phones, 56 px from 768 px
+ * (iPad, desktop), centred.
+ */
+export const BOOT_MARK_WIDTH = { phone: 48, wide: 56 } as const;
+const WIDE_FROM = 768;
+/** The three peas: left edge and opacity, as a share of the logo's width (the icon's grid). */
+export const BOOT_PEAS = [
+  { left: 0, opacity: 1 },
+  { left: 5 / 16.8, opacity: 0.85 },
+  { left: 10 / 16.8, opacity: 0.7 },
+] as const;
+/** Diameter of a pea as a share of the logo's width. */
+export const BOOT_PEA_SIZE = 6.8 / 16.8;
 
 /**
- * The inline stylesheet of the start screen. Layout of #splash lives only here (the app's CSS adds the
- * motion), so position and size are the same in the first paint and after the app has started.
+ * Motion of the start screen, in this stylesheet only (CSS, no script): it runs from the first paint
+ * of a cold start and the app never restarts it – it takes over the same element.
+ * - in: one pea after the other, left to right: 0 → its opacity, sliding 4 px in from the left
+ *   (240 ms each, 120 ms apart, soft curve)
+ * - while still loading: a calm wave of opacity, left to right (between its opacity and 40 % of it,
+ *   1.4 s per cycle, 150 ms apart)
+ * - out (src/lib/entrance.ts: .splash-out): logo and background fade in 200 ms
+ * „Bewegung reduzieren“: the peas stand at once, no sliding and no pulse, only the fade out.
+ */
+export const BOOT_MOTION = { inMs: 240, inStagger: 120, slidePx: 4, pulseMs: 1400, pulseStagger: 150, pulseLow: 0.4, outMs: 200 } as const;
+/** The wave starts once the last pea is in. */
+export const BOOT_PULSE_START = BOOT_MOTION.inStagger * 2 + BOOT_MOTION.inMs;
+
+/**
+ * The inline stylesheet of the start screen: layout, colours and motion of #splash live only here,
+ * so the first paint (before any script or other stylesheet) is the start screen as it stays.
  */
 export function bootCss(tokensCss: string): string {
   const { light, dark } = bootThemes(tokensCss);
+  const m = BOOT_MOTION;
+  const pea = (i: number) => {
+    const p = BOOT_PEAS[i]!;
+    return [
+      `.splash-pea:nth-child(${i + 1}){left:${num(p.left * 100)}%;--o:${p.opacity};`,
+      `animation:splash-in ${m.inMs}ms cubic-bezier(0.22,1,0.36,1) ${i * m.inStagger}ms both,`,
+      `splash-pulse ${m.pulseMs}ms ease-in-out ${BOOT_PULSE_START + i * m.pulseStagger}ms infinite}`,
+    ].join('');
+  };
   return [
     `:root{--boot-safe-top:env(safe-area-inset-top,0px);${themeVars(light)}}`,
     `@media (prefers-color-scheme: dark){:root:not([data-theme='light']){${themeVars(dark)}}}`,
     `:root[data-theme='dark']{${themeVars(dark)}}`,
     // never white: the page has its base colour before anything else is there
     `html,body{margin:0;background-color:var(--boot-base)}`,
-    `#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding-bottom:6vh;pointer-events:none}`,
+    `#splash{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;pointer-events:none}`,
+    `#splash.splash-out{opacity:0;transition:opacity ${m.outMs}ms ease-out}`,
     `.splash-bg{position:absolute;inset:0;background-color:var(--boot-base)}`,
-    // the mesh fades in over the plain base colour: the iOS start image (plain base + logo) turns into it softly
+    // the mesh fades in over the plain base colour: the iOS start image (only the base colour) turns into it softly
     `.splash-mesh{position:absolute;inset:0;background-image:var(--boot-mesh);animation:boot-mesh 600ms ease-out 80ms both}`,
     `@keyframes boot-mesh{from{opacity:0}to{opacity:1}}`,
-    `@media (prefers-reduced-motion: reduce){.splash-mesh{animation:none}}`,
-    `.splash-stage{position:relative;display:flex;align-items:center;justify-content:center;width:${BOOT_MARK_WIDTH}px;height:56px}`,
-    `.splash-mark{display:block;width:${BOOT_MARK_WIDTH}px;height:${num(BOOT_MARK_HEIGHT)}px;overflow:visible;color:var(--boot-mark)}`,
+    `.splash-mark{position:relative;display:block;width:${BOOT_MARK_WIDTH.phone}px;height:${num(BOOT_MARK_WIDTH.phone * BOOT_PEA_SIZE)}px;color:var(--boot-mark)}`,
+    `@media (min-width: ${WIDE_FROM}px){.splash-mark{width:${BOOT_MARK_WIDTH.wide}px;height:${num(BOOT_MARK_WIDTH.wide * BOOT_PEA_SIZE)}px}}`,
+    `.splash-pea{position:absolute;top:0;width:${num(BOOT_PEA_SIZE * 100)}%;height:100%;border-radius:50%;background-color:currentColor;opacity:var(--o)}`,
+    pea(0),
+    pea(1),
+    pea(2),
+    `@keyframes splash-in{from{opacity:0;transform:translateX(-${m.slidePx}px)}to{opacity:var(--o);transform:translateX(0)}}`,
+    `@keyframes splash-pulse{0%,100%{opacity:var(--o)}50%{opacity:calc(var(--o) * ${m.pulseLow})}}`,
+    `@media (prefers-reduced-motion: reduce){.splash-mesh,.splash-pea{animation:none!important}#splash.splash-out{transition-duration:${m.outMs}ms!important}}`,
   ].join('\n');
 }
 
-/** iPhone and iPad screens for apple-touch-startup-image (CSS px, pixel ratio, status bar height in CSS px). */
+/** iPhone and iPad screens for apple-touch-startup-image (CSS px and pixel ratio). The images show only the background. */
 export interface StartupDevice {
   name: string;
   width: number;
   height: number;
   dpr: number;
-  /** the status bar („default“ style): the web view starts below it, the start image covers it too */
-  statusBar: number;
   ipad: boolean;
 }
 
 export const STARTUP_DEVICES: StartupDevice[] = [
   // iPhone
-  { name: 'iphone-se', width: 375, height: 667, dpr: 2, statusBar: 20, ipad: false }, // SE 2/3, 6–8
-  { name: 'iphone-8-plus', width: 414, height: 736, dpr: 3, statusBar: 20, ipad: false },
-  { name: 'iphone-x', width: 375, height: 812, dpr: 3, statusBar: 44, ipad: false }, // X, XS, 11 Pro, 12/13 mini
-  { name: 'iphone-xr', width: 414, height: 896, dpr: 2, statusBar: 48, ipad: false }, // XR, 11
-  { name: 'iphone-xs-max', width: 414, height: 896, dpr: 3, statusBar: 44, ipad: false }, // XS Max, 11 Pro Max
-  { name: 'iphone-12', width: 390, height: 844, dpr: 3, statusBar: 47, ipad: false }, // 12, 13, 14, 16e
-  { name: 'iphone-12-pro-max', width: 428, height: 926, dpr: 3, statusBar: 47, ipad: false }, // 12/13 Pro Max, 14 Plus
-  { name: 'iphone-15', width: 393, height: 852, dpr: 3, statusBar: 59, ipad: false }, // 14 Pro, 15, 15 Pro, 16
-  { name: 'iphone-15-pro-max', width: 430, height: 932, dpr: 3, statusBar: 59, ipad: false }, // 14 Pro Max, 15 Plus/Pro Max, 16 Plus
-  { name: 'iphone-air', width: 420, height: 912, dpr: 3, statusBar: 62, ipad: false },
-  { name: 'iphone-16-pro', width: 402, height: 874, dpr: 3, statusBar: 62, ipad: false }, // 16 Pro, 17, 17 Pro
-  { name: 'iphone-16-pro-max', width: 440, height: 956, dpr: 3, statusBar: 62, ipad: false }, // 16/17 Pro Max
+  { name: 'iphone-se', width: 375, height: 667, dpr: 2, ipad: false }, // SE 2/3, 6–8
+  { name: 'iphone-8-plus', width: 414, height: 736, dpr: 3, ipad: false },
+  { name: 'iphone-x', width: 375, height: 812, dpr: 3, ipad: false }, // X, XS, 11 Pro, 12/13 mini
+  { name: 'iphone-xr', width: 414, height: 896, dpr: 2, ipad: false }, // XR, 11
+  { name: 'iphone-xs-max', width: 414, height: 896, dpr: 3, ipad: false }, // XS Max, 11 Pro Max
+  { name: 'iphone-12', width: 390, height: 844, dpr: 3, ipad: false }, // 12, 13, 14, 16e
+  { name: 'iphone-12-pro-max', width: 428, height: 926, dpr: 3, ipad: false }, // 12/13 Pro Max, 14 Plus
+  { name: 'iphone-15', width: 393, height: 852, dpr: 3, ipad: false }, // 14 Pro, 15, 15 Pro, 16
+  { name: 'iphone-15-pro-max', width: 430, height: 932, dpr: 3, ipad: false }, // 14 Pro Max, 15 Plus/Pro Max, 16 Plus
+  { name: 'iphone-air', width: 420, height: 912, dpr: 3, ipad: false },
+  { name: 'iphone-16-pro', width: 402, height: 874, dpr: 3, ipad: false }, // 16 Pro, 17, 17 Pro
+  { name: 'iphone-16-pro-max', width: 440, height: 956, dpr: 3, ipad: false }, // 16/17 Pro Max
   // iPad (portrait and landscape)
-  { name: 'ipad-9-7', width: 768, height: 1024, dpr: 2, statusBar: 20, ipad: true }, // iPad 9.7", mini 5
-  { name: 'ipad-mini', width: 744, height: 1133, dpr: 2, statusBar: 24, ipad: true }, // mini 6/7
-  { name: 'ipad-10-2', width: 810, height: 1080, dpr: 2, statusBar: 20, ipad: true },
-  { name: 'ipad-10-5', width: 834, height: 1112, dpr: 2, statusBar: 20, ipad: true },
-  { name: 'ipad-air', width: 820, height: 1180, dpr: 2, statusBar: 24, ipad: true }, // Air 4/5, iPad 10/11
-  { name: 'ipad-pro-11', width: 834, height: 1194, dpr: 2, statusBar: 24, ipad: true }, // Pro 11 (1–4), Air 11
-  { name: 'ipad-pro-11-m4', width: 834, height: 1210, dpr: 2, statusBar: 24, ipad: true },
-  { name: 'ipad-pro-12-9', width: 1024, height: 1366, dpr: 2, statusBar: 24, ipad: true }, // Pro 12.9, Air 13
-  { name: 'ipad-pro-13-m4', width: 1032, height: 1376, dpr: 2, statusBar: 24, ipad: true },
+  { name: 'ipad-9-7', width: 768, height: 1024, dpr: 2, ipad: true }, // iPad 9.7", mini 5
+  { name: 'ipad-mini', width: 744, height: 1133, dpr: 2, ipad: true }, // mini 6/7
+  { name: 'ipad-10-2', width: 810, height: 1080, dpr: 2, ipad: true },
+  { name: 'ipad-10-5', width: 834, height: 1112, dpr: 2, ipad: true },
+  { name: 'ipad-air', width: 820, height: 1180, dpr: 2, ipad: true }, // Air 4/5, iPad 10/11
+  { name: 'ipad-pro-11', width: 834, height: 1194, dpr: 2, ipad: true }, // Pro 11 (1–4), Air 11
+  { name: 'ipad-pro-11-m4', width: 834, height: 1210, dpr: 2, ipad: true },
+  { name: 'ipad-pro-12-9', width: 1024, height: 1366, dpr: 2, ipad: true }, // Pro 12.9, Air 13
+  { name: 'ipad-pro-13-m4', width: 1032, height: 1376, dpr: 2, ipad: true },
 ];
 
 export type Scheme = 'light' | 'dark';

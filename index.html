@@ -33,20 +33,14 @@
     </script>
   </head>
   <body>
-    <!-- Start screen and loading animation (layout inline above, motion in src/index.css, exit in
-         src/lib/entrance.ts). Static and visible from the first paint: the base colour, the mesh of the
-         Monat screen and the flat logo (three overlapping peas, the app icon's geometry). When the app
-         starts (src/main.tsx: .splash-live) the same peas wave in place until the data is there, then
-         fly into the sidebar logo or fade. Only transform and opacity. -->
+    <!-- Start screen and loading animation, one element from the first paint to the end (layout, colours
+         and motion inline above, src/lib/bootSplash.ts; exit in src/lib/entrance.ts). The base colour, the
+         mesh of the Monat screen and the logo: the app icon's three overlapping peas, flat. Pure CSS: the
+         peas come in left to right, then pulse calmly while loading; the app never restarts it, it only
+         fades the whole screen out (200 ms). Only opacity and a small translateX. -->
     <div id="splash" aria-hidden="true">
       <div class="splash-bg"><div class="splash-mesh"></div></div>
-      <div class="splash-stage">
-        <svg class="splash-mark" viewBox="5.6 10.6 16.8 6.8" focusable="false">
-          <circle cx="9" cy="14" r="3.4" fill="currentColor" />
-          <circle cx="14" cy="14" r="3.4" fill="currentColor" opacity=".85" />
-          <circle cx="19" cy="14" r="3.4" fill="currentColor" opacity=".7" />
-        </svg>
-      </div>
+      <div class="splash-mark" data-testid="splash-logo"><span class="splash-pea"></span><span class="splash-pea"></span><span class="splash-pea"></span></div>
     </div>
     <script>
       // never stay forever when the app script fails to load (a slow first load keeps the logo longer)

@@ -1,4 +1,4 @@
-// Lade-Animation: the splash at app start (markup and layout in index.html, motion in index.css) and the
+// Lade-Animation: the splash at app start (markup, layout and motion inline in index.html) and the
 // entrance of every screen (tab change, first screen after the splash).
 //
 // Both only animate opacity and transform with fill „backwards“: when they end nothing is left on
@@ -29,26 +29,13 @@ function splashGone() {
   markRemoved();
 }
 
-/** Exit of the splash: FLIP into the header logo, or zoom-out with fade, or (reduced motion) a fade. */
-export const SPLASH_FLIP_MS = 360;
-export const SPLASH_ZOOM_MS = 240;
-export const SPLASH_FADE_MS = 180;
-
-/** The logo the peas fly into: visible, in the viewport, not in a hidden tab (desktop: the sidebar). */
-function headerLogo(): HTMLElement | null {
-  for (const el of document.querySelectorAll<HTMLElement>('#root [data-testid="logo"]')) {
-    if (el.closest('[data-tab-hidden]')) continue;
-    const r = el.getBoundingClientRect();
-    if (r.width >= 20 && r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth) return el;
-  }
-  return null;
-}
+/** Exit of the splash: logo and background fade together (inline CSS of index.html, .splash-out). */
+export const SPLASH_OUT_MS = 200;
 
 /**
- * Takes the splash out (once), as soon as the app is ready. A splash that never became visible (the
- * load took less than 300 ms) is removed at once. Otherwise: the three peas fly into the header logo
- * (FLIP, 360 ms) while the background fades; without a visible logo they zoom out and fade (240 ms);
- * „Bewegung reduzieren“: only a fade (180 ms). Removed when that has ended.
+ * Takes the splash out (once), as soon as the app is ready: the whole start screen – background and
+ * the one logo – fades in 200 ms (also with „Bewegung reduzieren“), then it is removed. Nothing is
+ * restarted or moved: the logo's motion runs in the inline CSS from the first paint.
  */
 export function hideSplash(): Promise<void> {
   if (started) return fading;
@@ -59,48 +46,9 @@ export function hideSplash(): Promise<void> {
     markFading();
     return fading;
   }
-  // never shown (faster than 300 ms): nothing to animate, nothing may flash
-  if (parseFloat(getComputedStyle(splash).opacity) < 0.02) {
-    splashGone();
-    markFading();
-    return fading;
-  }
-  const stage = splash.querySelector<HTMLElement>('.splash-stage');
-  const logo = reducedMotion() ? null : headerLogo();
-  let ms = SPLASH_FADE_MS;
-  if (stage && reducedMotion()) {
-    stage.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SPLASH_FADE_MS, easing: 'ease-out', fill: 'forwards' });
-  } else if (stage && logo) {
-    ms = SPLASH_FLIP_MS;
-    const from = stage.getBoundingClientRect();
-    const to = logo.getBoundingClientRect();
-    // the start screen's logo fills the stage's width; the sidebar mark too (data-span), a square logo 60 %
-    const span = Number(logo.dataset.span ?? 0.6);
-    const scale = (to.width * span) / from.width;
-    const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-    const dy = to.top + to.height / 2 - (from.top + from.height / 2);
-    stage.animate(
-      [
-        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-        { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, opacity: 1, offset: 0.8 },
-        { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, opacity: 0 },
-      ],
-      { duration: SPLASH_FLIP_MS, easing: 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'forwards' },
-    );
-  } else if (stage) {
-    ms = SPLASH_ZOOM_MS;
-    stage.animate(
-      [
-        { transform: 'scale(1)', opacity: 1 },
-        { transform: 'scale(0.6)', opacity: 0 },
-      ],
-      { duration: SPLASH_ZOOM_MS, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' },
-    );
-  }
-  splash.style.setProperty('--splash-out-ms', `${ms}ms`);
   splash.classList.add('splash-out');
   markFading();
-  window.setTimeout(splashGone, ms + 30);
+  window.setTimeout(splashGone, SPLASH_OUT_MS + 30);
   return fading;
 }
 
