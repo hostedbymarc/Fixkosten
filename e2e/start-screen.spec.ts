@@ -304,6 +304,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // the exit is a fade of the whole screen, 200 ms, no flight, no scaling
         const exit = await page.evaluate(async () => {
           const s = document.getElementById('splash')!;
+          // the peas are in, then the exit
+          await Promise.all((s.getAnimations({ subtree: true }) as CSSAnimation[]).filter((a) => a.animationName === 'splash-in').map((a) => a.finished));
           s.classList.add('splash-out');
           const cs = getComputedStyle(s);
           const transition = { property: cs.transitionProperty, duration: cs.transitionDuration };
