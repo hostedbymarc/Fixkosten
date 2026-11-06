@@ -46,7 +46,7 @@ test.describe('Lade-Animation', () => {
   // Start screen (fix-white-start): static and visible from the first paint – the base colour, the mesh
   // and the flat logo, inline in index.html. Once the app script runs, the same three peas wave in
   // place (the only endless animation, gone with the splash); no minimum duration.
-  test('Start: statisches Logo ab dem ersten Bild, mit dem App-Start wellen dieselben drei Erbsen, blockiert nichts', async ({ page }) => {
+  test('Start: ein Logo ab dem ersten Bild, Erbsen kommen herein und pulsieren (CSS), die App übernimmt ohne Neustart, blockiert nichts', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await watchSplash(page);
     // a slow app script: the static start screen has its stage
@@ -60,29 +60,28 @@ test.describe('Lade-Animation', () => {
     const splash = page.locator('#splash');
     await expect(splash).toBeVisible();
     await expect(splash).toHaveAttribute('aria-hidden', 'true');
-    await expect(splash.locator('.splash-mark circle')).toHaveCount(3);
+    await expect(splash.locator('.splash-mark .splash-pea')).toHaveCount(3);
     await expect(splash).toHaveText('');
-    // before the app: visible at once, nothing moves (only the mesh fades in over the base colour)
-    const before = await splash.evaluate((el) => ({
-      opacity: getComputedStyle(el).opacity,
-      pointer: getComputedStyle(el).pointerEvents,
-      waves: (el.getAnimations({ subtree: true }) as CSSAnimation[]).filter((a) => a.animationName === 'splash-wave').length,
-    }));
-    expect(before).toEqual({ opacity: '1', pointer: 'none', waves: 0 });
-    release();
-    await expect(splash).toHaveClass(/splash-live/);
-    const info = await splash.evaluate((el) => {
+    // before the app: visible at once, the peas come in and pulse (CSS of index.html), only opacity and transform
+    const motion = (el: Element) => {
       const anims = el.getAnimations({ subtree: true }) as CSSAnimation[];
       return {
-        waves: anims.filter((a) => a.animationName === 'splash-wave').length,
-        // only transform and opacity
+        names: anims.map((a) => a.animationName).filter((n) => n.startsWith('splash-')).sort(),
+        starts: anims.filter((a) => a.animationName.startsWith('splash-')).map((a) => a.startTime),
         props: [...new Set(anims.flatMap((a) => (a.effect as KeyframeEffect).getKeyframes().flatMap((k) => Object.keys(k)))).values()].filter(
           (k) => !['offset', 'computedOffset', 'easing', 'composite', 'transform', 'opacity'].includes(k),
         ),
       };
-    });
-    expect(info.waves, 'the three peas of the logo wave').toBe(3);
-    expect(info.props, 'only transform and opacity').toEqual([]);
+    };
+    const before = await splash.evaluate(motion);
+    expect(await splash.evaluate((el) => [getComputedStyle(el).opacity, getComputedStyle(el).pointerEvents])).toEqual(['1', 'none']);
+    expect(before.names).toEqual(['splash-in', 'splash-in', 'splash-in', 'splash-pulse', 'splash-pulse', 'splash-pulse']);
+    expect(before.props, 'only transform and opacity').toEqual([]);
+    release();
+    // the app takes over the same element: nothing restarted
+    await expect(splash).toHaveClass(/splash-live/);
+    const after = await splash.evaluate(motion).catch(() => null);
+    if (after) expect(after.starts, 'not restarted').toEqual(before.starts);
     await expect(splash).toHaveCount(0, { timeout: 8000 });
     await expect(page.getByTestId('hero')).toBeVisible();
     const infinite = await page.evaluate(() => document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations === Infinity).length);
