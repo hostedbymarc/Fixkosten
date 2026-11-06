@@ -67,8 +67,10 @@ const problems = [];
 const classes = new Set();
 // the page background: Nebel + grain (body::before/::after) and the scrim at the top (#root::before)
 const PAGE_BACKGROUND = new Set(['body::before', 'body::after', '#root::before']);
-// the loading animation's light layer: removed before the app can be captured, never in a page capture
-const SPLASH_ONLY = new Set(['.splash-light']);
+// the start screen draws its mesh inline in index.html (src/lib/bootSplash.ts, built from the
+// tokens): removed before the app can be captured, never part of a page capture
+const SPLASH_ONLY = new Set([]);
+const START_SCREEN_FILES = new Set(['src/lib/bootSplash.ts']);
 let gradientRules = 0;
 /** The colour stops of every gradient in a declaration block (arguments without positions/directions). */
 function gradients(body) {
@@ -134,7 +136,7 @@ for (const file of files('src').filter((f) => f.endsWith('.css'))) {
 }
 
 // components: no gradient in class strings, inline styles or SVG (logo: opaque token stops only)
-for (const file of files('src').filter((f) => /\.tsx?$/.test(f) && !/\.test\.ts$/.test(f))) {
+for (const file of files('src').filter((f) => /\.tsx?$/.test(f) && !/\.test\.ts$/.test(f) && !START_SCREEN_FILES.has(f))) {
   if (SVG_GRADIENT_FILES.has(file)) {
     const text = readFileSync(file, 'utf8');
     if (/gradient\(|bg-gradient-|gradient-to-|stopOpacity|stop-opacity/.test(text)) problems.push(`${file}: CSS-Verlauf oder Stop-Deckkraft im Logo`);

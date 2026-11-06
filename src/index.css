@@ -932,145 +932,26 @@ button:active > .pea[data-pressable] {
   animation: month-from-left 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Lade-Animation „Squish & Merge“ (#splash in index.html). Timeline after the start (it only becomes
-   visible after 300 ms; faster loads never see it):
-     300–820 ms   the peas drop in 80 ms apart and squash on landing (scaleX 1.18 / scaleY .82), spring
-                  back (CSS linear() spring)
-     840–1380 ms  they glide together, merge into one drop (gooey filter on the silhouettes) and
-                  spring apart
-     from 1380 ms a wave of small squashes (1.2 s) until src/lib/entrance.ts takes them out: FLIP into
-                  the header logo (360 ms) or zoom-out with fade (240 ms).
-   Only transform and opacity. The silhouettes are flat (the filter thresholds their alpha); the
-   soft light and the darker rim are a second layer above that follows the same animations. The
-   splash is never part of a page capture, so its light layer may fade into transparency. */
-#splash {
-  --splash-spring: linear(0, 0.39 7%, 0.86 16%, 1.09 25%, 1.13 31%, 1.06 41%, 0.98 55%, 0.99 70%, 1);
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 6vh;
-  pointer-events: none;
-  opacity: 0;
-  animation: splash-show 160ms ease-out 300ms forwards;
+/* Start screen and loading animation (#splash in index.html). Layout and colours are inline in
+   index.html (src/lib/bootSplash.ts), so the first paint – before this stylesheet – already shows the
+   base colour, the mesh and the flat logo, and nothing moves when this file arrives. Here only the
+   motion: once the app has started (src/main.tsx adds .splash-live) the three peas of the logo wave in
+   place (small squashes, 80 ms apart) until src/lib/entrance.ts takes them out: FLIP into the sidebar
+   logo (360 ms) or zoom-out with fade (240 ms). Only transform and opacity; the logo's box never moves. */
+#splash.splash-live .splash-mark circle {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: splash-wave 1200ms ease-in-out infinite;
 }
-.splash-bg {
-  position: absolute;
-  inset: 0;
-  background-color: var(--nebel-base);
+#splash.splash-live .splash-mark circle:nth-child(2) {
+  animation-delay: 80ms;
+}
+#splash.splash-live .splash-mark circle:nth-child(3) {
+  animation-delay: 160ms;
 }
 #splash.splash-out .splash-bg {
   opacity: 0;
   transition: opacity var(--splash-out-ms, 240ms) ease-out;
-}
-.splash-filters {
-  position: absolute;
-}
-.splash-stage {
-  position: relative;
-  width: 112px;
-  height: 56px;
-}
-.splash-goo,
-.splash-lights {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#splash.splash-merging .splash-goo {
-  filter: url(#splash-goo);
-}
-.splash-slot,
-.splash-drop {
-  display: block;
-  transform-origin: 50% 100%;
-}
-.splash-slot + .splash-slot {
-  margin-left: -3px;
-}
-.splash-body,
-.splash-light {
-  display: block;
-  width: 1em;
-  height: 1em;
-  font-size: var(--pea-size);
-  border-radius: 50% / 48%;
-}
-.splash-body {
-  background-color: var(--pea-c);
-}
-.splash-light {
-  background-image: radial-gradient(
-    ellipse 118% 108% at 35% 30%,
-    color-mix(in oklab, var(--pea-c), var(--pea-light) 60%) 0%,
-    color-mix(in oklab, color-mix(in oklab, var(--pea-c), var(--pea-light) 30%) 50%, transparent) 22%,
-    transparent 45%,
-    color-mix(in oklab, color-mix(in oklab, var(--pea-c), var(--pea-dark) 35%) 70%, transparent) 100%
-  );
-}
-.splash-drop {
-  animation:
-    splash-drop 520ms var(--splash-spring) both,
-    splash-wave 1200ms ease-in-out infinite;
-}
-.splash-slot {
-  animation: splash-merge 540ms cubic-bezier(0.5, 0, 0.3, 1) 840ms both;
-}
-.splash-slot:nth-child(1) .splash-drop {
-  animation-delay: 300ms, 1380ms;
-}
-.splash-slot:nth-child(2) .splash-drop {
-  animation-delay: 380ms, 1480ms;
-}
-.splash-slot:nth-child(3) .splash-drop {
-  animation-delay: 460ms, 1580ms;
-}
-.splash-slot:nth-child(1) {
-  --merge-x: 34px;
-}
-.splash-slot:nth-child(2) {
-  --merge-x: 0px;
-}
-.splash-slot:nth-child(3) {
-  --merge-x: -32px;
-}
-@keyframes splash-show {
-  to {
-    opacity: 1;
-  }
-}
-@keyframes splash-drop {
-  0% {
-    transform: translateY(-140px) scale(0.92, 1.08);
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  45% {
-    transform: translateY(0) scale(1.18, 0.82);
-  }
-  70% {
-    transform: translateY(0) scale(0.95, 1.05);
-  }
-  100% {
-    transform: translateY(0) scale(1, 1);
-    opacity: 1;
-  }
-}
-@keyframes splash-merge {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  45%,
-  55% {
-    transform: translateX(var(--merge-x));
-  }
 }
 @keyframes splash-wave {
   0%,
@@ -1086,8 +967,7 @@ button:active > .pea[data-pressable] {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .splash-drop,
-  .splash-slot,
+  #splash.splash-live .splash-mark circle,
   .anim-check,
   .anim-check path,
   .anim-sheet,
@@ -1099,10 +979,6 @@ button:active > .pea[data-pressable] {
   }
   * {
     transition-duration: 0ms !important;
-  }
-  /* the splash is the static mark and only fades */
-  #splash {
-    animation: splash-show 160ms ease-out 300ms forwards !important;
   }
   .press:active {
     transform: none;

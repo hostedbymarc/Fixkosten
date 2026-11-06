@@ -14,6 +14,8 @@ export function historyDataset(): Dataset {
 export function watchConsole(page: Page): string[] {
   const logs: string[] = [];
   page.on('console', (m) => {
+    // the tests block the app's service worker (playwright.config.ts): Playwright's own notice about it is not the app's
+    if (m.text() === 'Service Worker registration blocked by Playwright') return;
     if (m.type() === 'error' || m.type() === 'warning') logs.push(`${m.type()}: ${m.text()}`);
   });
   page.on('pageerror', (e) => logs.push(`pageerror: ${e.message}`));
