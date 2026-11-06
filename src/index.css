@@ -932,42 +932,13 @@ button:active > .pea[data-pressable] {
   animation: month-from-left 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Start screen and loading animation (#splash in index.html). Layout and colours are inline in
-   index.html (src/lib/bootSplash.ts), so the first paint – before this stylesheet – already shows the
-   base colour, the mesh and the flat logo, and nothing moves when this file arrives. Here only the
-   motion: once the app has started (src/main.tsx adds .splash-live) the three peas of the logo wave in
-   place (small squashes, 80 ms apart) until src/lib/entrance.ts takes them out: FLIP into the sidebar
-   logo (360 ms) or zoom-out with fade (240 ms). Only transform and opacity; the logo's box never moves. */
-#splash.splash-live .splash-mark circle {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: splash-wave 1200ms ease-in-out infinite;
-}
-#splash.splash-live .splash-mark circle:nth-child(2) {
-  animation-delay: 80ms;
-}
-#splash.splash-live .splash-mark circle:nth-child(3) {
-  animation-delay: 160ms;
-}
-#splash.splash-out .splash-bg {
-  opacity: 0;
-  transition: opacity var(--splash-out-ms, 240ms) ease-out;
-}
-@keyframes splash-wave {
-  0%,
-  60%,
-  100% {
-    transform: scale(1, 1);
-  }
-  20% {
-    transform: scale(1.1, 0.9);
-  }
-  40% {
-    transform: scale(0.96, 1.04) translateY(-3px);
-  }
+/* Start screen and loading animation (#splash in index.html): layout, colours and motion are inline
+   there (src/lib/bootSplash.ts). Exactly one logo at any time: the sidebar's own mark (iPad, desktop)
+   stays hidden while the start screen is there, also while it fades. */
+:root[data-splash] [data-testid='sidebar'] [data-testid='logo'] {
+  visibility: hidden;
 }
 @media (prefers-reduced-motion: reduce) {
-  #splash.splash-live .splash-mark circle,
   .anim-check,
   .anim-check path,
   .anim-sheet,

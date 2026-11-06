@@ -4,10 +4,9 @@
 //   node scripts/make-startup-images.mjs        (after changing the logo, the tokens or the device list)
 // Every iPhone portrait, every iPad portrait and landscape, light and dark, at the device's pixels.
 //
-// The image is the start screen's first frame: base colour and logo (the mesh fades in over it right
-// after, inline CSS). The web view of the installed app starts below the status bar („default“
-// style), the image covers the whole screen: the logo sits lower by the status bar, so it does not
-// jump when the page takes over.
+// The image is ONLY the start screen's background in its first frame: the base colour, no logo (the
+// mesh fades in right after, inline CSS). The one logo is the page's own element, which comes in from
+// the first paint: iOS cross-fades its start image into the page, a logo in the image would show twice.
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 import { createServer } from 'vite';
@@ -40,8 +39,8 @@ for (const img of images) {
     reducedMotion: 'reduce',
   });
   await page.setContent(html);
-  // first frame: the mesh not yet faded in; the web view below the status bar
-  await page.addStyleTag({ content: `.splash-mesh{opacity:0!important;animation:none!important}#splash{top:${img.device.statusBar}px}` });
+  // first frame: the mesh not yet faded in, no logo
+  await page.addStyleTag({ content: `.splash-mesh{opacity:0!important;animation:none!important}.splash-mark{display:none!important}` });
   const path = `${out}/${img.href.split('/').pop()}`;
   const png = await page.screenshot({ path, type: 'png' });
   bytes += png.length;

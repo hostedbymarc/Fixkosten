@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { bootCss, bootThemes, renderBootHtml, STARTUP_DEVICES, startupImages } from './bootSplash';
+import { BOOT_MARK_WIDTH, BOOT_MOTION, BOOT_PEA_SIZE, BOOT_PEAS, bootCss, bootThemes, renderBootHtml, STARTUP_DEVICES, startupImages } from './bootSplash';
 
 const tokens = readFileSync(new URL('../styles/tokens.css', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
@@ -42,8 +42,43 @@ describe('Start-Bildschirm aus den Tokens (kein Weiß, keine eigenen Farben)', (
     expect(out).toContain('<meta name="theme-color" content="#f4f5f1" media="(prefers-color-scheme: light)" />');
     expect(out).toContain('<meta name="theme-color" content="#121612" media="(prefers-color-scheme: dark)" />');
     expect(out).toContain('<style id="boot-css">');
-    // the start screen needs no script: the logo is markup
-    expect(html).toMatch(/<div id="splash"[\s\S]*<svg class="splash-mark"[\s\S]*<circle[\s\S]*<circle[\s\S]*<circle/);
+    // the start screen needs no script: the one logo is markup, three peas
+    expect(html.match(/class="splash-mark"/g)).toHaveLength(1);
+    expect(html.match(/class="splash-pea"/g)).toHaveLength(3);
+  });
+});
+
+describe('Logo und Bewegung des Start-Bildschirms (nur CSS)', () => {
+  const css = bootCss(tokens);
+
+  it('Geometrie des App-Icons: r 3,4 bei cx 9 / 14 / 19, Deckkraft 100 / 85 / 70 %, 48 px (iPhone) und 56 px (ab 768 px)', () => {
+    expect(BOOT_MARK_WIDTH).toEqual({ phone: 48, wide: 56 });
+    expect(BOOT_PEA_SIZE).toBeCloseTo(6.8 / 16.8, 6);
+    expect(BOOT_PEAS.map((p) => [p.left * 16.8 + 5.6 + 3.4, p.opacity])).toEqual([
+      [9, 1],
+      [14, 0.85],
+      [19, 0.7],
+    ]);
+    expect(css).toContain('.splash-mark{position:relative;display:block;width:48px;');
+    expect(css).toContain('@media (min-width: 768px){.splash-mark{width:56px;');
+  });
+
+  it('Einblenden links → rechts (240 ms, 120 ms Versatz, 4 px), danach Pulsieren (1,4 s, 150 ms Versatz, bis 40 %)', () => {
+    expect(BOOT_MOTION).toMatchObject({ inMs: 240, inStagger: 120, slidePx: 4, pulseMs: 1400, pulseStagger: 150, pulseLow: 0.4, outMs: 200 });
+    for (const [i, delay] of [0, 120, 240].entries()) {
+      expect(css).toContain(`.splash-pea:nth-child(${i + 1}){`);
+      expect(css).toMatch(new RegExp(`nth-child\\(${i + 1}\\)\\{[^}]*splash-in 240ms cubic-bezier\\(0\\.22,1,0\\.36,1\\) ${delay}ms both,splash-pulse 1400ms ease-in-out ${480 + i * 150}ms infinite`));
+    }
+    expect(css).toContain('@keyframes splash-in{from{opacity:0;transform:translateX(-4px)}to{opacity:var(--o);transform:translateX(0)}}');
+    expect(css).toContain('@keyframes splash-pulse{0%,100%{opacity:var(--o)}50%{opacity:calc(var(--o) * 0.4)}}');
+  });
+
+  it('nur opacity und translateX, kein Filter; „Bewegung reduzieren“: keine Animation, nur Ausblenden (200 ms)', () => {
+    const keyframes = [...css.matchAll(/@keyframes [\w-]+\{([\s\S]*?\})\}/g)].map((m) => m[1]!);
+    for (const k of keyframes) for (const [, prop] of k.matchAll(/([\w-]+):/g)) expect(['opacity', 'transform']).toContain(prop);
+    expect(css).not.toMatch(/filter|scale\(|translateY/);
+    expect(css).toContain('@media (prefers-reduced-motion: reduce){.splash-mesh,.splash-pea{animation:none!important}#splash.splash-out{transition-duration:200ms!important}}');
+    expect(css).toContain('#splash.splash-out{opacity:0;transition:opacity 200ms ease-out}');
   });
 });
 
