@@ -188,16 +188,12 @@ Betroffene Dateien mit deinen Daten:
 |---|---|---|
 | `tests/fixtures/live-2026-10-25.json` | dein Export vom 25.10.2026 (31 Positionen, Notizen, IDs) | ersetzt durch `beispiel-2026-10-25.json` |
 | `tests/fixtures/live-2026-10-29.json` | dein Export vom 29.10.2026 | ersetzt durch `beispiel-2026-10-29.json` |
-| `tests/fixtures/seed.json`, `v1-2776e95.json`, `history-24m.json` | Seed aus deinen Positionen (Namen mit Bezirksnummern) | Namen ersetzt |
+| `tests/fixtures/seed.json`, `v1-2776e95.json`, `history-24m.json` | Seed aus deinen Positionen (Namen mit Ortsangaben) | Namen ersetzt |
 | `tests/regression/kennzahlen-vor-fixkostenkonto.json` | Kennzahlen mit Namen und IDs aus den Exporten | Namen und IDs ersetzt |
-| Tests, `docs/audit-berechnungen.md`, `docs/PLAN.md` u. a. | Namen wie „Hotel Lissabon“, „Kredit Süd“, Notizen | Namen ersetzt |
+| Tests, `docs/audit-berechnungen.md`, `docs/PLAN.md` u. a. | Positionsnamen mit Orten, Notizen | Namen ersetzt |
 
 Nachgebaut heißt:
-- Fiktive Namen, zum Beispiel:
-  - Kredit Nord → Kredit Nord
-  - BK Süd → BK Süd
-  - Hotel Lissabon → Hotel Lissabon
-  - Zug Graz → Zug Graz
+- Fiktive Namen: Ortsangaben werden zu „Nord“, „Süd“, „West“, Reiseziele zu „Lissabon“ und „Graz“.
 - Notizen ohne Orte.
 - Neue IDs, deterministisch erzeugt.
 - **Die Beträge sind gleich geblieben.** Ohne Namen sind sie nicht zuordenbar. So bleiben alle Golden- und Regressionswerte vergleichbar.
@@ -213,4 +209,4 @@ Nachgebaut heißt:
 Ausgenommen sind die `beispiel-*.json`.
 
 Was nicht ersetzbar war:
-- Screenshots (PNG/JPG) in `docs/screenshots/` zeigen die alten Seed-Namen, zum Beispiel „Kredit Nord“. Bilder lassen sich nicht per Text ersetzen.
+- Ältere Screenshots (PNG/JPG) in `docs/screenshots/` und in der Historie zeigen noch die alten Seed-Namen. Bilder lassen sich nicht per Text ersetzen.
