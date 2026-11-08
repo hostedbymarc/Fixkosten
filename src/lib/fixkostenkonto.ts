@@ -180,12 +180,20 @@ export interface KontoInput {
   receivedThisMonth: boolean;
   /** monthly deposit (the rounded standing order) */
   deposit: number;
+  /**
+   * The plan's deposit of each month (index 0 = the active month), instead of `deposit`: the base
+   * amount plus the extra or the one-time amount (kontoState). The active month still brings nothing
+   * when its deposit already arrived.
+   */
+  deposits?: number[];
 }
 
 export interface KontoDebit {
   name: string;
   amount: number;
   once?: boolean;
+  /** a monthly position (rent, …): every month the same, never the reason for a gap */
+  monthly?: boolean;
 }
 
 export interface KontoMonth {
@@ -238,7 +246,10 @@ function monthDebits(ds: Dataset, period: Period): MonthDebits {
   for (const i of dueItems(ds, period)) {
     if (!i.due || i.status === 'skipped' || !i.fromNet || !onKonto(ds, i.position, period)) continue;
     const amount = i.status === 'paid' ? i.payment!.actualAmount : i.planned;
-    add({ name: i.position.name, amount, ...(i.plan?.frequency === 'once' ? { once: true } : {}) }, i.status === 'open');
+    add(
+      { name: i.position.name, amount, ...(i.plan?.frequency === 'once' ? { once: true } : {}), ...(i.plan?.frequency === 'monthly' ? { monthly: true } : {}) },
+      i.status === 'open',
+    );
   }
   for (const o of ds.oneOffs) {
     if (o.period !== period || !o.positionId) continue;
@@ -270,7 +281,8 @@ export function simulateKonto(ds: Dataset, active: Period, input: KontoInput, co
     const period = addPeriods(active, i);
     const d = monthDebits(ds, period);
     const first = i === 0;
-    const deposit = first && input.receivedThisMonth ? 0 : depositCents;
+    const planned = input.deposits ? Math.max(toCents(input.deposits[i] ?? input.deposit), 0) : depositCents;
+    const deposit = first && input.receivedThisMonth ? 0 : planned;
     const debits = first ? d.openCents : d.allCents;
     const start = balance;
     balance = start + deposit - debits;
@@ -289,7 +301,7 @@ export function simulateKonto(ds: Dataset, active: Period, input: KontoInput, co
     });
   }
   const lowestCents = count > 0 ? lowest : 0;
-  const surplus = depositCents * count - allDebits;
+  const surplus = (input.deposits ? months.reduce((a, m) => a + toCents(m.deposit), 0) + (input.receivedThisMonth ? depositCents : 0) : depositCents * count) - allDebits;
   return {
     months,
     lowest: fromCents(lowestCents),

@@ -1,3 +1,4 @@
+import { useExclusiveChartTooltip } from '../../lib/popoverBus';
 import { useState } from 'react';
 import { DeferredChart } from './DeferredChart';
 import { categoryColor } from '../../lib/categoryColors';
@@ -172,6 +173,7 @@ function changeText(c: TrendChange): string {
 }
 
 export function TrendSection({ ds, periods, today, months }: { ds: Dataset; periods: Period[]; today: Period; months: number }) {
+  const tip = useExclusiveChartTooltip();
   if (months < 3) {
     return <EmptyCard id="trend" title="Entwicklung der Fixkosten" text={trendTooShortText(ds, today)} />;
   }
@@ -198,7 +200,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
         ]),
       }}
     >
-      <div className="h-[230px] w-full" role="img" aria-label="Gestapeltes Flächendiagramm: Ø pro Monat nach Kategorie">
+      <div className="h-[230px] w-full" role="img" aria-label="Gestapeltes Flächendiagramm: Ø pro Monat nach Kategorie" {...tip.handlers}>
         <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <AreaChart data={rows} margin={{ ...CHART_MARGIN, right: 8 }} accessibilityLayer>
@@ -207,6 +209,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
             <YAxis {...yAxisProps} />
             <Tooltip
               {...tooltipProps}
+              active={tip.active}
               cursor={{ stroke: COLORS.inkSoft, strokeDasharray: '3 3' }}
               content={(props: TipProps<(typeof rows)[number]>) => {
                 const r = tipRow(props);
@@ -268,6 +271,7 @@ export function TrendSection({ ds, periods, today, months }: { ds: Dataset; peri
 // ---------------------------------------------------------------------------
 
 export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods: Period[]; today: Period }) {
+  const tip = useExclusiveChartTooltip();
   const p = planVsActual(ds, periods, today);
   if (p.closedMonths === 0) {
     const running = p.rows[p.rows.length - 1];
@@ -309,7 +313,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
         ]),
       }}
     >
-      <div className="h-[230px] w-full" role="img" aria-label="Balkendiagramm: Plan und Ist pro Monat">
+      <div className="h-[230px] w-full" role="img" aria-label="Balkendiagramm: Plan und Ist pro Monat" {...tip.handlers}>
         <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
           <BarChart data={rows} margin={CHART_MARGIN} accessibilityLayer barGap={2} barCategoryGap="24%">
@@ -318,6 +322,7 @@ export function PlanActualSection({ ds, periods, today }: { ds: Dataset; periods
             <YAxis {...yAxisProps} ticks={ticks} domain={[0, ticks[ticks.length - 1]!]} interval={0} />
             <Tooltip
               {...tooltipProps}
+              active={tip.active}
               content={(props: TipProps<(typeof rows)[number]>) => {
                 const r = tipRow(props);
                 if (!r) return null;

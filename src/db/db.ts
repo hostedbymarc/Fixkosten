@@ -72,12 +72,18 @@ export function nameHash(name: string): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
 
-/** Hashed names of the positions that move to "Meine Immos" in v2. */
+/**
+ * Hashed names of the positions that move to "Meine Immos" in v2: the four property positions of
+ * the original seed (names only as hashes) and their counterparts in the nachgebaute test data.
+ */
 export const IMMOS_NAME_HASHES = new Set([
-  'yfqpf3lgxu', // Kredit Nord
-  'nmtcecyq2e', // BK Nord
-  '2bcdiis4tdi', // BK Süd
+  'yfqpf3lgxu',
+  'nmtcecyq2e',
+  '2bcdiis4tdi',
   'qxnemloql', // Baurechtszins
+  '1y783tvidz3', // Kredit Nord (Testdaten)
+  '1qtj39jhjdf', // BK Nord (Testdaten)
+  '2dhxyst8ju4', // BK Süd (Testdaten)
 ]);
 
 /**

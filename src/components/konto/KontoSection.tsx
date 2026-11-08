@@ -26,12 +26,12 @@ function KontoSectionOn({ ds, today }: { ds: Dataset; today: Period }) {
       </p>
       <div className="glass flex min-w-0 flex-col gap-4 p-4">
         <div className="mb-1 min-w-0">
-          <p className="text-[13px] font-medium text-ink-mute">{t(state.hasAccount ? 'settings.order' : 'settings.monthly')}</p>
+          <p className="text-[13px] font-medium text-ink-mute">{t('tile.info.title')}</p>
           <p className="num truncate text-[22px] font-semibold leading-tight tracking-[-0.01em] text-ink" data-testid="konto-analyse-order">
-            {formatEUR(state.order)} / Monat
+            {formatEUR(state.next.amount)} / Monat
           </p>
         </div>
-        <KontoSimulationView overview={overview} active={today} chartHeight={240} />
+        <KontoSimulationView simulation={state.planSimulation} active={today} chartHeight={240} />
       </div>
     </section>
   );

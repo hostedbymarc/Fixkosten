@@ -1802,7 +1802,7 @@
    "changes": []
   }
  },
- "tests/fixtures/live-2026-10-25.json": {
+ "tests/fixtures/beispiel-2026-10-25.json": {
   "months": {
    "2025-08": {
     "figures": {
@@ -3588,7 +3588,7 @@
    ]
   }
  },
- "tests/fixtures/live-2026-10-29.json": {
+ "tests/fixtures/beispiel-2026-10-29.json": {
   "months": {
    "2025-08": {
     "figures": {

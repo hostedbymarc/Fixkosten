@@ -12,3 +12,13 @@ seed.local.json
 dist-harness
 dist-e2e
 harness-results
+# echte Sicherungen/Exporte nie ins Repo (Tests nutzen nur nachgebaute Daten in tests/fixtures/)
+erbse-backup*.json
+fixkosten-backup*.json
+*-backup*.json
+*backup*.json
+*export*.json
+tests/fixtures/live-*.json
+!tests/fixtures/beispiel-*.json
+erbse-*.json
+fixkosten-2*.json

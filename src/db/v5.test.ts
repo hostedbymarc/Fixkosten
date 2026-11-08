@@ -38,7 +38,7 @@ const savingsIds = (ds: Pick<Dataset, 'categories'>) => new Set(ds.categories.fi
 
 describe('Migration v4 → v5', () => {
   it('account vorbelegt (Vermögensaufbau → Girokonto, sonst Fixkostenkonto), keine Daten verloren', async () => {
-    const live = parseBackup(raw('tests/fixtures/live-2026-10-29.json')).data;
+    const live = parseBackup(raw('tests/fixtures/beispiel-2026-10-29.json')).data;
     const v4 = openDb(4);
     await v4.transaction('rw', v4.tables, async () => {
       await v4.categories.bulkAdd(live.categories);
@@ -108,7 +108,7 @@ describe('Import', () => {
   });
 
   it('erbse-*.json (v4, ohne neue Felder): gleiche Daten, account vorbelegt', async () => {
-    const r = raw('tests/fixtures/live-2026-10-29.json');
+    const r = raw('tests/fixtures/beispiel-2026-10-29.json');
     const file = parseBackup(structuredClone(r));
     expect(withoutAccount(file.data.positions)).toEqual(parseBackup(structuredClone(r)).data.positions.map(({ account: _a, ...p }) => p));
     const db = openDb();
@@ -119,7 +119,7 @@ describe('Import', () => {
 
   it('neuer Export → Import ergibt identische Daten (inkl. Konto, Fixkostenkonto-Einstellungen, Land)', async () => {
     const source = openDb();
-    await importIntoEmpty(source, parseBackup(raw('tests/fixtures/live-2026-10-29.json')));
+    await importIntoEmpty(source, parseBackup(raw('tests/fixtures/beispiel-2026-10-29.json')));
     await setPositionAccount(source, (await source.positions.toArray()).find((p) => p.name === 'Strom')!.id, 'girokonto');
     await writeKonto(source, { enabled: true, balance: 1234.56, receivedFor: '2026-10', rounding: 10 });
     await writeCountry(source, 'CH');
@@ -141,11 +141,11 @@ describe('Import', () => {
 
   it('Import ohne Konto-Einstellungen behält die des Geräts; Rückgängig stellt den Stand exakt wieder her', async () => {
     const db = openDb();
-    await importIntoEmpty(db, parseBackup(raw('tests/fixtures/live-2026-10-29.json')));
-    await importBackup(db, { ...parseBackup(raw('tests/fixtures/live-2026-10-29.json')), settings: { fixkostenkonto: { enabled: true, inviteDismissed: false, balance: 50, receivedFor: null, rounding: 1 }, country: 'DE' } }, 'merge');
+    await importIntoEmpty(db, parseBackup(raw('tests/fixtures/beispiel-2026-10-29.json')));
+    await importBackup(db, { ...parseBackup(raw('tests/fixtures/beispiel-2026-10-29.json')), settings: { fixkostenkonto: { enabled: true, inviteDismissed: false, balance: 50, receivedFor: null, rounding: 1 }, country: 'DE' } }, 'merge');
     expect((await readKonto(db)).balance).toBe(50);
     expect(await readCountryRaw(db)).toBe('DE');
-    await importBackup(db, parseBackup(raw('tests/fixtures/live-2026-10-29.json')), 'replace');
+    await importBackup(db, parseBackup(raw('tests/fixtures/beispiel-2026-10-29.json')), 'replace');
     expect((await readKonto(db)).balance).toBe(50);
     await undoLastImport(db);
     expect((await readKonto(db)).balance).toBe(50);
@@ -154,7 +154,7 @@ describe('Import', () => {
   });
 
   it('ungültige Einstellungen in der Datei → Standardwerte', () => {
-    const file = parseBackup({ ...raw('tests/fixtures/live-2026-10-29.json'), settings: { fixkostenkonto: { enabled: 'ja', balance: 'x', rounding: 7, receivedFor: '2026-13' }, country: 'FR' } });
+    const file = parseBackup({ ...raw('tests/fixtures/beispiel-2026-10-29.json'), settings: { fixkostenkonto: { enabled: 'ja', balance: 'x', rounding: 7, receivedFor: '2026-13' }, country: 'FR' } });
     expect(file.settings).toEqual({ fixkostenkonto: { enabled: false, inviteDismissed: false, balance: 0, receivedFor: null, rounding: 5 } });
   });
 });

@@ -167,7 +167,7 @@ test.describe('Frei verfügbar positiv und negativ', () => {
     await (isTouchProject() ? icon.tap() : icon.hover());
     await expect(page.getByTestId('free-average-formula')).toHaveText(eur('Netto € 7.819 − Ø Fixkosten € 2.952,17 − Ø Vermögensaufbau € 800,00 = € 4.066,83'));
     await expect(page.getByRole('tooltip')).toContainText(
-      'So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.',
+      'So viel bleibt dir im Schnitt pro Monat. Jahreszahlungen sind anteilig drin, dein Vermögensaufbau ist abgezogen.',
     );
     // tap / hover next to it (the month title would open the month grid)
     await (isTouchProject() ? page.getByTestId('hero-paid').tap() : page.getByTestId('hero-paid').hover());

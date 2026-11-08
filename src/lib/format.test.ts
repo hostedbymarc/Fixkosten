@@ -42,6 +42,25 @@ describe('format (de-AT)', () => {
     expect(amountToInput(262.02)).toBe('262,02');
     expect(amountToInput(735)).toBe('735');
   });
+
+  it('Cent-Beträge: bis zu 2 Nachkommastellen, Komma als Trenner, eingefügt mit und ohne Tausenderpunkt', () => {
+    expect(parseAmount('1.087,43')).toBe(1087.43);
+    expect(parseAmount('1087,43')).toBe(1087.43);
+    expect(parseAmount(' € 1.087,43 ')).toBe(1087.43);
+    expect(parseAmount('1087.43')).toBe(1087.43);
+    expect(parseAmount('0,5')).toBe(0.5);
+    expect(parseAmount('3.282,48')).toBe(3282.48);
+    // finer than a cent: no amount
+    expect(parseAmount('1,234')).toBeNull();
+    expect(parseAmount('12,345')).toBeNull();
+    expect(parseAmount('1,2,3')).toBeNull();
+    // shown with a comma, always
+    expect(amountToInput(1087.43)).toBe('1087,43');
+    expect(amountToInput(0.5)).toBe('0,50');
+    expect(amountToInput(parseAmount('1.087,43')!)).toBe('1087,43');
+    expect(formatEUR(1087.43).replace(/\s/g, ' ')).toBe('€ 1.087,43');
+    expect(formatEUR(362.48).replace(/\s/g, ' ')).toBe('€ 362,48');
+  });
 });
 
 describe('period', () => {

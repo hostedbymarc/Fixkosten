@@ -1,0 +1,2126 @@
+{
+ "format": "fixkosten-backup",
+ "schemaVersion": 4,
+ "exportedAt": "2026-10-25T08:13:48.900Z",
+ "data": {
+  "categories": [
+   {
+    "id": "1128d801-d902-41ae-a6a1-42d4d4e5a73c",
+    "name": "Investieren",
+    "color": "#B08968",
+    "kind": "savings",
+    "sortOrder": 3
+   },
+   {
+    "id": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "name": "Abos",
+    "color": "#0F766E",
+    "kind": "expense",
+    "sortOrder": 2
+   },
+   {
+    "id": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0",
+    "name": "Immo",
+    "color": "#2E2E8A",
+    "kind": "expense",
+    "sortOrder": 1
+   },
+   {
+    "id": "7551ae06-9d77-4c9e-a097-d3db42b65149",
+    "name": "Sonstiges",
+    "color": "#D9467A",
+    "kind": "expense",
+    "sortOrder": 4
+   },
+   {
+    "id": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "name": "Wohnen & Leben",
+    "color": "#5B5BD6",
+    "kind": "expense",
+    "sortOrder": 0
+   }
+  ],
+  "positions": [
+   {
+    "id": "22bceafd-993c-4b51-aefc-3f67dc72a5a2",
+    "name": "Strom",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 64,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:42:50.651Z",
+    "sortOrder": 2
+   },
+   {
+    "id": "8e34bede-9d5f-45ee-ac10-b5fd57dcfaf4",
+    "name": "Steuerberater",
+    "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 1260,
+      "frequency": "annual",
+      "dueMonths": [
+       2
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:56:57.842Z",
+    "sortOrder": 22
+   },
+   {
+    "id": "9b5aa219-f728-4f5a-a564-9a9d90c51e8e",
+    "name": "Extra",
+    "categoryId": "1128d801-d902-41ae-a6a1-42d4d4e5a73c",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 1060,
+      "frequency": "once",
+      "dueMonths": [
+       10
+      ],
+      "dueDay": 2,
+      "dueDate": "2026-10-02"
+     }
+    ],
+    "createdAt": "2026-10-06T19:25:19.279Z",
+    "sortOrder": 25,
+    "archivedAt": "2026-10-06"
+   },
+   {
+    "id": "7d0e6059-c78d-4538-a8db-5221b7cb106c",
+    "name": "Entgelt Konto",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 14,
+      "frequency": "quarterly",
+      "dueMonths": [
+       1,
+       4,
+       7,
+       10
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:51:35.447Z",
+    "sortOrder": 16
+   },
+   {
+    "id": "de82d445-bb38-4af9-a454-cb0e9519d339",
+    "name": "BK Nord",
+    "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 169,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:45:23.994Z",
+    "sortOrder": 8
+   },
+   {
+    "id": "d61952c7-93e3-4795-a9ef-79b378de4b52",
+    "name": "Amex Turbopunkte",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 15,
+      "frequency": "annual",
+      "dueMonths": [
+       10
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:54:41.372Z",
+    "sortOrder": 21
+   },
+   {
+    "id": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "name": "Hotel Lissabon",
+    "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149",
+    "history": [
+     {
+      "validFrom": "2026-11",
+      "amount": 504,
+      "frequency": "once",
+      "dueMonths": [
+       11
+      ],
+      "dueDay": 3,
+      "dueDate": "2026-11-03"
+     }
+    ],
+    "createdAt": "2026-10-06T19:15:00.400Z",
+    "sortOrder": 24
+   },
+   {
+    "id": "87f0c843-959a-4c09-ab4c-d0819f53a446",
+    "name": "BK West",
+    "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 87,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:45:55.085Z",
+    "sortOrder": 9
+   },
+   {
+    "id": "a837776e-ea54-4a47-ab4c-d4488a4544e8",
+    "name": "Parqet",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 87,
+      "frequency": "annual",
+      "dueMonths": [
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:53:51.413Z",
+    "sortOrder": 19
+   },
+   {
+    "id": "49ce47d4-6815-4b6d-a1f4-4ddfe1d05ff2",
+    "name": "iCloud",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 3,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:47:54.797Z",
+    "sortOrder": 10
+   },
+   {
+    "id": "baa4415e-e0c2-41d4-af33-b51e275163a6",
+    "name": "iPhones + Zubehör",
+    "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149",
+    "history": [
+     {
+      "validFrom": "2026-11",
+      "amount": 2511,
+      "frequency": "once",
+      "dueMonths": [
+       11
+      ],
+      "dueDay": 3,
+      "dueDate": "2026-11-03"
+     }
+    ],
+    "createdAt": "2026-10-10T12:05:16.722Z",
+    "sortOrder": 29
+   },
+   {
+    "id": "37e0779c-8150-4987-a203-82170d8c6952",
+    "name": "Claude",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 22,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:48:29.841Z",
+    "sortOrder": 12
+   },
+   {
+    "id": "1c55a02d-eb3a-4efe-ac1a-a30124f3754d",
+    "name": "Baurechtszins Nord",
+    "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 262,
+      "frequency": "semiannual",
+      "dueMonths": [
+       6,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:46:42.253Z",
+    "sortOrder": 23
+   },
+   {
+    "id": "15c24766-8b06-45cf-afc2-3b15092cfdef",
+    "name": "Öffis",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 686,
+      "frequency": "annual",
+      "dueMonths": [
+       2
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:52:37.041Z",
+    "sortOrder": 18
+   },
+   {
+    "id": "90b1eada-df4b-4ff5-afe7-ce5b3818c81d",
+    "name": "Lebensmittel & Co",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 480,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:43:55.184Z",
+    "sortOrder": 4
+   },
+   {
+    "id": "0fcb2143-6383-45c0-aa20-93bade954703",
+    "name": "Amex",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 690,
+      "frequency": "annual",
+      "dueMonths": [
+       10
+      ]
+     },
+     {
+      "validFrom": "2027-10",
+      "amount": 717.8,
+      "frequency": "annual",
+      "dueMonths": [
+       10
+      ],
+      "changedOn": "2027-10-06",
+      "recordedAt": "2026-10-06T18:55:59.344Z"
+     }
+    ],
+    "createdAt": "2026-10-05T15:54:19.099Z",
+    "sortOrder": 20
+   },
+   {
+    "id": "814a198f-4e3a-40b9-a188-a640002280e3",
+    "name": "ETF Sparplan",
+    "categoryId": "1128d801-d902-41ae-a6a1-42d4d4e5a73c",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 400,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:50:08.700Z",
+    "sortOrder": 14
+   },
+   {
+    "id": "e77321e2-a823-4369-af37-5bd8f7b66c59",
+    "name": "Entgelt Depot",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 35,
+      "frequency": "quarterly",
+      "dueMonths": [
+       1,
+       4,
+       7,
+       10
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:51:51.819Z",
+    "sortOrder": 17
+   },
+   {
+    "id": "5766578c-1ed0-495a-a80c-0c5a6433e871",
+    "name": "Haushaltsversicherung",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 17,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:43:10.817Z",
+    "sortOrder": 3
+   },
+   {
+    "id": "4b593504-d8ca-4bda-ab14-1e92f8eda731",
+    "name": "Kredit Nord",
+    "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 735,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:45:02.837Z",
+    "sortOrder": 6
+   },
+   {
+    "id": "ce173137-00e3-494d-a38c-06c4d09571b5",
+    "name": "Internet",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 23,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:42:37.490Z",
+    "sortOrder": 1
+   },
+   {
+    "id": "d8e40f77-3707-4b0e-aa84-40eca2dd278a",
+    "name": "Cash",
+    "categoryId": "1128d801-d902-41ae-a6a1-42d4d4e5a73c",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 400,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:49:45.739Z",
+    "sortOrder": 15
+   },
+   {
+    "id": "1b1a3239-340b-4c58-a804-27d9e5e6376a",
+    "name": "Zug Graz",
+    "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 70,
+      "frequency": "once",
+      "dueMonths": [
+       10
+      ],
+      "dueDay": 9,
+      "dueDate": "2026-10-09"
+     }
+    ],
+    "createdAt": "2026-10-06T19:44:21.614Z",
+    "sortOrder": 26
+   },
+   {
+    "id": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "name": "Hotel Graz",
+    "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149",
+    "history": [
+     {
+      "validFrom": "2026-12",
+      "amount": 130,
+      "frequency": "once",
+      "dueMonths": [
+       12
+      ],
+      "dueDay": 1,
+      "dueDate": "2026-12-01"
+     }
+    ],
+    "createdAt": "2026-10-06T19:49:31.763Z",
+    "sortOrder": 27
+   },
+   {
+    "id": "20ea7cf5-a6a9-4e8f-ab66-145f6fa663b9",
+    "name": "Miete",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 1008,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "dueDay": 1
+     }
+    ],
+    "createdAt": "2026-10-05T15:41:54.744Z",
+    "sortOrder": 0
+   },
+   {
+    "id": "c402e4be-2e82-42a1-a0c2-ad1556a5dec1",
+    "name": "Handy",
+    "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 10,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:44:11.560Z",
+    "sortOrder": 5
+   },
+   {
+    "id": "c3eeb0e2-c447-49e1-a648-5ed49c249f27",
+    "name": "Kredit Süd",
+    "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0",
+    "history": [
+     {
+      "validFrom": "2027-01",
+      "amount": 460,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "dueDay": 5
+     }
+    ],
+    "createdAt": "2026-10-06T19:08:39.288Z",
+    "sortOrder": 7
+   },
+   {
+    "id": "bae98264-138a-454c-a48a-991058cd47a9",
+    "name": "Spotify",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 11,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:48:13.036Z",
+    "sortOrder": 11
+   },
+   {
+    "id": "bdf4759e-3c53-48b1-a94d-a5c54742d640",
+    "name": "Gym",
+    "categoryId": "6e15aa59-4084-44ab-a2c7-91db5e9415c7",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 35,
+      "frequency": "monthly",
+      "dueMonths": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ],
+    "createdAt": "2026-10-05T15:48:46.375Z",
+    "sortOrder": 13
+   },
+   {
+    "id": "818b1e26-d2ca-45b1-ae6e-47ad9143b7fc",
+    "name": "Miete Nord",
+    "categoryId": "1128d801-d902-41ae-a6a1-42d4d4e5a73c",
+    "history": [
+     {
+      "validFrom": "2026-10",
+      "amount": 1060,
+      "frequency": "once",
+      "dueMonths": [
+       10
+      ],
+      "dueDay": 2,
+      "dueDate": "2026-10-02"
+     }
+    ],
+    "createdAt": "2026-10-08T21:11:59.848Z",
+    "sortOrder": 28
+   }
+  ],
+  "payments": [
+   {
+    "id": "5d4184a2-f359-4577-a32f-18baf2b0fc23",
+    "positionId": "90b1eada-df4b-4ff5-afe7-ce5b3818c81d",
+    "period": "2026-11",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 450,
+    "paidAt": "2026-10-24T20:38:02.187Z"
+   },
+   {
+    "id": "bdaedd5a-fd00-4f75-aaf9-f4c964cbc282",
+    "positionId": "ce173137-00e3-494d-a38c-06c4d09571b5",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 23,
+    "actualAmount": 23,
+    "paidAt": "2026-10-05T15:57:26.938Z"
+   },
+   {
+    "id": "103ce39d-4466-4032-a76a-72a3599b2f3f",
+    "positionId": "d8e40f77-3707-4b0e-aa84-40eca2dd278a",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-10-05T15:57:44.314Z"
+   },
+   {
+    "id": "198dec92-a26b-4bb4-a85a-00d0e6056108",
+    "positionId": "814a198f-4e3a-40b9-a188-a640002280e3",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-10-05T15:57:44.961Z"
+   },
+   {
+    "id": "e8fb7f30-f470-4619-aef2-4fdae366e504",
+    "positionId": "d8e40f77-3707-4b0e-aa84-40eca2dd278a",
+    "period": "2026-11",
+    "status": "paid",
+    "plannedAmount": 400,
+    "actualAmount": 400,
+    "paidAt": "2026-10-24T06:32:12.571Z"
+   },
+   {
+    "id": "ee443cf9-994b-452d-a45e-9bdeab246005",
+    "positionId": "1b1a3239-340b-4c58-a804-27d9e5e6376a",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 70,
+    "actualAmount": 70,
+    "paidAt": "2026-10-09T13:00:03.520Z"
+   },
+   {
+    "id": "2cb678dd-39dc-4cec-a189-8d8b8ee3179b",
+    "positionId": "87f0c843-959a-4c09-ab4c-d0819f53a446",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 87,
+    "actualAmount": 87,
+    "paidAt": "2026-10-05T15:57:35.682Z"
+   },
+   {
+    "id": "e8f0b33a-4c45-404c-aa9e-39a8066be56b",
+    "positionId": "37e0779c-8150-4987-a203-82170d8c6952",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 22,
+    "actualAmount": 22,
+    "paidAt": "2026-10-05T15:57:40.401Z"
+   },
+   {
+    "id": "d1e6f13c-141a-4520-abf8-f6345e292a33",
+    "positionId": "bdf4759e-3c53-48b1-a94d-a5c54742d640",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35,
+    "paidAt": "2026-10-05T15:57:40.889Z"
+   },
+   {
+    "id": "906421cd-49d3-4935-ad59-064ee54f5806",
+    "positionId": "7d0e6059-c78d-4538-a8db-5221b7cb106c",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 14,
+    "actualAmount": 14,
+    "paidAt": "2026-10-05T15:57:30.811Z"
+   },
+   {
+    "id": "dd364b4b-6b2f-406b-a185-aeb9f8b803b1",
+    "positionId": "de82d445-bb38-4af9-a454-cb0e9519d339",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 169,
+    "actualAmount": 169,
+    "paidAt": "2026-10-05T15:57:35.262Z"
+   },
+   {
+    "id": "9f87ceff-8e45-4534-a8a4-39d7e94986b6",
+    "positionId": "e77321e2-a823-4369-af37-5bd8f7b66c59",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 35,
+    "actualAmount": 35.5,
+    "paidAt": "2026-10-12T06:50:02.255Z"
+   },
+   {
+    "id": "9ebc916d-205d-4fee-a129-dffd9f5c5041",
+    "positionId": "d61952c7-93e3-4795-a9ef-79b378de4b52",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 15,
+    "actualAmount": 15,
+    "paidAt": "2026-10-05T15:57:42.100Z"
+   },
+   {
+    "id": "ee34d673-8ed9-462e-aa6d-c432060c4b2b",
+    "positionId": "0fcb2143-6383-45c0-aa20-93bade954703",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 690,
+    "actualAmount": 690,
+    "paidAt": "2026-10-05T15:57:41.329Z"
+   },
+   {
+    "id": "9366e604-1c94-47f9-a15a-f12f77bade1a",
+    "positionId": "4b593504-d8ca-4bda-ab14-1e92f8eda731",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 735,
+    "actualAmount": 735,
+    "paidAt": "2026-10-05T15:57:34.702Z"
+   },
+   {
+    "id": "049da614-4f18-46df-a781-d9bbb6a311d1",
+    "positionId": "818b1e26-d2ca-45b1-ae6e-47ad9143b7fc",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 1060,
+    "actualAmount": 1060,
+    "paidAt": "2026-10-09T09:36:59.787Z"
+   },
+   {
+    "id": "7cfd4cd5-b9a9-490b-a7ad-5685f566ee57",
+    "positionId": "20ea7cf5-a6a9-4e8f-ab66-145f6fa663b9",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 1008,
+    "actualAmount": 1008,
+    "paidAt": "2026-10-05T15:57:26.478Z"
+   },
+   {
+    "id": "f3f29e00-19f7-4aee-a660-0bae37573c32",
+    "positionId": "5766578c-1ed0-495a-a80c-0c5a6433e871",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 17,
+    "actualAmount": 17,
+    "paidAt": "2026-10-05T15:57:28.443Z"
+   },
+   {
+    "id": "f7c37997-6431-4422-aea1-395fe5306165",
+    "positionId": "c402e4be-2e82-42a1-a0c2-ad1556a5dec1",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 10,
+    "actualAmount": 10,
+    "paidAt": "2026-10-05T15:57:29.554Z"
+   },
+   {
+    "id": "000cbec4-2bb5-4399-a271-34a20351b229",
+    "positionId": "49ce47d4-6815-4b6d-a1f4-4ddfe1d05ff2",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 3,
+    "actualAmount": 3,
+    "paidAt": "2026-10-05T15:57:37.080Z"
+   },
+   {
+    "id": "097e1e03-04df-4484-aee2-4664d6cad914",
+    "positionId": "90b1eada-df4b-4ff5-afe7-ce5b3818c81d",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 480,
+    "actualAmount": 480,
+    "paidAt": "2026-10-05T15:57:29.052Z"
+   },
+   {
+    "id": "d065ce5d-1825-444b-a335-70da5f612fbd",
+    "positionId": "bae98264-138a-454c-a48a-991058cd47a9",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 11,
+    "actualAmount": 11,
+    "paidAt": "2026-10-05T15:57:37.376Z"
+   },
+   {
+    "id": "6df87ef3-58ea-4f7e-a9e4-794a97781488",
+    "positionId": "22bceafd-993c-4b51-aefc-3f67dc72a5a2",
+    "period": "2026-10",
+    "status": "paid",
+    "plannedAmount": 64,
+    "actualAmount": 64,
+    "paidAt": "2026-10-05T15:57:27.284Z"
+   }
+  ],
+  "oneOffs": [],
+  "monthClose": [
+   {
+    "period": "2026-10",
+    "netSalary": 4788,
+    "note": "Miete Süd ausgegeben",
+    "updatedAt": "2026-10-12T06:50:39.514Z"
+   },
+   {
+    "period": "2026-11",
+    "netSalary": 7819,
+    "note": "1370€ als Freibetrag bis 5.11",
+    "updatedAt": "2026-10-24T21:11:17.927Z"
+   }
+  ],
+  "changeLog": [
+   {
+    "id": "032986e7-2304-40b7-a816-e27ae334bbbf",
+    "at": "2026-10-06T19:44:21.617Z",
+    "positionId": "1b1a3239-340b-4c58-a804-27d9e5e6376a",
+    "type": "created",
+    "validFrom": "2026-11",
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 167,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    }
+   },
+   {
+    "id": "66617802-c38e-4b81-afe0-2c862b858dbf",
+    "at": "2026-10-08T21:11:59.851Z",
+    "positionId": "818b1e26-d2ca-45b1-ae6e-47ad9143b7fc",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 1060,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 2,
+     "dueDate": "2026-10-02"
+    }
+   },
+   {
+    "id": "cd014f33-8026-4599-ad5b-31d8221b2f37",
+    "at": "2026-10-05T15:52:37.045Z",
+    "positionId": "15c24766-8b06-45cf-afc2-3b15092cfdef",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 686,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    }
+   },
+   {
+    "id": "a2f0e5e5-cdb4-4d1b-a1a3-fa904890cc47",
+    "at": "2026-10-06T19:50:16.441Z",
+    "positionId": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "type": "corrected",
+    "validFrom": "2026-10",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 26,
+     "dueDate": "2026-11-26"
+    },
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 26,
+     "dueDate": "2026-10-26"
+    }
+   },
+   {
+    "id": "31dfa1fd-36ed-4a0f-a688-ee3fea6ac48b",
+    "at": "2026-10-13T06:03:32.021Z",
+    "positionId": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 504,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    }
+   },
+   {
+    "id": "681ae6df-e831-454f-ae75-3235865e4b0a",
+    "at": "2026-10-06T19:50:50.654Z",
+    "positionId": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 200,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 200,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 27,
+     "dueDate": "2026-11-27"
+    }
+   },
+   {
+    "id": "7d294b45-c47c-4a44-ad9c-9576590fa3bb",
+    "at": "2026-10-05T15:45:23.996Z",
+    "positionId": "de82d445-bb38-4af9-a454-cb0e9519d339",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 169,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "83af6bcd-a0c3-4203-ac38-0ebd7f835af1",
+    "at": "2026-10-06T19:08:39.289Z",
+    "positionId": "c3eeb0e2-c447-49e1-a648-5ed49c249f27",
+    "type": "created",
+    "validFrom": "2027-01",
+    "to": {
+     "validFrom": "2027-01",
+     "amount": 460,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "dueDay": 5
+    }
+   },
+   {
+    "id": "2e34cfce-3adb-43e0-adeb-960ec01668bb",
+    "at": "2026-10-05T15:43:55.185Z",
+    "positionId": "90b1eada-df4b-4ff5-afe7-ce5b3818c81d",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 480,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "8b929a5d-567e-4b46-a850-1fe73a543d6d",
+    "at": "2026-10-24T06:43:53.870Z",
+    "positionId": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 504,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 504,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 3,
+     "dueDate": "2026-11-03"
+    }
+   },
+   {
+    "id": "51681d71-f11d-492f-ad89-fa18c68c25f6",
+    "at": "2026-10-06T19:07:10.432Z",
+    "positionId": "8e34bede-9d5f-45ee-ac10-b5fd57dcfaf4",
+    "type": "corrected",
+    "validFrom": "2026-10",
+    "from": {
+     "validFrom": "2026-10",
+     "amount": 1260,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    },
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 1260,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    }
+   },
+   {
+    "id": "7d45677d-6fd7-4f3e-a097-d3cf7f4c75ce",
+    "at": "2026-10-09T12:59:55.502Z",
+    "positionId": "1b1a3239-340b-4c58-a804-27d9e5e6376a",
+    "type": "corrected",
+    "validFrom": "2026-10",
+    "from": {
+     "validFrom": "2026-12",
+     "amount": 167,
+     "frequency": "once",
+     "dueMonths": [
+      12
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-12-01"
+    },
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 70,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 9,
+     "dueDate": "2026-10-09"
+    }
+   },
+   {
+    "id": "1a82b1fe-5f0e-4609-a565-0bf76136e603",
+    "at": "2026-10-05T15:48:29.842Z",
+    "positionId": "37e0779c-8150-4987-a203-82170d8c6952",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 22,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "ad9e3a21-2b30-4271-ad96-eb629d2861b0",
+    "at": "2026-10-06T19:50:43.625Z",
+    "positionId": "1b1a3239-340b-4c58-a804-27d9e5e6376a",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 167,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 167,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 27,
+     "dueDate": "2026-11-27"
+    }
+   },
+   {
+    "id": "b95d0cc5-6c13-49a0-a404-235496690437",
+    "at": "2026-10-09T11:14:16.487Z",
+    "positionId": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "type": "corrected",
+    "validFrom": "2026-10",
+    "from": {
+     "validFrom": "2026-12",
+     "amount": 200,
+     "frequency": "once",
+     "dueMonths": [
+      12
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-12-01"
+    },
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 130,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 16,
+     "dueDate": "2026-10-16"
+    }
+   },
+   {
+    "id": "89638461-8bc7-4e98-a2f6-2a8a6e029585",
+    "at": "2026-10-06T19:52:13.250Z",
+    "positionId": "1b1a3239-340b-4c58-a804-27d9e5e6376a",
+    "type": "corrected",
+    "validFrom": "2026-12",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 167,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 27,
+     "dueDate": "2026-11-27"
+    },
+    "to": {
+     "validFrom": "2026-12",
+     "amount": 167,
+     "frequency": "once",
+     "dueMonths": [
+      12
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-12-01"
+    }
+   },
+   {
+    "id": "5750f54a-a7ad-49c0-a974-3c79f108ded1",
+    "at": "2026-10-09T12:08:51.261Z",
+    "positionId": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-10",
+     "amount": 130,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 16,
+     "dueDate": "2026-10-16"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 130,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 27,
+     "dueDate": "2026-11-27"
+    }
+   },
+   {
+    "id": "3fe008da-a966-4c4d-a887-b98a85e34ad7",
+    "at": "2026-10-06T19:25:19.281Z",
+    "positionId": "9b5aa219-f728-4f5a-a564-9a9d90c51e8e",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 1060,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 2,
+     "dueDate": "2026-10-02"
+    }
+   },
+   {
+    "id": "4cdb9b5a-acf2-4935-ad50-048b1658daf4",
+    "at": "2026-10-22T07:33:38.233Z",
+    "positionId": "baa4415e-e0c2-41d4-af33-b51e275163a6",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 2826,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 3,
+     "dueDate": "2026-11-03"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 2511,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 3,
+     "dueDate": "2026-11-03"
+    }
+   },
+   {
+    "id": "e13a0b10-54b5-4f82-a617-ea46825e23c7",
+    "at": "2026-10-05T15:56:57.844Z",
+    "positionId": "8e34bede-9d5f-45ee-ac10-b5fd57dcfaf4",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 1260,
+     "frequency": "annual",
+     "dueMonths": [
+      2
+     ]
+    }
+   },
+   {
+    "id": "67d64db2-69a8-45cc-ac7c-49929b097e23",
+    "at": "2026-10-05T15:43:10.819Z",
+    "positionId": "5766578c-1ed0-495a-a80c-0c5a6433e871",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 17,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "4f8f4916-3ce5-4943-adca-dd42ba29c22f",
+    "at": "2026-10-05T15:51:35.450Z",
+    "positionId": "7d0e6059-c78d-4538-a8db-5221b7cb106c",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 14,
+     "frequency": "quarterly",
+     "dueMonths": [
+      1,
+      4,
+      7,
+      10
+     ]
+    }
+   },
+   {
+    "id": "30d77fe1-b87a-4f6a-a312-d4e8d93ec8eb",
+    "at": "2026-10-05T15:45:55.086Z",
+    "positionId": "87f0c843-959a-4c09-ab4c-d0819f53a446",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 87,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "ca3ee20f-4c21-44e2-aeac-6473d2f19e86",
+    "at": "2026-10-06T19:52:23.641Z",
+    "positionId": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "type": "corrected",
+    "validFrom": "2026-12",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 200,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 27,
+     "dueDate": "2026-11-27"
+    },
+    "to": {
+     "validFrom": "2026-12",
+     "amount": 200,
+     "frequency": "once",
+     "dueMonths": [
+      12
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-12-01"
+    }
+   },
+   {
+    "id": "acfa18da-7e84-4948-a2e6-8da6d3d0884f",
+    "at": "2026-10-05T15:42:37.492Z",
+    "positionId": "ce173137-00e3-494d-a38c-06c4d09571b5",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 23,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "1bd44521-1234-4554-a5a9-815a736ccf08",
+    "at": "2026-10-06T19:28:05.607Z",
+    "positionId": "9b5aa219-f728-4f5a-a564-9a9d90c51e8e",
+    "type": "archived"
+   },
+   {
+    "id": "628cefff-43f1-4322-a4e7-e2c08975f0e1",
+    "at": "2026-10-05T15:48:46.376Z",
+    "positionId": "bdf4759e-3c53-48b1-a94d-a5c54742d640",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 35,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "f7401189-d964-416b-a22d-e8433d0979ac",
+    "at": "2026-10-05T15:54:41.373Z",
+    "positionId": "d61952c7-93e3-4795-a9ef-79b378de4b52",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 15,
+     "frequency": "annual",
+     "dueMonths": [
+      10
+     ]
+    }
+   },
+   {
+    "id": "6eb5f2af-c9ee-48f6-a35c-9df41a879706",
+    "at": "2026-10-06T19:15:33.833Z",
+    "positionId": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-10",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 26,
+     "dueDate": "2026-10-26"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 26,
+     "dueDate": "2026-11-26"
+    }
+   },
+   {
+    "id": "c1bfb192-c315-49a6-ac75-a78801da75d7",
+    "at": "2026-10-05T15:53:51.415Z",
+    "positionId": "a837776e-ea54-4a47-ab4c-d4488a4544e8",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 87,
+     "frequency": "annual",
+     "dueMonths": [
+      12
+     ]
+    }
+   },
+   {
+    "id": "14cfd065-d994-408e-a275-33152ed24a55",
+    "at": "2026-10-05T15:45:35.028Z",
+    "positionId": "4b593504-d8ca-4bda-ab14-1e92f8eda731",
+    "type": "edited",
+    "from": {
+     "name": "Kredit Nord",
+     "categoryId": "88945efd-a2ca-435b-a3ec-9ed3a797f1fb"
+    },
+    "to": {
+     "name": "Kredit Nord",
+     "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0"
+    }
+   },
+   {
+    "id": "f3920498-edea-454c-a59c-dd7bc42a1ff0",
+    "at": "2026-10-05T15:50:08.701Z",
+    "positionId": "814a198f-4e3a-40b9-a188-a640002280e3",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 400,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "90072066-4d04-401a-a7ff-e190b36d9faa",
+    "at": "2026-10-06T19:51:58.787Z",
+    "positionId": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "type": "corrected",
+    "validFrom": "2026-11",
+    "from": {
+     "validFrom": "2026-10",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 26,
+     "dueDate": "2026-10-26"
+    },
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    }
+   },
+   {
+    "id": "293c00a4-1f30-4b99-a33a-4cb0d583b086",
+    "at": "2026-10-05T15:44:11.562Z",
+    "positionId": "c402e4be-2e82-42a1-a0c2-ad1556a5dec1",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 10,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "3465b5bf-bd5b-432c-aebf-20348da9a2fb",
+    "at": "2026-10-10T13:13:27.722Z",
+    "positionId": "baa4415e-e0c2-41d4-af33-b51e275163a6",
+    "type": "edited",
+    "from": {
+     "name": "iPhones",
+     "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149"
+    },
+    "to": {
+     "name": "iPhones + Zubehör",
+     "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149"
+    }
+   },
+   {
+    "id": "9493b9a3-3591-4ab4-ab1b-bda21cc3f1ff",
+    "at": "2026-10-05T15:54:19.101Z",
+    "positionId": "0fcb2143-6383-45c0-aa20-93bade954703",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 690,
+     "frequency": "annual",
+     "dueMonths": [
+      10
+     ]
+    }
+   },
+   {
+    "id": "c55de9a5-7296-4b57-af4e-b5f71fe4c395",
+    "at": "2026-10-06T19:06:49.187Z",
+    "positionId": "8e34bede-9d5f-45ee-ac10-b5fd57dcfaf4",
+    "type": "edited",
+    "from": {
+     "name": "Steuerberater",
+     "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0"
+    },
+    "to": {
+     "name": "Steuerberater",
+     "categoryId": "7551ae06-9d77-4c9e-a097-d3db42b65149"
+    }
+   },
+   {
+    "id": "a263ec16-8db0-4549-a2a3-fe3402fddf88",
+    "at": "2026-10-05T15:47:54.798Z",
+    "positionId": "49ce47d4-6815-4b6d-a1f4-4ddfe1d05ff2",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 3,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "18207143-872e-4ad4-af9c-649fb0638606",
+    "at": "2026-10-05T15:46:42.256Z",
+    "positionId": "1c55a02d-eb3a-4efe-ac1a-a30124f3754d",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 262,
+     "frequency": "semiannual",
+     "dueMonths": [
+      6,
+      12
+     ]
+    }
+   },
+   {
+    "id": "292453d0-c825-493a-a4bf-35d2f9f0e1d1",
+    "at": "2026-10-06T18:55:59.351Z",
+    "positionId": "0fcb2143-6383-45c0-aa20-93bade954703",
+    "type": "amount",
+    "validFrom": "2027-10",
+    "from": {
+     "validFrom": "2026-10",
+     "amount": 690,
+     "frequency": "annual",
+     "dueMonths": [
+      10
+     ]
+    },
+    "to": {
+     "validFrom": "2027-10",
+     "amount": 717.8,
+     "frequency": "annual",
+     "dueMonths": [
+      10
+     ],
+     "changedOn": "2027-10-06",
+     "recordedAt": "2026-10-06T18:55:59.344Z"
+    }
+   },
+   {
+    "id": "9356069f-53c9-4d73-acc8-ca97e8186d49",
+    "at": "2026-10-09T12:09:11.599Z",
+    "positionId": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "type": "corrected",
+    "validFrom": "2026-12",
+    "from": {
+     "validFrom": "2026-11",
+     "amount": 130,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 27,
+     "dueDate": "2026-11-27"
+    },
+    "to": {
+     "validFrom": "2026-12",
+     "amount": 130,
+     "frequency": "once",
+     "dueMonths": [
+      12
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-12-01"
+    }
+   },
+   {
+    "id": "cc6db4b8-c6ea-49b6-a2fb-dd9fbb9a9be7",
+    "at": "2026-10-09T09:26:23.539Z",
+    "positionId": "818b1e26-d2ca-45b1-ae6e-47ad9143b7fc",
+    "type": "edited",
+    "from": {
+     "name": "Miete Nord",
+     "categoryId": "1e94dee1-f052-4632-a2d0-a4ee596d3dd0"
+    },
+    "to": {
+     "name": "Miete Nord",
+     "categoryId": "1128d801-d902-41ae-a6a1-42d4d4e5a73c"
+    }
+   },
+   {
+    "id": "705c66a2-70ac-4d3b-aa04-e169d531d47c",
+    "at": "2026-10-06T19:15:00.403Z",
+    "positionId": "95f36783-63ab-4cd0-afbd-68319ca25df7",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 620,
+     "frequency": "once",
+     "dueMonths": [
+      10
+     ],
+     "dueDay": 26,
+     "dueDate": "2026-10-26"
+    }
+   },
+   {
+    "id": "0289941c-01f0-4289-a94f-1faa71560461",
+    "at": "2026-10-05T15:51:51.820Z",
+    "positionId": "e77321e2-a823-4369-af37-5bd8f7b66c59",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 35,
+     "frequency": "quarterly",
+     "dueMonths": [
+      1,
+      4,
+      7,
+      10
+     ]
+    }
+   },
+   {
+    "id": "87b00c5c-6f99-4ff7-ad28-3e83b6de06e9",
+    "at": "2026-10-05T15:42:50.652Z",
+    "positionId": "22bceafd-993c-4b51-aefc-3f67dc72a5a2",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 64,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "0bc695b2-067f-42da-a820-b9b9c4243c58",
+    "at": "2026-10-05T15:45:02.839Z",
+    "positionId": "4b593504-d8ca-4bda-ab14-1e92f8eda731",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 735,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "65871fed-8baa-486c-a813-ab8ed162d7a2",
+    "at": "2026-10-10T12:05:16.724Z",
+    "positionId": "baa4415e-e0c2-41d4-af33-b51e275163a6",
+    "type": "created",
+    "validFrom": "2026-11",
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 2826,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 3,
+     "dueDate": "2026-11-03"
+    }
+   },
+   {
+    "id": "60d0167e-8aa7-4c16-a249-9e9c54be3c07",
+    "at": "2026-10-05T15:41:54.745Z",
+    "positionId": "20ea7cf5-a6a9-4e8f-ab66-145f6fa663b9",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 1008,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ],
+     "dueDay": 1
+    }
+   },
+   {
+    "id": "e695f723-e527-480e-a789-dbb43683bd8a",
+    "at": "2026-10-05T15:48:13.037Z",
+    "positionId": "bae98264-138a-454c-a48a-991058cd47a9",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 11,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   },
+   {
+    "id": "ffbeb35d-24d1-4367-a139-9fe5e7dc1dcc",
+    "at": "2026-10-06T19:49:31.765Z",
+    "positionId": "7b6e1dcb-9e3d-4366-a9c9-9bec52379d5d",
+    "type": "created",
+    "validFrom": "2026-11",
+    "to": {
+     "validFrom": "2026-11",
+     "amount": 200,
+     "frequency": "once",
+     "dueMonths": [
+      11
+     ],
+     "dueDay": 1,
+     "dueDate": "2026-11-01"
+    }
+   },
+   {
+    "id": "b7619e18-23b1-4000-a2e2-100bcca13d12",
+    "at": "2026-10-05T15:49:45.741Z",
+    "positionId": "d8e40f77-3707-4b0e-aa84-40eca2dd278a",
+    "type": "created",
+    "validFrom": "2026-10",
+    "to": {
+     "validFrom": "2026-10",
+     "amount": 400,
+     "frequency": "monthly",
+     "dueMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+     ]
+    }
+   }
+  ],
+  "reminders": []
+ }
+}

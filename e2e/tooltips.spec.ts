@@ -115,8 +115,11 @@ async function outsidePoint(page: Page, button: Locator, sheet?: Locator): Promi
   const b = (await button.boundingBox())!;
   const vp = page.viewportSize()!;
   const area = sheet ? (await sheet.boundingBox())! : { x: 0, y: 0, width: vp.width, height: vp.height };
-  const point = await page.evaluate(
-    ({ b, area, vp }) => {
+  // the widest neutral neighbourhood that exists (cards close together on a phone: a smaller one)
+  let point: { x: number; y: number } | null = null;
+  for (const r of [20, 14, 10]) {
+    point = await page.evaluate(
+    ({ b, area, vp, r }) => {
       const interactive = 'button, a, input, select, textarea, summary, label, nav, [role="tooltip"], [role="switch"], [role="radio"], [role="dialog"] [data-sheet-handle]';
       let best: { x: number; y: number; d: number } | null = null;
       const x0 = Math.max(area.x + 4, 2);
@@ -128,8 +131,9 @@ async function outsidePoint(page: Page, button: Locator, sheet?: Locator): Promi
           // not on the icon itself
           if (x >= b.x - 4 && x <= b.x + b.width + 4 && y >= b.y - 4 && y <= b.y + b.height + 4) continue;
           // touch adjustment snaps a tap to a nearby target: the whole neighbourhood must be neutral
+          const k = Math.round(r * 0.7);
           const around = [
-            [0, 0], [-20, 0], [20, 0], [0, -20], [0, 20], [-14, -14], [14, -14], [-14, 14], [14, 14],
+            [0, 0], [-r, 0], [r, 0], [0, -r], [0, r], [-k, -k], [k, -k], [-k, k], [k, k],
           ].map(([dx, dy]) => document.elementFromPoint(x + dx!, y + dy!));
           if (around.some((el) => !el || el.closest(interactive) || el.closest('.glass-tile, [data-testid="hero"]'))) continue;
           const d = Math.hypot(x - (b.x + b.width / 2), y - (b.y + b.height / 2));
@@ -138,8 +142,10 @@ async function outsidePoint(page: Page, button: Locator, sheet?: Locator): Promi
       }
       return best;
     },
-    { b, area, vp },
-  );
+    { b, area, vp, r },
+    );
+    if (point) break;
+  }
   if (!point) throw new Error('no neutral spot next to the ⓘ');
   return { x: point.x, y: point.y };
 }
@@ -186,32 +192,26 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
-      // setup without an own account: „Dein Plan“ has the ⓘ „Mit einem eigenen Konto …“
-      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
+      // setup without an own account, nothing set aside; a gap that can be spread asks one more question
+      await page.getByTestId('konto-tile-start').click();
       await page.getByTestId('konto-setup-account-no').click();
       await page.getByTestId('konto-setup-nothing').click();
-      const setupSheet = page.getByTestId('bottom-sheet');
+      await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', /^(gap|plan)$/);
+      if ((await page.getByTestId('konto-setup').getAttribute('data-step')) === 'gap') await page.getByTestId('konto-setup-gap-spread').click();
       await expect(page.getByTestId('konto-setup-plan')).toBeVisible();
-      await animationsDone(page, 'bottom-sheet');
-      await page.waitForTimeout(300); // the sheet settles to the plan's height
-      await exercise(page, info(setupSheet, 'Monatsbetrag zur Seite legen'), mode, seen, setupSheet);
-      await page.getByTestId('plan-order-done').click();
-      if (await page.getByTestId('plan-gap-done').count()) await page.getByTestId('plan-gap-done').click();
       await page.getByTestId('konto-setup-finish').click();
-      await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
+      await expect(page.getByTestId('konto-setup')).toHaveCount(0);
 
       // --- Monat
       await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
       if (await info(page, 'im Ø-Monat').count()) await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
-      await exercise(page, info(page, 'Monatsbetrag'), mode, seen);
+      await exercise(page, page.getByTestId('konto-tile-info'), mode, seen);
 
       // --- Fixkostenkonto-Sheet
       await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       const kontoSheet = page.getByTestId('bottom-sheet');
       await animationsDone(page, 'bottom-sheet');
-      await exercise(page, info(kontoSheet, 'Stand am Monatsende'), mode, seen, kontoSheet);
-      await kontoSheet.getByTestId('konto-settings-inline').locator('summary').click();
-      await exercise(page, info(kontoSheet, 'Schon zur Seite gelegt'), mode, seen, kontoSheet);
+      await exercise(page, info(kontoSheet, 'Verlauf mit Plan'), mode, seen, kontoSheet);
       await kontoSheet.getByTestId('konto-positions').locator('summary').first().click();
       await exercise(page, info(kontoSheet, 'Eingeplante Rechnungen'), mode, seen, kontoSheet);
       await page.keyboard.press('Escape');
@@ -254,11 +254,11 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
 
       // --- Analyse
       await goTo(page, 'analyse');
-      await exercise(page, info(page.getByTestId('konto-analyse'), 'Stand am Monatsende'), mode, seen);
+      await exercise(page, info(page.getByTestId('konto-analyse'), 'Verlauf mit Plan'), mode, seen);
 
       // --- Einstellungen
       await goTo(page, 'einstellungen');
-      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
+      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Schon zur Seite gelegt', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
         await exercise(page, info(page, name), mode, seen);
       }
 

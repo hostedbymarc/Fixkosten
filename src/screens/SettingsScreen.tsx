@@ -6,9 +6,11 @@ import { ConfirmSheet } from '../components/ConfirmSheet';
 import { Segmented, SelectField, SwitchField } from '../components/form';
 import { useKontoState } from '../components/konto/KontoSheet';
 import { KontoSetup } from '../components/konto/KontoTile';
-import { orderDay } from '../lib/kontoBalance';
 import { t } from '../lib/kontoTexts';
-import { dayLabel, deadlinePassed, KontoStatusLine } from '../components/konto/KontoStatusView';
+import { PlanAmount } from '../components/konto/KontoStatusView';
+import { BalanceField, RoundingField } from '../components/konto/KontoParts';
+import { setGapMode } from '../db/kontoActions';
+import type { GapMode } from '../db/settings';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
 import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, currencyOf, DEFAULT_COUNTRY, type Currency } from '../lib/country';
@@ -190,10 +192,7 @@ function BackupSection({ ds }: { ds: Dataset }) {
           Sicherung
         </h2>
         <InfoTip label="Erklärung: Sicherung" title="Sicherung" className="-my-3 -ml-1.5" testId="backup-info">
-          <p>
-            Deine Daten liegen nur auf diesem Gerät. Eine Sicherung (JSON) kannst du auf einem anderen Gerät oder nach dem Löschen der Website-Daten wieder
-            importieren.
-          </p>
+          <p>Deine Daten liegen nur auf diesem Gerät. Mit einer Sicherung holst du sie zurück. Das geht auch auf einem anderen Gerät.</p>
         </InfoTip>
       </div>
       <div className="glass flex flex-col gap-3 p-4" data-testid="backup-section">
@@ -298,7 +297,7 @@ function MonthSection() {
           value={String(start)}
           onChange={(v) => void writeMonthStart(db, toMonthStart(v === 'last' ? 'last' : Number(v)))}
           options={MONTH_START_CHOICES.map((c) => ({ value: String(c), label: monthStartLabel(c) }))}
-          info="Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt."
+          info="Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt."
         />
         <p className="px-1 text-[13px] text-ink-mute" data-testid="active-month">
           Aktiver Monat: <span className="font-semibold text-ink-soft">{periodLabel(active)}</span>
@@ -332,7 +331,7 @@ function AppearanceSection() {
           <Logo size={44} />
           <p className="text-[15px] font-semibold text-ink">Erbse wie eine App öffnen</p>
           <InfoTip label="Erklärung: Erbse wie eine App öffnen" title="Erbse wie eine App öffnen" className="-my-3 -ml-2 shrink-0" testId="install-info">
-            <p>In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.</p>
+            <p>Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“.</p>
           </InfoTip>
         </div>
       </div>
@@ -368,43 +367,37 @@ function KontoSection({ ds }: { ds: Dataset }) {
         {settings.enabled && (
           <>
             {settings.setupDone && (
-              <div className="flex flex-col gap-3 border-t border-line pt-3">
-                {/* the same status, standing order and gap as tile, sheet and „Dein Plan“ (kontoState) */}
-                <KontoStatusLine state={state} withAction={false} testId="settings-status" />
-                <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2 text-[15px]" data-testid="konto-summary">
-                  <dt className="text-ink-soft">{t('settings.balance')}</dt>
-                  <dd className="num text-right font-semibold text-ink" data-testid="konto-summary-balance">
-                    {formatEUR(state.balance)}
-                  </dd>
+              <div className="flex flex-col gap-4 border-t border-line pt-3" data-testid="konto-summary">
+                {/* the same amount and reason as tile and sheet (kontoState) */}
+                <div data-testid="settings-plan">
+                  <p className="text-[13px] font-medium text-ink-mute">{t(state.monthDone ? 'tile.title.next' : 'tile.title')}</p>
+                  <PlanAmount state={state} start={start} testId="settings" />
+                </div>
+                <div>
+                  <BalanceField balance={state.balance} testId="konto-balance" />
                   {asOf && (
-                    <>
-                      <dt className="sr-only">Stand</dt>
-                      <dd className="col-span-2 -mt-1.5 text-[13px] text-ink-mute" data-testid="konto-summary-asof">
-                        {t('settings.asOf', { datum: asOf })}
-                      </dd>
-                    </>
+                    <p className="mt-1 px-1 text-[13px] text-ink-mute" data-testid="konto-summary-asof">
+                      {t('settings.asOf', { datum: asOf })}
+                    </p>
                   )}
-                  <dt className="text-ink-soft">{t(state.hasAccount ? 'settings.order' : 'settings.monthly')}</dt>
-                  <dd className="num text-right font-semibold text-ink">
-                    <span data-testid="konto-summary-order">{formatEUR(state.order)}</span> {orderDay(start)}
-                  </dd>
-                  {state.gap > 0 && (
-                    <>
-                      <dt className="text-ink-soft">{t('settings.gap')}</dt>
-                      <dd className="num text-right font-semibold text-ink">
-                        {/* „€ 1.087,34 bis 24. Jänner“ – the same date as tile and plan */}
-                        <span data-testid="konto-summary-gap">{formatEUR(state.gap)}</span>{' '}
-                        <span className="font-normal text-ink-soft" data-testid="konto-summary-gap-by">
-                          {deadlinePassed(state.gapBy) ? t('settings.gap.now') : t('settings.gap.by', { datum: dayLabel(state.gapBy!) })}
-                        </span>
-                      </dd>
-                    </>
+                </div>
+                <div data-testid="konto-gap-mode">
+                  <Segmented<GapMode>
+                    label={t('settings.gapMode')}
+                    value={state.mode ?? settings.gapMode ?? 'spread'}
+                    onChange={(m) => void setGapMode(db, m)}
+                    options={[
+                      { value: 'spread', label: t('settings.gapMode.spread') },
+                      { value: 'lump', label: t('settings.gapMode.lump') },
+                    ]}
+                  />
+                  {(state.gap <= 0 || !state.canSpread) && (
+                    <p className="mt-1 px-1 text-[13px] text-ink-mute" data-testid="konto-gap-mode-note">
+                      {t(state.gap <= 0 ? 'settings.gapMode.none' : 'settings.gapMode.forced')}
+                    </p>
                   )}
-                  <dt className="text-ink-soft">{t('settings.rounding')}</dt>
-                  <dd className="num text-right text-ink" data-testid="konto-summary-rounding">
-                    {formatEUR(settings.rounding)}
-                  </dd>
-                </dl>
+                </div>
+                <RoundingField settings={settings} />
               </div>
             )}
             <button

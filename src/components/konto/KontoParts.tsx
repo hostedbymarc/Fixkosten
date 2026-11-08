@@ -1,20 +1,21 @@
+import type { MonthStart } from '../../lib/activeMonth';
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
-import { answerMonthCheck, setAnchor } from '../../db/kontoActions';
+import { setAnchor } from '../../db/kontoActions';
 import { writeKonto, type KontoSettings } from '../../db/settings';
 import { localToday } from '../../lib/activeMonth';
-import { depositDone } from '../../lib/kontoBalance';
-import { ROUNDING_CHOICES, type KontoMonth, type KontoOverview, type Rounding, type StandingOrderCause } from '../../lib/fixkostenkonto';
+import { ROUNDING_CHOICES, type KontoMonth, type KontoSimulation, type Rounding } from '../../lib/fixkostenkonto';
 import { amountToInput, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
 import { axisPeriodLabel } from '../../lib/analytics';
 import { t } from '../../lib/kontoTexts';
-import { monthName, periodLabel } from '../../lib/period';
+import { periodLabel } from '../../lib/period';
 import type { Period } from '../../lib/types';
 import { AlertIcon } from '../Icons';
 import { AmountField, Segmented } from '../form';
 
 /** The assumption of the simulation, visible wherever its numbers are. */
-export const KONTO_ASSUMPTION = t('sheet.assumption');
+/** ⓘ of „Verlauf mit Plan“: the deposit comes on the day the month starts („am 1.“, „am 25.“, „am Monatsletzten“). */
+export const chartInfo = (start: MonthStart) => t('sheet.chart.info', { tag: start === 'last' ? 'Monatsletzten' : `${start}.` });
 
 /** Signed amount, never colour only: '−€ 120' with the alert icon when below 0. */
 export function SignedBalance({ value, className = '' }: { value: number; className?: string }) {
@@ -27,12 +28,12 @@ export function SignedBalance({ value, className = '' }: { value: number; classN
   );
 }
 
-/** Hint when the balance keeps growing: the standing order is higher than needed. */
-export function RisingHint({ overview }: { overview: KontoOverview }) {
-  if (!overview.simulation.rising) return null;
+/** Hint when the balance keeps growing: the monthly amount is higher than needed. */
+export function RisingHint({ simulation }: { simulation: KontoSimulation }) {
+  if (!simulation.rising) return null;
   return (
     <p className="rounded-2xl bg-zinc-50 px-3 py-2.5 text-[13px] leading-snug text-ink-soft" data-testid="konto-rising">
-      {withBold(t('sheet.rising', { betrag: '\u0000' }), formatEUR(overview.simulation.surplus))}
+      {withBold(t('sheet.rising', { betrag: '\u0000' }), formatEUR(simulation.surplus))}
     </p>
   );
 }
@@ -97,17 +98,17 @@ export function MonthBreakdown({ month, active }: { month: KontoMonth; active: P
  * the breakdown. Also the table alternative to the chart.
  */
 export function MonthList({
-  overview,
+  simulation,
   active,
   selected,
   onSelect,
 }: {
-  overview: KontoOverview;
+  simulation: KontoSimulation;
   active: Period;
   selected: Period | null;
   onSelect: (p: Period | null) => void;
 }) {
-  const months = overview.simulation.months;
+  const months = simulation.months;
   // one format for each column, so the amounts line up (cents only where one of them has some)
   const deposits = formatEURSet(...months.map((m) => m.deposit));
   const debits = formatEURSet(...months.map((m) => m.debits));
@@ -160,74 +161,45 @@ export function MonthList({
   );
 }
 
-/** The hint line under the standing order: its largest reason, in one sentence. */
-export function causeText(cause: StandingOrderCause): string {
-  const more = cause.monthly > 0 ? 'Mehr' : 'Weniger';
-  const month = periodLabel(cause.period);
-  switch (cause.kind) {
-    case 'change':
-      return `${more}, weil ${cause.name} ab ${month} ${formatEUR(cause.amount)} kostet.`;
-    case 'start':
-      return `${more}, weil ${cause.name} ab ${month} dazukommt.`;
-    case 'end':
-      return `${more}, weil ${cause.name} nach ${month} endet.`;
-    case 'once':
-      return `${more}, weil ${cause.name} im ${month} einmalig ${formatEUR(cause.amount)} kostet.`;
-  }
+/**
+ * „Schon zur Seite gelegt“ (with cents): a balance typed here is a new anchor, saved right away.
+ * Lives in the settings (the sheet only links there).
+ */
+export function BalanceField({ balance, testId = 'konto-balance' }: { balance: number; testId?: string }) {
+  const [text, setText] = useState(amountToInput(balance));
+  const [dirty, setDirty] = useState(false);
+  // a change from elsewhere (import, the monthly check) shows up unless the field is being edited
+  useEffect(() => {
+    if (!dirty) setText(amountToInput(balance));
+  }, [balance, dirty]);
+  const parsed = text.trim() === '' ? 0 : parseAmount(text);
+  return (
+    <AmountField
+      label={t('settings.balance')}
+      value={text}
+      onChange={(v) => {
+        setText(v);
+        setDirty(true);
+        const value = v.trim() === '' ? 0 : parseAmount(v);
+        if (value !== null) void setAnchor(db, value, localToday());
+      }}
+      placeholder="0"
+      error={parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.087,43' : null}
+      info={t('settings.balance.info')}
+      testId={testId}
+    />
+  );
 }
 
-/**
- * „Schon zur Seite gelegt“, „Dauerauftrag für … schon eingegangen?“ (without account: „Für … schon zur Seite gelegt?“), rounding. Saved right away:
- * a balance typed here is a new anchor, the answer is this month's check.
- */
-export function KontoInputs({ settings, active, balance, showRounding = true }: { settings: KontoSettings; active: Period; balance?: number; showRounding?: boolean }) {
-  const shown = balance ?? settings.balance;
-  const [text, setText] = useState(amountToInput(shown));
-  const [dirty, setDirty] = useState(false);
-  // a change from elsewhere (import, the other screen) shows up unless the field is being edited
-  useEffect(() => {
-    if (!dirty) setText(amountToInput(shown));
-  }, [shown, dirty]);
-  const parsed = text.trim() === '' ? 0 : parseAmount(text);
-  const received = depositDone(settings, active);
+/** „Monatsbetrag aufrunden auf € 1 / 5 / 10“ */
+export function RoundingField({ settings }: { settings: KontoSettings }) {
   return (
-    <div className="flex flex-col gap-4" data-testid="konto-inputs">
-      <AmountField
-        label={t('settings.balance')}
-        value={text}
-        onChange={(v) => {
-          setText(v);
-          setDirty(true);
-          const value = v.trim() === '' ? 0 : parseAmount(v);
-          if (value !== null) void setAnchor(db, value, localToday());
-        }}
-        placeholder="0"
-        error={parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.250,00' : null}
-        info={t('sheet.balance.info')}
-        testId="konto-balance"
-      />
-      <Segmented<'yes' | 'no'>
-        label={t(settings.hasAccount === false ? 'sheet.received.plan' : 'sheet.received', { monat: monthName(active) })}
-        value={received ? 'yes' : 'no'}
-        onChange={(v) =>
-          void answerMonthCheck(db, active, v === 'yes', localToday()).then(() =>
-            writeKonto(db, { receivedFor: v === 'yes' ? active : null, ...(v === 'yes' && settings.orderStartsAfter === active ? { orderStartsAfter: null } : {}) }),
-          )
-        }
-        options={[
-          { value: 'yes', label: 'Ja' },
-          { value: 'no', label: 'Nein' },
-        ]}
-      />
-      {showRounding && (
-        <Segmented<string>
-          label={t('sheet.rounding')}
-          value={String(settings.rounding)}
-          onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
-          options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}
-        />
-      )}
-    </div>
+    <Segmented<string>
+      label={t('settings.rounding')}
+      value={String(settings.rounding)}
+      onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
+      options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}
+    />
   );
 }
 

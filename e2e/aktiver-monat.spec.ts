@@ -45,7 +45,7 @@ test.describe('Aktiver Monat: Einstellung und Startmonat', () => {
     expect(options).toEqual(['1. (Kalendermonat)', ...Array.from({ length: 14 }, (_, i) => `${15 + i}.`), 'Monatsletzter']);
     // the explanation is in the ⓘ next to the label (Tooltips statt Erklärtexte)
     const info = await openInfo(page, section.getByRole('button', { name: 'Erklärung: Neuer Monat beginnt am' }));
-    await expect(info).toContainText('Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt.');
+    await expect(info).toContainText('Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt.');
     await page.keyboard.press('Escape');
     await expect(info).toHaveCount(0);
     await expect(section.getByTestId('active-month')).toHaveText('Aktiver Monat: Oktober 2026');

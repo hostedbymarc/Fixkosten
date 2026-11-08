@@ -327,8 +327,8 @@ describe('Dauerauftrag über die nächsten 12 Monate (Prompt A, F1)', () => {
   });
 });
 
-describe('echte Daten (live-2026-10-29.json)', () => {
-  const live = parseBackup(JSON.parse(readFileSync('tests/fixtures/live-2026-10-29.json', 'utf8')));
+describe('echte Daten (beispiel-2026-10-29.json)', () => {
+  const live = parseBackup(JSON.parse(readFileSync('tests/fixtures/beispiel-2026-10-29.json', 'utf8')));
   const d: Dataset = { ...live.data };
 
   it('Dauerauftrag = Abbuchungen Dezember 2026 – November 2027 ÷ 12 (alle Positionen standardmäßig auf dem Fixkostenkonto)', () => {

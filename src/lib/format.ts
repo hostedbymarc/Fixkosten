@@ -134,7 +134,8 @@ export function parseAmount(input: string): number | null {
   } else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) {
     s = s.replace(/\./g, ''); // '1.234' = thousands, not decimals
   }
-  if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
+  // at most 2 decimals: cents, nothing finer ('1,234' is no amount)
+  if (!/^-?\d+(\.\d{1,2})?$/.test(s)) return null;
   const n = Number(s);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
 }
