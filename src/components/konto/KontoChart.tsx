@@ -4,6 +4,7 @@ import { axisPeriodLabel, shortPeriodLabel } from '../../lib/analytics';
 import type { KontoSimulation } from '../../lib/fixkostenkonto';
 import { formatEUR } from '../../lib/format';
 import { periodLabel, shortMonthName, monthOf } from '../../lib/period';
+import { useExclusiveChartTooltip } from '../../lib/popoverBus';
 import type { Period } from '../../lib/types';
 import { TooltipBox, TooltipRow } from '../analysis/ChartCard';
 import { AXIS_TICK, COLORS, niceTicks, tooltipProps, xAxisProps, yAxisProps } from '../analysis/chartTheme';
@@ -65,6 +66,7 @@ export default function KontoChart({
   const first = rows[0];
   const last = rows[rows.length - 1];
   const negatives = rows.filter((r) => r.negative).length;
+  const tip = useExclusiveChartTooltip();
   return (
     <div
       style={{ height }}
@@ -73,6 +75,7 @@ export default function KontoChart({
         negatives ? `, ${negatives} ${negatives === 1 ? 'Monat' : 'Monate'} unter 0` : ', nie unter 0'
       }`}
       data-testid="konto-chart"
+      {...tip.handlers}
     >
       <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height }}>
         <LineChart data={rows} margin={{ top: 14, right: 12, bottom: 0, left: 0 }} accessibilityLayer>
@@ -88,6 +91,7 @@ export default function KontoChart({
           <ReferenceLine y={0} stroke={COLORS.ink} strokeWidth={1.5} ifOverflow="extendDomain" data-testid="konto-zero-line" />
           <Tooltip
             {...tooltipProps}
+            active={tip.active}
             cursor={{ stroke: COLORS.grid }}
             content={(props: TipProps) => {
               const m = props.active && props.payload?.length ? (props.payload[0]!.payload ?? null) : null;

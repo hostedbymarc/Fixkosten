@@ -67,7 +67,7 @@ describe('live data: schema v1 (2776e95) → v4 in one step', () => {
     const categories = [...ds.categories].sort((a, b) => a.sortOrder - b.sortOrder).map((c) => c.name);
     expect(categories).toEqual(['Meine Immos', 'Wohnen & Leben', 'Abos & Freizeit', 'Banking & Finanzen', 'Mobilität', 'Investing']);
     expect(ds.positions.filter((p) => p.categoryId === 'cat-immos').map((p) => p.name).sort()).toEqual(
-      ['BK Süd', 'BK Nord', 'Baurechtszins', 'Kredit Nord'],
+      ['BK Nord', 'BK Süd', 'Baurechtszins', 'Kredit Nord'],
     );
 
     // no isVariable, no legacy plan fields, history filled

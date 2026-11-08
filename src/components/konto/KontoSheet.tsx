@@ -9,7 +9,7 @@ import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { BottomSheet } from '../BottomSheet';
 import { InfoTip } from '../InfoTip';
-import { Fold, KONTO_ASSUMPTION, MonthBreakdown, MonthList, RisingHint } from './KontoParts';
+import { chartInfo, Fold, MonthBreakdown, MonthList, RisingHint } from './KontoParts';
 import { ConfirmButton, PlanStatus, SwitchModeLink, WhyAmount } from './KontoStatusView';
 
 const KontoChart = lazy(() => import('./KontoChart'));
@@ -25,6 +25,7 @@ export function useKontoState(ds: Dataset, active: Period): KontoState {
 /** „Verlauf mit Plan“: chart, tap detail and the month list of the plan's simulation (sheet and analysis). */
 export function KontoSimulationView({ simulation, active, chartHeight }: { simulation: KontoSimulation; active: Period; chartHeight?: number }) {
   const [selected, setSelected] = useState<Period | null>(null);
+  const start = useMonthStart();
   const month = simulation.months.find((m) => m.period === selected);
   return (
     <div className="flex flex-col gap-3" data-testid="konto-simulation">
@@ -32,7 +33,7 @@ export function KontoSimulationView({ simulation, active, chartHeight }: { simul
         <div className="flex items-center">
           <p className="text-[13px] font-medium text-ink-mute">{t('sheet.chart')}</p>
           <InfoTip label={`Erklärung: ${t('sheet.chart')}`} title={t('sheet.chart')} className="-my-3 -ml-1.5" testId="konto-assumption">
-            <p>{KONTO_ASSUMPTION}</p>
+            <p>{chartInfo(start)}</p>
           </InfoTip>
         </div>
         <Suspense fallback={<div style={{ height: chartHeight ?? 220 }} />}>
@@ -90,7 +91,7 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
                 <span className="num">{formatAvg(overview.order.exact)}</span>, aufgerundet auf {formatEUR(overview.order.rounding)}
               </p>
               <InfoTip label="Erklärung: Eingeplante Rechnungen" title="Eingeplante Rechnungen" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
-                <p>Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.</p>
+                <p>{t('sheet.positions.info')}</p>
               </InfoTip>
             </div>
           </Fold>

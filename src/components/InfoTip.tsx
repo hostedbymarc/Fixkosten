@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useExclusivePopover } from '../lib/popoverBus';
 import { InfoIcon } from './Icons';
 
 /** Popover width; narrower on small phones (16 px margin each side). */
@@ -32,6 +33,8 @@ export function InfoTip({ label, title, children, className = '', style, testId 
   // a tap on the popover moves the focus away from the icon: that blur does not close it
   const downInPopover = useRef(false);
   const id = useId();
+  // only one popover at a time: opening this one closes any other ⓘ or chart popup
+  useExclusivePopover(open, () => setOpen(false));
 
   // below the icon, or above when there is no room; clamped to the viewport
   useLayoutEffect(() => {

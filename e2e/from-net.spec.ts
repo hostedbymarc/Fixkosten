@@ -5,7 +5,7 @@ import { expectClean } from './measure';
 
 const SWITCH_LABEL = 'Von ‚Frei verfügbar‘ abziehen';
 const HINT =
-  "Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.";
+  "Aus, wenn das Geld nicht aus deinem Gehalt kommt. Zum Beispiel eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.";
 
 test.describe('Schalter „Von ‚Frei verfügbar‘ abziehen“ (Einmalige im Vermögensaufbau)', () => {
   test('Neue einmalige Zahlung: Schalter nur in Vermögensaufbau-Kategorien, Default an', async ({ page }) => {

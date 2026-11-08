@@ -23,7 +23,7 @@ import { formatAvg, formatCompactEUR, formatDelta, formatEUR, formatPercent } fr
 import { addPeriods } from '../lib/period';
 import type { Dataset } from '../lib/types';
 
-export const FIXTURES = ['tests/fixtures/seed.json', 'tests/fixtures/live-2026-10-25.json', 'tests/fixtures/live-2026-10-29.json', 'tests/fixtures/history-24m.json'];
+export const FIXTURES = ['tests/fixtures/seed.json', 'tests/fixtures/beispiel-2026-10-25.json', 'tests/fixtures/beispiel-2026-10-29.json', 'tests/fixtures/history-24m.json'];
 
 function load(file: string): Dataset {
   // only figures are compared, never records: the new optional `account` (schema v5) is not part of them

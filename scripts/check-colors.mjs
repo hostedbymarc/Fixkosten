@@ -16,7 +16,7 @@ const NAME_OK = [
   /name = 'fixkosten'/, // IndexedDB name
   /'fixkosten-backup'/, // backup format
   /'fixkosten-theme'/, // stored appearance
-  /\b(der|die|den|deiner|[Dd]eine|keine|zu den)\s+Fixkosten\b/, // the German word as a term
+  /\b(der|die|den|deiner|[Dd]eine|keine|zu den|alle)\s+Fixkosten\b/, // the German word as a term
   /Fixkosten oder Sparplan/,
   /Monatliche Fixkosten/,
   /Fixkosten einplanen/, // feature name (sprint fixkosten-einplanen), not the old app name

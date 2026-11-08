@@ -1,3 +1,4 @@
+import { useExclusiveChartTooltip } from '../../lib/popoverBus';
 import { useEffect, useState } from 'react';
 import { DeferredChart } from './DeferredChart';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -305,6 +306,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
   const f = yearForecast(ds, today);
   const summary = forecastSummary(f);
   const narrow = useNarrow();
+  const tip = useExclusiveChartTooltip();
   // tapped bar: its row in „Details“ is highlighted
   const [selected, setSelected] = useState<Period | null>(null);
   const active = f.months[0]?.period;
@@ -344,6 +346,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
       <div
         // phones: the chart uses half of the card padding, the month labels need it
         className="h-[230px] max-md:-mx-2"
+        {...tip.handlers}
         role="img"
         aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
       >
@@ -371,6 +374,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
             />
             <Tooltip
               {...tooltipProps}
+              active={tip.active}
               content={(props: TipProps<(typeof rows)[number]>) => {
                 const m = props.active && props.payload?.length ? (props.payload[0]!.payload ?? null) : null;
                 if (!m) return null;

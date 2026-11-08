@@ -58,7 +58,7 @@ export function SetupDialog() {
   // the explanation of each step lives in the ⓘ next to its title
   const infos: Record<Step, string> = {
     start:
-      'Deine Fixkosten liegen nur auf diesem Gerät. Wähle eine Sicherung (JSON), um deinen Stand zu übernehmen, richte Erbse neu ein oder starte mit einer leeren App.',
+      'Deine Fixkosten liegen nur auf diesem Gerät. Hast du eine Sicherung? Dann übernimm damit deinen Stand. Sonst richte Erbse neu ein oder starte leer.',
     country: 'Erbse zeigt alle Beträge in dieser Währung. Du kannst sie später in den Einstellungen ändern.',
     templates: 'Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus, wie viel du monatlich zur Seite legst.',
   };

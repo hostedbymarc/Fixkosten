@@ -224,11 +224,10 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
               info={
                 <>
                   <span className="block">
-                    <span className="font-semibold text-ink">Fixkostenkonto:</span> Ein zweites Konto nur für deine Rechnungen. Erbse sagt dir, wie viel du jeden Monat
-                    draufüberweist.
+                    <span className="font-semibold text-ink">Fixkostenkonto:</span> Zählt zu deinem Monatsbetrag. Dafür legst du jeden Monat Geld zur Seite.
                   </span>
                   <span className="mt-1 block">
-                    <span className="font-semibold text-ink">Alltagskonto:</span> Dein normales Konto mit Karte. Zählt nicht zum Dauerauftrag.
+                    <span className="font-semibold text-ink">Alltagskonto:</span> Dein normales Konto mit Karte. Zählt nicht zum Monatsbetrag.
                   </span>
                 </>
               }
@@ -264,7 +263,7 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
                 label="Von ‚Frei verfügbar‘ abziehen"
                 checked={fromNet}
                 onChange={setFromNet}
-                info="Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
+                info="Aus, wenn das Geld nicht aus deinem Gehalt kommt. Zum Beispiel eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘."
                 testId="from-net"
               />
             )}

@@ -205,7 +205,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       // --- Monat
       await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
       if (await info(page, 'im Ø-Monat').count()) await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
-      await exercise(page, info(page, 'Monatsbetrag'), mode, seen);
+      await exercise(page, page.getByTestId('konto-tile-info'), mode, seen);
 
       // --- Fixkostenkonto-Sheet
       await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });

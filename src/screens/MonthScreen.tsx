@@ -818,7 +818,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
           <p className="num text-ink" data-testid="free-average-formula">
             {explanation.formula}
           </p>
-          <p>So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.</p>
+          <p>So viel bleibt dir im Schnitt pro Monat. Jahreszahlungen sind anteilig drin, dein Vermögensaufbau ist abgezogen.</p>
         </InfoTip>
       )}
     </div>

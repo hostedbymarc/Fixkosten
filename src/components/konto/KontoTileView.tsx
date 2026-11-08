@@ -59,7 +59,7 @@ export function KontoTileView({ state, start, active, onOpen, buttonRef }: Konto
         <span className="truncate text-[13px] font-medium leading-5 text-ink-mute" data-testid="konto-tile-title">
           {title}
         </span>
-        <InfoTip label={`Erklärung: ${t('tile.info.title')}`} title={t('tile.info.title')} className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
+        <InfoTip label={`Erklärung: ${title}`} title={title} className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
           <p>{ORDER_INFO}</p>
         </InfoTip>
         <span className="flex-1" />

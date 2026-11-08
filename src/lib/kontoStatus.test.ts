@@ -40,10 +40,14 @@ afterEach(async () => {
 });
 const stateOf = async (db: FixkostenDB) => kontoState(DATA, ACTIVE, await readKonto(db));
 
+// Wortgenau aus dem Auftrag (fixkosten-ein-betrag, Ergänzung): der erste Satz hat 15 Wörter.
+const DICTATED = new Set(['sheet.chart.info']);
+
 describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote, „zur Seite legen“ statt „einzahlen“', () => {
   for (const [id, text] of Object.entries(KONTO_TEXTS)) {
     it(id, () => {
-      for (const s of sentences(text)) expect(wordCount(s), s).toBeLessThanOrEqual(12);
+      if (!DICTATED.has(id)) for (const s of sentences(text)) expect(wordCount(s), s).toBeLessThanOrEqual(12);
+      expect(text).not.toMatch(/Annahme|Checkliste|erledigt|Kontostand heute|schon eingegangen/i);
       expect(text).not.toMatch(/Schote|Erbsen?\s*=|\b1 Erbse\b/i);
       expect(text).not.toMatch(/\b(Sie|Ihr|Ihnen)\b/);
       expect(text).not.toMatch(/einzahlen|eingezahlt|gedeckt|Fixkostenkonto eröffnen/i);

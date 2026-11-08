@@ -2,10 +2,10 @@
 |---|---|---|---|
 | Status | `status.setup` | Fixkosten einplanen | 2 |
 | Status | `status.covered` | Alles eingeplant bis {monat}. | 4 |
-| undefined | `reason.bills` | Im {monat} kommen {rechnungen}. | 4 |
-| undefined | `reason.bill` | Im {monat} kommt {rechnungen}. | 4 |
-| undefined | `reason.now` | Diesen Monat reicht das Geld nicht. | 6 |
-| undefined | `reason.short` | Ab {monat} reicht das Geld nicht. | 6 |
+| Grund | `reason.bills` | Im {monat} kommen {rechnungen}. | 4 |
+| Grund | `reason.bill` | Im {monat} kommt {rechnungen}. | 4 |
+| Grund | `reason.now` | Diesen Monat reicht das Geld nicht. | 6 |
+| Grund | `reason.short` | Ab {monat} reicht das Geld nicht. | 6 |
 | Dein Plan | `plan.spread` | Darum bis dahin {extra} extra, ab {folgemonat} {betrag}. | 8 |
 | Dein Plan | `plan.lump` | Leg bis {datum} {betrag} extra zur Seite. | 7 |
 | Dein Plan | `plan.lump.now` | Leg jetzt {betrag} extra zur Seite. | 6 |
@@ -20,7 +20,7 @@
 | Kachel | `tile.title.next` | Nächsten Monat zur Seite legen | 5 |
 | Kachel | `tile.setup` | Fixkosten einplanen | 2 |
 | Kachel | `tile.info.title` | Monatsbetrag | 1 |
-| Kachel | `tile.info` | So viel legst du jeden Monat zur Seite. Alle Abbuchungen der nächsten 12 Monate, geteilt durch 12, aufgerundet. Fehlt vor einer großen Rechnung Geld, kommt bis dahin ein Extra dazu. | 8 · 10 · 12 |
+| Kachel | `tile.info` | Dieser Betrag deckt alle Fixkosten der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu. | 9 · 9 |
 | Kachel | `tile.start` | Jetzt starten | 2 |
 | Kachel | `tile.streak` | {n} Monate in Folge | 4 |
 | Kachel | `tile.streak.new` | Neue Serie startet. | 3 |
@@ -69,7 +69,8 @@
 | Sheet | `sheet.sum` | Summe | 1 |
 | Sheet | `sheet.ok` | Mit diesem Plan nie im Minus. | 6 |
 | Sheet | `sheet.chart` | Verlauf mit Plan | 3 |
-| Sheet | `sheet.assumption` | Annahme: Du legst den Betrag zum Monatsbeginn zur Seite. Danach kommen die Abbuchungen. Im laufenden Monat zählen nur offene Rechnungen. | 9 · 4 · 7 |
+| Sheet | `sheet.chart.info` | So entwickelt sich dein Geld, wenn du den Betrag immer am {tag} zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen. | 15 · 7 |
+| Sheet | `sheet.positions.info` | Diese Rechnungen deckt dein Monatsbetrag. Zahlst du eine vom Alltagskonto? Stell sie unter Positionen um. | 5 · 5 · 5 |
 | Sheet | `sheet.allMonths` | Alle Monate | 2 |
 | Sheet | `sheet.positions` | Eingeplante Rechnungen ({n}) | 3 |
 | Sheet | `sheet.col.deposit` | Einzahlung | 1 |
@@ -81,9 +82,9 @@
 | Einstellungen | `settings.switch` | Fixkosten einplanen | 2 |
 | Einstellungen | `settings.off` | Erbse zeigt nur deine Fixkosten. | 5 |
 | Einstellungen | `settings.on` | Erbse sagt dir, wie viel du monatlich zur Seite legst. Und warnt, bevor es knapp wird. | 10 · 6 |
-| Einstellungen | `settings.info` | Erbse rechnet aus, wie viel du monatlich zur Seite legst. Und ob es jeden Monat reicht. Ohne Banklogin. | 10 · 6 · 2 |
+| Einstellungen | `settings.info` | Erbse nennt dir jeden Monat einen Betrag zum Zurücklegen. Damit kommst du nie ins Minus. Ohne Banklogin. | 9 · 6 · 2 |
 | Einstellungen | `settings.balance` | Schon zur Seite gelegt | 4 |
-| Einstellungen | `settings.balance.info` | Was heute für deine Fixkosten bereitliegt. | 6 |
+| Einstellungen | `settings.balance.info` | So viel hast du schon für deine Fixkosten zur Seite gelegt. | 11 |
 | Einstellungen | `settings.asOf` | Stand vom {datum} | 3 |
 | Einstellungen | `settings.gapMode` | Lücke schließen | 2 |
 | Einstellungen | `settings.gapMode.spread` | Verteilt | 1 |

@@ -1,3 +1,4 @@
+import type { MonthStart } from '../../lib/activeMonth';
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
 import { setAnchor } from '../../db/kontoActions';
@@ -13,7 +14,8 @@ import { AlertIcon } from '../Icons';
 import { AmountField, Segmented } from '../form';
 
 /** The assumption of the simulation, visible wherever its numbers are. */
-export const KONTO_ASSUMPTION = t('sheet.assumption');
+/** ⓘ of „Verlauf mit Plan“: the deposit comes on the day the month starts („am 1.“, „am 25.“, „am Monatsletzten“). */
+export const chartInfo = (start: MonthStart) => t('sheet.chart.info', { tag: start === 'last' ? 'Monatsletzten' : `${start}.` });
 
 /** Signed amount, never colour only: '−€ 120' with the alert icon when below 0. */
 export function SignedBalance({ value, className = '' }: { value: number; className?: string }) {

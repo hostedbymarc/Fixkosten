@@ -192,10 +192,7 @@ function BackupSection({ ds }: { ds: Dataset }) {
           Sicherung
         </h2>
         <InfoTip label="Erklärung: Sicherung" title="Sicherung" className="-my-3 -ml-1.5" testId="backup-info">
-          <p>
-            Deine Daten liegen nur auf diesem Gerät. Eine Sicherung (JSON) kannst du auf einem anderen Gerät oder nach dem Löschen der Website-Daten wieder
-            importieren.
-          </p>
+          <p>Deine Daten liegen nur auf diesem Gerät. Mit einer Sicherung holst du sie zurück. Das geht auch auf einem anderen Gerät.</p>
         </InfoTip>
       </div>
       <div className="glass flex flex-col gap-3 p-4" data-testid="backup-section">
@@ -300,7 +297,7 @@ function MonthSection() {
           value={String(start)}
           onChange={(v) => void writeMonthStart(db, toMonthStart(v === 'last' ? 'last' : Number(v)))}
           options={MONTH_START_CHOICES.map((c) => ({ value: String(c), label: monthStartLabel(c) }))}
-          info="Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt."
+          info="Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt."
         />
         <p className="px-1 text-[13px] text-ink-mute" data-testid="active-month">
           Aktiver Monat: <span className="font-semibold text-ink-soft">{periodLabel(active)}</span>
@@ -334,7 +331,7 @@ function AppearanceSection() {
           <Logo size={44} />
           <p className="text-[15px] font-semibold text-ink">Erbse wie eine App öffnen</p>
           <InfoTip label="Erklärung: Erbse wie eine App öffnen" title="Erbse wie eine App öffnen" className="-my-3 -ml-2 shrink-0" testId="install-info">
-            <p>In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.</p>
+            <p>Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“.</p>
           </InfoTip>
         </div>
       </div>
