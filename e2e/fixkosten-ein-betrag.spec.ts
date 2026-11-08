@@ -56,7 +56,11 @@ async function openOn(page: Page, date: Date) {
 /** Setup without an own account: „Nein, ich plane nur“, the amount typed (or „Noch nichts“). */
 async function setUp(page: Page, tap: (l: Locator) => Promise<void>, balance: string | null) {
   await tap(page.getByTestId('konto-tile-start'));
+  // the sheet is in before the first answer (a tap while it slides in can get lost)
+  await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'account');
+  await animationsDone(page, 'bottom-sheet');
   await tap(page.getByTestId('konto-setup-account-no'));
+  await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'balance');
   if (balance === null) await tap(page.getByTestId('konto-setup-nothing'));
   else {
     await page.getByTestId('konto-setup-balance').fill(balance);
