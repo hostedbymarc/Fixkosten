@@ -210,3 +210,15 @@ Ausgenommen sind die `beispiel-*.json`.
 
 Was nicht ersetzbar war:
 - Ältere Screenshots (PNG/JPG) in `docs/screenshots/` und in der Historie zeigen noch die alten Seed-Namen. Bilder lassen sich nicht per Text ersetzen.
+
+**Git-Historie bereinigt** (`git filter-repo`, 08.11.2026):
+- Alle 40 Branches sind neu geschrieben und mit Force gepusht, `main` eingeschlossen.
+- Die beiden Exportdateien sind aus jedem Commit entfernt.
+- Echte Namen, Notizen und IDs sind in allen Dateien und Commit-Texten ersetzt.
+- Danach findet die Prüfung über alle Objekte 0 Treffer.
+
+Bitte selbst erledigen:
+- Die alten Commits hängen noch an den geschlossenen Pull Requests (`refs/pull/*`). Über die PR-Seiten sind sie weiter abrufbar. Nur der GitHub-Support kann sie löschen: Formular „Remove sensitive data“, mit dem Repo und dem Hinweis auf die Force-Pushes vom 08.11.2026.
+- Wer das Repo geklont oder geforkt hat, hat die alten Daten weiter.
+- Am sichersten: Repo auf privat stellen. Das geht unter Settings → General → Danger Zone. Netlify-Deploys laufen weiter.
+- Lokale Klone vor dem nächsten Arbeiten neu holen: `git fetch && git reset --hard origin/main`.
