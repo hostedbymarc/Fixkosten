@@ -24,6 +24,10 @@ const PAGES = [
 ] as const;
 
 async function settle(page: Page) {
+  // the hidden Analyse tab is built when the app is idle after its start (src/App.tsx, prefetchAnalyse):
+  // if that lands between the viewport and the full-page capture the page changes under the comparison.
+  // Wait until it is built and its charts are mounted (data-analyse-ready), then measure.
+  await page.waitForFunction(() => 'analyseReady' in document.documentElement.dataset, null, { timeout: 15_000 });
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
   await page.waitForTimeout(250);
