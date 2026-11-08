@@ -78,7 +78,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(order).toBe(Math.ceil(Math.round(exact * 100) / 500) * 5);
         // the assumption is in the ⓘ next to „Verlauf mit Plan“
         const assumption = await openInfo(page, sheet.getByTestId('konto-assumption'));
-        await expect(assumption).toContainText('Danach kommen die Abbuchungen');
+        await expect(assumption).toContainText('Diesen Monat zählen nur noch offene Rechnungen');
         await page.keyboard.press('Escape');
         await expect(assumption).toHaveCount(0);
         await expect(sheet).toBeVisible();

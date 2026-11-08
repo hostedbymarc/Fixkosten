@@ -25,17 +25,24 @@ const popovers = (page: Page) => page.locator('[role=tooltip]');
 /** the chart's month popup (Recharts tooltip with content) */
 const chartPopup = (page: Page) => page.getByTestId('konto-chart').getByTestId('chart-tooltip');
 
-/** the first chart point that the open popover does not cover */
-async function freeDot(page: Page): Promise<Locator> {
+/**
+ * A spot of the chart the open popover does not cover: a point first; on small phones the ⓘ lies
+ * over all points, then the plot area near the x axis (a tap there opens the month's popup too).
+ */
+async function freeSpot(page: Page): Promise<{ target: Locator; position?: { x: number; y: number } }> {
   const pop = await page.locator('[role=tooltip]').boundingBox();
+  const covered = (b: { x: number; y: number; width: number; height: number }) =>
+    !!pop && b.x < pop.x + pop.width + 8 && b.x + b.width > pop.x - 8 && b.y < pop.y + pop.height + 8 && b.y + b.height > pop.y - 8;
   const dots = page.getByTestId('konto-sheet').getByTestId('konto-dot');
   for (let i = (await dots.count()) - 1; i >= 0; i--) {
     const b = await dots.nth(i).boundingBox();
-    if (!b) continue;
-    const hit = pop && b.x < pop.x + pop.width + 8 && b.x + b.width > pop.x - 8 && b.y < pop.y + pop.height + 8 && b.y + b.height > pop.y - 8;
-    if (!hit) return dots.nth(i);
+    if (b && !covered(b)) return { target: dots.nth(i) };
   }
-  throw new Error('kein freier Diagrammpunkt');
+  const chart = page.getByTestId('konto-sheet').getByTestId('konto-chart');
+  const c = (await chart.boundingBox())!;
+  const position = { x: c.width / 2, y: c.height - 40 };
+  if (covered({ x: c.x + position.x - 4, y: c.y + position.y - 4, width: 8, height: 8 })) throw new Error('keine freie Stelle im Diagramm');
+  return { target: chart, position };
 }
 
 async function shot(page: Page, name: string) {
@@ -97,8 +104,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-assumption-popover')).toHaveText(`Verlauf mit Plan${CHART_INFO}`);
         await shot(page, `${tag}-verlauf-mit-plan`);
         // a point the open ⓘ does not cover (on phones it lies over part of the chart)
-        const dot = await freeDot(page);
-        await tap(dot);
+        const spot = await freeSpot(page);
+        await (use.hasTouch ? spot.target.tap({ position: spot.position }) : spot.target.click({ position: spot.position }));
         await expect(chartPopup(page)).toBeVisible();
         await expect(popovers(page)).toHaveCount(0);
 
