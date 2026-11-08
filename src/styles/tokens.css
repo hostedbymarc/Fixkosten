@@ -67,6 +67,14 @@
   --c-zinc-300: 176 186 181;
   --c-zinc-900: 31 39 36;
 
+  /* Bedienelemente (Antwort-Buttons, Segment-Controls, sekundäre Buttons): sichtbare Fläche, 1 px Rand
+     mit ≥ 3:1 gegen den Untergrund, das gewählte Segment im Brand-Ton (contrast-controls.test.ts) */
+  --c-control: 255 255 255;
+  --c-control-edge: 128 140 134;
+  --c-control-track: 236 239 234;
+  --c-control-on: var(--brand-500);
+  --c-on-control: 255 255 255;
+
   --line: rgba(31, 39, 36, 0.06);
   --edge: rgba(31, 39, 36, 0.16);
   --field: rgba(255, 255, 255, 0.85);
@@ -278,6 +286,13 @@
     --c-zinc-200: 52 61 56;
     --c-zinc-300: 82 93 88;
     --c-zinc-900: 238 241 236;
+
+    /* Bedienelemente: eine Stufe heller als der Untergrund, Rand ≥ 3:1, gewählt im Brand-Ton */
+    --c-control: 46 55 50;
+    --c-control-edge: 124 137 130;
+    --c-control-track: 30 37 33;
+    --c-control-on: var(--brand-500);
+    --c-on-control: 255 255 255;
     --line: rgba(255, 255, 255, 0.07);
     --edge: rgba(255, 255, 255, 0.16);
     --field: rgba(20, 26, 22, 0.85);
@@ -450,6 +465,13 @@
   --c-zinc-200: 52 61 56;
   --c-zinc-300: 82 93 88;
   --c-zinc-900: 238 241 236;
+
+  /* Bedienelemente: eine Stufe heller als der Untergrund, Rand ≥ 3:1, gewählt im Brand-Ton */
+  --c-control: 46 55 50;
+  --c-control-edge: 124 137 130;
+  --c-control-track: 30 37 33;
+  --c-control-on: var(--brand-500);
+  --c-on-control: 255 255 255;
   --line: rgba(255, 255, 255, 0.07);
   --edge: rgba(255, 255, 255, 0.16);
   --field: rgba(20, 26, 22, 0.85);

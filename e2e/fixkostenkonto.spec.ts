@@ -72,10 +72,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // „Warum € X?“: the normal month = the amount of the tile
         await expect(sheet.getByTestId('konto-why')).toContainText(/^Warum €/);
         expect(amountOf((await sheet.getByTestId('konto-why-base').textContent())!)).toBe(order);
-        // base = all debits of the 12 months from next month on ÷ 12, rounded up to € 5
+        // base = all debits of the 12 months from next month on ÷ 12, to the cent („Monatsbetrag runden“ off)
         const exactText = (await sheet.getByTestId('konto-order-exact').textContent())!;
         const exact = amountOf(exactText.match(/€\s?\d[\d.]*(,\d+)?/)![0]);
-        expect(order).toBe(Math.ceil(Math.round(exact * 100) / 500) * 5);
+        expect(exactText).toContain('auf den Cent');
+        expect(Math.abs(order - exact)).toBeLessThanOrEqual(0.01);
         // the assumption is in the ⓘ next to „Verlauf mit Plan“
         const assumption = await openInfo(page, sheet.getByTestId('konto-assumption'));
         await expect(assumption).toContainText('Diesen Monat zählen nur noch offene Rechnungen');
@@ -84,7 +85,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(sheet).toBeVisible();
         await expect(sheet.getByTestId('konto-chart')).toBeVisible();
         await expect(sheet.getByTestId('konto-dot')).toHaveCount(12);
-        await expect(sheet.getByTestId('konto-plan-status')).toHaveText('Mit diesem Plan nie im Minus.');
+        await expect(sheet.getByTestId('konto-plan-status')).toHaveText('Mit diesem Plan nie unter € 100.');
         await shot(page, vp, scheme, '3-sheet');
 
         // tap on a month: deposit, debits, balance

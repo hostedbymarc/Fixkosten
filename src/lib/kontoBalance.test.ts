@@ -36,7 +36,7 @@ const ds = (positions: Position[], payments: Payment[] = [], oneOffs: OneOff[] =
   reminders: [],
   changeLog: [],
 });
-const settings = (patch: Partial<KontoSettings>): KontoSettings => ({ ...toKontoSettings({}), enabled: true, setupDone: true, rounding: 1, ...patch });
+const settings = (patch: Partial<KontoSettings>): KontoSettings => ({ ...toKontoSettings({}), enabled: true, setupDone: true, rounding: 1, roundingOn: true, buffer: 0, ...patch });
 
 // Miete 1000 monatlich (Fixkostenkonto), Versicherung 600 im Februar (Fixkostenkonto), ETF 300 (Alltagskonto)
 // → Dauerauftrag 1000 + 50 = 1050
@@ -143,7 +143,7 @@ describe('Status aus den gespeicherten Daten', () => {
     expect(kontoState(DATA, '2026-11', s).overview.simulation.months[0]!.deposit).toBe(0);
   });
   it('Daten aus PR #39 (Kontostand, kein Anker) rechnen wie vorher', () => {
-    const old = toKontoSettings({ enabled: true, inviteDismissed: false, balance: 300, receivedFor: '2026-11', rounding: 1 });
+    const old = toKontoSettings({ enabled: true, inviteDismissed: false, balance: 300, receivedFor: '2026-11', rounding: 1, buffer: 0 });
     const st = kontoState(DATA, '2026-11', old);
     expect(old.setupDone).toBe(true);
     expect(st.balance).toBe(300);
@@ -246,7 +246,8 @@ describe('Monats-Check: welche Karte', () => {
 describe('Einstellungen: alte Einträge, Export → Import', () => {
   it('alter Eintrag ohne die neuen Felder wird korrekt gelesen', () => {
     const old = { enabled: true, inviteDismissed: true, balance: 0, receivedFor: '2026-10', rounding: 10 };
-    expect(toKontoSettings(old)).toEqual({ ...DEFAULT_KONTO, ...old, setupDone: false });
+    // a stored rounding counts as „Monatsbetrag runden“ on; the buffer is € 100 for existing setups too
+    expect(toKontoSettings(old)).toEqual({ ...DEFAULT_KONTO, ...old, roundingOn: true, buffer: 100, setupDone: false });
     expect(toKontoSettings({ ...old, balance: 80 }).setupDone).toBe(true);
   });
   it('toKontoSettings ist idempotent (Export → Import ergibt dieselben Einstellungen)', () => {

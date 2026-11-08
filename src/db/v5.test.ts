@@ -125,7 +125,8 @@ describe('Import', () => {
     await writeCountry(source, 'CH');
     const exported = JSON.parse(JSON.stringify(await exportBackup(source)));
     expect(exported.schemaVersion).toBe(5);
-    expect(exported.settings.fixkostenkonto).toEqual({ enabled: true, inviteDismissed: false, balance: 1234.56, receivedFor: '2026-10', rounding: 10 });
+    // a new setup rounds only on request: „Monatsbetrag runden“ off is stored explicitly
+    expect(exported.settings.fixkostenkonto).toEqual({ enabled: true, inviteDismissed: false, balance: 1234.56, receivedFor: '2026-10', rounding: 10, roundingOn: false });
     expect(exported.settings.country).toBe('CH');
 
     name = `v5-target-${crypto.randomUUID()}`;
@@ -155,7 +156,7 @@ describe('Import', () => {
 
   it('ungültige Einstellungen in der Datei → Standardwerte', () => {
     const file = parseBackup({ ...raw('tests/fixtures/beispiel-2026-10-29.json'), settings: { fixkostenkonto: { enabled: 'ja', balance: 'x', rounding: 7, receivedFor: '2026-13' }, country: 'FR' } });
-    expect(file.settings).toEqual({ fixkostenkonto: { enabled: false, inviteDismissed: false, balance: 0, receivedFor: null, rounding: 5 } });
+    expect(file.settings).toEqual({ fixkostenkonto: { enabled: false, inviteDismissed: false, balance: 0, receivedFor: null, rounding: 5, roundingOn: false } });
   });
 });
 

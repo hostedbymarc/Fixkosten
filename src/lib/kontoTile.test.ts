@@ -28,7 +28,7 @@ const DATA: Dataset = {
 };
 const NOV = '2026-11';
 const setUp = (balance: number, patch: Partial<KontoSettings> = {}) =>
-  toKontoSettings({ enabled: true, balance, rounding: 5, setupDone: true, hasAccount: false, receivedFor: NOV, anchor: { amount: balance, at: '2026-11-08T09:00:00.000Z' }, ...patch });
+  toKontoSettings({ enabled: true, balance, rounding: 5, buffer: 0, setupDone: true, hasAccount: false, receivedFor: NOV, anchor: { amount: balance, at: '2026-11-08T09:00:00.000Z' }, ...patch });
 const eur = (v: number) => formatEUR(v);
 
 beforeAll(() => {

@@ -28,6 +28,7 @@ export default {
         canvas: c('canvas'),
         surface: c('surface'),
         raised: c('raised'),
+        control: { DEFAULT: c('control'), edge: c('control-edge'), track: c('control-track'), on: c('control-on'), ink: c('on-control') },
         field: 'var(--field)',
         line: 'var(--line)',
         edge: 'var(--edge)',

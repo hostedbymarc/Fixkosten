@@ -15,7 +15,7 @@ import { useKontoState } from './KontoSheet';
 
 const BUTTON = 'focus-ring h-11 flex-1 rounded-xl px-4 text-[15px] font-semibold md:flex-none';
 const PRIMARY = `${BUTTON} bg-accent text-white hover:bg-accent-hover disabled:opacity-50`;
-const SECONDARY = `${BUTTON} text-ink-soft hover:bg-zinc-100`;
+const SECONDARY = `${BUTTON} border border-control-edge bg-control text-ink-soft hover:bg-control-track`;
 
 /**
  * Monats-Check, on top of the month screen: at most one card.

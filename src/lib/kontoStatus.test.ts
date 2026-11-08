@@ -29,7 +29,7 @@ const opened: FixkostenDB[] = [];
 async function newDb(patch: Partial<KontoSettings> = {}): Promise<FixkostenDB> {
   const db = new FixkostenDB(`konto-${crypto.randomUUID()}`);
   opened.push(db);
-  await db.meta.put({ key: 'fixkostenkonto', value: { enabled: true, inviteDismissed: false, balance: 0, receivedFor: null, rounding: 1, ...patch } });
+  await db.meta.put({ key: 'fixkostenkonto', value: { enabled: true, inviteDismissed: false, balance: 0, receivedFor: null, rounding: 1, buffer: 0, ...patch } });
   return db;
 }
 afterEach(async () => {
@@ -63,6 +63,7 @@ describe('Status aus dem Modell: gedeckt nur ohne Lücke, verteilt nur wenn mög
           enabled: true,
           balance: amount,
           rounding: 1,
+          buffer: 0,
           setupDone: true,
           hasAccount,
           gapMode,
@@ -79,7 +80,7 @@ describe('Status aus dem Modell: gedeckt nur ohne Lücke, verteilt nur wenn mög
         });
       }
   it('nicht eingerichtet: auch mit großem Kontostand nie gedeckt', () => {
-    const s = toKontoSettings({ enabled: true, balance: 0, rounding: 1, setupDone: false, anchor: { amount: 99_999, at: '2026-11-03T10:00:00.000Z' } });
+    const s = toKontoSettings({ enabled: true, balance: 0, rounding: 1, buffer: 0, setupDone: false, anchor: { amount: 99_999, at: '2026-11-03T10:00:00.000Z' } });
     expect(kontoState(DATA, ACTIVE, s).status).toBe('setup');
   });
 });
@@ -163,6 +164,7 @@ describe('Lücke: „Leg bis {Datum} einmalig € Y zur Seite.“', () => {
       enabled: true,
       balance: 0,
       rounding: 1,
+      buffer: 0,
       setupDone: true,
       hasAccount: true,
       orderRuns: true,

@@ -82,6 +82,10 @@ export const KONTO_TEXTS = {
   'sheet.lump': 'Einmalig bis {datum}',
   'sheet.sum': 'Summe',
   'sheet.ok': 'Mit diesem Plan nie im Minus.',
+  'sheet.ok.buffer': 'Mit diesem Plan nie unter {betrag}.',
+  'sheet.buffer': 'Puffer {betrag}',
+  'sheet.month.lowest': 'Gezeigt: {monat}, der Monat mit dem tiefsten Stand. Tipp auf einen Punkt für einen anderen Monat.',
+  'sheet.month.picked': 'Gezeigt: {monat}.',
   'sheet.chart': 'Verlauf mit Plan',
   'sheet.chart.info': 'So entwickelt sich dein Geld, wenn du den Betrag immer am {tag} zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen.',
   'sheet.positions.info': 'Diese Rechnungen deckt dein Monatsbetrag. Zahlst du eine vom Alltagskonto? Stell sie unter Positionen um.',
@@ -107,7 +111,11 @@ export const KONTO_TEXTS = {
   'settings.gapMode.lump': 'Auf einmal',
   'settings.gapMode.none': 'Gerade fehlt nichts.',
   'settings.gapMode.forced': 'Bis dahin kommt keine Einzahlung mehr. Darum auf einmal.',
+  'settings.roundingOn': 'Monatsbetrag runden',
   'settings.rounding': 'Monatsbetrag aufrunden auf',
+  'settings.buffer': 'Sicherheitspuffer',
+  'settings.buffer.off': 'Aus',
+  'settings.buffer.info': 'Ein kleines Polster, falls eine Rechnung teurer wird.',
   'settings.edit': 'Einrichtung ändern',
 } as const;
 

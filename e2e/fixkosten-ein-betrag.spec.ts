@@ -3,8 +3,9 @@ import type { Locator, Page } from '@playwright/test';
 import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
 
 // „Fixkosten einplanen“ with ONE amount per month (seed data, today 5 October 2026 → October active):
-// - base € 2.955; with € 184,21 set aside the money is short in February (Steuerberater, Offi):
-//   € 1.030,81 – spread over November … February (€ 257,71 extra) or set aside at once
+// - base € 2.952,17 (to the cent, „Monatsbetrag runden“ off); with € 184,21 set aside and the
+//   Sicherheitspuffer € 100 the money is short in February (Steuerberater, Offi): € 1.142,13 – spread
+//   over November … February (€ 285,54 extra) or set aside at once
 // - with nothing set aside the money is short at once: one-time amount, no question (special case)
 // - tile verteilt / auf einmal / Sonderfall / gedeckt, „Lieber auf einmal?“ and back, the short sheet,
 //   the settings with cents, the monthly check, the milestone never while a gap is open
@@ -24,9 +25,9 @@ const VIEWPORTS = {
 
 /** € amounts as the app writes them (narrow space after the sign) */
 const E = (s: string) => s.replace(/ /g, '\\s');
-const BASE = '€ 2.955';
-const EXTRA = '€ 257,71';
-const GAP = '€ 1.030,81';
+const BASE = '€ 2.952,17';
+const EXTRA = '€ 285,54';
+const GAP = '€ 1.142,13';
 const REASON = 'Im Februar kommen Steuerberater und Offi (Jahreskarte).';
 
 async function shot(page: Page, name: string, target?: Locator) {
@@ -100,7 +101,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
         // „Dein Plan“: the one amount with its reason
         await expect(setup).toHaveAttribute('data-step', 'plan');
-        await expect(page.getByTestId('setup-amount')).toHaveText(/^€\s3\.212,71$/);
+        await expect(page.getByTestId('setup-amount')).toHaveText(/^€\s3\.237,71$/);
         await expect(page.getByTestId('setup-when')).toHaveText('am 1. November, wenn dein Gehalt kommt');
         await expect(page.getByTestId('setup-hint')).toHaveText(new RegExp(`^${REASON.replace(/[().]/g, '\\$&')} Darum bis dahin ${E(EXTRA)} extra, ab März ${E(BASE)}\\.$`));
         await shot(page, `${tag}-02-dein-plan`);
@@ -110,7 +111,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // tile „verteilt“: no checklist, no bar
         await expect(card).toHaveAttribute('data-view', 'spread');
         await expect(page.getByTestId('konto-tile-title')).toHaveText('Nächsten Monat zur Seite legen');
-        await expect(page.getByTestId('tile-amount')).toHaveText(/^€\s3\.212,71$/);
+        await expect(page.getByTestId('tile-amount')).toHaveText(/^€\s3\.237,71$/);
         await expect(page.getByTestId('tile-when')).toHaveText('am 1. November, wenn dein Gehalt kommt');
         await expect(page.getByTestId('tile-reason')).toHaveText(REASON);
         await expect(page.getByTestId('tile-how')).toHaveText(new RegExp(`^Darum bis dahin ${E(EXTRA)} extra, ab März ${E(BASE)}\\.$`));
@@ -139,13 +140,13 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tapTile(page);
         const sheet = page.getByTestId('konto-sheet');
         await expect(sheet).toBeVisible();
-        await expect(sheet.getByTestId('konto-why')).toContainText(/^Warum €\s3\.212,71\?/);
+        await expect(sheet.getByTestId('konto-why')).toContainText(/^Warum €\s3\.237,71\?/);
         await expect(sheet.getByTestId('konto-why-base')).toHaveText(new RegExp(`^${E(BASE)}$`));
         await expect(sheet.getByTestId('konto-why')).toContainText('Extra für Februar');
         await expect(sheet.getByTestId('konto-why-extra')).toHaveText(new RegExp(`^\\+ ${E(EXTRA)}$`));
         await expect(sheet.getByTestId('konto-why-bills')).toContainText('Steuerberater');
-        await expect(sheet.getByTestId('konto-why-sum')).toHaveText(/^€\s3\.212,71$/);
-        await expect(sheet.getByTestId('konto-plan-status')).toHaveText('Mit diesem Plan nie im Minus.');
+        await expect(sheet.getByTestId('konto-why-sum')).toHaveText(/^€\s3\.237,71$/);
+        await expect(sheet.getByTestId('konto-plan-status')).toHaveText('Mit diesem Plan nie unter € 100.');
         await expect(sheet.getByTestId('konto-chart')).toBeVisible();
         await expect(sheet.getByTestId('konto-dot')).toHaveCount(12);
         await expect(sheet.locator('[data-testid=konto-below-zero], [data-negative]')).toHaveCount(0);
@@ -166,11 +167,14 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-balance')).toHaveValue('184,21');
         await expect(page.getByTestId('konto-balance')).toHaveAttribute('inputmode', 'decimal');
         await expect(page.getByTestId('konto-gap-mode').getByRole('radio', { name: 'Verteilt' })).toHaveAttribute('aria-checked', 'true');
-        await expect(settings.getByRole('radio', { name: '€ 5' })).toHaveAttribute('aria-checked', 'true');
+        // „Monatsbetrag runden“ is off for a new setup: no choice of the step
+        await expect(page.getByTestId('konto-rounding-on').getByRole('switch')).toHaveAttribute('aria-checked', 'false');
+        await expect(page.getByTestId('konto-rounding-step')).toHaveCount(0);
+        await expect(page.getByTestId('konto-buffer').getByRole('radio', { name: '€ 100' })).toHaveAttribute('aria-checked', 'true');
         await expect(page.getByTestId('konto-setup-edit')).toHaveText('Einrichtung ändern');
         // cents pasted with thousands dot: € 1.087,43 → shown with a comma
         await page.getByTestId('konto-balance').fill('1.087,43');
-        await expect(page.getByTestId('settings-amount')).not.toHaveText(/^€\s3\.212,71$/);
+        await expect(page.getByTestId('settings-amount')).not.toHaveText(/^€\s3\.237,71$/);
         await settings.scrollIntoViewIfNeeded();
         await shot(page, `${tag}-06-einstellungen`);
         await page.reload();

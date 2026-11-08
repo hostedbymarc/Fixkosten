@@ -14,6 +14,14 @@ export type Rounding = 1 | 5 | 10;
 export const ROUNDING_CHOICES: Rounding[] = [1, 5, 10];
 export const DEFAULT_ROUNDING: Rounding = 5;
 
+/** The step the monthly amount is rounded up to: 0 = exact to the cent („Monatsbetrag runden“ off). */
+export type RoundStep = 0 | Rounding;
+
+/** The effective step: the chosen rounding while „Monatsbetrag runden“ is on, else to the cent. */
+export function roundStep(s: { rounding: Rounding; roundingOn: boolean }): RoundStep {
+  return s.roundingOn ? s.rounding : 0;
+}
+
 export function toRounding(value: unknown): Rounding {
   return value === 1 || value === 5 || value === 10 ? value : DEFAULT_ROUNDING;
 }
@@ -48,9 +56,9 @@ export function onKonto(ds: Dataset, position: Position, period: Period): boolea
 export interface StandingOrder {
   /** Σ all Fixkostenkonto debits of the 12 months from the next month on ÷ 12, exact to fractions of a cent */
   exact: number;
-  /** `exact` rounded UP to the rounding step */
+  /** `exact` rounded UP to the rounding step (0: to the cent) */
   amount: number;
-  rounding: Rounding;
+  rounding: RoundStep;
   /** first and last month of the window (the 12 months from the month after the active one) */
   from: Period;
   to: Period;
@@ -88,7 +96,7 @@ export function orderWindow(active: Period): Period[] {
  * in those months, planned changes and one-time payments; skipped months count nothing. Without
  * any of these it equals the sum of today's monthly shares (`monthlyEquivalent`).
  */
-export function standingOrder(ds: Dataset, active: Period, rounding: Rounding = DEFAULT_ROUNDING): StandingOrder {
+export function standingOrder(ds: Dataset, active: Period, rounding: RoundStep = DEFAULT_ROUNDING): StandingOrder {
   const window = orderWindow(active);
   // cents per position over the window, and what each one-time debit and plan change was
   const totals = new Map<string, number>();
@@ -119,8 +127,8 @@ export function standingOrder(ds: Dataset, active: Period, rounding: Rounding = 
     .filter((p) => (totals.get(p.id) ?? 0) > 0)
     .map((position) => ({ position, monthly: (totals.get(position.id) ?? 0) / 1200 }))
     .sort((a, b) => b.monthly - a.monthly || a.position.sortOrder - b.position.sortOrder);
-  // 12 months × rounding step in cents
-  const step = rounding * 100 * 12;
+  // 12 months × rounding step in cents; without rounding up to the next cent of the monthly amount
+  const step = rounding === 0 ? 12 : rounding * 100 * 12;
   const amount = totalCents <= 0 ? 0 : (Math.ceil(totalCents / step) * step) / 1200;
   return { exact: totalCents / 1200, amount, rounding, from: window[0]!, to: window[11]!, positions, cause: largestCause(ds, active, window, totals, onceOf) };
 }
@@ -318,7 +326,7 @@ export interface KontoOverview {
   simulation: KontoSimulation;
 }
 
-export function kontoOverview(ds: Dataset, active: Period, settings: { balance: number; receivedFor: Period | null; rounding: Rounding }): KontoOverview {
+export function kontoOverview(ds: Dataset, active: Period, settings: { balance: number; receivedFor: Period | null; rounding: RoundStep }): KontoOverview {
   const order = standingOrder(ds, active, settings.rounding);
   const simulation = simulateKonto(ds, active, { balance: settings.balance, receivedThisMonth: settings.receivedFor === active, deposit: order.amount });
   return { order, simulation };

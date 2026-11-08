@@ -1,13 +1,12 @@
 // Recharts lives in its own chunk: the month screen loads this file only when the sheet opens.
-import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { axisPeriodLabel, shortPeriodLabel } from '../../lib/analytics';
 import type { KontoSimulation } from '../../lib/fixkostenkonto';
 import { formatEUR } from '../../lib/format';
-import { periodLabel, shortMonthName, monthOf } from '../../lib/period';
-import { useExclusiveChartTooltip } from '../../lib/popoverBus';
+import { t } from '../../lib/kontoTexts';
+import { shortMonthName, monthOf } from '../../lib/period';
 import type { Period } from '../../lib/types';
-import { TooltipBox, TooltipRow } from '../analysis/ChartCard';
-import { AXIS_TICK, COLORS, niceTicks, tooltipProps, xAxisProps, yAxisProps } from '../analysis/chartTheme';
+import { AXIS_TICK, COLORS, niceTicks, xAxisProps, yAxisProps } from '../analysis/chartTheme';
 
 interface Row {
   period: Period;
@@ -36,20 +35,18 @@ function BalanceDot({ cx, cy, payload, selected, onSelect }: DotProps & { select
   );
 }
 
-interface TipProps {
-  active?: boolean;
-  payload?: ReadonlyArray<{ payload?: Row }>;
-}
-
 export default function KontoChart({
   simulation,
   active,
+  buffer = 0,
   selected,
   onSelect,
   height = 220,
 }: {
   simulation: KontoSimulation;
   active: Period;
+  /** Sicherheitspuffer: dashed line „Puffer € 100“ (none at 0) */
+  buffer?: number;
   selected: Period | null;
   onSelect: (p: Period) => void;
   height?: number;
@@ -62,20 +59,18 @@ export default function KontoChart({
     negative: Math.round(m.end * 100) < 0,
   }));
   const values = rows.map((r) => r.end);
-  const ticks = niceTicks(Math.min(...values, 0), Math.max(...values, 0));
+  const ticks = niceTicks(Math.min(...values, 0), Math.max(...values, buffer, 0));
   const first = rows[0];
   const last = rows[rows.length - 1];
   const negatives = rows.filter((r) => r.negative).length;
-  const tip = useExclusiveChartTooltip();
   return (
     <div
       style={{ height }}
       role="img"
       aria-label={`Liniendiagramm: Verlauf mit Plan, Stand am Monatsende, ${first ? shortPeriodLabel(first.period) : ''} bis ${last ? shortPeriodLabel(last.period) : ''}${
-        negatives ? `, ${negatives} ${negatives === 1 ? 'Monat' : 'Monate'} unter 0` : ', nie unter 0'
+        negatives ? `, ${negatives} ${negatives === 1 ? 'Monat' : 'Monate'} unter 0` : buffer > 0 ? `, nie unter ${formatEUR(buffer)}` : ', nie unter 0'
       }`}
       data-testid="konto-chart"
-      {...tip.handlers}
     >
       <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height }}>
         <LineChart data={rows} margin={{ top: 14, right: 12, bottom: 0, left: 0 }} accessibilityLayer>
@@ -89,22 +84,17 @@ export default function KontoChart({
           />
           <YAxis {...yAxisProps} ticks={ticks} domain={[ticks[0]!, ticks[ticks.length - 1]!]} />
           <ReferenceLine y={0} stroke={COLORS.ink} strokeWidth={1.5} ifOverflow="extendDomain" data-testid="konto-zero-line" />
-          <Tooltip
-            {...tooltipProps}
-            active={tip.active}
-            cursor={{ stroke: COLORS.grid }}
-            content={(props: TipProps) => {
-              const m = props.active && props.payload?.length ? (props.payload[0]!.payload ?? null) : null;
-              if (!m) return null;
-              return (
-                <TooltipBox title={periodLabel(m.period)} badge={m.period === active ? 'aktiv' : undefined}>
-                  <TooltipRow label="Einzahlung" value={`+${formatEUR(m.deposit)}`} />
-                  <TooltipRow label="Abbuchungen" value={formatEUR(-m.debits)} />
-                  <TooltipRow label="Stand" value={formatEUR(m.end)} swatch={COLORS.accent} />
-                </TooltipBox>
-              );
-            }}
-          />
+          {buffer > 0 && (
+            <ReferenceLine
+              y={buffer}
+              stroke={COLORS.inkSoft}
+              strokeDasharray="4 4"
+              strokeWidth={1.25}
+              ifOverflow="extendDomain"
+              label={{ value: t('sheet.buffer', { betrag: formatEUR(buffer) }), position: 'insideBottomRight', fill: COLORS.inkSoft, fontSize: 11 }}
+              data-testid="konto-buffer-line"
+            />
+          )}
           <Line
             type="linear"
             dataKey="end"

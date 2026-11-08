@@ -29,6 +29,7 @@ const setUp = (balance: number, patch: Partial<KontoSettings> = {}) =>
     enabled: true,
     balance,
     rounding: 5,
+    buffer: 0, // Puffer 0: die Werte von vor dem Sicherheitspuffer
     setupDone: true,
     hasAccount: false,
     receivedFor: NOV,

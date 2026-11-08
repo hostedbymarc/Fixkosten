@@ -51,7 +51,7 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
         {/* the range only matters from 3 months of data on; the data hint lives in the empty states */}
         {months >= 3 && (
           <div className="flex justify-end">
-            <div role="radiogroup" aria-label="Zeitraum" className="flex rounded-xl bg-zinc-100 p-1" data-testid="range">
+            <div role="radiogroup" aria-label="Zeitraum" className="flex rounded-xl border border-control-edge bg-control-track p-1" data-testid="range">
               {RANGES.map((r) => (
                 <button
                   key={r.value}
@@ -61,7 +61,7 @@ export default function AnalyseScreen({ ds }: { ds: Dataset }) {
                   aria-label={r.aria}
                   onClick={() => setRange(r.value)}
                   className={`focus-ring h-11 min-w-[56px] rounded-lg px-3 text-[14px] font-semibold ${
-                    range === r.value ? 'bg-raised text-ink shadow-card' : 'text-ink-mute hover:text-ink'
+                    range === r.value ? 'bg-control-on text-control-ink shadow-card' : 'text-ink-mute hover:bg-control hover:text-ink'
                   }`}
                 >
                   {r.label}
