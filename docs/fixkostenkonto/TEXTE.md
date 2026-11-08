@@ -1,21 +1,27 @@
 | Bereich | Schlüssel | Text | Wörter je Satz |
 |---|---|---|---|
 | Status | `status.setup` | Fixkosten einplanen | 2 |
-| Status | `status.progress` | {n} von {gesamt} erledigt | 4 |
-| Status | `status.gap` | Ab {monat} reicht das Geld nicht. | 6 |
-| Status | `status.gap.action` | Leg bis {datum} einmalig {betrag} zur Seite. | 7 |
-| Status | `status.gap.actionNow` | Leg jetzt einmalig {betrag} zur Seite. | 6 |
-| Status | `status.gap.done` | Erledigt, zur Seite gelegt | 4 |
 | Status | `status.covered` | Alles eingeplant bis {monat}. | 4 |
-| Kachel | `tile.title` | Fixkosten einplanen | 2 |
-| Kachel | `tile.order` | Dauerauftrag {betrag} {tag} | 3 |
-| Kachel | `tile.monthly` | Monatlich {betrag} {tag} | 3 |
+| undefined | `reason.bills` | Im {monat} kommen {rechnungen}. | 4 |
+| undefined | `reason.bill` | Im {monat} kommt {rechnungen}. | 4 |
+| undefined | `reason.now` | Diesen Monat reicht das Geld nicht. | 6 |
+| undefined | `reason.short` | Ab {monat} reicht das Geld nicht. | 6 |
+| Dein Plan | `plan.spread` | Darum bis dahin {extra} extra, ab {folgemonat} {betrag}. | 8 |
+| Dein Plan | `plan.lump` | Leg bis {datum} {betrag} extra zur Seite. | 7 |
+| Dein Plan | `plan.lump.now` | Leg jetzt {betrag} extra zur Seite. | 6 |
+| Dein Plan | `plan.when` | am {datum}, wenn dein Gehalt kommt | 6 |
+| Dein Plan | `plan.when.order` | per Dauerauftrag am {datum} | 4 |
+| Dein Plan | `plan.confirm` | Zur Seite gelegt | 3 |
+| Dein Plan | `plan.toLump` | Lieber auf einmal? | 3 |
+| Dein Plan | `plan.toSpread` | Lieber verteilen? | 2 |
+| Dein Plan | `plan.copy` | Betrag kopieren | 2 |
+| Dein Plan | `plan.copied` | Kopiert | 1 |
+| Kachel | `tile.title` | Diesen Monat zur Seite legen | 5 |
+| Kachel | `tile.title.next` | Nächsten Monat zur Seite legen | 5 |
+| Kachel | `tile.setup` | Fixkosten einplanen | 2 |
 | Kachel | `tile.info.title` | Monatsbetrag | 1 |
-| Kachel | `tile.info` | So viel legst du jeden Monat zur Seite. Alle Abbuchungen der nächsten 12 Monate, geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin. | 8 · 10 · 7 |
+| Kachel | `tile.info` | So viel legst du jeden Monat zur Seite. Alle Abbuchungen der nächsten 12 Monate, geteilt durch 12, aufgerundet. Fehlt vor einer großen Rechnung Geld, kommt bis dahin ein Extra dazu. | 8 · 10 · 12 |
 | Kachel | `tile.start` | Jetzt starten | 2 |
-| Kachel | `tile.next.order.new` | Dauerauftrag einrichten: {betrag} {tag} | 4 |
-| Kachel | `tile.next.order.check` | Dauerauftrag prüfen: {betrag} {tag} | 4 |
-| Kachel | `tile.next.monthly` | Leg monatlich {tag} {betrag} zur Seite. | 6 |
 | Kachel | `tile.streak` | {n} Monate in Folge | 4 |
 | Kachel | `tile.streak.new` | Neue Serie startet. | 3 |
 | Einladung | `invite.title` | Neu: Fixkosten einplanen. | 3 |
@@ -33,26 +39,18 @@
 | Einrichtung | `setup.order` | Läuft dein Dauerauftrag schon? | 4 |
 | Einrichtung | `setup.order.yes` | Ja | 1 |
 | Einrichtung | `setup.order.no` | Nein | 1 |
-| Dein Plan | `plan.title` | Dein Plan | 2 |
-| Dein Plan | `plan.order.new` | Dauerauftrag einrichten: {betrag} monatlich {tag} auf dein Fixkostenkonto | 8 |
-| Dein Plan | `plan.order.check` | Dauerauftrag prüfen: {betrag} monatlich {tag} auf dein Fixkostenkonto | 8 |
-| Dein Plan | `plan.monthly` | Leg jeden Monat {betrag} für Fixkosten zur Seite. | 8 |
-| Dein Plan | `plan.monthly.info` | Mit einem eigenen Konto und Dauerauftrag passiert das automatisch. | 9 |
-| Dein Plan | `plan.gap` | Leg bis {datum} einmalig {betrag} zur Seite. | 7 |
-| Dein Plan | `plan.gap.now` | Leg jetzt einmalig {betrag} zur Seite. | 6 |
-| Dein Plan | `plan.gap.none` | Kein Extra-Betrag nötig. | 3 |
-| Dein Plan | `plan.copy` | Betrag kopieren | 2 |
-| Dein Plan | `plan.copied` | Kopiert | 1 |
-| Dein Plan | `plan.done` | Erledigt | 1 |
-| Dein Plan | `plan.finish` | Fertig | 1 |
-| Monats-Check | `check.month` | Neuer Monat. Ist dein Dauerauftrag eingegangen? | 2 · 4 |
-| Monats-Check | `check.month.again` | Ist dein Dauerauftrag für {monat} eingegangen? | 6 |
-| Monats-Check | `check.month.plan` | Neuer Monat. Hast du {betrag} zur Seite gelegt? | 2 · 6 |
-| Monats-Check | `check.month.plan.again` | Hast du für {monat} {betrag} zur Seite gelegt? | 8 |
+| Einrichtung | `setup.gap.text` | Dafür fehlen dir {betrag}. Wie willst du das lösen? | 4 · 5 |
+| Einrichtung | `setup.gap.spread` | Auf {n} Monate verteilen ({betrag} extra pro Monat) | 8 |
+| Einrichtung | `setup.gap.spread.one` | Mit der nächsten Einzahlung ({betrag} extra) | 6 |
+| Einrichtung | `setup.gap.lump` | Auf einmal zur Seite legen | 5 |
+| Einrichtung | `setup.plan` | Dein Plan | 2 |
+| Einrichtung | `setup.order.new` | Richte den Dauerauftrag ein: {betrag} {tag}. | 6 |
+| Einrichtung | `setup.finish` | Fertig | 1 |
+| Monats-Check | `check.month` | Neuer Monat. Hast du {betrag} zur Seite gelegt? | 2 · 6 |
+| Monats-Check | `check.month.again` | Hast du für {monat} {betrag} zur Seite gelegt? | 8 |
 | Monats-Check | `check.month.yes` | Ja | 1 |
 | Monats-Check | `check.month.no` | Noch nicht | 2 |
-| Monats-Check | `check.balance` | Stimmt dein Kontostand noch? {betrag} | 4 · 1 |
-| Monats-Check | `check.balance.plan` | Liegen noch {betrag} für Fixkosten bereit? | 6 |
+| Monats-Check | `check.balance` | Liegen noch {betrag} für Fixkosten bereit? | 6 |
 | Monats-Check | `check.balance.ok` | Stimmt | 1 |
 | Monats-Check | `check.balance.other` | Anderer Betrag | 2 |
 | Monats-Check | `check.balance.remind` | Trag ein, was du schon zur Seite gelegt hast. Dann rechnet Erbse genauer. | 9 · 4 |
@@ -64,21 +62,20 @@
 | Meilensteine | `milestone.year` | Ein Jahr eingeplant | 3 |
 | Meilensteine | `milestone.toast` | Geschafft: {meilenstein} | 2 |
 | Sheet | `sheet.title` | Fixkosten einplanen | 2 |
-| Sheet | `sheet.q1` | Wie viel lege ich monatlich zur Seite? | 7 |
-| Sheet | `sheet.q1.cause` | Aus {n} Rechnungen der nächsten 12 Monate, aufgerundet. | 8 |
-| Sheet | `sheet.q3` | Reicht es das ganze Jahr? | 5 |
-| Sheet | `sheet.chart` | Stand am Monatsende | 3 |
-| Sheet | `sheet.assumption` | Annahme: Der Monatsbetrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen. | 9 · 8 |
+| Sheet | `sheet.why` | Warum {betrag}? | 2 |
+| Sheet | `sheet.normal` | Normaler Monat | 2 |
+| Sheet | `sheet.extra` | Extra für {monat} | 3 |
+| Sheet | `sheet.lump` | Einmalig bis {datum} | 3 |
+| Sheet | `sheet.sum` | Summe | 1 |
+| Sheet | `sheet.ok` | Mit diesem Plan nie im Minus. | 6 |
+| Sheet | `sheet.chart` | Verlauf mit Plan | 3 |
+| Sheet | `sheet.assumption` | Annahme: Du legst den Betrag zum Monatsbeginn zur Seite. Danach kommen die Abbuchungen. Im laufenden Monat zählen nur offene Rechnungen. | 9 · 4 · 7 |
 | Sheet | `sheet.allMonths` | Alle Monate | 2 |
 | Sheet | `sheet.positions` | Eingeplante Rechnungen ({n}) | 3 |
-| Sheet | `sheet.inputs` | Zur Seite gelegt und Rundung | 5 |
 | Sheet | `sheet.col.deposit` | Einzahlung | 1 |
 | Sheet | `sheet.col.debits` | Abbuchungen | 1 |
 | Sheet | `sheet.col.end` | Stand | 1 |
-| Sheet | `sheet.balance.info` | Was heute für deine Fixkosten bereitliegt. | 6 |
-| Sheet | `sheet.received` | Dauerauftrag für {monat} schon eingegangen? | 5 |
-| Sheet | `sheet.received.plan` | Für {monat} schon zur Seite gelegt? | 6 |
-| Sheet | `sheet.rounding` | Monatsbetrag aufrunden auf | 3 |
+| Sheet | `sheet.settings` | Einstellungen ändern | 2 |
 | Sheet | `sheet.rising` | Dein Stand steigt in 12 Monaten um {betrag}. Der Monatsbetrag ist höher als nötig, z. B. durch die Rundung. | 8 · 7 · 1 · 3 |
 | Einstellungen | `settings.title` | Fixkosten einplanen | 2 |
 | Einstellungen | `settings.switch` | Fixkosten einplanen | 2 |
@@ -86,11 +83,12 @@
 | Einstellungen | `settings.on` | Erbse sagt dir, wie viel du monatlich zur Seite legst. Und warnt, bevor es knapp wird. | 10 · 6 |
 | Einstellungen | `settings.info` | Erbse rechnet aus, wie viel du monatlich zur Seite legst. Und ob es jeden Monat reicht. Ohne Banklogin. | 10 · 6 · 2 |
 | Einstellungen | `settings.balance` | Schon zur Seite gelegt | 4 |
+| Einstellungen | `settings.balance.info` | Was heute für deine Fixkosten bereitliegt. | 6 |
 | Einstellungen | `settings.asOf` | Stand vom {datum} | 3 |
-| Einstellungen | `settings.order` | Dauerauftrag | 1 |
-| Einstellungen | `settings.monthly` | Monatlich zur Seite | 3 |
-| Einstellungen | `settings.gap` | Einmalig zur Seite legen | 4 |
-| Einstellungen | `settings.gap.by` | bis {datum} | 2 |
-| Einstellungen | `settings.gap.now` | jetzt | 1 |
-| Einstellungen | `settings.rounding` | Rundung | 1 |
+| Einstellungen | `settings.gapMode` | Lücke schließen | 2 |
+| Einstellungen | `settings.gapMode.spread` | Verteilt | 1 |
+| Einstellungen | `settings.gapMode.lump` | Auf einmal | 2 |
+| Einstellungen | `settings.gapMode.none` | Gerade fehlt nichts. | 3 |
+| Einstellungen | `settings.gapMode.forced` | Bis dahin kommt keine Einzahlung mehr. Darum auf einmal. | 6 · 3 |
+| Einstellungen | `settings.rounding` | Monatsbetrag aufrunden auf | 3 |
 | Einstellungen | `settings.edit` | Einrichtung ändern | 2 |
