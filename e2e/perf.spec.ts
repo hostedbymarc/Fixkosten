@@ -20,10 +20,10 @@ import { importLive, OKT_TODAY } from './live';
 test.describe.configure({ mode: 'serial' });
 
 const OUT = 'docs/perf';
-/** median time of `calibrate` on an idle container (8 runs, see docs/fixkostenkonto/FEINSCHLIFF-PUFFER.md) */
+/** another reference for another machine: PERF_REF_MS=<ms> (see docs/fixkostenkonto/FEINSCHLIFF-PUFFER.md) */
 const REF_CALIBRATION_MS = Number(process.env.PERF_REF_MS ?? 0) || 0;
-/** reference: median calibration time on an idle container (placeholder until measured) */
-const CALIBRATION_REF = 40;
+/** reference: median calibration time on an idle container (9 measurements 27–34 ms, 08.11.2026) */
+const CALIBRATION_REF = 30;
 
 /** A fixed workload of style, layout and script work; median of 5 runs in ms. */
 async function calibrate(page: Page): Promise<number> {
