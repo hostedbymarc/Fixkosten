@@ -16,13 +16,19 @@ export interface KontoAnchor {
   at: string;
 }
 
-/** Monthly check „Ist dein Dauerauftrag eingegangen?“ – one per month. */
+/** Monthly check „Hast du € X zur Seite gelegt?“ – one per month. */
 export interface KontoCheck {
   period: Period;
   deposited: boolean;
   /** ISO timestamp of the answer */
   answeredAt: string;
+  /** the amount confirmed (base plus extra of that month); older checks: none – the base amount counts */
+  amount?: number;
 }
+
+/** How the gap is closed: spread over the deposits until the first month below 0, or set aside at once. */
+export type GapMode = 'spread' | 'lump';
+export const GAP_MODES: GapMode[] = ['spread', 'lump'];
 
 // 'firstPod' (stored id, kept for existing data) = „Zum ersten Mal alles gedeckt“
 export const MILESTONES = ['firstPod', 'streak3', 'streak6', 'year'] as const;
@@ -62,6 +68,8 @@ export interface KontoSettings {
   plan: { accountDone: boolean; orderDone: boolean; gapDone: boolean };
   /** milestones whose toast came already (it comes once) */
   milestonesShown: Milestone[];
+  /** how the gap is closed (null: not asked – spread when possible) */
+  gapMode: GapMode | null;
 }
 
 export const DEFAULT_KONTO: KontoSettings = {
@@ -82,6 +90,7 @@ export const DEFAULT_KONTO: KontoSettings = {
   orderStartsAfter: null,
   plan: { accountDone: false, orderDone: false, gapDone: false },
   milestonesShown: [],
+  gapMode: null,
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -104,7 +113,12 @@ export function toKontoSettings(value: unknown): KontoSettings {
       (c): c is Record<string, unknown> =>
         isObj(c) && typeof c.period === 'string' && isPeriod(c.period) && typeof c.deposited === 'boolean' && isTimestamp(c.answeredAt),
     )
-    .map((c) => ({ period: c.period as Period, deposited: c.deposited as boolean, answeredAt: c.answeredAt as string }))
+    .map((c) => ({
+      period: c.period as Period,
+      deposited: c.deposited as boolean,
+      answeredAt: c.answeredAt as string,
+      ...(money(c.amount) !== null && money(c.amount)! >= 0 ? { amount: money(c.amount)! } : {}),
+    }))
     // one per month (the last answer wins), in month order
     .reduce<KontoCheck[]>((acc, c) => [...acc.filter((x) => x.period !== c.period), c], [])
     .sort((a, b) => (a.period < b.period ? -1 : a.period > b.period ? 1 : 0));
@@ -130,6 +144,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
     milestonesShown: (Array.isArray(v.milestonesShown) ? v.milestonesShown : []).filter(
       (m, i, all): m is Milestone => MILESTONES.includes(m as Milestone) && all.indexOf(m) === i,
     ),
+    gapMode: GAP_MODES.includes(v.gapMode as GapMode) ? (v.gapMode as GapMode) : null,
   };
 }
 
@@ -164,6 +179,7 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.orderStartsAfter) out.orderStartsAfter = s.orderStartsAfter;
   if (s.plan.accountDone || s.plan.orderDone || s.plan.gapDone) out.plan = s.plan;
   if (s.milestonesShown.length) out.milestonesShown = s.milestonesShown;
+  if (s.gapMode) out.gapMode = s.gapMode;
   return out;
 }
 

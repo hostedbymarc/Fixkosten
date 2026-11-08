@@ -4,7 +4,7 @@
 import { dayKey } from '../lib/kontoBalance';
 import type { Period } from '../lib/types';
 import type { FixkostenDB } from './db';
-import { readKonto, writeKonto, type KontoCheck, type Milestone } from './settings';
+import { readKonto, writeKonto, type GapMode, type KontoCheck, type Milestone } from './settings';
 
 /** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
@@ -22,19 +22,13 @@ export interface SetupAnswers {
 }
 
 /**
- * All questions answered: saved at once, „Dein Plan“ then reads everything from the stored state
- * (kontoState) – the same numbers as tile, sheet and settings.
- * This month brings nothing more in every case: a running standing order arrived at the start of the
- * month (it is in the amount), a new one – or setting aside by hand – starts next month.
+ * The setup questions answered: saved at once; the plan (amount, gap, how it is closed) then reads
+ * everything from the stored state (kontoState) – the same numbers as tile, sheet and settings.
+ * Erbse takes this month's deposit as already in the amount set aside (it comes when the month begins).
  */
 export async function finishSetup(db: FixkostenDB, a: SetupAnswers, ctx: { active: Period; now: Date }): Promise<void> {
   const at = ctx.now.toISOString();
-  const current = await readKonto(db);
   const amount = Math.round(a.balance * 100) / 100;
-  const runs = a.hasAccount && a.orderRuns === true;
-  const checks = runs
-    ? upsertCheck(current.checks, { period: ctx.active, deposited: true, answeredAt: at })
-    : current.checks.filter((c) => c.period !== ctx.active);
   await writeKonto(db, {
     enabled: true,
     hasAccount: a.hasAccount,
@@ -43,9 +37,8 @@ export async function finishSetup(db: FixkostenDB, a: SetupAnswers, ctx: { activ
     anchor: { amount, at },
     balanceUnknown: false,
     balanceCheckedOn: dayKey(ctx.now),
-    checks,
-    receivedFor: runs ? ctx.active : null,
-    orderStartsAfter: runs ? null : ctx.active,
+    receivedFor: ctx.active,
+    orderStartsAfter: null,
     plan: { accountDone: false, orderDone: false, gapDone: false },
     setupSteps: a.hasAccount ? 3 : 2,
     setupDone: true,
@@ -53,13 +46,27 @@ export async function finishSetup(db: FixkostenDB, a: SetupAnswers, ctx: { activ
   session.setUp = true;
 }
 
-/** Monthly check: „Ja“ / „Noch nicht“. */
-export async function answerMonthCheck(db: FixkostenDB, active: Period, deposited: boolean, now: Date): Promise<void> {
+/** „Auf {n} Monate verteilen“ / „Auf einmal zur Seite legen“ (setup, tile, sheet, settings). */
+export async function setGapMode(db: FixkostenDB, mode: GapMode): Promise<void> {
+  await writeKonto(db, { gapMode: mode });
+}
+
+/**
+ * Monthly check: „Ja“ (with the amount of the month: base plus extra) / „Noch nicht“. „Ja“ is the
+ * deposit of the month: the expected balance grows by exactly that amount.
+ */
+export async function answerMonthCheck(db: FixkostenDB, active: Period, deposited: boolean, now: Date, amount?: number): Promise<void> {
   const current = await readKonto(db);
+  const check: KontoCheck = { period: active, deposited, answeredAt: now.toISOString(), ...(deposited && amount !== undefined ? { amount: Math.round(amount * 100) / 100 } : {}) };
   await writeKonto(db, {
-    checks: upsertCheck(current.checks, { period: active, deposited, answeredAt: now.toISOString() }),
-    ...(deposited ? {} : { snoozedOn: dayKey(now) }),
+    checks: upsertCheck(current.checks, check),
+    ...(deposited ? { receivedFor: active } : { snoozedOn: dayKey(now) }),
   });
+}
+
+/** „Zur Seite gelegt“ under the one-time amount: the amount set aside grows by it (a new anchor). */
+export async function confirmLump(db: FixkostenDB, balance: number, lump: number, now: Date): Promise<void> {
+  await setAnchor(db, balance + lump, now);
 }
 
 /** A balance the user states („Anderer Betrag“, the reminder, the field in the sheet): a new anchor. */
