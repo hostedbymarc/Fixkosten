@@ -1,7 +1,7 @@
 // Recharts lives in its own chunk: the month screen loads this file only when the sheet opens.
-import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { axisPeriodLabel, shortPeriodLabel } from '../../lib/analytics';
-import type { KontoOverview } from '../../lib/fixkostenkonto';
+import type { KontoSimulation } from '../../lib/fixkostenkonto';
 import { formatEUR } from '../../lib/format';
 import { periodLabel, shortMonthName, monthOf } from '../../lib/period';
 import type { Period } from '../../lib/types';
@@ -22,33 +22,15 @@ interface DotProps {
   payload?: Row;
 }
 
-/**
- * Month-end balance: a dot per month. Below 0: red, larger, with a „!“ inside (never colour only;
- * the amount in the tooltip and the list carries the minus sign).
- */
+/** Month-end balance with the plan: a green dot per month (the plan never goes below 0, no warning marks). */
 function BalanceDot({ cx, cy, payload, selected, onSelect }: DotProps & { selected: Period | null; onSelect: (p: Period) => void }) {
   if (cx === undefined || cy === undefined || !payload) return null;
   const isSelected = selected === payload.period;
   return (
-    <g
-      onClick={() => onSelect(payload.period)}
-      style={{ cursor: 'pointer' }}
-      data-testid="konto-dot"
-      data-period={payload.period}
-      data-negative={payload.negative || undefined}
-    >
+    <g onClick={() => onSelect(payload.period)} style={{ cursor: 'pointer' }} data-testid="konto-dot" data-period={payload.period}>
       {/* 44 px hit area */}
       <circle cx={cx} cy={cy} r={22} fill="transparent" />
-      {payload.negative ? (
-        <>
-          <circle cx={cx} cy={cy} r={isSelected ? 9 : 8} fill={COLORS.over} stroke={COLORS.surface} strokeWidth={2} />
-          <text x={cx} y={cy + 4} textAnchor="middle" fontSize={11} fontWeight={700} fill={COLORS.surface}>
-            !
-          </text>
-        </>
-      ) : (
-        <circle cx={cx} cy={cy} r={isSelected ? 6 : 4} fill={COLORS.accent} stroke={COLORS.surface} strokeWidth={2} />
-      )}
+      <circle cx={cx} cy={cy} r={isSelected ? 6 : 4} fill={COLORS.accent} stroke={COLORS.surface} strokeWidth={2} />
     </g>
   );
 }
@@ -59,19 +41,19 @@ interface TipProps {
 }
 
 export default function KontoChart({
-  overview,
+  simulation,
   active,
   selected,
   onSelect,
   height = 220,
 }: {
-  overview: KontoOverview;
+  simulation: KontoSimulation;
   active: Period;
   selected: Period | null;
   onSelect: (p: Period) => void;
   height?: number;
 }) {
-  const rows: Row[] = overview.simulation.months.map((m) => ({
+  const rows: Row[] = simulation.months.map((m) => ({
     period: m.period,
     end: m.end,
     deposit: m.deposit,
@@ -87,7 +69,7 @@ export default function KontoChart({
     <div
       style={{ height }}
       role="img"
-      aria-label={`Liniendiagramm: Stand am Monatsende, ${first ? shortPeriodLabel(first.period) : ''} bis ${last ? shortPeriodLabel(last.period) : ''}${
+      aria-label={`Liniendiagramm: Verlauf mit Plan, Stand am Monatsende, ${first ? shortPeriodLabel(first.period) : ''} bis ${last ? shortPeriodLabel(last.period) : ''}${
         negatives ? `, ${negatives} ${negatives === 1 ? 'Monat' : 'Monate'} unter 0` : ', nie unter 0'
       }`}
       data-testid="konto-chart"
@@ -103,8 +85,6 @@ export default function KontoChart({
             tick={{ ...AXIS_TICK }}
           />
           <YAxis {...yAxisProps} ticks={ticks} domain={[ticks[0]!, ticks[ticks.length - 1]!]} />
-          {/* below 0 is tinted red, the zero line is clear: you see at once where the account would be short */}
-          {ticks[0]! < 0 && <ReferenceArea y1={ticks[0]!} y2={0} fill={COLORS.over} fillOpacity={0.09} stroke="none" ifOverflow="hidden" data-testid="konto-below-zero" />}
           <ReferenceLine y={0} stroke={COLORS.ink} strokeWidth={1.5} ifOverflow="extendDomain" data-testid="konto-zero-line" />
           <Tooltip
             {...tooltipProps}
@@ -116,7 +96,7 @@ export default function KontoChart({
                 <TooltipBox title={periodLabel(m.period)} badge={m.period === active ? 'aktiv' : undefined}>
                   <TooltipRow label="Einzahlung" value={`+${formatEUR(m.deposit)}`} />
                   <TooltipRow label="Abbuchungen" value={formatEUR(-m.debits)} />
-                  <TooltipRow label={m.negative ? 'Stand (unter 0!)' : 'Stand'} value={formatEUR(m.end)} swatch={m.negative ? COLORS.over : COLORS.accent} />
+                  <TooltipRow label="Stand" value={formatEUR(m.end)} swatch={COLORS.accent} />
                 </TooltipBox>
               );
             }}

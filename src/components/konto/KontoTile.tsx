@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { db } from '../../db/db';
-import { adoptLegacyBalance, finishSetup, markMilestones } from '../../db/kontoActions';
+import { adoptLegacyBalance, finishSetup, markMilestones, setGapMode } from '../../db/kontoActions';
 import { writeKonto } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
 import { localToday } from '../../lib/activeMonth';
-import { newMilestones, orderDay, type KontoState } from '../../lib/kontoBalance';
+import { newMilestones, type KontoState } from '../../lib/kontoBalance';
 import { MILESTONE_TEXT, t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
@@ -18,8 +18,8 @@ import { KontoTileView, ORDER_INFO } from './KontoTileView';
 export const STANDING_ORDER_INFO = ORDER_INFO;
 
 /**
- * The tile „Fixkosten einplanen“ (internally: Fixkostenkonto) on the month screen (mode on only), directly below the hero. Status
- * „setup“ opens the setup (or „Dein Plan“ once both questions are answered), otherwise the sheet.
+ * The tile of „Fixkosten einplanen“ (internally: Fixkostenkonto) on the month screen (mode on only), directly below the hero. Not set
+ * up: it opens the setup, otherwise the sheet.
  * Every change of balance, account or positions shows at once (live query + kontoState).
  */
 export function KontoTile({ ds, active }: { ds: Dataset; active: Period }) {
@@ -42,7 +42,7 @@ function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
   }, [settings.setupDone, settings.anchor]);
   return (
     <>
-      <KontoTileView state={state} day={orderDay(start)} onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')} buttonRef={button} />
+      <KontoTileView state={state} start={start} active={active} onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')} buttonRef={button} />
       {open === 'sheet' && <KontoSheet ds={ds} active={active} onClose={() => setOpen(null)} returnFocusTo={button.current} />}
       {open === 'setup' && <KontoSetup ds={ds} active={active} restart={!settings.setupDone} onClose={() => setOpen(null)} />}
     </>
@@ -64,8 +64,8 @@ function useMilestoneToasts(state: KontoState, paused: boolean) {
 }
 
 /**
- * The setup sheet. `restart` (not set up, „Einrichtung ändern“): the questions; otherwise
- * „Dein Plan“ straight away. The caller decides, from settings it already has loaded. Numbers and status: kontoState, like everywhere else.
+ * The setup sheet. `restart` (not set up, „Einrichtung ändern“): the questions; otherwise „Dein Plan“
+ * straight away. Numbers and status: kontoState, like everywhere else.
  */
 export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Dataset; active: Period; restart: boolean; onClose: () => void; onDone?: () => void }) {
   const { settings } = useKonto();
@@ -74,10 +74,11 @@ export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Datas
   return (
     <KontoSetupSheet
       state={state}
-      day={orderDay(start)}
+      start={start}
       initialStep={restart ? 'account' : 'plan'}
-      initial={settings.setupDone ? { balance: state.balance, hasAccount: settings.hasAccount !== false } : undefined}
+      initial={settings.setupDone ? { balance: state.balance, hasAccount: settings.hasAccount !== false, orderRuns: settings.orderRuns } : undefined}
       onAnswers={(answers) => finishSetup(db, answers, { active, now: localToday() })}
+      onGapMode={(mode) => setGapMode(db, mode)}
       onClose={onClose}
       onFinish={onDone ?? onClose}
     />

@@ -120,12 +120,12 @@ describe('Status aus den gespeicherten Daten', () => {
   it('nicht eingerichtet', () => {
     const st = kontoState(DATA, '2026-11', settings({ setupDone: false }));
     expect(st.status).toBe('setup');
-    expect(st.planDone).toBe(0);
   });
-  it('Lücke → „Erledigt, eingezahlt“ (neuer Anker = Stand + Lücke) → gedeckt', () => {
+  it('Lücke → „Zur Seite gelegt“ (neuer Anker = Stand + Lücke) → gedeckt', () => {
     const s = settings({ anchor: { amount: 0, at: ANCHOR.at } });
     const before = kontoState(DATA, '2026-11', s);
-    expect(before.status).toBe('gap');
+    // a gap, spread over the deposits until February (verteilt, where possible)
+    expect(before.status).toBe('spread');
     // Nov: +1050 − 1000 = 50; Dec 100; Jan 150; Feb 200 − 600 = −400 → gap 400, in February
     expect(before.gap).toBe(400);
     expect(before.gapMonth).toBe('2027-02');
@@ -185,20 +185,24 @@ describe('Meilensteine', () => {
         Array.from({ length: n }, (_, i) => check(`2026-${String(i + 1).padStart(2, '0')}`)),
         '2026-12',
       );
-    expect(reachedMilestones({ milestonesShown: [] }, 'gap', run(2))).toEqual([]);
-    expect(reachedMilestones({ milestonesShown: [] }, 'covered', run(3))).toEqual(['firstPod', 'streak3']);
-    expect(reachedMilestones({ milestonesShown: [] }, 'setup', run(6))).toEqual(['streak3', 'streak6']);
+    const confirmed = { milestonesShown: [], checks: [check('2026-10')] };
+    expect(reachedMilestones(confirmed, 'spread', run(2))).toEqual([]);
+    expect(reachedMilestones(confirmed, 'covered', run(3))).toEqual(['firstPod', 'streak3']);
+    expect(reachedMilestones(confirmed, 'setup', run(6))).toEqual(['streak3', 'streak6']);
     const year = streakOf(
       Array.from({ length: 12 }, (_, i) => check(`2026-${String(i + 1).padStart(2, '0')}`)),
       '2026-12',
     );
-    expect(reachedMilestones({ milestonesShown: [] }, 'gap', year)).toEqual(['streak3', 'streak6', 'year']);
+    expect(reachedMilestones(confirmed, 'lump', year)).toEqual(['streak3', 'streak6', 'year']);
   });
   it('einmal gezeigt bleibt es (auch wenn später etwas fehlt), Toast nur einmal', () => {
     const none = streakOf([], '2026-11');
-    expect(reachedMilestones({ milestonesShown: ['firstPod'] }, 'gap', none)).toEqual(['firstPod']);
-    expect(newMilestones({ milestonesShown: ['firstPod'] }, 'covered', none)).toEqual([]);
-    expect(newMilestones({ milestonesShown: [] }, 'covered', none)).toEqual(['firstPod']);
+    const checks = [check('2026-10')];
+    expect(reachedMilestones({ milestonesShown: ['firstPod'], checks }, 'spread', none)).toEqual(['firstPod']);
+    expect(newMilestones({ milestonesShown: ['firstPod'], checks }, 'covered', none)).toEqual([]);
+    expect(newMilestones({ milestonesShown: [], checks }, 'covered', none)).toEqual(['firstPod']);
+    // covered, but no month confirmed yet: not yet
+    expect(newMilestones({ milestonesShown: [], checks: [] }, 'covered', none)).toEqual([]);
   });
 });
 

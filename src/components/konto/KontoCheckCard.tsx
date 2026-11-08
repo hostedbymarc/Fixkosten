@@ -5,7 +5,8 @@ import { useKonto } from '../../db/useKonto';
 import { localToday } from '../../lib/activeMonth';
 import { formatEUR, parseAmount } from '../../lib/format';
 import { dueCard } from '../../lib/kontoBalance';
-import { monthName } from '../../lib/period';
+import { periodName } from '../../lib/kontoWords';
+import { useMonthStart } from '../../lib/useToday';
 import { t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
 import { AmountField } from '../form';
@@ -18,8 +19,8 @@ const SECONDARY = `${BUTTON} text-ink-soft hover:bg-zinc-100`;
 
 /**
  * Monats-Check, on top of the month screen: at most one card.
- * - „Neuer Monat. Ist dein Dauerauftrag eingegangen?“ (without an account: „Hast du € X zur Seite gelegt?“)
- *   Ja / Noch nicht (asks again on a later day)
+ * - „Neuer Monat. Hast du € X zur Seite gelegt?“ (X: the month's amount, base plus extra) – Ja / Noch
+ *   nicht (asks again on a later day). The only recurring action; it counts the series.
  * - every 3 months „Stimmt dein Kontostand noch? € Z“ Stimmt / Anderer Betrag (new anchor)
  * - after „Weiß ich gerade nicht“: the balance, on the next start
  */
@@ -36,19 +37,15 @@ function Card({ card, ds, active, again, onLater }: { card: 'month' | 'balance' 
   const [editing, setEditing] = useState(card === 'remind');
   const [text, setText] = useState('');
   const amount = parseAmount(text);
-  const plan = !state.hasAccount;
-  const betrag = formatEUR(state.order);
+  const start = useMonthStart();
+  const betrag = formatEUR(state.months[0]!.amount);
   const title =
     card === 'month'
-      ? plan
-        ? again
-          ? t('check.month.plan.again', { monat: monthName(active), betrag })
-          : t('check.month.plan', { betrag })
-        : again
-          ? t('check.month.again', { monat: monthName(active) })
-          : t('check.month')
+      ? again
+        ? t('check.month.again', { monat: periodName(active, start), betrag })
+        : t('check.month', { betrag })
       : card === 'balance'
-        ? t(plan ? 'check.balance.plan' : 'check.balance', { betrag: formatEUR(state.balance) })
+        ? t('check.balance', { betrag: formatEUR(state.balance) })
         : t('check.balance.remind');
   return (
     <section className="glass surface flex flex-col gap-3 p-4 md:p-5" aria-labelledby="konto-check-title" data-testid="konto-check" data-card={card}>
@@ -60,7 +57,7 @@ function Card({ card, ds, active, again, onLater }: { card: 'month' | 'balance' 
       </div>
       {card === 'month' && (
         <div className="flex gap-2">
-          <button type="button" className={PRIMARY} onClick={() => void answerMonthCheck(db, active, true, localToday())} data-testid="konto-check-yes">
+          <button type="button" className={PRIMARY} onClick={() => void answerMonthCheck(db, active, true, localToday(), state.months[0]!.amount)} data-testid="konto-check-yes">
             {t('check.month.yes')}
           </button>
           <button type="button" className={SECONDARY} onClick={() => void answerMonthCheck(db, active, false, localToday())} data-testid="konto-check-no">

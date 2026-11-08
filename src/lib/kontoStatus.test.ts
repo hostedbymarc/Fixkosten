@@ -1,11 +1,11 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { FixkostenDB } from '../db/db';
-import { finishSetup, setAnchor, setPlan } from '../db/kontoActions';
+import { answerMonthCheck, confirmLump, finishSetup, setGapMode } from '../db/kontoActions';
 import { readKonto, toKontoSettings, type KontoSettings } from '../db/settings';
 import { activeMonth } from './activeMonth';
 import { orderWindow, simulateKonto, standingOrder } from './fixkostenkonto';
-import { kontoState, lastDayBefore, orderDay, periodStartDate, planSteps, statusOf } from './kontoBalance';
+import { kontoState, lastDayBefore, orderDay, periodStartDate } from './kontoBalance';
 import { KONTO_TEXTS, sentences, wordCount } from './kontoTexts';
 import type { Category, Dataset, Position } from './types';
 
@@ -51,109 +51,98 @@ describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote, „zur Se
   }
 });
 
-describe('„Gedeckt“ nie, solange ein Plan-Punkt offen ist', () => {
-  const bools = [true, false] as const;
+describe('Status aus dem Modell: gedeckt nur ohne Lücke, verteilt nur wenn möglich', () => {
   for (const hasAccount of [null, true, false] as const)
-    for (const orderRuns of [null, true, false] as const)
-      for (const accountDone of bools)
-        for (const orderDone of bools)
-          for (const amount of [0, 100_000]) {
-            const s = toKontoSettings({
-              enabled: true,
-              balance: amount,
-              rounding: 1,
-              setupDone: true,
-              hasAccount,
-              orderRuns,
-              anchor: { amount, at: '2026-11-03T10:00:00.000Z' },
-              plan: { accountDone, orderDone, gapDone: false },
-            });
-            it(`Konto ${hasAccount} · läuft ${orderRuns} · erledigt ${accountDone}/${orderDone} · Stand ${amount}`, () => {
-              // the old point „Konto eröffnen“ (accountDone) is gone: it never changes the status
-              const st = kontoState(DATA, ACTIVE, s);
-              const open = st.plan.some((p) => !p.done);
-              if (open) expect(st.status).not.toBe('covered');
-              if (st.plan.some((p) => p.id !== 'gap' && !p.done)) expect(st.status).toBe('setup');
-              expect(st.planDone).toBe(st.plan.filter((p) => p.done).length);
-              expect(st.plan.map((p) => p.id)).toEqual(['order', 'gap']);
-              if (hasAccount !== null && !orderDone) expect(st.status).toBe('setup');
-            });
-          }
+    for (const gapMode of [null, 'spread', 'lump'] as const)
+      for (const amount of [0, 1000, 100_000]) {
+        const s = toKontoSettings({
+          enabled: true,
+          balance: amount,
+          rounding: 1,
+          setupDone: true,
+          hasAccount,
+          gapMode,
+          receivedFor: ACTIVE,
+          anchor: { amount, at: '2026-11-03T10:00:00.000Z' },
+        });
+        it(`Konto ${hasAccount} · Lücke ${gapMode} · Stand ${amount}`, () => {
+          const st = kontoState(DATA, ACTIVE, s);
+          if (st.gap <= 0) expect(st.status).toBe('covered');
+          else if (st.canSpread && gapMode !== 'lump') expect(st.status).toBe('spread');
+          else expect(st.status).toBe('lump');
+          // with the plan never below 0
+          for (const m of st.planSimulation.months) expect(Math.round(m.end * 100)).toBeGreaterThanOrEqual(0);
+        });
+      }
   it('nicht eingerichtet: auch mit großem Kontostand nie gedeckt', () => {
     const s = toKontoSettings({ enabled: true, balance: 0, rounding: 1, setupDone: false, anchor: { amount: 99_999, at: '2026-11-03T10:00:00.000Z' } });
     expect(kontoState(DATA, ACTIVE, s).status).toBe('setup');
-    expect(statusOf(false, planSteps(s, 0))).toBe('setup');
   });
 });
 
 describe('Einrichtung in beiden Varianten (mit und ohne eigenes Konto; gespeichert, dann eine Wahrheit)', () => {
-  it('mit Konto: Stand 0, Dauerauftrag läuft → 0 von 2, „Erledigt“ und Lücke → eingeplant', async () => {
+  it('mit Konto, Stand 0, Dauerauftrag läuft: diesen Monat schon drin; die Miete fehlt sofort → automatisch auf einmal', async () => {
     const db = await newDb();
     await finishSetup(db, { hasAccount: true, balance: 0, orderRuns: true }, { active: ACTIVE, now: NOW });
+    const s = await readKonto(db);
+    expect(s.receivedFor).toBe(ACTIVE);
+    expect(s.orderStartsAfter).toBeNull();
+    // the deposit of this month is in the amount set aside: none is asked
+    expect(s.checks).toEqual([]);
     let st = await stateOf(db);
-    // November: no further deposit (it arrived at the start of the month), Miete 1000 → −1000 …
     expect(st.overview.simulation.months[0]!.deposit).toBe(0);
     expect(st.order).toBe(1050);
     expect(st.hasAccount).toBe(true);
-    expect(st.plan.map((p) => [p.id, p.done, p.isNew])).toEqual([
-      ['order', false, false],
-      ['gap', false, false],
-    ]);
-    expect(st.status).toBe('setup');
-    expect(st.planDone).toBe(0);
-    await setPlan(db, { orderDone: true });
-    st = await stateOf(db);
-    expect(st.status).toBe('gap');
-    // Nov −1000; Dec +50 → −950; Jan −900; Feb −1450 → one-time amount 1450, first minus already in November
+    // Nov −1000 (first below 0 already now: no deposit left before it); lowest Feb −1450
+    expect(st.gapFrom).toBe(ACTIVE);
+    expect(st.canSpread).toBe(false);
+    expect(st.status).toBe('lump');
     expect(st.gap).toBe(1450);
-    expect(st.gapMonth).toBe('2027-02');
-    expect(st.gapFrom).toBe('2026-11');
-    await setAnchor(db, st.balance + st.gap, new Date('2026-11-04T09:05:00.000Z'));
+    await confirmLump(db, st.balance, st.lump, new Date('2026-11-04T09:05:00.000Z'));
     st = await stateOf(db);
     expect(st.status).toBe('covered');
-    expect(st.planDone).toBe(2);
   });
 
-  it('mit Konto, Dauerauftrag läuft nicht: „Dauerauftrag einrichten“ (neu), diesen Monat kommt nichts', async () => {
+  it('mit Konto, Dauerauftrag läuft nicht: auch dann zählt dieser Monat als zur Seite gelegt', async () => {
     const db = await newDb();
     await finishSetup(db, { hasAccount: true, balance: 500, orderRuns: false }, { active: ACTIVE, now: NOW });
     const s = await readKonto(db);
-    expect(s.orderStartsAfter).toBe(ACTIVE);
     expect(s.orderRuns).toBe(false);
-    const st = kontoState(DATA, ACTIVE, s);
-    expect(st.plan[0]).toMatchObject({ id: 'order', isNew: true, done: false });
-    expect(st.overview.simulation.months[0]!.deposit).toBe(0);
+    expect(s.receivedFor).toBe(ACTIVE);
+    expect(kontoState(DATA, ACTIVE, s).overview.simulation.months[0]!.deposit).toBe(0);
   });
 
-  it('ohne Konto („Nein, ich plane nur“), „Noch nichts“: zwei Punkte, Dauerauftrag nicht gefragt', async () => {
+  it('ohne Konto, € 1.000: Lücke im Februar, verteilt auf Dez, Jän, Feb; „Lieber auf einmal?“ und zurück', async () => {
     const db = await newDb();
-    await finishSetup(db, { hasAccount: false, balance: 0, orderRuns: null }, { active: ACTIVE, now: NOW });
-    const s = await readKonto(db);
-    expect(s.hasAccount).toBe(false);
-    expect(s.orderRuns).toBeNull();
-    expect(s.orderStartsAfter).toBe(ACTIVE);
-    let st = kontoState(DATA, ACTIVE, s);
+    await finishSetup(db, { hasAccount: false, balance: 1000, orderRuns: null }, { active: ACTIVE, now: NOW });
+    let st = await stateOf(db);
     expect(st.hasAccount).toBe(false);
-    expect(st.plan.map((p) => [p.id, p.done, p.isNew])).toEqual([
-      ['order', false, false],
-      ['gap', false, false],
-    ]);
-    expect(st.planDone).toBe(0);
-    expect(st.status).toBe('setup');
-    // setting the one-time amount aside first does not make it „eingeplant“: the monthly amount is still open
-    await setAnchor(db, st.balance + st.gap, new Date('2026-11-04T09:05:00.000Z'));
+    // Nov 0, Dec 50, Jan 100, Feb 150 − 600 = −450
+    expect(st.gap).toBe(450);
+    expect(st.gapFrom).toBe('2027-02');
+    expect(st.deposits).toBe(3);
+    expect(st.status).toBe('spread');
+    expect(st.extra).toBe(150);
+    await setGapMode(db, 'lump');
     st = await stateOf(db);
-    expect(st.gap).toBe(0);
-    expect(st.planDone).toBe(1);
-    expect(st.status).toBe('setup');
-    await setPlan(db, { orderDone: true });
-    expect((await stateOf(db)).status).toBe('covered');
+    expect(st.status).toBe('lump');
+    expect(st.lump).toBe(450);
+    await setGapMode(db, 'spread');
+    expect((await stateOf(db)).status).toBe('spread');
+  });
+
+  it('Monats-Check „Ja“ speichert den Betrag des Monats; der Stand wächst genau darum', async () => {
+    const db = await newDb();
+    await finishSetup(db, { hasAccount: false, balance: 1000, orderRuns: null }, { active: ACTIVE, now: NOW });
+    await answerMonthCheck(db, '2026-12', true, new Date('2026-12-01T09:00:00.000Z'), 1200);
+    const s = await readKonto(db);
+    expect(s.checks).toEqual([{ period: '2026-12', deposited: true, answeredAt: '2026-12-01T09:00:00.000Z', amount: 1200 }]);
+    expect(kontoState(DATA, '2026-12', s).balance).toBe(2200);
   });
 
   it('Betrag mit Cent: Lücke auf den Cent wie überall', async () => {
     const db = await newDb();
     await finishSetup(db, { hasAccount: true, balance: 184.21, orderRuns: false }, { active: ACTIVE, now: NOW });
-    await setPlan(db, { orderDone: true });
     const st = await stateOf(db);
     expect(st.gap).toBe(Math.round(-st.overview.simulation.lowest * 100) / 100);
     expect(Math.round(st.gap * 100) % 100).toBe(79);

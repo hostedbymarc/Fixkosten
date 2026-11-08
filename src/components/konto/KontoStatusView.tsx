@@ -1,290 +1,166 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { db } from '../../db/db';
-import { setAnchor, setPlan } from '../../db/kontoActions';
-import { localToday } from '../../lib/activeMonth';
+import { answerMonthCheck, confirmLump, setGapMode } from '../../db/kontoActions';
+import { localToday, type MonthStart } from '../../lib/activeMonth';
 import { amountToInput, formatEUR } from '../../lib/format';
-import type { KontoState, PlanStep } from '../../lib/kontoBalance';
+import type { KontoState } from '../../lib/kontoBalance';
 import { t } from '../../lib/kontoTexts';
-import { monthName, periodLabel, toPeriod } from '../../lib/period';
-import { AlertIcon } from '../Icons';
-import { InfoTip } from '../InfoTip';
-import { Pea, PeaOpen } from '../Pea';
+import { coveredText, dayLabel, planText, reasonText, whenText } from '../../lib/kontoWords';
+import { monthName } from '../../lib/period';
+import { Pea } from '../Pea';
 
 /**
- * The status sentence, from kontoState only – tile, sheet, „Dein Plan“ and settings use exactly this.
- * setup: „Fixkosten einplanen“ · gap: „Ab Februar 2027 reicht das Geld nicht.“ · covered: „Alles eingeplant bis Oktober 2027.“
+ * ONE amount, always with its reason (tile, setup, sheet): the amount of the next deposit, when it
+ * comes, and – with a gap – why and how it is closed:
+ * - spread: „Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Darum bis dahin € 362,48 extra, ab März € 2.920.“
+ * - lump: „Im Februar kommen … Leg bis 31. Jänner € 1.087,43 extra zur Seite.“
+ * - covered: „Alles eingeplant bis Oktober 2027.“ with a tick.
+ * Every number from kontoState.
  */
-export function statusText(state: KontoState): string {
-  if (state.status === 'setup') return t('status.setup');
-  if (state.status === 'gap') return t('status.gap', { monat: periodLabel(state.gapFrom ?? state.coveredUntil) });
-  return t('status.covered', { monat: periodLabel(state.coveredUntil) });
-}
-
-export function progressText(state: KontoState): string {
-  return t('status.progress', { n: state.planDone, gesamt: state.plan.length });
-}
-
-/** „24. Jänner“; with the year only when the day is a year or more away („24. Jänner 2028“). */
-export function dayLabel(d: Date, today: Date = localToday()): string {
-  const months = (d.getFullYear() - today.getFullYear()) * 12 + d.getMonth() - today.getMonth();
-  return months < 12 ? `${d.getDate()}. ${monthName(toPeriod(d))}` : `${d.getDate()}. ${periodLabel(toPeriod(d))}`;
-}
-
-/** The deadline has passed (the money is missing in the active month): „jetzt“ instead of a date. */
-export function deadlinePassed(by: Date | null): boolean {
-  if (!by) return true;
-  const today = localToday();
-  return by < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-}
-
-/** „Leg bis 24. Jänner einmalig € 865,79 zur Seite.“ (tile, sheet, settings) */
-export function gapActionText(state: KontoState): string {
-  const betrag = formatEUR(state.gap);
-  return deadlinePassed(state.gapBy) ? t('status.gap.actionNow', { betrag }) : t('status.gap.action', { datum: dayLabel(state.gapBy!), betrag });
-}
-
-/**
- * Thin progress bar in brand green: „1 von 2 erledigt“ (plan, tile, sheet, settings). The track is always
- * visible, also at 0 % (.progress-track); bar and text sit left-aligned in one line.
- */
-export function PlanProgress({ state, testId, className = '' }: { state: KontoState; testId: string; className?: string }) {
-  const total = state.plan.length;
+export function PlanAmount({ state, start, size = 'regular', testId = 'konto' }: { state: KontoState; start: MonthStart; size?: 'regular' | 'large'; testId?: string }) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <div
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={total}
-        aria-valuenow={state.planDone}
-        aria-label={progressText(state)}
-        className="progress-track h-2 w-full max-w-[160px] overflow-hidden rounded-full"
-        data-testid={`${testId}-bar`}
-      >
-        <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${(state.planDone / total) * 100}%` }} />
-      </div>
-      <span className="shrink-0 text-[14px] text-ink-mute" data-testid={`${testId}-progress`}>
-        {progressText(state)}
-      </span>
-    </div>
-  );
-}
-
-/**
- * The status in words, with its one action: the progress bar while the plan is open, „Leg bis …
- * einmalig … zur Seite.“ with „Erledigt, zur Seite gelegt“ for a gap, a tick when everything is planned.
- */
-export function KontoStatusLine({
-  state,
-  size = 'regular',
-  withAction = true,
-  testId,
-}: {
-  state: KontoState;
-  size?: 'compact' | 'regular';
-  /** „Erledigt, zur Seite gelegt“ under a gap */
-  withAction?: boolean;
-  testId: string;
-}) {
-  const big = size === 'regular' ? 'text-[17px]' : 'text-[16px]';
-  const small = size === 'regular' ? 'text-[15px]' : 'text-[14px]';
-  return (
-    <div data-testid={testId} data-status={state.status} role="status">
-      {/* setup: the heading above already says „Fixkosten einplanen“ – the status stays for screen readers only */}
-      <p className={state.status === 'setup' ? 'sr-only' : `flex items-center gap-2 font-semibold leading-snug text-ink ${big}`}>
-        {state.status === 'gap' && <AlertIcon size={18} className="shrink-0 text-over" aria-hidden="true" />}
-        {state.status === 'covered' && <Pea size={20} state="checked" className="shrink-0" />}
-        <span data-testid={`${testId}-text`}>{statusText(state)}</span>
+    <div data-testid={`${testId}-plan`} data-mode={state.mode ?? 'covered'}>
+      <p className={`num font-semibold leading-tight tracking-[-0.02em] text-ink ${size === 'large' ? 'text-[34px]' : 'text-[30px]'}`} data-testid={`${testId}-amount`}>
+        {formatEUR(state.next.amount)}
       </p>
-      {state.status === 'setup' && <PlanProgress state={state} testId={testId} />}
-      {state.status === 'gap' && (
-        <>
-          <p className={`mt-1 leading-snug text-ink-soft ${small}`} data-testid={`${testId}-action`}>
-            {gapActionText(state)}
-          </p>
-          {withAction && <PaidButton state={state} testId={`${testId}-paid`} />}
-        </>
-      )}
+      <p className="mt-0.5 text-[14px] leading-snug text-ink-soft" data-testid={`${testId}-when`}>
+        {whenText(state, start)}
+      </p>
+      <PlanHint state={state} start={start} testId={testId} />
     </div>
   );
 }
 
-/** „Erledigt, zur Seite gelegt“: the one-time amount is set aside → a new anchor, the gap is 0. */
-export function PaidButton({ state, testId }: { state: KontoState; testId: string }) {
+/** The reason and how the gap is closed – or the tick when everything is planned. */
+export function PlanHint({ state, start, testId = 'konto' }: { state: KontoState; start: MonthStart; testId?: string }) {
+  if (!state.mode) {
+    return (
+      <p className="mt-3 flex items-center gap-2 text-[15px] font-semibold leading-snug text-ink" data-testid={`${testId}-covered`}>
+        <Pea size={20} state="checked" className="shrink-0" />
+        <span data-testid={`${testId}-status-text`}>{coveredText(state, start)}</span>
+      </p>
+    );
+  }
+  return (
+    <p className="mt-3 rounded-2xl bg-accent-soft px-3 py-2.5 text-[14px] leading-snug text-ink" data-testid={`${testId}-hint`}>
+      <span data-testid={`${testId}-reason`}>{reasonText(state, start)}</span> <span data-testid={`${testId}-how`}>{planText(state, start)}</span>
+    </p>
+  );
+}
+
+/** Something to confirm now: this month's deposit while it is open, else the open one-time amount. */
+export function pendingConfirm(state: KontoState): 'month' | 'lump' | null {
+  if (!state.setupDone) return null;
+  if (!state.monthDone) return 'month';
+  return state.mode === 'lump' ? 'lump' : null;
+}
+
+/**
+ * „Zur Seite gelegt“: confirms this month (its amount, base plus extra) or the one-time amount –
+ * the amount set aside grows by it.
+ */
+export function ConfirmButton({ state, active, testId = 'konto-confirm', className = '' }: { state: KontoState; active: string; testId?: string; className?: string }) {
+  const what = pendingConfirm(state);
+  if (!what) return null;
+  const onClick = () =>
+    what === 'month'
+      ? void answerMonthCheck(db, active as never, true, localToday(), state.months[0]!.amount)
+      : void confirmLump(db, state.balance, state.lump, localToday());
   return (
     <button
       type="button"
-      onClick={() => void setAnchor(db, state.balance + state.gap, localToday())}
-      className="focus-ring relative z-10 mt-2 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto"
+      onClick={onClick}
+      className={`focus-ring relative z-10 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto ${className}`}
       data-testid={testId}
+      data-confirm={what}
     >
-      {t('status.gap.done')}
+      {t('plan.confirm')}
     </button>
   );
 }
 
-/** The next open plan point as one sentence with amount and date (tile): „Dauerauftrag einrichten: € 2.912 am 25.“ */
-export function nextTaskText(state: KontoState, day: string): string | null {
-  const next = state.plan.find((p) => !p.done);
-  if (!state.setupDone || !next) return null;
-  if (next.id === 'gap') return gapActionText(state);
-  const betrag = formatEUR(state.order);
-  if (!state.hasAccount) return t('tile.next.monthly', { betrag, tag: day });
-  return t(next.isNew ? 'tile.next.order.new' : 'tile.next.order.check', { betrag, tag: day });
+/** „Lieber auf einmal?“ / „Lieber verteilen?“ – only while spreading is possible. */
+export function SwitchModeLink({ state, testId = 'konto-switch', className = '' }: { state: KontoState; testId?: string; className?: string }) {
+  if (!state.canSpread || !state.mode) return null;
+  const to = state.mode === 'spread' ? 'lump' : 'spread';
+  return (
+    <button
+      type="button"
+      onClick={() => void setGapMode(db, to)}
+      className={`focus-ring relative z-10 -mx-1 h-11 rounded-lg px-1 text-[14px] font-medium text-accent-ink underline underline-offset-2 ${className}`}
+      data-testid={testId}
+      data-to={to}
+    >
+      {t(to === 'lump' ? 'plan.toLump' : 'plan.toSpread')}
+    </button>
+  );
 }
 
 /**
- * The tile once the questions are answered but plan points are open: the next task with its amount and
- * date and its „Erledigt“, then the bar „x von 2 erledigt“. A gap also says from when the money is short.
+ * „Warum € X?“ (sheet): „Normaler Monat € 2.920“, „Extra für Februar + € 362,48“ with the big bills
+ * of that month under it (name and amount), the sum. With the one-time amount: „Einmalig bis …“.
  */
-export function NextTask({ state, day, testId }: { state: KontoState; day: string; testId: string }) {
-  const next = state.plan.find((p) => !p.done)!;
-  const text = nextTaskText(state, day)!;
-  const amount = formatEUR(next.id === 'gap' ? state.gap : state.order);
-  const [before, after] = text.split(amount);
+export function WhyAmount({ state }: { state: KontoState }) {
+  const extra = state.mode === 'spread' ? state.next.extra : state.mode === 'lump' ? state.lump : 0;
   return (
-    <div data-testid={testId} data-status={state.status} data-next={next.id} role="status">
-      {state.status !== 'gap' && (
-        <p className="sr-only" data-testid={`${testId}-text`}>
-          {statusText(state)}
-        </p>
-      )}
-      <p className="text-[16px] font-semibold leading-snug text-ink" data-testid={`${testId}-action`}>
-        {before}
-        <span className="num whitespace-nowrap" data-testid={`${testId}-amount`}>
-          {amount}
-        </span>
-        {after}
+    <section className="flex flex-col gap-2" aria-labelledby="konto-why" data-testid="konto-why">
+      <h3 id="konto-why" className="text-[17px] font-semibold leading-snug text-ink">
+        {t('sheet.why', { betrag: formatEUR(state.next.amount) })}
+      </h3>
+      <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 text-[15px]">
+        <dt className="text-ink-soft">{t('sheet.normal')}</dt>
+        <dd className="num text-right text-ink" data-testid="konto-why-base">
+          {formatEUR(state.order)}
+        </dd>
+        {extra > 0 && state.gapFrom && (
+          <>
+            <dt className="text-ink-soft">
+              {state.mode === 'spread' ? t('sheet.extra', { monat: monthName(state.gapFrom) }) : t('sheet.lump', { datum: dayLabel(state.gapBy ?? new Date()) })}
+            </dt>
+            <dd className="num text-right text-ink" data-testid="konto-why-extra">
+              + {formatEUR(extra)}
+            </dd>
+            {state.gapBills.length > 0 && (
+              <dd className="col-span-2 -mt-0.5 mb-1">
+                <ul className="flex flex-col gap-0.5 border-l-2 border-accent-soft pl-3 text-[13px] text-ink-mute" data-testid="konto-why-bills">
+                  {state.gapBills.map((b, i) => (
+                    <li key={`${b.name}-${i}`} className="flex justify-between gap-3">
+                      <span className="min-w-0 truncate">{b.name}</span>
+                      <span className="num shrink-0">{formatEUR(b.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            )}
+          </>
+        )}
+        {state.mode === 'spread' && state.next.extra > 0 && (
+          <>
+            <dt className="border-t border-line pt-1.5 font-semibold text-ink">{t('sheet.sum')}</dt>
+            <dd className="num border-t border-line pt-1.5 text-right font-semibold text-ink" data-testid="konto-why-sum">
+              {formatEUR(state.next.amount)}
+            </dd>
+          </>
+        )}
+      </dl>
+    </section>
+  );
+}
+
+/** Status of the plan (sheet): „Mit diesem Plan nie im Minus.“ with a tick, or – one-time amount open – the reason. */
+export function PlanStatus({ state, start }: { state: KontoState; start: MonthStart }) {
+  if (state.mode === 'lump') {
+    return (
+      <p className="rounded-2xl bg-accent-soft px-3 py-2.5 text-[14px] leading-snug text-ink" data-testid="konto-plan-status" data-ok="false">
+        {reasonText(state, start)} {planText(state, start)}
       </p>
-      {state.status === 'gap' && (
-        <p className="mt-1 flex items-center gap-1.5 text-[13px] leading-5 text-ink-soft" data-testid={`${testId}-warn`}>
-          <AlertIcon size={15} className="shrink-0 text-over" aria-hidden="true" />
-          <span data-testid={`${testId}-text`}>{statusText(state)}</span>
-        </p>
-      )}
-      {next.id === 'gap' ? (
-        <PaidButton state={state} testId={`${testId}-paid`} />
-      ) : (
-        <button
-          type="button"
-          onClick={() => void setPlan(db, { orderDone: true })}
-          className="focus-ring relative z-10 mt-2 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto"
-          data-testid={`${testId}-done`}
-        >
-          {t('plan.done')}
-        </button>
-      )}
-      <PlanProgress state={state} testId={testId} className="mt-3" />
-    </div>
-  );
-}
-
-/**
- * „Dein Plan“: two points (the monthly amount, the one-time amount); the progress is in the status
- * line. Only the next open point has the primary green „Erledigt“, the others a secondary one – any
- * order works. Each „Erledigt“ is saved at once and pops in; the numbers are the ones of kontoState.
- */
-export function PlanList({ state, day, testId = 'plan' }: { state: KontoState; day: string; testId?: string }) {
-  const next = state.plan.find((p) => !p.done)?.id;
-  return (
-    <ul className="flex flex-col gap-3" data-testid={testId}>
-      {state.plan.map((step) => (
-        <PlanItem key={step.id} step={step} state={state} day={day} primary={step.id === next} testId={`${testId}-${step.id}`} />
-      ))}
-    </ul>
-  );
-}
-
-/** text with one amount in it, the amount bold and with its test id */
-function withAmount(text: string, amount: string, testId: string): ReactNode {
-  const [before, after] = text.split('\u0000');
-  return (
-    <>
-      {before}
-      <span className="num whitespace-nowrap font-semibold" data-testid={testId}>
-        {amount}
-      </span>
-      {after}
-    </>
-  );
-}
-
-function PlanItem({ step, state, day, primary, testId }: { step: PlanStep; state: KontoState; day: string; primary: boolean; testId: string }) {
-  let body: ReactNode;
-  let onDone: (() => void) | null = null;
-  if (step.id === 'order') {
-    if (state.hasAccount) {
-      body = (
-        <>
-          {withAmount(t(step.isNew ? 'plan.order.new' : 'plan.order.check', { betrag: '\u0000', tag: day }), formatEUR(state.order), `${testId}-value`)}
-          <CopyButton amount={state.order} testId={`${testId}-copy`} />
-        </>
-      );
-    } else {
-      body = (
-        <span className="inline">
-          {withAmount(t('plan.monthly', { betrag: '\u0000' }), formatEUR(state.order), `${testId}-value`)}
-          <InfoTip label="Erklärung: Monatsbetrag zur Seite legen" title="Automatisch zur Seite legen" className="-my-3 -ml-1 inline-flex align-middle" testId={`${testId}-info`}>
-            <p>{t('plan.monthly.info')}</p>
-          </InfoTip>
-        </span>
-      );
-    }
-    onDone = () => void setPlan(db, { orderDone: !step.done });
-  } else if (state.gap > 0) {
-    const text = deadlinePassed(state.gapBy) ? t('plan.gap.now', { betrag: '\u0000' }) : t('plan.gap', { datum: dayLabel(state.gapBy!), betrag: '\u0000' });
-    body = withAmount(text, formatEUR(state.gap), `${testId}-value`);
-    // set aside: a new anchor, the gap is 0 and this point is done (it cannot be undone here)
-    onDone = () => void setAnchor(db, state.balance + state.gap, localToday());
-  } else {
-    body = t('plan.gap.none');
+    );
   }
-  const popped = usePop(step.done);
-  const button = step.done
-    ? 'text-paid-ink'
-    : primary
-      ? 'bg-accent text-white hover:bg-accent-hover'
-      : 'glass-inset bg-surface text-accent-ink hover:bg-accent-soft';
   return (
-    <li className="glass-inset flex items-start gap-3 rounded-2xl bg-surface p-4" data-testid={testId} data-done={step.done || undefined}>
-      <span className="mt-0.5 shrink-0">
-        {step.done ? <Pea size={24} state="checked" className={popped ? 'anim-check' : ''} /> : <PeaOpen size={24} />}
-      </span>
-      <div className="min-w-0 flex-1 text-[16px] leading-snug text-ink">{body}</div>
-      {onDone && (
-        <button
-          type="button"
-          onClick={onDone}
-          aria-pressed={step.done}
-          className={`focus-ring h-11 shrink-0 rounded-xl px-4 text-[15px] font-semibold ${button}`}
-          data-testid={`${testId}-done`}
-          data-primary={(primary && !step.done) || undefined}
-        >
-          {t('plan.done')}
-        </button>
-      )}
-    </li>
-  );
-}
-
-/** True right after `done` turned true (not when it was already done on mount): the pop plays once. */
-function usePop(done: boolean): boolean {
-  const was = useRef(done);
-  const [pop, setPop] = useState(false);
-  useEffect(() => {
-    if (done && !was.current) setPop(true);
-    was.current = done;
-  }, [done]);
-  return pop;
-}
-
-/** The success moment once the last point is done: the tick pops, „Alles eingeplant bis …“. */
-export function PlanSuccess({ state, testId = 'plan-success' }: { state: KontoState; testId?: string }) {
-  if (state.status !== 'covered') return null;
-  return (
-    <div className="flex flex-col items-center gap-2 rounded-2xl bg-paid-soft px-4 py-5 text-center" data-testid={testId} role="status">
-      <Pea size={44} state="checked" className="anim-check" />
-      <p className="text-[18px] font-semibold leading-snug text-ink">{statusText(state)}</p>
-    </div>
+    <p className="flex items-center gap-2 text-[15px] font-semibold leading-snug text-ink" data-testid="konto-plan-status" data-ok="true">
+      <Pea size={20} state="checked" className="shrink-0" />
+      {t('sheet.ok')}
+    </p>
   );
 }
 

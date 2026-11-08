@@ -32,6 +32,11 @@ export function untilLabel(period: Period, start: MonthStart, today?: Date): str
   return start === 1 ? periodLabel(period) : dayLabel(lastDayBefore(addPeriods(period, 1), start), today);
 }
 
+/** A period as a whole: „November“; with the 25th „den Monat seit 25. Oktober“ (for „für …“). */
+export function periodName(period: Period, start: MonthStart, today?: Date): string {
+  return start === 1 ? monthName(period) : `den Monat seit ${dayLabel(periodStartDate(period, start), today)}`;
+}
+
 /** „A“, „A und B“ – the largest one or two bills. */
 export function billNames(bills: KontoDebit[], max = 2): string {
   const names = bills.slice(0, max).map((b) => b.name);
