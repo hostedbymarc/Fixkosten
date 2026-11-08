@@ -115,7 +115,7 @@ export function WhyAmount({ state }: { state: KontoState }) {
         {extra > 0 && state.gapFrom && (
           <>
             <dt className="text-ink-soft">
-              {state.mode === 'spread' ? t('sheet.extra', { monat: monthName(state.gapFrom) }) : t('sheet.lump', { datum: dayLabel(state.gapBy ?? new Date()) })}
+              {state.mode === 'spread' ? t('sheet.extra', { monat: monthName(state.gapFrom) }) : t('sheet.lump', { datum: dayLabel(state.gapBy ?? localToday()) })}
             </dt>
             <dd className="num text-right text-ink" data-testid="konto-why-extra">
               + {formatEUR(extra)}
@@ -136,8 +136,9 @@ export function WhyAmount({ state }: { state: KontoState }) {
         )}
         {state.mode === 'spread' && state.next.extra > 0 && (
           <>
-            <dt className="border-t border-line pt-1.5 font-semibold text-ink">{t('sheet.sum')}</dt>
-            <dd className="num border-t border-line pt-1.5 text-right font-semibold text-ink" data-testid="konto-why-sum">
+            <div className="col-span-2 border-t border-line" aria-hidden="true" />
+            <dt className="font-semibold text-ink">{t('sheet.sum')}</dt>
+            <dd className="num text-right font-semibold text-ink" data-testid="konto-why-sum">
               {formatEUR(state.next.amount)}
             </dd>
           </>

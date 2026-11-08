@@ -36,7 +36,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
       await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       await expect(page.getByTestId('konto-sheet')).toBeVisible();
-      await page.getByTestId('konto-settings-inline').locator('summary').click();
+      await page.getByTestId('konto-positions').locator('summary').click();
       await shot(page, '2-fixkostenkonto-sheet', false);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);

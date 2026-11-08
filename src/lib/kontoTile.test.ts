@@ -82,6 +82,13 @@ describe('Grund und Plan in einem Satz (deine Daten nachgebaut)', () => {
     expect(coveredText(st, 1)).toBe('Alles eingeplant bis Oktober 2027.');
     expect(coveredText(st, 25)).toBe('Alles eingeplant bis 24. Oktober.');
   });
+  it('eine Rechnung: „kommt“; schon diesen Monat: „Diesen Monat reicht das Geld nicht.“', () => {
+    const one = kontoState({ ...DATA, positions: [pos('miete', 'Miete', 2500), pos('kfz', 'Kfz-Versicherung', 5040, [2])] }, NOV, setUp(5192.57));
+    expect(reasonText(one, 1)).toBe('Im Februar kommt Kfz-Versicherung.');
+    const now = kontoState(DATA, NOV, setUp(100));
+    expect(now.gapFrom).toBe(NOV);
+    expect(reasonText(now, 1)).toBe('Diesen Monat reicht das Geld nicht.');
+  });
   it('drei Rechnungen: die zwei größten im Satz', () => {
     expect(billNames([{ name: 'A', amount: 3 }, { name: 'B', amount: 2 }, { name: 'C', amount: 1 }])).toBe('A und B');
     expect(billNames([{ name: 'A', amount: 3 }], 2)).toBe('A');

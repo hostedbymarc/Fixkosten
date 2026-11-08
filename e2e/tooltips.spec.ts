@@ -186,19 +186,13 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
-      // setup without an own account: „Dein Plan“ has the ⓘ „Mit einem eigenen Konto …“
-      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
+      // setup without an own account, nothing set aside: the money is missing at once – one-time amount, no gap question
+      await page.getByTestId('konto-tile-start').click();
       await page.getByTestId('konto-setup-account-no').click();
       await page.getByTestId('konto-setup-nothing').click();
-      const setupSheet = page.getByTestId('bottom-sheet');
       await expect(page.getByTestId('konto-setup-plan')).toBeVisible();
-      await animationsDone(page, 'bottom-sheet');
-      await page.waitForTimeout(300); // the sheet settles to the plan's height
-      await exercise(page, info(setupSheet, 'Monatsbetrag zur Seite legen'), mode, seen, setupSheet);
-      await page.getByTestId('plan-order-done').click();
-      if (await page.getByTestId('plan-gap-done').count()) await page.getByTestId('plan-gap-done').click();
       await page.getByTestId('konto-setup-finish').click();
-      await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
+      await expect(page.getByTestId('konto-setup')).toHaveCount(0);
 
       // --- Monat
       await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
@@ -209,9 +203,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
       const kontoSheet = page.getByTestId('bottom-sheet');
       await animationsDone(page, 'bottom-sheet');
-      await exercise(page, info(kontoSheet, 'Stand am Monatsende'), mode, seen, kontoSheet);
-      await kontoSheet.getByTestId('konto-settings-inline').locator('summary').click();
-      await exercise(page, info(kontoSheet, 'Schon zur Seite gelegt'), mode, seen, kontoSheet);
+      await exercise(page, info(kontoSheet, 'Verlauf mit Plan'), mode, seen, kontoSheet);
       await kontoSheet.getByTestId('konto-positions').locator('summary').first().click();
       await exercise(page, info(kontoSheet, 'Eingeplante Rechnungen'), mode, seen, kontoSheet);
       await page.keyboard.press('Escape');
@@ -254,11 +246,11 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
 
       // --- Analyse
       await goTo(page, 'analyse');
-      await exercise(page, info(page.getByTestId('konto-analyse'), 'Stand am Monatsende'), mode, seen);
+      await exercise(page, info(page.getByTestId('konto-analyse'), 'Verlauf mit Plan'), mode, seen);
 
       // --- Einstellungen
       await goTo(page, 'einstellungen');
-      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
+      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Schon zur Seite gelegt', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
         await exercise(page, info(page, name), mode, seen);
       }
 

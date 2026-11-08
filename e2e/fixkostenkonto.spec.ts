@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { animationsDone, appSettled, expect, FIXTURE, goTo, openInfo, setUpKonto, test, TODAY } from './fixtures';
 
 // „Fixkosten einplanen“ (internally Fixkostenkonto): onboarding with the currency only (Euro with
-// de-AT / de-DE, Franken), activation through the invitation card, sheet with the one-time amount,
+// de-AT / de-DE, Franken), activation through the invitation card, the short sheet („Warum € X?“),
 // analysis section – on iPhone SE, iPhone 15, iPad portrait/landscape and desktop 1440, light and dark. Runs in the desktop project only; every viewport is its own context below.
 
 const DIR = 'docs/screenshots/fixkostenkonto';
@@ -53,7 +53,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('konto-invite')).toBeVisible();
         await expect(page.getByTestId('konto-invite')).toContainText('Neu: Fixkosten einplanen. Erbse sagt dir, wie viel du monatlich zur Seite legst.');
         await expect(page.getByTestId('konto-tile')).toHaveCount(0);
-        const avg = amountOf((await page.getByTestId('kpi-value').textContent())!);
         await shot(page, vp, scheme, '1-einladung');
 
         await page.getByTestId('konto-invite-enable').click();
@@ -61,37 +60,31 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const tile = page.getByTestId('konto-tile');
         await expect(tile).toBeVisible();
         await setUpKonto(page);
-        const order = amountOf((await page.getByTestId('konto-tile-value').textContent())!);
+        // everything planned: the one amount is the base amount
+        await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-view', 'covered');
+        const order = amountOf((await page.getByTestId('tile-amount').textContent())!);
         await tile.scrollIntoViewIfNeeded();
         await shot(page, vp, scheme, '2-kachel');
 
-        await tile.click();
+        await tile.click({ position: { x: 12, y: 12 } });
         const sheet = page.getByTestId('konto-sheet');
         await expect(sheet).toBeVisible();
-        await expect(sheet.getByTestId('konto-order-value')).toHaveText(/./);
-        expect(amountOf((await sheet.getByTestId('konto-order-value').textContent())!)).toBe(order);
-        // D = all debits of the 12 months from next month on ÷ 12, rounded up to € 5. Without a change in
-        // those months (no hint line) that is the Ø pro Monat (seed: Fixkosten on the Fixkostenkonto).
+        // „Warum € X?“: the normal month = the amount of the tile
+        await expect(sheet.getByTestId('konto-why')).toContainText(/^Warum €/);
+        expect(amountOf((await sheet.getByTestId('konto-why-base').textContent())!)).toBe(order);
+        // base = all debits of the 12 months from next month on ÷ 12, rounded up to € 5
         const exactText = (await sheet.getByTestId('konto-order-exact').textContent())!;
         const exact = amountOf(exactText.match(/€\s?\d[\d.]*(,\d+)?/)![0]);
         expect(order).toBe(Math.ceil(Math.round(exact * 100) / 500) * 5);
-        if ((await sheet.getByTestId('konto-order-cause').count()) === 0) expect(exact).toBeCloseTo(avg, 2);
-        else await expect(sheet.getByTestId('konto-order-cause')).toHaveText(/^(Mehr|Weniger), weil /);
-        // the assumption is in the ⓘ next to „Stand am Monatsende“
+        // the assumption is in the ⓘ next to „Verlauf mit Plan“
         const assumption = await openInfo(page, sheet.getByTestId('konto-assumption'));
-        await expect(assumption).toContainText('vor allen Abbuchungen');
+        await expect(assumption).toContainText('Danach kommen die Abbuchungen');
         await page.keyboard.press('Escape');
         await expect(assumption).toHaveCount(0);
         await expect(sheet).toBeVisible();
         await expect(sheet.getByTestId('konto-chart')).toBeVisible();
         await expect(sheet.getByTestId('konto-dot')).toHaveCount(12);
-        const status = sheet.getByTestId('sheet-status');
-        await expect(status).toBeVisible();
-        if ((await status.getAttribute('data-status')) === 'gap') {
-          await expect(status).toContainText('Zahl einmalig');
-          // months below 0: red dot with „!“ and a signed amount, never colour only
-          await expect(sheet.locator('[data-testid=konto-dot][data-negative]').first()).toBeAttached();
-        }
+        await expect(sheet.getByTestId('konto-plan-status')).toHaveText('Mit diesem Plan nie im Minus.');
         await shot(page, vp, scheme, '3-sheet');
 
         // tap on a month: deposit, debits, balance
@@ -101,14 +94,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(detail).toContainText('Einzahlung');
         await expect(detail).toContainText('Abbuchungen');
         await expect(detail).toContainText('Stand am Monatsende');
-
-        // „Schon zur Seite gelegt“ high enough → planned
-        await sheet.getByTestId('konto-settings-inline').locator('summary').click();
-        await sheet.getByTestId('konto-balance').fill('20000');
-        await expect(sheet.getByTestId('sheet-status-text')).toHaveText(/^Alles eingeplant bis \S+ \d{4}\.$/);
-        await sheet.getByTestId('konto-balance').fill('0');
-        await shot(page, vp, scheme, '4-sheet-eingaben');
-        await page.keyboard.press('Escape');
+        // amount set aside and rounding live in the settings: one link
+        await sheet.getByTestId('konto-settings-link').click();
+        await expect(page.getByTestId('konto-settings')).toBeVisible();
+        await goTo(page, 'monat');
 
         // analysis section
         await goTo(page, 'analyse');
@@ -176,7 +165,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
             await expect(tile).toBeVisible();
             await expect(page.getByTestId('konto-invite')).toHaveCount(0);
             await setUpKonto(page);
-            const value = (await page.getByTestId('konto-tile-value').textContent())!;
+            const value = (await page.getByTestId('tile-amount').textContent())!;
             // annual or quarterly template → monthly share, rounded up to 5
             if (country === 'CH') {
               expect(value).toMatch(/^CHF\s30$/); // Serafe 335 / 12 = 27,92 → 30
@@ -194,7 +183,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
   }
 }
 
-test('Position aufs Alltagskonto: Dauerauftrag sinkt um ihren Monatsanteil', async ({ page }) => {
+test('Position aufs Alltagskonto: Grundbetrag sinkt um ihren Monatsanteil', async ({ page }) => {
   test.skip(test.info().project.name !== 'desktop');
   await importApp(page);
   await page.getByTestId('konto-invite-enable').click();

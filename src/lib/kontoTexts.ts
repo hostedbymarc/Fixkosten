@@ -7,6 +7,8 @@ export const KONTO_TEXTS = {
   'status.setup': 'Fixkosten einplanen',
   'status.covered': 'Alles eingeplant bis {monat}.',
   'reason.bills': 'Im {monat} kommen {rechnungen}.',
+  'reason.bill': 'Im {monat} kommt {rechnungen}.',
+  'reason.now': 'Diesen Monat reicht das Geld nicht.',
   'reason.short': 'Ab {monat} reicht das Geld nicht.',
   'plan.spread': 'Darum bis dahin {extra} extra, ab {folgemonat} {betrag}.',
   'plan.lump': 'Leg bis {datum} {betrag} extra zur Seite.',

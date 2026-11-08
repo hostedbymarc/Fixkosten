@@ -384,14 +384,13 @@ export async function checkRadio(radio: Locator) {
  */
 export async function setUpKonto(page: Page) {
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
-  await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
+  await page.getByTestId('konto-tile-start').click();
   await page.getByTestId('konto-setup-account-yes').click();
-  await page.getByTestId('konto-setup-balance').fill('0');
+  // enough set aside: no gap, everything planned (the gap question does not come)
+  await page.getByTestId('konto-setup-balance').fill('10000');
   await page.getByTestId('konto-setup-next').click();
-  await page.getByTestId('konto-setup-order-no').click();
-  await page.getByTestId('plan-order-done').click();
-  const gap = page.getByTestId('plan-gap-done');
-  if (await gap.count()) await gap.click();
+  await page.getByTestId('konto-setup-order-yes').click();
+  await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'plan');
   await page.getByTestId('konto-setup-finish').click();
   await expect(page.getByTestId('konto-setup')).toHaveCount(0);
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');

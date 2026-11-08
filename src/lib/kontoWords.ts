@@ -43,12 +43,15 @@ export function billNames(bills: KontoDebit[], max = 2): string {
   return names.length <= 1 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} und ${names.at(-1)}`;
 }
 
-/** The reason: „Im Februar kommen Kfz-Versicherung und Haushaltsversicherung.“ (else „Ab Februar reicht das Geld nicht.“) */
+/**
+ * The reason: „Im Februar kommen Kfz-Versicherung und Haushaltsversicherung.“ (one bill: „kommt“);
+ * without big bills „Ab Februar reicht das Geld nicht.“; already this month „Diesen Monat reicht das Geld nicht.“
+ */
 export function reasonText(state: KontoState, start: MonthStart, today?: Date): string {
   if (!state.gapFrom) return '';
-  return state.gapBills.length
-    ? t('reason.bills', { monat: monthName(state.gapFrom), rechnungen: billNames(state.gapBills) })
-    : t('reason.short', { monat: fromLabel(state.gapFrom, start, today) });
+  if (state.gapFrom === state.months[0]?.period) return t('reason.now');
+  if (!state.gapBills.length) return t('reason.short', { monat: fromLabel(state.gapFrom, start, today) });
+  return t(state.gapBills.length === 1 ? 'reason.bill' : 'reason.bills', { monat: monthName(state.gapFrom), rechnungen: billNames(state.gapBills) });
 }
 
 /** The deadline of the one-time amount has passed (the money is missing in the active month): „jetzt“. */
