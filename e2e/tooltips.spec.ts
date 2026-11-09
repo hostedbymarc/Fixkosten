@@ -194,6 +194,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(page.getByTestId('konto-tile')).toBeVisible();
       // setup without an own account, nothing set aside; a gap that can be spread asks one more question
       await page.getByTestId('konto-tile-start').click();
+      await expect(page.getByTestId('bottom-sheet')).not.toHaveAttribute('data-animating', '');
       await page.getByTestId('konto-setup-account-no').click();
       await page.getByTestId('konto-setup-nothing').click();
       await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', /^(gap|plan)$/);

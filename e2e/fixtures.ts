@@ -385,6 +385,9 @@ export async function checkRadio(radio: Locator) {
 export async function setUpKonto(page: Page) {
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
   await page.getByTestId('konto-tile-start').click();
+  // a tap while the sheet slides in can land on the scrim and close it: wait until it rests
+  await expect(page.getByTestId('bottom-sheet')).toBeVisible();
+  await expect(page.getByTestId('bottom-sheet')).not.toHaveAttribute('data-animating', '');
   await page.getByTestId('konto-setup-account-yes').click();
   // enough set aside: no gap, everything planned (the gap question does not come)
   await page.getByTestId('konto-setup-balance').fill('10000');
