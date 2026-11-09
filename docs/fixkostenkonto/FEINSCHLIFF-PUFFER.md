@@ -93,6 +93,7 @@ Die vollständige Liste steht in `TEXTE.md` (neu erzeugt).
 | Test | Ursache | Behebung |
 |---|---|---|
 | fullpage „Monat November“ | Der versteckte Analyse-Tab wird während der Messung aufgebaut. Die Seitenhöhe springt. | `settle()` wartet auf `data-analyse-ready` am `<html>`. 18/18 grün. |
+| fullpage „Positionen“ (Runde 3, iPhone 15 und iPad hoch) | Unter voller Last wichen Viewport und Ganzseiten-Bild um 7 % ab. Allein lief der Test 12/12 grün. | Bis zu drei Aufnahme-Paare. Ein echter Fehler zeigt sich in jedem Paar. Abweichende Paare hängen als Bild am Test. |
 | screenshots Phase 2 (Pro Max) | Der Klick kam, während das Sheet noch hereinfuhr. Dazu öffnete ein Hover das ⓘ „Startmonat“ nach dem Scrollen. Esc schloss dann nur das ⓘ. | Helfer `sheetIn()` wartet auf die Animation. `closeSheet()` nimmt die Maus weg und prüft, dass kein ⓘ offen ist. 30/30 grün auf allen Projekten. |
 | layout-phase2 „sheets“ (iPad quer) | Dasselbe Hover-ⓘ unter dem Mauszeiger. | Maus weg, ⓘ zu, dann Esc. 40/40 grün. |
 | perf „Scrollen Monat“ | Die Grenze von 16 ms hängt an der Geschwindigkeit des Containers. | Kalibrierung, siehe unten. 3/3 grün, dreimal hintereinander. |
