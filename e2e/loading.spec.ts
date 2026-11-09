@@ -73,6 +73,8 @@ test.describe('Lade-Animation', () => {
         ),
       };
     };
+    // a pending CSS animation has no start time yet (startTime null): wait until all have started
+    await splash.evaluate((el) => Promise.all(el.getAnimations({ subtree: true }).map((a) => a.ready)));
     const before = await splash.evaluate(motion);
     expect(await splash.evaluate((el) => [getComputedStyle(el).opacity, getComputedStyle(el).pointerEvents])).toEqual(['1', 'none']);
     expect(before.names).toEqual(['splash-in', 'splash-in', 'splash-in', 'splash-pulse', 'splash-pulse', 'splash-pulse']);
