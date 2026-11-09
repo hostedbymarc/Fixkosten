@@ -30,6 +30,8 @@ export function InfoTip({ label, title, children, className = '', style, testId 
   const button = useRef<HTMLButtonElement>(null);
   const popover = useRef<HTMLDivElement>(null);
   const pointer = useRef('mouse');
+  // opened by hovering: a tap on the icon then keeps it open (no toggle back to closed)
+  const byHover = useRef(false);
   // a tap on the popover moves the focus away from the icon: that blur does not close it
   const downInPopover = useRef(false);
   const id = useId();
@@ -38,7 +40,10 @@ export function InfoTip({ label, title, children, className = '', style, testId 
 
   // below the icon, or above when there is no room; clamped to the viewport
   useLayoutEffect(() => {
-    if (!open) return setPos(null);
+    if (!open) {
+      byHover.current = false;
+      return setPos(null);
+    }
     const place = () => {
       if (!button.current || !popover.current) return;
       const b = button.current.getBoundingClientRect();
@@ -99,7 +104,11 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         style={style}
         data-testid={testId}
         onPointerDown={(e) => (pointer.current = e.pointerType)}
-        onPointerEnter={(e) => e.pointerType === 'mouse' && setOpen(true)}
+        onPointerEnter={(e) => {
+          if (e.pointerType !== 'mouse' || open) return;
+          byHover.current = true;
+          setOpen(true);
+        }}
         onPointerLeave={(e) => e.pointerType === 'mouse' && setOpen(false)}
         onFocus={(e) => e.currentTarget.matches(':focus-visible') && setOpen(true)}
         onBlur={() => {
@@ -108,7 +117,9 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         }}
         onClick={(e) => {
           // touch and keyboard toggle; a mouse already opened it on hover
-          if (e.detail === 0 || pointer.current !== 'mouse') setOpen((v) => !v);
+          if (e.detail !== 0 && pointer.current === 'mouse') return;
+          if (open && byHover.current) byHover.current = false;
+          else setOpen((v) => !v);
         }}
       >
         <InfoIcon size={15} />

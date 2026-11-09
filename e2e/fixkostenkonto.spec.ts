@@ -167,9 +167,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
             await expect(page.getByTestId('konto-invite')).toHaveCount(0);
             await setUpKonto(page);
             const value = (await page.getByTestId('tile-amount').textContent())!;
-            // annual or quarterly template → monthly share, rounded up to 5
+            // annual or quarterly template → monthly share, to the cent („Monatsbetrag runden“ off)
             if (country === 'CH') {
-              expect(value).toMatch(/^CHF\s30$/); // Serafe 335 / 12 = 27,92 → 30
+              expect(value).toMatch(/^CHF\s27\.92$/); // Serafe 335 / 12 = 27,916… → 27.92
             } else if (country === 'DE') {
               expect(value).toMatch(/^40\s€$/); // Rundfunkbeitrag 120 / 3 = 40
             } else {
