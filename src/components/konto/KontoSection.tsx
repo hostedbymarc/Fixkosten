@@ -31,7 +31,7 @@ function KontoSectionOn({ ds, today }: { ds: Dataset; today: Period }) {
             {formatEUR(state.next.amount)} / Monat
           </p>
         </div>
-        <KontoSimulationView simulation={state.planSimulation} active={today} chartHeight={240} />
+        <KontoSimulationView simulation={state.planSimulation} active={today} buffer={state.buffer} chartHeight={240} />
       </div>
     </section>
   );

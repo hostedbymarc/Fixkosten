@@ -31,7 +31,7 @@ interface Props {
 
 const BIG = 'focus-ring flex min-h-14 w-full items-center justify-center rounded-2xl px-5 py-3 text-center text-[17px] font-semibold leading-snug';
 const PRIMARY = `${BIG} bg-accent text-white hover:bg-accent-hover disabled:opacity-50`;
-const SECONDARY = `${BIG} glass-inset bg-surface text-ink hover:bg-zinc-100`;
+const SECONDARY = `${BIG} border border-control-edge bg-control text-ink hover:bg-control-track`;
 
 /**
  * Setup of „Fixkosten einplanen“, one question per screen:

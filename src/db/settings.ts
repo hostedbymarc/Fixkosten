@@ -30,6 +30,11 @@ export interface KontoCheck {
 export type GapMode = 'spread' | 'lump';
 export const GAP_MODES: GapMode[] = ['spread', 'lump'];
 
+/** Sicherheitspuffer: the balance with the plan never goes below it at a month's end. */
+export type Buffer = 0 | 100 | 250 | 500;
+export const BUFFERS: Buffer[] = [0, 100, 250, 500];
+export const DEFAULT_BUFFER: Buffer = 100;
+
 // 'firstPod' (stored id, kept for existing data) = „Zum ersten Mal alles gedeckt“
 export const MILESTONES = ['firstPod', 'streak3', 'streak6', 'year'] as const;
 export type Milestone = (typeof MILESTONES)[number];
@@ -44,6 +49,10 @@ export interface KontoSettings {
   /** month for which the standing order already arrived; another month = not yet */
   receivedFor: Period | null;
   rounding: Rounding;
+  /** „Monatsbetrag runden“: off → to the cent. Not stored: on when a rounding was stored (every setup before this switch) */
+  roundingOn: boolean;
+  /** Sicherheitspuffer (default € 100, also for existing setups) */
+  buffer: Buffer;
   // ---- Einrichtung und Plan (all optional in storage; defaults below) ----
   /** balance anchor; none: `balance` without corrections (data from PR #39) */
   anchor: KontoAnchor | null;
@@ -78,6 +87,8 @@ export const DEFAULT_KONTO: KontoSettings = {
   balance: 0,
   receivedFor: null,
   rounding: DEFAULT_ROUNDING,
+  roundingOn: false,
+  buffer: DEFAULT_BUFFER,
   anchor: null,
   hasAccount: null,
   orderRuns: null,
@@ -130,6 +141,8 @@ export function toKontoSettings(value: unknown): KontoSettings {
     balance,
     receivedFor: typeof v.receivedFor === 'string' && isPeriod(v.receivedFor) ? v.receivedFor : null,
     rounding: toRounding(v.rounding),
+    roundingOn: typeof v.roundingOn === 'boolean' ? v.roundingOn : isRounding(v.rounding),
+    buffer: BUFFERS.includes(v.buffer as Buffer) ? (v.buffer as Buffer) : DEFAULT_BUFFER,
     anchor,
     hasAccount: typeof v.hasAccount === 'boolean' ? v.hasAccount : null,
     orderRuns: typeof v.orderRuns === 'boolean' ? v.orderRuns : null,
@@ -147,6 +160,8 @@ export function toKontoSettings(value: unknown): KontoSettings {
     gapMode: GAP_MODES.includes(v.gapMode as GapMode) ? (v.gapMode as GapMode) : null,
   };
 }
+
+const isRounding = (v: unknown) => v === 1 || v === 5 || v === 10;
 
 /** Without a stored setupDone: set up when there is a balance or an anchor. */
 function derivedSetupDone(s: Pick<KontoSettings, 'balance' | 'anchor'>): boolean {
@@ -180,6 +195,9 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.plan.accountDone || s.plan.orderDone || s.plan.gapDone) out.plan = s.plan;
   if (s.milestonesShown.length) out.milestonesShown = s.milestonesShown;
   if (s.gapMode) out.gapMode = s.gapMode;
+  // `rounding` is always stored, so a missing `roundingOn` reads as on
+  if (!s.roundingOn) out.roundingOn = false;
+  if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;
   return out;
 }
 

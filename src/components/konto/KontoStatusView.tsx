@@ -148,7 +148,7 @@ export function WhyAmount({ state }: { state: KontoState }) {
   );
 }
 
-/** Status of the plan (sheet): „Mit diesem Plan nie im Minus.“ with a tick, or – one-time amount open – the reason. */
+/** Status of the plan (sheet): „Mit diesem Plan nie unter € 100.“ (buffer 0: „… nie im Minus.“) with a tick, or – one-time amount open – the reason. */
 export function PlanStatus({ state, start }: { state: KontoState; start: MonthStart }) {
   if (state.mode === 'lump') {
     return (
@@ -160,7 +160,7 @@ export function PlanStatus({ state, start }: { state: KontoState; start: MonthSt
   return (
     <p className="flex items-center gap-2 text-[15px] font-semibold leading-snug text-ink" data-testid="konto-plan-status" data-ok="true">
       <Pea size={20} state="checked" className="shrink-0" />
-      {t('sheet.ok')}
+      {state.buffer > 0 ? t('sheet.ok.buffer', { betrag: formatEUR(state.buffer) }) : t('sheet.ok')}
     </p>
   );
 }
@@ -179,7 +179,7 @@ export function CopyButton({ amount, testId }: { amount: number; testId: string 
           /* no clipboard: the amount stays visible */
         }
       }}
-      className="focus-ring glass-inset mt-2 flex h-11 items-center rounded-xl bg-surface px-3 text-[15px] font-semibold text-accent-ink"
+      className="focus-ring mt-2 flex h-11 items-center rounded-xl border border-control-edge bg-control px-3 text-[15px] font-semibold text-accent-ink hover:bg-control-track"
       data-testid={testId}
     >
       {copied ? t('plan.copied') : t('plan.copy')}

@@ -15,6 +15,24 @@ async function shot(page: Page, name: string, fullPage = false) {
   await style.evaluate((el) => (el as Element).remove());
 }
 
+/** A sheet opened: wait until it has slid in (a tap while it moves can land beside its target). */
+async function sheetIn(page: Page) {
+  await expect(page.getByTestId('bottom-sheet').last()).toBeVisible();
+  await animationsDone(page, 'bottom-sheet');
+}
+
+/**
+ * Esc closes the top sheet. The pointer is moved away first: an ⓘ that slid under the resting pointer
+ * may have opened by hover, and Esc would close only that ⓘ (by design).
+ */
+async function closeSheet(page: Page) {
+  const before = await page.getByTestId('bottom-sheet').count();
+  await page.mouse.move(1, 1);
+  await expect(page.locator('[role=tooltip]')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('bottom-sheet')).toHaveCount(before - 1);
+}
+
 test.describe('Screenshots Phase 2', () => {
   test('month screens', async ({ app }) => {
     await app.evaluate(() => document.fonts.ready);
@@ -41,23 +59,33 @@ test.describe('Screenshots Phase 2', () => {
     await shot(app, 'positionen-full', true);
 
     await app.getByRole('button', { name: 'Position hinzufügen' }).click();
+    await sheetIn(app);
     await app.getByLabel('Name').fill('KFZ-Versicherung');
     await app.getByLabel('Betrag').fill('120,50');
     await app.getByRole('radio', { name: 'Quartal' }).click();
-    await app.getByLabel('Startmonat').selectOption({ label: 'Feb' });
+    await expect(app.getByRole('radio', { name: 'Quartal' })).toHaveAttribute('aria-checked', 'true');
+    await app.getByLabel('Startmonat', { exact: true }).selectOption({ label: 'Feb' });
     await shot(app, 'position-neu');
-    await app.keyboard.press('Escape');
+    await closeSheet(app);
 
     await app.getByRole('button', { name: 'Handy – Details' }).click();
+    await sheetIn(app);
     await shot(app, 'position-detail');
     await app.getByRole('button', { name: 'Bearbeiten' }).click();
+    await sheetIn(app);
     await app.getByLabel('Betrag').fill('8');
     await app.getByTestId('change-mode').scrollIntoViewIfNeeded();
     await shot(app, 'position-ab-wann');
+    // Esc in the edit form goes back to the detail sheet, the second one closes it
+    await app.mouse.move(1, 1);
+    await expect(app.locator('[role=tooltip]')).toHaveCount(0);
     await app.keyboard.press('Escape');
-    await app.keyboard.press('Escape');
+    await expect(app.getByTestId('position-detail')).toBeVisible();
+    await sheetIn(app);
+    await closeSheet(app);
 
     await app.getByRole('button', { name: 'Kategorien' }).click();
+    await sheetIn(app);
     await shot(app, 'kategorien');
     await app.getByRole('button', { name: 'Mobilität bearbeiten' }).click();
     await shot(app, 'kategorie-bearbeiten');

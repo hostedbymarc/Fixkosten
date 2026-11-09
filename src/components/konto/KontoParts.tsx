@@ -2,7 +2,7 @@ import type { MonthStart } from '../../lib/activeMonth';
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
 import { setAnchor } from '../../db/kontoActions';
-import { writeKonto, type KontoSettings } from '../../db/settings';
+import { BUFFERS, writeKonto, type Buffer, type KontoSettings } from '../../db/settings';
 import { localToday } from '../../lib/activeMonth';
 import { ROUNDING_CHOICES, type KontoMonth, type KontoSimulation, type Rounding } from '../../lib/fixkostenkonto';
 import { amountToInput, formatEUR, formatEURSet, MINUS, parseAmount } from '../../lib/format';
@@ -11,7 +11,7 @@ import { t } from '../../lib/kontoTexts';
 import { periodLabel } from '../../lib/period';
 import type { Period } from '../../lib/types';
 import { AlertIcon } from '../Icons';
-import { AmountField, Segmented } from '../form';
+import { AmountField, Segmented, SwitchField } from '../form';
 
 /** The assumption of the simulation, visible wherever its numbers are. */
 /** ⓘ of „Verlauf mit Plan“: the deposit comes on the day the month starts („am 1.“, „am 25.“, „am Monatsletzten“). */
@@ -191,16 +191,53 @@ export function BalanceField({ balance, testId = 'konto-balance' }: { balance: n
   );
 }
 
-/** „Monatsbetrag aufrunden auf € 1 / 5 / 10“ */
+/**
+ * „Monatsbetrag runden“ (off: to the cent); only when it is on the choice € 1 / 5 / 10 (€ 5 when
+ * switched on the first time).
+ */
 export function RoundingField({ settings }: { settings: KontoSettings }) {
   return (
-    <Segmented<string>
-      label={t('settings.rounding')}
-      value={String(settings.rounding)}
-      onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
-      options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}
-    />
+    <div className="flex flex-col gap-3" data-testid="konto-rounding">
+      <SwitchField
+        label={t('settings.roundingOn')}
+        checked={settings.roundingOn}
+        onChange={(on) => void writeKonto(db, { roundingOn: on })}
+        testId="konto-rounding-on"
+      />
+      {settings.roundingOn && (
+        <div data-testid="konto-rounding-step">
+          <Segmented<string>
+            label={t('settings.rounding')}
+            value={String(settings.rounding)}
+            onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
+            options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}
+          />
+        </div>
+      )}
+    </div>
   );
+}
+
+/** „Sicherheitspuffer: Aus / € 100 / € 250 / € 500“ */
+export function BufferField({ settings }: { settings: KontoSettings }) {
+  return (
+    <div data-testid="konto-buffer">
+      <Segmented<string>
+        label={t('settings.buffer')}
+        value={String(settings.buffer)}
+        onChange={(v) => void writeKonto(db, { buffer: Number(v) as Buffer })}
+        options={BUFFERS.map((b) => ({ value: String(b), label: b === 0 ? t('settings.buffer.off') : formatEUR(b) }))}
+        info={t('settings.buffer.info')}
+      />
+    </div>
+  );
+}
+
+/** The month the card under „Verlauf mit Plan“ shows without a tap: the lowest balance, the earlier one on a tie. */
+export function lowestMonth(simulation: KontoSimulation): KontoMonth | null {
+  let best: KontoMonth | null = null;
+  for (const m of simulation.months) if (!best || Math.round(m.end * 100) < Math.round(best.end * 100)) best = m;
+  return best;
 }
 
 /** A folded block (native <details>): heading button with 44 px height, content below. */

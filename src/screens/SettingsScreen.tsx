@@ -8,7 +8,7 @@ import { useKontoState } from '../components/konto/KontoSheet';
 import { KontoSetup } from '../components/konto/KontoTile';
 import { t } from '../lib/kontoTexts';
 import { PlanAmount } from '../components/konto/KontoStatusView';
-import { BalanceField, RoundingField } from '../components/konto/KontoParts';
+import { BalanceField, BufferField, RoundingField } from '../components/konto/KontoParts';
 import { setGapMode } from '../db/kontoActions';
 import type { GapMode } from '../db/settings';
 import { useKonto } from '../db/useKonto';
@@ -397,13 +397,14 @@ function KontoSection({ ds }: { ds: Dataset }) {
                     </p>
                   )}
                 </div>
+                <BufferField settings={settings} />
                 <RoundingField settings={settings} />
               </div>
             )}
             <button
               type="button"
               onClick={() => setSetup(true)}
-              className="focus-ring h-11 self-start rounded-xl px-4 text-[15px] font-semibold text-accent-ink glass-inset bg-surface hover:bg-accent-soft"
+              className="focus-ring h-11 self-start rounded-xl border border-control-edge bg-control px-4 text-[15px] font-semibold text-accent-ink hover:bg-control-track"
               data-testid="konto-setup-edit"
             >
               {settings.setupDone ? t('settings.edit') : t('status.setup')}

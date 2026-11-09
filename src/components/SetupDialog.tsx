@@ -168,7 +168,7 @@ function CountryStep({ country, onChange, onBack, onNext }: { country: Country; 
               aria-checked={on}
               onClick={() => onChange(countryForCurrency(c, browserLanguages()))}
               className={`focus-ring flex min-h-[52px] items-center rounded-2xl border px-4 text-left text-[16px] ${
-                on ? 'border-accent-ink bg-accent-soft font-semibold text-ink' : 'border-edge bg-field font-medium text-ink hover:border-zinc-300'
+                on ? 'border-control-on bg-control-on font-semibold text-control-ink' : 'border-control-edge bg-control font-medium text-ink hover:bg-control-track'
               }`}
               data-testid={`setup-currency-${c}`}
             >

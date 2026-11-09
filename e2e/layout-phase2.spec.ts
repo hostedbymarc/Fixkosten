@@ -39,7 +39,12 @@ test.describe('Layout Phase 2 (gemessen)', () => {
     // the save button is reachable inside the sheet (scroll container)
     await app.getByRole('button', { name: 'Position anlegen' }).scrollIntoViewIfNeeded();
     await expect(app.getByRole('button', { name: 'Position anlegen' })).toBeInViewport();
+    // scrolling moved the ⓘ „Startmonat“ under the resting mouse pointer: it may have opened by hover,
+    // and Esc then closes only that ⓘ (by design). Move the pointer away first, then close the sheet.
+    await app.mouse.move(1, 1);
+    await expect(app.locator('[role=tooltip]')).toHaveCount(0);
     await app.keyboard.press('Escape');
+    await expect(app.getByTestId('bottom-sheet')).toHaveCount(0);
 
     await app.getByRole('button', { name: 'Depotentgelt – Details' }).click();
     await sheet(app);

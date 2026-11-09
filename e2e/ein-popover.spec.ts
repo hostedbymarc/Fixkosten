@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
 import { animationsDone, appSettled, expect, FIXTURE, goTo, setUpKonto, test, TODAY } from './fixtures';
 
-// Only one popover at a time (ⓘ and the chart's month popup), and the reworded ⓘ texts.
+// Only one popover at a time (every ⓘ; the chart „Verlauf mit Plan“ has no popup, its month is in the card), and the reworded ⓘ texts.
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots of the
 // changed ⓘ texts to docs/screenshots/info-texte/. Runs in the desktop project; every viewport is its own context.
 
@@ -22,28 +22,6 @@ const CHART_INFO = 'So entwickelt sich dein Geld, wenn du den Betrag immer am 1.
 
 /** every open ⓘ popover on the page (screen and sheet) */
 const popovers = (page: Page) => page.locator('[role=tooltip]');
-/** the chart's month popup (Recharts tooltip with content) */
-const chartPopup = (page: Page) => page.getByTestId('konto-chart').getByTestId('chart-tooltip');
-
-/**
- * A spot of the chart the open popover does not cover: a point first; on small phones the ⓘ lies
- * over all points, then the plot area near the x axis (a tap there opens the month's popup too).
- */
-async function freeSpot(page: Page): Promise<{ target: Locator; position?: { x: number; y: number } }> {
-  const pop = await page.locator('[role=tooltip]').boundingBox();
-  const covered = (b: { x: number; y: number; width: number; height: number }) =>
-    !!pop && b.x < pop.x + pop.width + 8 && b.x + b.width > pop.x - 8 && b.y < pop.y + pop.height + 8 && b.y + b.height > pop.y - 8;
-  const dots = page.getByTestId('konto-sheet').getByTestId('konto-dot');
-  for (let i = (await dots.count()) - 1; i >= 0; i--) {
-    const b = await dots.nth(i).boundingBox();
-    if (b && !covered(b)) return { target: dots.nth(i) };
-  }
-  const chart = page.getByTestId('konto-sheet').getByTestId('konto-chart');
-  const c = (await chart.boundingBox())!;
-  const position = { x: c.width / 2, y: c.height - 40 };
-  if (covered({ x: c.x + position.x - 4, y: c.y + position.y - 4, width: 8, height: 8 })) throw new Error('keine freie Stelle im Diagramm');
-  return { target: chart, position };
-}
 
 async function shot(page: Page, name: string) {
   await page.waitForTimeout(250);
@@ -71,7 +49,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.setTimeout(120_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('zwei ⓘ nacheinander: nur das zweite ist offen; ⓘ und Diagramm-Popup schließen sich gegenseitig', async ({ page }) => {
+      test('zwei ⓘ nacheinander: nur das zweite ist offen; Diagrammpunkt füllt die Karte, kein Popup', async ({ page }) => {
         await start(page);
 
         // screen: tile ⓘ, then the ⓘ of „Abzüge vom Netto“
@@ -103,17 +81,20 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(chartInfo);
         await expect(page.getByTestId('konto-assumption-popover')).toHaveText(`Verlauf mit Plan${CHART_INFO}`);
         await shot(page, `${tag}-verlauf-mit-plan`);
-        // a point the open ⓘ does not cover (on phones it lies over part of the chart)
-        const spot = await freeSpot(page);
-        await (use.hasTouch ? spot.target.tap({ position: spot.position }) : spot.target.click({ position: spot.position }));
-        await expect(chartPopup(page)).toBeVisible();
+        // the chart has no popup any more: a tapped point fills the card under the chart (one month info)
+        await page.keyboard.press('Escape');
         await expect(popovers(page)).toHaveCount(0);
-
-        // and back: the ⓘ closes the chart popup
+        const dot = sheet.getByTestId('konto-dot').nth(3);
+        const period = await dot.getAttribute('data-period');
+        await tap(dot);
+        await expect(sheet.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
+        await expect(page.getByTestId('chart-tooltip')).toHaveCount(0);
+        await expect(popovers(page)).toHaveCount(0);
+        // the ⓘ opens over it; the card stays
         await tap(chartInfo);
         await expect(page.getByTestId('konto-assumption-popover')).toBeVisible();
-        await expect(chartPopup(page)).toHaveCount(0);
         await expect(popovers(page)).toHaveCount(1);
+        await expect(sheet.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
 
         // ⓘ „Eingeplante Rechnungen“ (in the fold), then the chart ⓘ: only the second
         await page.keyboard.press('Escape');

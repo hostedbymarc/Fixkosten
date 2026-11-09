@@ -11,7 +11,7 @@
 import type { GapMode, KontoCheck, KontoSettings, Milestone } from '../db/settings';
 import { MILESTONES } from '../db/settings';
 import type { MonthStart } from './activeMonth';
-import { kontoOverview, onKonto, simulateKonto, standingOrder, type KontoDebit, type KontoOverview, type KontoSimulation } from './fixkostenkonto';
+import { kontoOverview, onKonto, roundStep, simulateKonto, standingOrder, type KontoDebit, type KontoOverview, type KontoSimulation } from './fixkostenkonto';
 import { addPeriods, toPeriod } from './period';
 import type { Dataset, Period } from './types';
 
@@ -19,12 +19,12 @@ const cents = (v: number) => Math.round(v * 100);
 const after = (iso: string, anchor: string) => Date.parse(iso) > Date.parse(anchor);
 
 /** The expected balance today. Without an anchor (data from PR #39): the stored balance. */
-export function expectedBalance(ds: Dataset, s: Pick<KontoSettings, 'anchor' | 'balance' | 'checks' | 'rounding'>): number {
+export function expectedBalance(ds: Dataset, s: Pick<KontoSettings, 'anchor' | 'balance' | 'checks' | 'rounding' | 'roundingOn'>): number {
   const anchor = s.anchor;
   if (!anchor) return s.balance;
   let total = cents(anchor.amount);
   for (const c of s.checks) {
-    if (c.deposited && after(c.answeredAt, anchor.at)) total += cents(c.amount ?? standingOrder(ds, c.period, s.rounding).amount);
+    if (c.deposited && after(c.answeredAt, anchor.at)) total += cents(c.amount ?? standingOrder(ds, c.period, roundStep(s)).amount);
   }
   for (const p of ds.payments) {
     if (p.status !== 'paid' || !after(p.paidAt, anchor.at)) continue;
@@ -78,15 +78,17 @@ export interface KontoState {
   overview: KontoOverview;
   /** expected amount set aside today („Schon zur Seite gelegt“) */
   balance: number;
+  /** Sicherheitspuffer: with the plan no month ends below it */
+  buffer: number;
   /** Grundbetrag: the rounded 12-month amount (= overview.order.amount) */
   order: number;
   /** false: „Nein, ich plane nur“ – no own account, the money is set aside by hand */
   hasAccount: boolean;
   /** the setup questions are answered and stored */
   setupDone: boolean;
-  /** what is missing with the base amount alone, whole cents; 0 = nothing. = the lowest balance below 0 */
+  /** what is missing with the base amount alone so no month ends below the buffer, whole cents; 0 = nothing */
   gap: number;
-  /** first month that ends below 0 with the base amount alone: the bills of that month are the reason */
+  /** first month that ends below the buffer with the base amount alone: the bills of that month are the reason */
   gapFrom: Period | null;
   /** last day before gapFrom begins: until then the one-time amount („Leg bis 31. Jänner …“) */
   gapBy: Date | null;
@@ -144,11 +146,14 @@ function bigBills(sim: KontoSimulation, period: Period | null, max = 4): KontoDe
 export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start: MonthStart = 1): KontoState {
   const balance = expectedBalance(ds, s);
   const monthDone = depositDone(s, active);
-  const overview = kontoOverview(ds, active, { balance, receivedFor: monthDone ? active : null, rounding: s.rounding });
+  const overview = kontoOverview(ds, active, { balance, receivedFor: monthDone ? active : null, rounding: roundStep(s) });
   const sim = overview.simulation;
   const base = overview.order.amount;
-  const gap = cents(sim.gap) > 0 ? cents(sim.gap) / 100 : 0;
-  const gapFrom = gap > 0 ? (sim.months.find((m) => cents(m.end) < 0)?.period ?? sim.lowestPeriod) : null;
+  // the gap against the Sicherheitspuffer: what is missing so no month ends below it
+  const buffer = cents(s.buffer);
+  const short = sim.months.length ? buffer - cents(sim.lowest) : 0;
+  const gap = short > 0 ? short / 100 : 0;
+  const gapFrom = gap > 0 ? (sim.months.find((m) => cents(m.end) < buffer)?.period ?? sim.lowestPeriod) : null;
   // the deposits still to come up to and including the first month below 0
   const fromIndex = gapFrom ? sim.months.findIndex((m) => m.period === gapFrom) : -1;
   const deposits = fromIndex < 0 ? 0 : fromIndex + 1 - (monthDone ? 1 : 0);
@@ -176,6 +181,7 @@ export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start:
   return {
     overview,
     balance,
+    buffer: s.buffer,
     order: base,
     hasAccount: s.hasAccount !== false,
     setupDone: s.setupDone,

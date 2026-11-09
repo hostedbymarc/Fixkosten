@@ -223,7 +223,7 @@ export function Segmented<T extends string>({
       <FieldLabel id={id} label={label} info={info} as="div" />
       <div role="radiogroup" aria-labelledby={id}>
       <div
-        className={`grid gap-1 rounded-2xl bg-zinc-100 p-1 ${gridClass ?? ''}`}
+        className={`grid gap-1 rounded-2xl border border-control-edge bg-control-track p-1 ${gridClass ?? ''}`}
         style={gridClass ? undefined : { gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
       >
         {options.map((o) => {
@@ -236,7 +236,7 @@ export function Segmented<T extends string>({
               aria-checked={active}
               onClick={() => onChange(o.value)}
               className={`focus-ring min-h-[44px] rounded-xl px-1 text-[14px] font-medium ${
-                active ? 'bg-raised font-semibold text-ink shadow-card' : 'text-ink-mute hover:text-ink'
+                active ? 'bg-control-on font-semibold text-control-ink shadow-card' : 'text-ink-mute hover:bg-control hover:text-ink'
               }`}
             >
               {o.label}

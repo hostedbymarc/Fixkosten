@@ -9,7 +9,7 @@ import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { BottomSheet } from '../BottomSheet';
 import { InfoTip } from '../InfoTip';
-import { chartInfo, Fold, MonthBreakdown, MonthList, RisingHint } from './KontoParts';
+import { chartInfo, Fold, lowestMonth, MonthBreakdown, MonthList, RisingHint } from './KontoParts';
 import { ConfirmButton, PlanStatus, SwitchModeLink, WhyAmount } from './KontoStatusView';
 
 const KontoChart = lazy(() => import('./KontoChart'));
@@ -22,11 +22,17 @@ export function useKontoState(ds: Dataset, active: Period): KontoState {
 }
 
 
-/** „Verlauf mit Plan“: chart, tap detail and the month list of the plan's simulation (sheet and analysis). */
-export function KontoSimulationView({ simulation, active, chartHeight }: { simulation: KontoSimulation; active: Period; chartHeight?: number }) {
-  const [selected, setSelected] = useState<Period | null>(null);
+/**
+ * „Verlauf mit Plan“: chart and ONE month card under it (no popup over the chart). Without a tap the
+ * card shows the month with the lowest balance (the earlier one on a tie); a tap on a point or a row
+ * of „Alle Monate“ shows that month. A small line above the card says which month it is.
+ */
+export function KontoSimulationView({ simulation, active, buffer = 0, chartHeight }: { simulation: KontoSimulation; active: Period; buffer?: number; chartHeight?: number }) {
+  const [picked, setPicked] = useState<Period | null>(null);
   const start = useMonthStart();
-  const month = simulation.months.find((m) => m.period === selected);
+  const lowest = lowestMonth(simulation);
+  const month = simulation.months.find((m) => m.period === picked) ?? lowest;
+  const select = (p: Period | null) => setPicked(p);
   return (
     <div className="flex flex-col gap-3" data-testid="konto-simulation">
       <div>
@@ -37,17 +43,22 @@ export function KontoSimulationView({ simulation, active, chartHeight }: { simul
           </InfoTip>
         </div>
         <Suspense fallback={<div style={{ height: chartHeight ?? 220 }} />}>
-          <KontoChart simulation={simulation} active={active} selected={selected} onSelect={(p) => setSelected(p === selected ? null : p)} height={chartHeight} />
+          <KontoChart simulation={simulation} active={active} buffer={buffer} selected={month?.period ?? null} onSelect={(p) => select(p)} height={chartHeight} />
         </Suspense>
       </div>
       {month && (
-        <div className="rounded-2xl border border-edge bg-field p-3" data-testid="konto-selected">
-          <MonthBreakdown month={month} active={active} />
+        <div className="flex flex-col gap-1.5">
+          <p className="px-1 text-[12px] leading-snug text-ink-mute" data-testid="konto-selected-hint" data-default={picked ? 'false' : 'true'} aria-live="polite">
+            {picked ? t('sheet.month.picked', { monat: periodLabel(month.period) }) : t('sheet.month.lowest', { monat: periodLabel(month.period) })}
+          </p>
+          <div className="rounded-2xl border border-edge bg-field p-3" data-testid="konto-selected" data-period={month.period}>
+            <MonthBreakdown month={month} active={active} />
+          </div>
         </div>
       )}
       <RisingHint simulation={simulation} />
       <Fold summary={t('sheet.allMonths')} testId="konto-months">
-        <MonthList simulation={simulation} active={active} selected={selected} onSelect={setSelected} />
+        <MonthList simulation={simulation} active={active} selected={picked} onSelect={select} />
       </Fold>
     </div>
   );
@@ -73,7 +84,7 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
             <SwitchModeLink state={state} testId="sheet-switch" />
           </div>
         </div>
-        <KontoSimulationView simulation={state.planSimulation} active={active} />
+        <KontoSimulationView simulation={state.planSimulation} active={active} buffer={state.buffer} />
 
         <div className="flex flex-col">
           <Fold summary={t('sheet.positions', { n: overview.order.positions.length })} testId="konto-positions">
@@ -88,7 +99,8 @@ export function KontoSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset
             <div className="mt-2 flex items-center text-[13px] text-ink-mute">
               <p data-testid="konto-order-exact">
                 Abbuchungen {periodLabel(overview.order.from)} bis {periodLabel(overview.order.to)} ÷ 12 ={' '}
-                <span className="num">{formatAvg(overview.order.exact)}</span>, aufgerundet auf {formatEUR(overview.order.rounding)}
+                <span className="num">{formatAvg(overview.order.exact)}</span>
+                {overview.order.rounding ? `, aufgerundet auf ${formatEUR(overview.order.rounding)}` : ', auf den Cent'}
               </p>
               <InfoTip label="Erklärung: Eingeplante Rechnungen" title="Eingeplante Rechnungen" className="-my-3 -ml-1 shrink-0" testId="konto-positions-info">
                 <p>{t('sheet.positions.info')}</p>

@@ -68,6 +68,10 @@
 | Sheet | `sheet.lump` | Einmalig bis {datum} | 3 |
 | Sheet | `sheet.sum` | Summe | 1 |
 | Sheet | `sheet.ok` | Mit diesem Plan nie im Minus. | 6 |
+| Sheet | `sheet.ok.buffer` | Mit diesem Plan nie unter {betrag}. | 6 |
+| Sheet | `sheet.buffer` | Puffer {betrag} | 2 |
+| Sheet | `sheet.month.lowest` | Gezeigt: {monat}, der Monat mit dem tiefsten Stand. Tipp auf einen Punkt für einen anderen Monat. | 8 · 8 |
+| Sheet | `sheet.month.picked` | Gezeigt: {monat}. | 2 |
 | Sheet | `sheet.chart` | Verlauf mit Plan | 3 |
 | Sheet | `sheet.chart.info` | So entwickelt sich dein Geld, wenn du den Betrag immer am {tag} zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen. | 15 · 7 |
 | Sheet | `sheet.positions.info` | Diese Rechnungen deckt dein Monatsbetrag. Zahlst du eine vom Alltagskonto? Stell sie unter Positionen um. | 5 · 5 · 5 |
@@ -91,5 +95,9 @@
 | Einstellungen | `settings.gapMode.lump` | Auf einmal | 2 |
 | Einstellungen | `settings.gapMode.none` | Gerade fehlt nichts. | 3 |
 | Einstellungen | `settings.gapMode.forced` | Bis dahin kommt keine Einzahlung mehr. Darum auf einmal. | 6 · 3 |
+| Einstellungen | `settings.roundingOn` | Monatsbetrag runden | 2 |
 | Einstellungen | `settings.rounding` | Monatsbetrag aufrunden auf | 3 |
+| Einstellungen | `settings.buffer` | Sicherheitspuffer | 1 |
+| Einstellungen | `settings.buffer.off` | Aus | 1 |
+| Einstellungen | `settings.buffer.info` | Ein kleines Polster, falls eine Rechnung teurer wird. | 8 |
 | Einstellungen | `settings.edit` | Einrichtung ändern | 2 |
