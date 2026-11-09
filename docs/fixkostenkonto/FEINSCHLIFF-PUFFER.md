@@ -1,5 +1,7 @@
 # Fixkosten einplanen · Feinschliff und Puffer (feinschliff-puffer)
 
+PR: #46 · Preview: https://deploy-preview-46--fixkosten.netlify.app
+
 Was gleich bleibt:
 - Datenbankname, Netlify-Subdomain und Export-Format sind unverändert.
 - Neue Felder kommen nur additiv in den Einstellungs-Eintrag `fixkostenkonto`:
