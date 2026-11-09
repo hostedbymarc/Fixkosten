@@ -1,31 +1,31 @@
 {
   "Scrollen Monat": {
-    "frames": 293,
-    "avgFrameMs": 14.9,
-    "maxFrameMs": 21,
-    "calibrationMs": 31,
-    "factor": 1.03,
-    "avgFrameMsNormalised": 14.5,
+    "frames": 286,
+    "avgFrameMs": 14.3,
+    "maxFrameMs": 28,
+    "calibrationMs": 33,
+    "factor": 1.1,
+    "avgFrameMsNormalised": 13,
     "longtasks": [],
     "cls": 0
   },
   "Scrollen Analyse": {
-    "frames": 373,
-    "avgFrameMs": 14.8,
-    "maxFrameMs": 23.2,
-    "calibrationMs": 28,
-    "factor": 1,
-    "avgFrameMsNormalised": 14.8,
+    "frames": 371,
+    "avgFrameMs": 14.6,
+    "maxFrameMs": 23.9,
+    "calibrationMs": 32,
+    "factor": 1.07,
+    "avgFrameMsNormalised": 13.6,
     "longtasks": [],
     "cls": 0
   },
   "Tabwechsel": {
-    "frames": 395,
-    "avgFrameMs": 13.6,
-    "maxFrameMs": 34.1,
-    "calibrationMs": 29,
+    "frames": 393,
+    "avgFrameMs": 14.1,
+    "maxFrameMs": 46.2,
+    "calibrationMs": 30,
     "factor": 1,
-    "avgFrameMsNormalised": 13.6,
+    "avgFrameMsNormalised": 14.1,
     "switches": [
       {
         "tab": "Analyse",

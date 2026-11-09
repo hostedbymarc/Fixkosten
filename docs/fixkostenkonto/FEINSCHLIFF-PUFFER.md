@@ -117,7 +117,18 @@ Die vollständige Liste steht in `TEXTE.md` (neu erzeugt).
 
 ### Volle Suite
 
-Siehe PR-Beschreibung: zwei Läufe hintereinander, je Projekt die Zahl der grünen Tests.
+Zwei Läufe hintereinander, gleicher Code-Stand, kein Retry nötig.
+
+| Projekt | Runde 8 | Runde 9 |
+|---|---|---|
+| desktop | 450 grün | 450 grün |
+| iphone-15 | 268 grün | 268 grün |
+| ipad-portrait | 257 grün | 257 grün |
+| ipad-landscape | 245 grün | 245 grün |
+| iphone-pro-max | 241 grün | 241 grün |
+| perf | 3 grün | 3 grün |
+
+Frühere Runden waren nicht ganz grün. Jeder Fehler steht oben in der Tabelle.
 
 ## Entscheidungen, bitte prüfen
 
