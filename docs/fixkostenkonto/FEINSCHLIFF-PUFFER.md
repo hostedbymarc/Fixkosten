@@ -97,6 +97,7 @@ Die vollständige Liste steht in `TEXTE.md` (neu erzeugt).
 | layout-phase2 „sheets“ (iPad quer) | Dasselbe Hover-ⓘ unter dem Mauszeiger. | Maus weg, ⓘ zu, dann Esc. 40/40 grün. |
 | perf „Scrollen Monat“ | Die Grenze von 16 ms hängt an der Geschwindigkeit des Containers. | Kalibrierung, siehe unten. 3/3 grün, dreimal hintereinander. |
 | fixkostenkonto CHF (neu rot nach Punkt 3) | Die Erwartung „CHF 30“ setzte die alte Rundung voraus. | Erwartung auf den Cent: CHF 27.92. |
+| loading „Start: ein Logo …“ (iPad quer, neu gefunden) | Unter Last war eine CSS-Animation noch nicht gestartet. Ihre Startzeit war `null`, der Vergleich schlug fehl. | Erst auf `animation.ready` warten, dann messen. 30/30 ohne Retry. |
 | ein-popover, WebKit iPhone SE (neu gefunden) | WebKit meldet nach dem Scrollen ein Maus-Hover am alten Tipp-Punkt. Das öffnete das ⓘ, der Tipp schloss es gleich wieder. | `InfoTip`: Ein Tipp auf ein per Hover geöffnetes ⓘ lässt es offen. Das hilft auch auf dem iPad mit Trackpad. |
 
 ### Vorschlag perf (zur Diskussion)
