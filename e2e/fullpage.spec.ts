@@ -98,9 +98,20 @@ for (const scheme of ['light', 'dark'] as const) {
         // (Recharts ResponsiveContainer; also on main, ~1 in 24): masked in both, it is not the subject here
         const mask = [page.locator('[data-testid="forecast"] .recharts-responsive-container')];
         if (p.route === 'analyse') expect(await mask[0]!.count(), 'chart to mask').toBe(1);
-        const viewport = await page.screenshot({ mask });
-        const firstScreen = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height }, mask });
-        expect(await diffShare(page, viewport, firstScreen, 10), 'first screen vs viewport').toBeLessThanOrEqual(0.02);
+        // under load something can still change between the two captures (seen 1 in ~150 on Positionen):
+        // up to three pairs; a real full-page fault shows in every pair. Pairs that differ are attached.
+        let share = 1;
+        for (let attempt = 1; attempt <= 3 && share > 0.02; attempt++) {
+          if (attempt > 1) await settle(page);
+          const viewport = await page.screenshot({ mask });
+          const firstScreen = await page.screenshot({ fullPage: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height }, mask });
+          share = await diffShare(page, viewport, firstScreen, 10);
+          if (share > 0.02) {
+            await test.info().attach(`viewport-${attempt}`, { body: viewport, contentType: 'image/png' });
+            await test.info().attach(`firstScreen-${attempt} (${(share * 100).toFixed(1)} %)`, { body: firstScreen, contentType: 'image/png' });
+          }
+        }
+        expect(share, 'first screen vs viewport').toBeLessThanOrEqual(0.02);
 
         // 2) background only (content hidden): Chromium full page, then without filter, then the iOS layer model
         await page.addStyleTag({ content: HIDE_CONTENT });
