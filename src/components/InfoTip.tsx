@@ -21,15 +21,26 @@ interface Props {
 
 /**
  * Touch devices send a mouse hover to the spot of a tap (also after the tapped thing is gone, e.g. a
- * sheet that closed): within this time after a touch, a mouse hover opens nothing.
+ * sheet that closed): a mouse hover at that spot within this time opens nothing. A real hover (a
+ * trackpad on an iPad) elsewhere still opens.
  */
 const TOUCH_HOVER_MS = 800;
+const TOUCH_HOVER_PX = 12;
 /** mouse off the icon: closed after this, unless it went into the popover */
 const LEAVE_MS = 250;
-let lastTouch = -Infinity;
+let lastTouch = { at: -Infinity, x: 0, y: 0 };
 if (typeof document !== 'undefined') {
-  document.addEventListener('pointerdown', (e) => e.pointerType !== 'mouse' && (lastTouch = performance.now()), { capture: true, passive: true });
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType !== 'mouse') lastTouch = { at: performance.now(), x: e.clientX, y: e.clientY };
+    },
+    { capture: true, passive: true },
+  );
 }
+/** a mouse hover that is only the echo of the last tap */
+const echoOfTap = (e: { clientX: number; clientY: number }) =>
+  performance.now() - lastTouch.at < TOUCH_HOVER_MS && Math.hypot(e.clientX - lastTouch.x, e.clientY - lastTouch.y) < TOUCH_HOVER_PX;
 
 /**
  * ⓘ button with an explanation. Touch: tap opens, tap again or elsewhere closes.
@@ -118,9 +129,11 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         style={style}
         data-testid={testId}
         onPointerDown={(e) => (pointer.current = e.pointerType)}
-        onPointerEnter={(e) => {
-          if (e.pointerType === 'mouse') window.clearTimeout(leaveTimer.current);
-          if (e.pointerType !== 'mouse' || open || performance.now() - lastTouch < TOUCH_HOVER_MS) return;
+        onPointerEnter={(e) => e.pointerType === 'mouse' && window.clearTimeout(leaveTimer.current)}
+        // hover opens on a real mouse movement over the icon: content that moved under a resting
+        // cursor (a sheet closed, the page scrolled) or the echo of a tap opens nothing
+        onPointerMove={(e) => {
+          if (e.pointerType !== 'mouse' || open || echoOfTap(e)) return;
           byHover.current = true;
           setOpen(true);
         }}
