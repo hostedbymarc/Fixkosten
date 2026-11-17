@@ -101,3 +101,9 @@ export async function adoptLegacyBalance(db: FixkostenDB, now: Date): Promise<vo
   if (!current.enabled || !current.setupDone || current.anchor) return;
   await writeKonto(db, { anchor: { amount: current.balance, at: now.toISOString() } });
 }
+
+/** „So funktioniert Erbse“ was shown (any way it opened): it never opens by itself again. */
+export async function markWalkthroughSeen(db: FixkostenDB): Promise<void> {
+  const current = await readKonto(db);
+  if (!current.walkthroughSeen) await writeKonto(db, { walkthroughSeen: true });
+}

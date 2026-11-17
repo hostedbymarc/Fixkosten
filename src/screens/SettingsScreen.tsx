@@ -7,6 +7,8 @@ import { Segmented, SelectField, SwitchField } from '../components/form';
 import { useKontoState } from '../components/konto/KontoSheet';
 import { KontoSetup } from '../components/konto/KontoTile';
 import { t } from '../lib/kontoTexts';
+import { openWalkthrough } from '../lib/walkthroughBus';
+import { ChevronRight } from '../components/Icons';
 import { PlanAmount } from '../components/konto/KontoStatusView';
 import { BalanceField, BufferField, RoundingField } from '../components/konto/KontoParts';
 import { setGapMode } from '../db/kontoActions';
@@ -411,6 +413,15 @@ function KontoSection({ ds }: { ds: Dataset }) {
             </button>
           </>
         )}
+        <button
+          type="button"
+          onClick={() => openWalkthrough()}
+          className="focus-ring -mx-1 -mb-1 flex min-h-12 items-center justify-between gap-3 rounded-xl border-t border-line px-1 pt-3 text-left text-[15px] font-semibold text-ink"
+          data-testid="settings-walkthrough"
+        >
+          {t('settings.walkthrough')}
+          <ChevronRight className="h-5 w-5 shrink-0 text-ink-mute" aria-hidden="true" />
+        </button>
       </div>
       {setup && (
         <KontoSetup

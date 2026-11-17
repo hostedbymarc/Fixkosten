@@ -8,6 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
 import { useDataset } from './db/useDataset';
+import { WalkthroughHost } from './components/konto/WalkthroughHost';
 import { COUNTRY_KEY, toCountry } from './lib/country';
 import { setFormatCountry } from './lib/format';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
@@ -225,6 +226,7 @@ export function App() {
             )}
           </main>
           <TabBar route={route} />
+          {ds && <WalkthroughHost ds={ds} active={active} />}
         </div>
       </ToastProvider>
     </ActiveMonthContext.Provider>

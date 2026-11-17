@@ -117,6 +117,40 @@ export const KONTO_TEXTS = {
   'settings.buffer.off': 'Aus',
   'settings.buffer.info': 'Ein kleines Polster, falls eine Rechnung teurer wird.',
   'settings.edit': 'Einrichtung ändern',
+  'settings.walkthrough': 'So funktioniert Erbse',
+
+  // · Monats-Screen: Verbindung von „Abzüge vom Netto“ und dem Topf
+  'hero.pot': 'Bezahlt aus deinem Topf',
+  'hero.pot.info': 'Diese Fixkosten zahlst du aus dem Geld, das du zur Seite legst.',
+
+  // · Walkthrough „So funktioniert Erbse“ (5 Karten)
+  'walk.title': 'So funktioniert Erbse',
+  'walk.link': "So funktioniert's",
+  'walk.example': 'Beispiel',
+  'walk.example.note': 'Beispielzahlen. Richte „Fixkosten einplanen“ ein, dann siehst du deine.',
+  'walk.progress': 'Karte {n} von {gesamt}',
+  'walk.next': 'Weiter',
+  'walk.back': 'Zurück',
+  'walk.done': 'Fertig',
+  'walk.1.title': 'Deine Fixkosten schwanken.',
+  'walk.1.text': 'Im {teuer} zahlst du {max}, im {guenstig} nur {min}.',
+  'walk.2.title': 'Darum legst du jeden Monat gleich viel zur Seite.',
+  'walk.2.text': 'Das sind {betrag} pro Monat. Teure Monate gleicht dein Topf aus.',
+  'walk.3.title': 'Aus diesem Topf zahlst du alle Rechnungen.',
+  'walk.3.text': 'Das ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt.',
+  'walk.3.app': 'Oben in der App siehst du, was diesen Monat abgebucht wird. Bezahlt wird es aus deinem Topf.',
+  'walk.3.salary': 'Gehalt',
+  'walk.3.pot': 'Topf',
+  'walk.3.bills': 'Rechnungen',
+  'walk.4.title': 'Am Anfang fehlt manchmal etwas.',
+  'walk.4.notFull': 'Dein Topf ist bis dahin noch nicht voll.',
+  'walk.4.spread': 'Darum bis dahin {betrag} extra pro Monat.',
+  'walk.4.lump': 'Darum einmalig {betrag} bis {datum}.',
+  'walk.4.lump.now': 'Darum jetzt einmalig {betrag}.',
+  'walk.4.once': 'Das fällt nur einmal an.',
+  'walk.4.none': 'Bei dir reicht es schon. Gut gemacht.',
+  'walk.5.title': 'Jeden Monat ein Tipp.',
+  'walk.5.text': 'Am {tag} fragt Erbse, ob du den Betrag zur Seite gelegt hast. Den Rest rechnet Erbse.',
 } as const;
 
 export type KontoTextId = keyof typeof KONTO_TEXTS;

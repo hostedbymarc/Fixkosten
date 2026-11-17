@@ -5,6 +5,8 @@ import { useMonthCollapse } from '../lib/useCollapsed';
 import { Disclosure } from '../components/Disclosure';
 import { GlassGroup } from '../components/GlassGroup';
 import { Pea } from '../components/Pea';
+import { useKonto } from '../db/useKonto';
+import { t } from '../lib/kontoTexts';
 import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
@@ -623,6 +625,8 @@ function HeroCard({
  */
 function HeroDeductions({ figures }: { figures: MonthFigures }) {
   const explanation = deductionsExplanation(figures);
+  // „Fixkosten einplanen“ on: these Fixkosten are paid from the money set aside (the pot)
+  const { settings: konto } = useKonto();
   return (
     <div
       className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-4 md:ml-auto md:shrink-0 md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-8 md:text-right"
@@ -651,6 +655,18 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
       <div className="num col-span-2 col-start-1 row-start-2 text-[12px] leading-4 text-ink-mute md:col-span-1 md:row-start-3 lg:text-[13px]" data-testid="hero-deductions-breakdown">
         {explanation.breakdown}
       </div>
+      {konto.enabled && (
+        <div
+          className="col-span-2 col-start-1 row-start-3 -mb-2 flex items-center text-[12px] font-medium leading-4 text-ink-soft md:col-span-1 md:row-start-4 md:justify-end lg:text-[13px]"
+          data-testid="hero-pot"
+        >
+          <Pea size={12} className="mr-1.5 shrink-0" />
+          {t('hero.pot')}
+          <InfoTip label={`Erklärung: ${t('hero.pot')}`} title={t('hero.pot')} className="-my-3 -mr-3" testId="hero-pot-info">
+            <p>{t('hero.pot.info')}</p>
+          </InfoTip>
+        </div>
+      )}
     </div>
   );
 }
