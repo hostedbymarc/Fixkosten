@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { liveBackup } from '../tests/fixtures/live';
-import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test } from './fixtures';
+import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test, closeWalkthrough } from './fixtures';
 import { NEVER_IN_TOOLTIP, TOOLTIP_TEXTS } from './help-texts';
 import { OKT_TODAY } from './live';
 
@@ -201,6 +201,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       if ((await page.getByTestId('konto-setup').getAttribute('data-step')) === 'gap') await page.getByTestId('konto-setup-gap-spread').click();
       await expect(page.getByTestId('konto-setup-plan')).toBeVisible();
       await page.getByTestId('konto-setup-finish').click();
+      await closeWalkthrough(page);
       await expect(page.getByTestId('konto-setup')).toHaveCount(0);
 
       // --- Monat

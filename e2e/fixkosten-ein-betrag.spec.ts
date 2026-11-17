@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY, closeWalkthrough } from './fixtures';
 
 // „Fixkosten einplanen“ with ONE amount per month (seed data, today 5 October 2026 → October active):
 // - base € 2.952,17 (to the cent, „Monatsbetrag runden“ off); with € 184,21 set aside and the
@@ -106,6 +106,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('setup-hint')).toHaveText(new RegExp(`^${REASON.replace(/[().]/g, '\\$&')} Darum bis dahin ${E(EXTRA)} extra, ab März ${E(BASE)}\\.$`));
         await shot(page, `${tag}-02-dein-plan`);
         await tap(page.getByTestId('konto-setup-finish'));
+        await closeWalkthrough(page);
         await expect(setup).toHaveCount(0);
 
         // tile „verteilt“: no checklist, no bar
@@ -190,6 +191,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByTestId('konto-setup-gap-lump'));
         await expect(page.getByTestId('setup-how')).toHaveText(new RegExp(`^Leg bis 31\\. Jänner ${E(GAP)} extra zur Seite\\.$`));
         await tap(page.getByTestId('konto-setup-finish'));
+        await closeWalkthrough(page);
         const card = page.getByTestId('konto-tile-card');
         await expect(card).toHaveAttribute('data-view', 'lump');
         await expect(milestoneToast(page)).toHaveCount(0);
@@ -227,6 +229,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('setup-reason')).toHaveText('Diesen Monat reicht das Geld nicht.');
         await expect(page.getByTestId('setup-how')).toHaveText(/^Leg jetzt €\s[\d.]+,\d{2} extra zur Seite\.$/);
         await tap(page.getByTestId('konto-setup-finish'));
+        await closeWalkthrough(page);
         const card = page.getByTestId('konto-tile-card');
         await expect(card).toHaveAttribute('data-view', 'lump');
         await expect(page.getByTestId('tile-switch')).toHaveCount(0);
@@ -255,6 +258,7 @@ test.describe('Ein Betrag pro Monat · Neuer Monat beginnt am 25.', () => {
     await expect(page.getByTestId('setup-when')).toHaveText('am 25. Oktober, wenn dein Gehalt kommt');
     await expect(page.getByTestId('setup-how')).toHaveText(/, ab 25\. \S+ €/);
     await page.getByTestId('konto-setup-finish').tap();
+    await closeWalkthrough(page);
     await expect(page.getByTestId('tile-when')).toHaveText('am 25. Oktober, wenn dein Gehalt kommt');
     await page.getByTestId('konto-tile-card').scrollIntoViewIfNeeded();
     await shot(page, 'iphone-15-hell-10-tag-25');
