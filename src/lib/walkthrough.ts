@@ -7,7 +7,9 @@ import type { KontoState } from './kontoBalance';
 import { t } from './kontoTexts';
 import { dayLabel, deadlinePassed, reasonText } from './kontoWords';
 import { addPeriods, monthName } from './period';
-import type { Period } from './types';
+import { isActiveInPeriod } from './calc';
+import { accountOf } from './fixkostenkonto';
+import type { Dataset, Period } from './types';
 
 export const WALK_CARDS = 5;
 
@@ -29,6 +31,8 @@ export interface Walkthrough {
   base: number;
   /** the text of each card (card 3 is the same for everyone) */
   card1: string;
+  /** card 1: „{n} Posten zahlst du direkt.“ (positions on Gehalt or Spielgeld); null when there are none */
+  card1Direct: string | null;
   card2: string;
   /** card 4: one paragraph per sentence group; without a gap only „Bei dir reicht es schon. …“ */
   card4: string[];
@@ -59,7 +63,7 @@ export function askDay(start: MonthStart): string {
  * The cards from the stored state (`state` null or not set up: the example). `active` names the months
  * of the example; `today` only for the date of a one-time amount („bis 31. Jänner“).
  */
-export function walkthrough(state: KontoState | null, active: Period, start: MonthStart, today?: Date): Walkthrough {
+export function walkthrough(state: KontoState | null, active: Period, start: MonthStart, today?: Date, direct = 0): Walkthrough {
   const example = !state || !state.setupDone;
   const bars: WalkBar[] = example
     ? EXAMPLE.bills.map((amount, i) => ({ period: addPeriods(active, i), amount }))
@@ -77,7 +81,8 @@ export function walkthrough(state: KontoState | null, active: Period, start: Mon
   const card2 = t('walk.2.text', { betrag: formatEUR(base) });
   const card4 = example ? exampleGap(active) : gapCard(state, start, today);
   const card5 = t('walk.5.text', { tag: askDay(start) });
-  return { example, bars, maxIndex, minIndex, base, card1, card2, card4, card5 };
+  const card1Direct = !example && direct > 0 ? t('walk.1.direct', { n: direct }) : null;
+  return { example, bars, maxIndex, minIndex, base, card1, card1Direct, card2, card4, card5 };
 }
 
 function exampleGap(active: Period): string[] {
@@ -101,4 +106,12 @@ function gapCard(state: KontoState, start: MonthStart, today?: Date): string[] {
         ? t('walk.4.lump.now', { betrag: formatEUR(state.lump) })
         : t('walk.4.lump', { betrag: formatEUR(state.lump), datum: dayLabel(state.gapBy!, today) });
   return [now ? reason : `${reason} ${t('walk.4.notFull')}`, `${plan} ${t('walk.4.once')}`];
+}
+
+/** Positions paid straight from the salary or from the Spielgeld (active in `active`, Fixkosten only): „{n} Posten zahlst du direkt.“ */
+export function directCount(ds: Dataset, active: Period): number {
+  return ds.positions.filter((p) => {
+    const kind = ds.categories.find((c) => c.id === p.categoryId)?.kind;
+    return kind === 'expense' && isActiveInPeriod(p, active) && accountOf(ds, p) !== 'fixkostenkonto';
+  }).length;
 }

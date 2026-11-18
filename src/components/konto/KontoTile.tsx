@@ -10,6 +10,7 @@ import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { Pea } from '../Pea';
 import { openWalkthrough } from '../../lib/walkthroughBus';
+import { lumpAdvice, salarySplit } from '../../lib/salarySplit';
 import { useToast } from '../Toast';
 import { KontoSetupSheet } from './KontoSetupSheet';
 import { KontoSheet, useKontoState } from './KontoSheet';
@@ -43,7 +44,14 @@ function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
   }, [settings.setupDone, settings.anchor]);
   return (
     <>
-      <KontoTileView state={state} start={start} active={active} onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')} buttonRef={button} />
+      <KontoTileView
+        state={state}
+        start={start}
+        active={active}
+        onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')}
+        buttonRef={button}
+        advice={lumpAdvice(state, salarySplit(ds, active, state, settings))}
+      />
       {open === 'sheet' && <KontoSheet ds={ds} active={active} onClose={() => setOpen(null)} returnFocusTo={button.current} />}
       {open === 'setup' && <KontoSetup ds={ds} active={active} restart={!settings.setupDone} onClose={() => setOpen(null)} />}
     </>

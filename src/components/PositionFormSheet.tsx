@@ -4,6 +4,7 @@ import { changePlan, createPosition, setPositionAccount, updatePositionInfo, typ
 import { defaultAccount } from '../db/migrations';
 import { useKonto } from '../db/useKonto';
 import { accountOf } from '../lib/fixkostenkonto';
+import { t } from '../lib/kontoTexts';
 import {
   ALL_MONTHS,
   currentPlan,
@@ -214,23 +215,15 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
         {showAccount && (
           <div data-testid="account-field">
             <Segmented<Account>
-              label="Von welchem Konto geht das weg?"
+              label={t('account.question')}
               value={account}
               onChange={setAccountChoice}
               options={[
-                { value: 'fixkostenkonto', label: 'Fixkostenkonto' },
-                { value: 'girokonto', label: 'Alltagskonto' },
+                { value: 'fixkostenkonto', label: t('account.reserve') },
+                { value: 'girokonto', label: t('account.salary') },
+                { value: 'spielgeld', label: t('account.spielgeld') },
               ]}
-              info={
-                <>
-                  <span className="block">
-                    <span className="font-semibold text-ink">Fixkostenkonto:</span> Zählt zu deinem Monatsbetrag. Dafür legst du jeden Monat Geld zur Seite.
-                  </span>
-                  <span className="mt-1 block">
-                    <span className="font-semibold text-ink">Alltagskonto:</span> Dein normales Konto mit Karte. Zählt nicht zum Monatsbetrag.
-                  </span>
-                </>
-              }
+              info={t('account.info')}
             />
           </div>
         )}

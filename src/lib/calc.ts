@@ -488,13 +488,13 @@ export function monthFigures(ds: Dataset, period: Period): MonthFigures {
 }
 
 /** What pays the month's Fixkosten (Gesamt): the Rücklage, the salary directly, the Spielgeld. reserve + salary + spielgeld = Gesamt. */
-export interface FixkostenSources {
+export interface CostSources {
   reserve: number;
   salary: number;
   spielgeld: number;
 }
 
-export function fixkostenSources(ds: Dataset, period: Period): FixkostenSources {
+export function costSources(ds: Dataset, period: Period): CostSources {
   const sum = (a: Account) =>
     fromCents(monthEntries(ds, period).filter((e) => e.kind === 'expense' && e.account === a).reduce((acc, e) => acc + e.cents, 0));
   return { reserve: sum('fixkostenkonto'), salary: sum('girokonto'), spielgeld: sum('spielgeld') };

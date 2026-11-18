@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_KONTO, storedKonto, toKontoSettings, type KontoSettings } from '../db/settings';
 import { upgradePositionV5 } from '../db/migrations';
-import { fixkostenSources, monthFigures } from './calc';
+import { costSources, monthFigures } from './calc';
 import { kontoState } from './kontoBalance';
 import { lumpAdvice, salarySplit } from './salarySplit';
 import type { Account, Category, Dataset, Position } from './types';
@@ -117,13 +117,13 @@ describe('Gehalts-Aufteilung', () => {
 
 describe('Hero: Fixkosten nach Quelle', () => {
   it('Rücklage + Gehalt + Spielgeld = Fixkosten-Summe', () => {
-    const src = fixkostenSources(DATA, NOV);
+    const src = costSources(DATA, NOV);
     expect(src).toEqual({ reserve: 2500, salary: 450, spielgeld: 3028.45 });
     expect(Math.round((src.reserve + src.salary + src.spielgeld) * 100)).toBe(Math.round(monthFigures(DATA, NOV).total * 100));
   });
   it('auch mit Einmalbetrag ohne Position und Vermögensaufbau daneben', () => {
     const ds = { ...DATA, oneOffs: [{ id: 'o', period: NOV, amount: 37.5, label: 'Nachzahlung' }] };
-    const src = fixkostenSources(ds, NOV);
+    const src = costSources(ds, NOV);
     expect(src.salary).toBe(487.5);
     expect(Math.round((src.reserve + src.salary + src.spielgeld) * 100)).toBe(Math.round(monthFigures(ds, NOV).total * 100));
   });

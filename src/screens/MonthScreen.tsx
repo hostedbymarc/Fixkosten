@@ -6,6 +6,8 @@ import { Disclosure } from '../components/Disclosure';
 import { GlassGroup } from '../components/GlassGroup';
 import { Pea } from '../components/Pea';
 import { useKonto } from '../db/useKonto';
+import { SalarySplitCard } from '../components/konto/SalarySplitCard';
+import { SpielgeldCard } from '../components/konto/SpielgeldCard';
 import { t } from '../lib/kontoTexts';
 import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
@@ -63,6 +65,8 @@ import {
   type CategoryGroup,
   type DueItem,
   type OpenGroup,
+  costSources,
+  type CostSources,
 } from '../lib/calc';
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
@@ -102,6 +106,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const groups = useMemo(() => groupByCategory(items), [items]);
   // every amount of the month comes from here (hero, tiles, category headers)
   const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
+  // „Fixkosten einplanen“: Hero by source, „So teilt sich dein Gehalt“ and the Spielgeld card instead of „Frei verfügbar“ / „Ø pro Monat“
+  const { settings: konto } = useKonto();
   // fully paid categories start collapsed, categories with something open expanded
   const collapse = useMonthCollapse(period, (id) => {
     const t = categoryFigures(figures, id);
@@ -212,7 +218,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
       <div className="grid gap-3 md:gap-4">
         <KontoCheckCard ds={ds} active={today} />
-        <HeroCard period={period} figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
+        <HeroCard period={period} figures={figures} sources={konto.enabled ? costSources(ds, period) : null} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
         <KontoTile ds={ds} active={today} />
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
         {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
@@ -227,29 +233,37 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             ]),
           )}
         >
-        <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {/* „Fixkosten einplanen“ on: Netto-Gehalt and Vermögensaufbau, then „So teilt sich dein Gehalt“ across
+            (no „Ø pro Monat“, no „Frei verfügbar“); off: the four tiles as before */}
+        <GlassGroup className={`grid grid-cols-2 gap-3 md:gap-4 ${konto.enabled ? '' : 'md:grid-cols-4'}`}>
           <SalaryTile
             ref={salaryTile}
             period={period}
             salary={netSalaryForPeriod(ds, period)}
             onOpen={() => openClose(salaryTile.current)}
           />
-          <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
-            <span data-testid="kpi-hint">
-              davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
-            </span>
-          </KpiTile>
-          <FreeTile
-            ref={closeTile}
-            period={period}
-            calculated={figures.free}
-            average={freeAfterFixedAvg(ds, period)}
-            explanation={averageMonthExplanation(ds, period)}
-            onOpen={() => openClose(closeTile.current)}
-          />
+          {!konto.enabled && (
+            <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
+              <span data-testid="kpi-hint">
+                davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
+              </span>
+            </KpiTile>
+          )}
+          {!konto.enabled && (
+            <FreeTile
+              ref={closeTile}
+              period={period}
+              calculated={figures.free}
+              average={freeAfterFixedAvg(ds, period)}
+              explanation={averageMonthExplanation(ds, period)}
+              onOpen={() => openClose(closeTile.current)}
+            />
+          )}
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
+          {konto.enabled && <SalarySplitCard ref={closeTile} ds={ds} period={period} active={today} onOpenSalary={() => openClose(closeTile.current)} />}
         </GlassGroup>
         </TileFit.Provider>
+        {konto.enabled && <SpielgeldCard ds={ds} period={period} active={today} />}
         <KontoInvite />
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
@@ -535,11 +549,14 @@ const heroShown: { period: Period | null } = { period: null };
 function HeroCard({
   period,
   figures,
+  sources,
   openOnly,
   onToggleOpenOnly,
 }: {
   period: Period;
   figures: MonthFigures;
+  /** „Fixkosten einplanen“ on: what pays the Fixkosten (Rücklage, Gehalt, Spielgeld); off: null */
+  sources: CostSources | null;
   openOnly: boolean;
   onToggleOpenOnly: () => void;
 }) {
@@ -614,7 +631,7 @@ function HeroCard({
           </div>
         </div>
       </div>
-      <HeroDeductions figures={figures} />
+      <HeroDeductions figures={figures} sources={sources} />
     </div>
   );
 }
@@ -623,10 +640,16 @@ function HeroCard({
  * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau vom Netto (monthFigures.deductions). Phone: an extra
  * row under ring and amount; from iPad on it uses the free space on the right of the hero.
  */
-function HeroDeductions({ figures }: { figures: MonthFigures }) {
+function HeroDeductions({ figures, sources }: { figures: MonthFigures; sources: CostSources | null }) {
   const explanation = deductionsExplanation(figures);
-  // „Fixkosten einplanen“ on: these Fixkosten are paid from the money set aside (the pot)
-  const { settings: konto } = useKonto();
+  // „Fixkosten einplanen“ on: the Fixkosten by what pays them, only lines > 0 (reserve + salary + spielgeld = Fixkosten)
+  const lines = sources
+    ? ([
+        ['reserve', t('hero.src.reserve'), sources.reserve],
+        ['salary', t('hero.src.salary'), sources.salary],
+        ['spielgeld', t('hero.src.spielgeld'), sources.spielgeld],
+      ] as const).filter(([, , v]) => Math.round(v * 100) > 0)
+    : [];
   return (
     <div
       className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-4 md:ml-auto md:shrink-0 md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-8 md:text-right"
@@ -655,17 +678,17 @@ function HeroDeductions({ figures }: { figures: MonthFigures }) {
       <div className="num col-span-2 col-start-1 row-start-2 text-[12px] leading-4 text-ink-mute md:col-span-1 md:row-start-3 lg:text-[13px]" data-testid="hero-deductions-breakdown">
         {explanation.breakdown}
       </div>
-      {konto.enabled && (
-        <div
-          className="col-span-2 col-start-1 row-start-3 -mb-2 flex items-center text-[12px] font-medium leading-4 text-ink-soft md:col-span-1 md:row-start-4 md:justify-end lg:text-[13px]"
-          data-testid="hero-pot"
+      {lines.length > 0 && (
+        <ul
+          className="num col-span-2 col-start-1 row-start-3 flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] font-medium leading-4 text-ink-soft md:col-span-1 md:row-start-4 md:justify-end lg:text-[13px]"
+          data-testid="hero-sources"
         >
-          <Pea size={12} className="mr-1.5 shrink-0" />
-          {t('hero.pot')}
-          <InfoTip label={`Erklärung: ${t('hero.pot')}`} title={t('hero.pot')} className="-my-3 -mr-3" testId="hero-pot-info">
-            <p>{t('hero.pot.info')}</p>
-          </InfoTip>
-        </div>
+          {lines.map(([key, label, value]) => (
+            <li key={key} className="whitespace-nowrap" data-testid={`hero-source-${key}`}>
+              {label} {formatEUR(value, { fixed: true })}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

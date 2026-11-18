@@ -116,7 +116,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await forward(page);
         await expect(walk(page)).toHaveAttribute('data-card', '2');
         await expect(visibleCard(page, 2)).toContainText('Darum legst du jeden Monat gleich viel zur Seite.');
-        await expect(page.getByTestId('walkthrough-text-2')).toHaveText(new RegExp(`^Das sind ${AMOUNT} pro Monat\\. Teure Monate gleicht dein Topf aus\\.$`));
+        await expect(page.getByTestId('walkthrough-text-2')).toHaveText(new RegExp(`^Das sind ${AMOUNT} pro Monat\\. Teure Monate gleicht deine Rücklage aus\\.$`));
         await expect(page.getByTestId('walkthrough-base-line')).toBeVisible();
         await shot(page, `${tag}-02-gleich-viel`);
 
@@ -130,7 +130,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await forward(page);
         await expect(walk(page)).toHaveAttribute('data-card', '3');
         await expect(page.getByTestId('walkthrough-flow')).toHaveText(/Gehalt.*Topf.*Rechnungen/);
-        await expect(page.getByTestId('walkthrough-text-3')).toHaveText('Das ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt.');
+        await expect(page.getByTestId('walkthrough-text-3')).toHaveText('Die Rücklage ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt.');
         await expect(visibleCard(page, 3)).toContainText('Oben in der App siehst du, was diesen Monat abgebucht wird. Bezahlt wird es aus deinem Topf.');
         await shot(page, `${tag}-03-topf`);
 
@@ -138,7 +138,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByTestId('walkthrough-next'));
         await expect(walk(page)).toHaveAttribute('data-card', '4');
         const four = page.getByTestId('walkthrough-text-4');
-        await expect(four).toContainText('Dein Topf ist bis dahin noch nicht voll.');
+        await expect(four).toContainText('Deine Rücklage ist bis dahin noch nicht voll.');
         await expect(four.locator('p').last()).toHaveText(new RegExp(`^Darum bis dahin ${AMOUNT} extra pro Monat\\. Das fällt nur einmal an\\.$`));
         await shot(page, `${tag}-04-anfang`);
 

@@ -10,7 +10,7 @@ import { t } from '../lib/kontoTexts';
 import { openWalkthrough } from '../lib/walkthroughBus';
 import { ChevronRight } from '../components/Icons';
 import { PlanAmount } from '../components/konto/KontoStatusView';
-import { BalanceField, BufferField, RoundingField } from '../components/konto/KontoParts';
+import { BalanceField, BufferField, RoundingField, SpielgeldField } from '../components/konto/KontoParts';
 import { setGapMode } from '../db/kontoActions';
 import type { GapMode } from '../db/settings';
 import { useKonto } from '../db/useKonto';
@@ -401,6 +401,7 @@ function KontoSection({ ds }: { ds: Dataset }) {
                 </div>
                 <BufferField settings={settings} />
                 <RoundingField settings={settings} />
+                <SpielgeldField spielgeld={settings.spielgeld} />
               </div>
             )}
             <button
