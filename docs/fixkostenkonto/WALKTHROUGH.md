@@ -1,5 +1,7 @@
 # Walkthrough „So funktioniert Erbse“ (walkthrough)
 
+PR: #47 · Preview: https://deploy-preview-47--fixkosten.netlify.app
+
 **Anlass:** Ein Nutzer dachte, er zahlt die „Abzüge vom Netto“ und den Zur-Seite-Betrag zusätzlich. Der Walkthrough erklärt den Zusammenhang. Die Zeile im Monats-Screen verbindet beides.
 
 **Rahmen:**
@@ -26,6 +28,8 @@
 | **2** Monats-Screen | ✅ | Unter „Abzüge vom Netto“ steht „Bezahlt aus deinem Topf“ mit ⓘ, nur mit eingeschaltetem „Fixkosten einplanen“. |
 | Unit-Tests | ✅ | `walkthrough.test.ts` (18 Tests):<br>• Fälle: mit Lücke verteilt, auf einmal, Frist vorbei, ohne Lücke, ohne Einrichtung.<br>• 12-Wörter-Regel für alle erzeugten Sätze und alle festen Texte.<br>• Roundtrip von `walkthroughSeen`. |
 | E2E | ✅ | `walkthrough.spec.ts`:<br>• Geräte: iPhone SE, iPhone 15, iPad hoch und quer, Desktop 1440, jeweils hell und dunkel.<br>• Alle drei Einstiege, Wischen und Pfeiltasten, kein Wischen über die letzte Karte hinaus.<br>• Automatisch nur einmal.<br>• Beispielzahlen. |
+| WebKit | ✅ | Desktop Safari: `walkthrough`, `ein-popover`, `fixkostenkonto` 91/91 grün. |
+| Volle Suite | ✅ | Chromium, ein Lauf, kein Retry: desktop 470, iphone-15 268, ipad-portrait 257, ipad-landscape 245, iphone-pro-max 241, perf 3 – alle grün. Unit 1050/1050. |
 | Screenshots | ✅ | `docs/screenshots/walkthrough/`: alle 5 Karten, Monats-Screen mit ⓘ und Beispiel, je Gerät hell und dunkel. |
 
 ## Nebenbei behoben: ⓘ (InfoTip)
