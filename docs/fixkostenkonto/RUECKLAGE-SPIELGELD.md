@@ -179,4 +179,16 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 
 ## Testergebnisse der Ergänzung
 
-TESTERGEBNISSE
+- **Unit-Tests:** 1173 grün.
+- **Volle E2E-Suite, einmal komplett** (Chromium, alle 5 Projekte plus perf):
+  - Erster Lauf: 54 rot, alle wegen alter Erwartungen.
+    - „Alles abgebucht“ und `hero-planned` im bezahlten Monat.
+    - Alter Quellen-Text, alte Layout-Regel „ab iPad rechts“.
+    - Ein zu schmales ⓘ (39 px) neben „Abzüge vom Netto“ auf Desktop.
+  - Korrektur: Spalte 340 px, ⓘ schrumpft nicht mehr; Tests auf den Feier-Zustand umgestellt.
+  - Nachlauf der 9 betroffenen Specs auf allen 5 Projekten: 317 grün, 15 rot.
+  - Die 15 roten lagen in `dom-figures` und `once-sheet`: Untertitel ungeprüft, noch ein `hero-planned`.
+  - Danach beide Specs auf allen 5 Projekten: 45 grün, 0 rot.
+  - perf: 5 grün.
+- **WebKit** (feier, ruecklage-spielgeld, walkthrough, ein-popover, fixkostenkonto, hero-abzuege): 120 grün.
+- **Screenshots** stammen aus Chromium; die WebKit-Bilder wurden verworfen.
