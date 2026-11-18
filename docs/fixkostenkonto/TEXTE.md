@@ -102,9 +102,15 @@
 | Einstellungen | `settings.buffer.info` | Ein kleines Polster, falls eine Rechnung teurer wird. | 8 |
 | Einstellungen | `settings.edit` | Einrichtung ändern | 2 |
 | Einstellungen | `settings.walkthrough` | So funktioniert Erbse | 3 |
-| Monats-Screen | `hero.src.reserve` | aus deiner Rücklage | 3 |
-| Monats-Screen | `hero.src.salary` | direkt vom Gehalt | 3 |
-| Monats-Screen | `hero.src.spielgeld` | aus Spielgeld | 2 |
+| Monats-Screen | `hero.done.title` | {monat} erledigt | 2 |
+| Monats-Screen | `hero.done.sub` | Alle {n} Rechnungen bezahlt | 4 |
+| Monats-Screen | `hero.done.sub.one` | Deine Rechnung ist bezahlt | 4 |
+| Monats-Screen | `hero.done.replay` | Feier noch einmal abspielen | 4 |
+| Monats-Screen | `hero.src.title` | Woraus du bezahlst | 3 |
+| Monats-Screen | `hero.src.title.done` | Woraus du bezahlt hast | 4 |
+| Monats-Screen | `hero.src.reserve` | Rücklage | 1 |
+| Monats-Screen | `hero.src.salary` | Gehalt | 1 |
+| Monats-Screen | `hero.src.spielgeld` | Spielgeld | 1 |
 | Bearbeiten-Dialog | `account.question` | Woraus zahlst du das? | 4 |
 | Bearbeiten-Dialog | `account.reserve` | Rücklage | 1 |
 | Bearbeiten-Dialog | `account.salary` | Gehalt | 1 |
@@ -124,6 +130,10 @@
 | Spielgeld-Karte | `spiel.empty` | Diesen Monat noch nichts aus dem Spielgeld. | 7 |
 | Gehalts-Aufteilung | `split.title` | So teilt sich dein Gehalt | 5 |
 | Gehalts-Aufteilung | `split.salary` | Gehalt am {datum} | 3 |
+| Gehalts-Aufteilung | `split.salary.like` | wie im {monat} | 3 |
+| Gehalts-Aufteilung | `split.view` | Welches Gehalt? | 2 |
+| Gehalts-Aufteilung | `split.view.next` | Nächstes Gehalt | 2 |
+| Gehalts-Aufteilung | `split.view.current` | Aktuelles Gehalt | 2 |
 | Gehalts-Aufteilung | `split.reserve` | Zur Seite legen | 3 |
 | Gehalts-Aufteilung | `split.direct` | Direkt vom Gehalt | 3 |
 | Gehalts-Aufteilung | `split.wealth` | Vermögensaufbau | 1 |

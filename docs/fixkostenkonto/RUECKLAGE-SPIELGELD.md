@@ -107,3 +107,72 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 - **Prüfskripte:**
   - Der Bundle-Prüfer erlaubt jetzt das Wort „mieteinnahmen“. Es steht in deinem Text, enthält aber „Miete“ aus den Testdaten.
   - Die Hero-Funktion heißt `costSources`, weil der Namensprüfer „Fixkosten“ in Bezeichnern ablehnt.
+
+# Ergänzung (im selben PR)
+
+**Reihenfolge nach Freigabe:** zuerst #47 mergen, dann #48. Rahmen wie oben. Alle Zahlen kommen aus `kontoState()`, `costSources`, `monthItems` und `monthFigures`.
+
+## Punkt · erledigt · Beleg
+
+| Punkt | erledigt | Beleg |
+|---|---|---|
+| **1** Hero auf iPad und Desktop | ✅ | Ursache siehe unten. Bis 1279 px liegt alles untereinander wie auf dem iPhone. Ab 1280 px hat die rechte Spalte feste 300 px. Pillen brechen nicht mehr um. E2E `feier.spec.ts`: Betrag ≥ 2 × „Abzüge vom Netto“, ab iPad ≥ 56 px, Pille ≤ 33 px hoch, auf allen 5 Geräten hell und dunkel. |
+| **2** Woraus du bezahlst | ✅ | Überschrift „Woraus du bezahlst“ bzw. „… bezahlt hast“. Darunter ein Balken (10 px, 2 px Abstand) und die Zeilen untereinander: Punkt, Name, Betrag mit Cent. Nur Quellen > 0, bei einer Quelle kein Balken. Neue Tokens `--hero-src-*` verweisen auf bestehende Tokens, es gibt keine neuen Hex-Werte. Kontrast-Test: Farben ≥ 3:1, Text ≥ 4,5:1 gegen beide Enden des Hero-Verlaufs, hell und dunkel (33 Tests). E2E: Summe der Zeilen = Fixkosten, Balkenhöhe 10 px. |
+| **3** „{Monat} erledigt“ | ✅ | Haken im hellen Brand-Kreis, „Oktober erledigt“, „Alle 16 Rechnungen bezahlt“, Betrag groß. Ab 2 Monaten kommt „{n} Monate in Folge“ dazu, aus der bestehenden Serie, nur bei aktivem „Fixkosten einplanen“. „Alles abgebucht“ entfällt. Das Konfetti läuft live beim letzten Haken und einmal beim ersten Öffnen eines kompletten Monats (`celebratedMonths`). Ein Tipp auf den Haken spielt die Feier erneut ab. Bei reduced motion gibt es weder Konfetti noch Pop. |
+| **4** Nächstes Gehalt | ✅ | Umschalter „Nächstes Gehalt \| Aktuelles Gehalt“, Standard ist „Nächstes“. Fehlt das Netto des Folgemonats, gilt das zuletzt eingetragene mit „(wie im {Monat})“. „Zur Seite legen“ ist genau der Kachel-Betrag (Unit- und E2E-Test). Die Empfehlung der Kachel rechnet immer mit dem nächsten Gehalt und dem Grundbetrag. |
+| **5** Rundung | ✅ | Die Überschrift „Monatsbetrag aufrunden auf“ ist nur noch für Screenreader da. € 1 / € 5 / € 10 stehen direkt unter dem Schalter. |
+
+## Ursache des Desktop-Fehlers
+
+- Ab 768 px war der Hero zweispaltig. Links standen Ring und Betrag, rechts „Abzüge vom Netto“ mit `shrink-0`.
+- Die rechte Spalte nahm ihre ganze Inhaltsbreite. Die Quellen standen nebeneinander und durften nicht umbrechen.
+- Der große Betrag passt seine Schrift an die Restbreite an (`.fit`: Container-Breite ÷ Zeichenbreite).
+- Je breiter die rechte Spalte, desto kleiner der Betrag. Mit Cent („€ 5.670,48“) wurde er noch kleiner.
+- Die Pille „Alles abgebucht“ hatte kein `whitespace-nowrap`. In der schmalen Spalte brach sie um.
+- **Lösung:** Bis 1279 px untereinander, ab 1280 px rechte Spalte mit festen 300 px. Pillen mit `whitespace-nowrap`, Quellen untereinander.
+
+## Konfetti: Technik und Leistung
+
+- **Technik:** eine DOM-Ebene mit Kreisen, CSS-Keyframes nur auf `transform` und `opacity`. Der Compositor übernimmt die Animation, der Haupt-Thread rechnet nichts pro Frame.
+  - Canvas hätte jeden Frame im Haupt-Thread neu gezeichnet. Das ist unter 4× Drosselung teurer.
+- **Ebene:** hinter dem Hero-Inhalt, die Zahlen bleiben lesbar. Am Ende bleiben die Erbsen mit 70 % Deckkraft liegen.
+- **Erbsen:** 5–16 px, Dauer 1,6–3,2 s, Verzögerung 0–0,9 s, leichtes seitliches Schwingen.
+  - Farben aus `brand-100/200/300`, `cat-3`, `cat-6`, `pea-logo` und den Quellen-Tokens.
+  - Gleicher Monat ergibt das gleiche Bild (fester Startwert).
+- **Kein Ton.** Beim Verlassen des Screens verschwindet die Ebene.
+- **Messung** (`perf.spec.ts`, iPhone-Profil, 4× CPU-Drosselung, Tipp auf den Haken, 4,3 s Chrome-Trace):
+
+| Gerät | Erbsen | Ø Frame-Zeit | längster Frame |
+|---|---|---|---|
+| iPhone 15 | 90 | 15,5 ms | 75,8 ms |
+| iPhone SE | 90 | 15,8 ms | 105,2 ms |
+| iPhone SE | **60** (gewählt) | 15,4 ms | 58,6 ms |
+
+- Alle Werte liegen unter 16 ms. Das iPhone SE bekommt trotzdem 60 Erbsen, weil sich der längste Frame damit fast halbiert. Die Werte stehen in `docs/perf/liquid-glass.json`.
+
+## Entscheidungen, bitte prüfen
+
+- **`celebratedMonths` im Einstellungs-Eintrag:** Der Eintrag wird damit auch ohne „Fixkosten einplanen“ angelegt. Damit die Einladung trotzdem erscheint, gilt ein Eintrag mit nur gefeierten Monaten als „unberührt“ (Unit-Test). Gespeichert werden höchstens die letzten 36 Monate.
+- **Bestehende Daten:** Alte, komplett bezahlte Monate feiern beim ersten Öffnen einmal, wie im Auftrag beschrieben.
+- **Serie:** „{n} Monate in Folge“ zählt die bestätigten Monate von „Fixkosten einplanen“. Das Abzeichen erscheint nur im aktiven Monat.
+- **Einzahl:** Bei nur einer Rechnung steht „Deine Rechnung ist bezahlt“ statt „Alle 1 Rechnungen bezahlt“.
+- **Umschalter:** Die Stellung bleibt, solange der Monats-Screen offen ist. Beim nächsten Start steht er wieder auf „Nächstes Gehalt“.
+- **Wortregel:** Der Text-Test verbot „erledigt“, noch aus einem älteren Sprint. Für `hero.done.title` gilt jetzt eine Ausnahme, weil du den Titel vorgegeben hast.
+
+## Neue Texte
+
+| Wo | Text |
+|---|---|
+| Hero, Feier | „{Monat} erledigt“ · „Alle {n} Rechnungen bezahlt“ · „Deine Rechnung ist bezahlt“ · „{n} Monate in Folge“ · Haken: „Feier noch einmal abspielen“ |
+| Hero, Quellen | „Woraus du bezahlst“ / „Woraus du bezahlt hast“ · „Rücklage“ · „Gehalt“ · „Spielgeld“ (vorher „aus deiner Rücklage“, „direkt vom Gehalt“, „aus Spielgeld“) |
+| Gehalts-Aufteilung | „Nächstes Gehalt“ · „Aktuelles Gehalt“ · „(wie im {Monat})“ · nur für Screenreader: „Welches Gehalt?“ |
+| Hero | entfällt: „Alles abgebucht“ |
+
+## Screenshots der Ergänzung
+
+- `docs/screenshots/feier/`: `01-hero-normal`, `02-hero-erledigt` (Konfetti im Endzustand), `03-hero-erledigt-ruhig`, je Gerät hell und dunkel
+- `docs/screenshots/ruecklage-spielgeld/`: `07-hero-quellen` (Balken und zwei Zeilen), `08-aufteilung-naechstes-gehalt`, `09-aufteilung-aktuelles-gehalt`
+
+## Testergebnisse der Ergänzung
+
+TESTERGEBNISSE
