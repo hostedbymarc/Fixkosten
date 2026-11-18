@@ -51,7 +51,7 @@
   - Ein Test drückte Esc, während das Sheet noch glitt. Er wartet jetzt.
 - **Screenshots:** aus Chromium, in `docs/screenshots/ruecklage-spielgeld/`. Es gibt 7 je Gerät und Modus, 70 insgesamt.
 
-**Preview:** https://deploy-preview-{PR}--fixkosten.netlify.app
+**Preview:** https://deploy-preview-48--fixkosten.netlify.app
 
 ### Daten wie deine (Unit-Test, nachgebaut)
 
