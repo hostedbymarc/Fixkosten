@@ -148,7 +148,11 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 | iPhone SE | 90 | 15,8 ms | 105,2 ms |
 | iPhone SE | **60** (gewählt) | 15,4 ms | 58,6 ms |
 
-- Alle Werte liegen unter 16 ms. Das iPhone SE bekommt trotzdem 60 Erbsen, weil sich der längste Frame damit fast halbiert. Die Werte stehen in `docs/perf/liquid-glass.json`.
+- Zusätzlich lief die Messung in der vollen Suite, also auf einer stärker ausgelasteten Maschine. Die Kalibrierung lag dort bei 39 ms statt 27 ms.
+  - iPhone 15: 16,4 ms roh, auf die Maschine normiert 12,6 ms; längster Frame 74,6 ms.
+  - iPhone SE: 15,5 ms roh, normiert 12,2 ms; längster Frame 58 ms.
+  - Der Test prüft den normierten Wert. Roh lag das iPhone 15 dort knapp über 16 ms.
+- Einzeln gemessen liegen alle Werte unter 16 ms. Das iPhone SE bekommt trotzdem 60 Erbsen, weil sich der längste Frame damit fast halbiert. Die Werte stehen in `docs/perf/liquid-glass.json`.
 
 ## Entscheidungen, bitte prüfen
 
