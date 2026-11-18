@@ -109,6 +109,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-01-woraus-zahlst-du`);
         await tap(page.getByRole('button', { name: 'Speichern' }));
         await expect(page.getByTestId('position-form')).toHaveCount(0);
+        // the detail sheet comes back: Esc while it slides is lost (WebKit)
+        await sheetIn(page);
         await page.keyboard.press('Escape');
         await expect(page.getByRole('dialog')).toHaveCount(0);
         const chip = page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip');

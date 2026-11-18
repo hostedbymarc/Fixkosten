@@ -36,6 +36,23 @@
 | Unit-Tests | ✅ | `salarySplit.test.ts` (16) mit Daten wie deinen, Details unten. |
 | E2E | ✅ | `ruecklage-spielgeld.spec.ts`:<br>• Geräte: iPhone SE, iPhone 15, iPad hoch und quer, Desktop 1440, jeweils hell und dunkel.<br>• Ablauf: Position auf Spielgeld, Spielgeld setzen, Überzug beantworten.<br>• Karte, Hero und Empfehlung aktualisieren sich sofort. |
 
+### Testergebnisse
+
+- **Unit-Tests:** 1.107 grün, davon 16 in `salarySplit.test.ts`.
+- **Volle E2E-Suite (Chromium):** alle Projekte gelaufen.
+  - 25 Tests waren zuerst rot, alle mit alten Erwartungen:
+    - Die Kachel „auf einmal“ hatte einen neuen Knopf. Jetzt ist es wieder der gewohnte Bestätigen-Knopf, nur mit dem neuen Text.
+    - Der Tooltip-Test suchte „Frei verfügbar“ bei aktivem Modus. Er prüft es jetzt vorher.
+  - Gefixt und neu gelaufen: alle grün.
+- **Gefundener Fehler im InfoTip:**
+  - Auf dem iPad mit Maus konnte ein Tipp direkt nach einem Hover das Popover nicht offen halten.
+  - Der Schließ-Timer lief weiter. Jetzt stoppt ein Tipp ihn.
+- **WebKit:** `ruecklage-spielgeld`, `walkthrough`, `ein-popover`, `fixkostenkonto`, alle grün.
+  - Ein Test drückte Esc, während das Sheet noch glitt. Er wartet jetzt.
+- **Screenshots:** aus Chromium, in `docs/screenshots/ruecklage-spielgeld/`. Es gibt 7 je Gerät und Modus, 70 insgesamt.
+
+**Preview:** https://deploy-preview-{PR}--fixkosten.netlify.app
+
 ### Daten wie deine (Unit-Test, nachgebaut)
 
 - Eingaben:
