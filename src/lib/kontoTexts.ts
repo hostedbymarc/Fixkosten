@@ -120,9 +120,15 @@ export const KONTO_TEXTS = {
   'settings.walkthrough': 'So funktioniert Erbse',
 
   // · Monats-Screen, Hero: woraus die Fixkosten bezahlt werden (nur Zeilen > 0)
-  'hero.src.reserve': 'aus deiner Rücklage',
-  'hero.src.salary': 'direkt vom Gehalt',
-  'hero.src.spielgeld': 'aus Spielgeld',
+  'hero.done.title': '{monat} erledigt',
+  'hero.done.sub': 'Alle {n} Rechnungen bezahlt',
+  'hero.done.sub.one': 'Deine Rechnung ist bezahlt',
+  'hero.done.replay': 'Feier noch einmal abspielen',
+  'hero.src.title': 'Woraus du bezahlst',
+  'hero.src.title.done': 'Woraus du bezahlt hast',
+  'hero.src.reserve': 'Rücklage',
+  'hero.src.salary': 'Gehalt',
+  'hero.src.spielgeld': 'Spielgeld',
 
   // · Woraus zahlst du das? (Bearbeiten-Dialog, Positionen-Liste)
   'account.question': 'Woraus zahlst du das?',
@@ -148,6 +154,10 @@ export const KONTO_TEXTS = {
   // · So teilt sich dein Gehalt (statt „Frei verfügbar“, nur mit Fixkosten einplanen)
   'split.title': 'So teilt sich dein Gehalt',
   'split.salary': 'Gehalt am {datum}',
+  'split.salary.like': 'wie im {monat}',
+  'split.view': 'Welches Gehalt?',
+  'split.view.next': 'Nächstes Gehalt',
+  'split.view.current': 'Aktuelles Gehalt',
   'split.reserve': 'Zur Seite legen',
   'split.direct': 'Direkt vom Gehalt',
   'split.wealth': 'Vermögensaufbau',

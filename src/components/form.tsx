@@ -208,6 +208,7 @@ export function Segmented<T extends string>({
   options,
   gridClass,
   info,
+  hideLabel,
 }: {
   label: string;
   value: T;
@@ -216,11 +217,19 @@ export function Segmented<T extends string>({
   /** Tailwind grid columns (e.g. wrap to 3 per row on phones); default: one row */
   gridClass?: string;
   info?: ReactNode;
+  /** the label only for screen readers (a switch right above already says it) */
+  hideLabel?: boolean;
 }) {
   const id = useId();
   return (
     <div>
-      <FieldLabel id={id} label={label} info={info} as="div" />
+      {hideLabel ? (
+        <span id={id} className="sr-only">
+          {label}
+        </span>
+      ) : (
+        <FieldLabel id={id} label={label} info={info} as="div" />
+      )}
       <div role="radiogroup" aria-labelledby={id}>
       <div
         className={`grid gap-1 rounded-2xl border border-control-edge bg-control-track p-1 ${gridClass ?? ''}`}

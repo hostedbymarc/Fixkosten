@@ -154,6 +154,10 @@
   --hero-chip-ink: 34 47 18;
   --hero-chip-on-bg: 28 42 13; /* pressed (only open shown) */
   --hero-chip-on-ink: 255 255 255;
+  /* „Woraus du bezahlst“ on the hero: light colours, ≥ 3:1 against hero-from and hero-to (contrast.test.ts) */
+  --hero-src-reserve: var(--brand-100);
+  --hero-src-salary: var(--sky-deep);
+  --hero-src-spielgeld: var(--butter-deep);
   --hero-shadow: 0 1px 2px rgba(47, 67, 24, 0.18), 0 8px 16px -8px rgba(47, 67, 24, 0.28), 0 24px 48px -20px rgba(47, 67, 24, 0.5);
 
   /* Akzentflächen: cheerful fill, dark text of the same family (never white on pastel) */
@@ -355,6 +359,9 @@
     --hero-chip-ink: 34 47 18;
     --hero-chip-on-bg: 14 22 10;
     --hero-chip-on-ink: 255 255 255;
+    /* dark: sky-deep and butter-deep are dark, their inks are the light ones */
+    --hero-src-salary: var(--sky-ink);
+    --hero-src-spielgeld: var(--butter-ink);
     --hero-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 48px -20px rgba(0, 0, 0, 0.7);
     --butter: 58 44 6;
     --butter-ink: 255 226 154;
@@ -534,6 +541,9 @@
   --hero-chip-ink: 34 47 18;
   --hero-chip-on-bg: 14 22 10;
   --hero-chip-on-ink: 255 255 255;
+  /* dark: sky-deep and butter-deep are dark, their inks are the light ones */
+  --hero-src-salary: var(--sky-ink);
+  --hero-src-spielgeld: var(--butter-ink);
   --hero-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 48px -20px rgba(0, 0, 0, 0.7);
   --butter: 58 44 6;
   --butter-ink: 255 226 154;

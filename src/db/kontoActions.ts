@@ -108,6 +108,12 @@ export async function markWalkthroughSeen(db: FixkostenDB): Promise<void> {
   if (!current.walkthroughSeen) await writeKonto(db, { walkthroughSeen: true });
 }
 
+/** „{Monat} erledigt“ was celebrated: the confetti does not play again for this month by itself. */
+export async function markCelebrated(db: FixkostenDB, period: Period): Promise<void> {
+  const current = await readKonto(db);
+  if (!current.celebratedMonths.includes(period)) await writeKonto(db, { celebratedMonths: [...current.celebratedMonths, period].slice(-36) });
+}
+
 /** „Spielgeld pro Monat“: an amount (cents allowed) or null = off. */
 export async function setSpielgeld(db: FixkostenDB, amount: number | null): Promise<void> {
   await writeKonto(db, { spielgeld: amount !== null && amount > 0 ? Math.round(amount * 100) / 100 : null });

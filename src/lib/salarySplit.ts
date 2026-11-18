@@ -4,6 +4,7 @@
 // was spent above it) – the rest is the Überschuss. Only reads: kontoState, monthItems, monthFigures.
 import type { KontoSettings, OverflowSource } from '../db/settings';
 import { monthItems, netSalaryForPeriod, type SourceItem } from './calc';
+import { addPeriods } from './period';
 import type { KontoState } from './kontoBalance';
 import type { Dataset, Period } from './types';
 
@@ -12,7 +13,11 @@ const euros = (c: number) => c / 100;
 const sum = (items: SourceItem[]) => euros(items.reduce((a, i) => a + cents(i.amount), 0));
 
 export interface SalarySplit {
+  /** „Aktuelles Gehalt“ (the month shown, actual values) or „Nächstes Gehalt“ (the following month, planned) */
+  kind: 'current' | 'next';
   period: Period;
+  /** next: the salary is not entered for that month – the last one entered, from this month („wie im {Monat}“) */
+  salaryFrom: Period | null;
   /** net salary of the month; null = not entered */
   salary: number | null;
   /** „Zur Seite legen“: the amount of this month (base, plus the extra while spreading) */
@@ -57,7 +62,63 @@ export function salarySplit(ds: Dataset, period: Period, state: KontoState, sett
     salary === null
       ? null
       : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(play) - cents(overflowCounted));
-  return { period, salary, reserve, direct, directItems, wealth, spielgeld, spent, spentItems, overflow, overflowSource, overflowCounted, rest };
+  return { kind: 'current', period, salaryFrom: null, salary, reserve, direct, directItems, wealth, spielgeld, spent, spentItems, overflow, overflowSource, overflowCounted, rest };
+}
+
+/** The last net salary entered up to `period` (at most two years back): the amount and its month. */
+export function lastSalary(ds: Dataset, period: Period): { salary: number; from: Period } | null {
+  for (let i = 0; i < 24; i++) {
+    const p = addPeriods(period, -i);
+    const salary = netSalaryForPeriod(ds, p);
+    if (salary !== null) return { salary, from: p };
+  }
+  return null;
+}
+
+/**
+ * „Nächstes Gehalt“: the salary of the month after `period` (missing: the last one entered, „wie im {Monat}“),
+ * minus exactly the amount of the Zur-Seite-Kachel (`reserve`, default state.next.amount), what that month
+ * plans straight from the salary and as Vermögensaufbau, and the Spielgeld limit (no overflow: nothing is
+ * spent yet). Without a Spielgeld: what that month plans on it.
+ */
+export function nextSalarySplit(
+  ds: Dataset,
+  period: Period,
+  state: KontoState,
+  settings: Pick<KontoSettings, 'spielgeld'>,
+  reserve: number = state.next.amount,
+): SalarySplit {
+  const next = addPeriods(period, 1);
+  const items = monthItems(ds, next).filter((i) => i.fromNet);
+  const directItems = items.filter((i) => i.kind === 'expense' && i.account === 'girokonto');
+  const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
+  const spentItems = items.filter((i) => i.account === 'spielgeld');
+  const direct = sum(directItems);
+  const wealth = sum(wealthItems);
+  const spent = sum(spentItems);
+  const spielgeld = settings.spielgeld;
+  const play = spielgeld ?? spent;
+  const own = netSalaryForPeriod(ds, next);
+  const last = own === null ? lastSalary(ds, period) : null;
+  const salary = own ?? last?.salary ?? null;
+  const rest = salary === null ? null : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(play));
+  return {
+    kind: 'next',
+    period: next,
+    salaryFrom: last?.from ?? null,
+    salary,
+    reserve,
+    direct,
+    directItems,
+    wealth,
+    spielgeld,
+    spent,
+    spentItems,
+    overflow: 0,
+    overflowSource: 'surplus',
+    overflowCounted: 0,
+    rest,
+  };
 }
 
 /**
@@ -76,4 +137,12 @@ export function lumpAdvice(state: KontoState, split: SalarySplit): LumpAdvice | 
   if (split.spielgeld === null || split.rest === null || state.gap <= 0 || !state.mode) return null;
   const amount = state.mode === 'lump' ? state.lump : state.gap;
   return { advice: cents(split.rest) >= cents(amount) ? 'lump' : 'spread', rest: split.rest, amount };
+}
+
+/**
+ * The advice of the tile: always from the NEXT salary, with the base amount (without the extra) set aside –
+ * the Überschuss that is left in a normal month decides whether the gap can be closed at once.
+ */
+export function tileAdvice(ds: Dataset, active: Period, state: KontoState, settings: Pick<KontoSettings, 'spielgeld'>): LumpAdvice | null {
+  return lumpAdvice(state, nextSalarySplit(ds, active, state, settings, state.order));
 }

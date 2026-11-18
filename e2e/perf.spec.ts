@@ -183,3 +183,31 @@ test('Tabwechsel (inkl. erster Besuch Analyse): Ø Frame-Zeit < 16 ms, kein Long
     expect(s.cls, `${s.tab}: CLS`).toBe(0);
   }
 });
+
+// ruecklage-spielgeld: „{Monat} erledigt“ with the pea confetti (live data: October is paid). A tap on the
+// check plays it again; measured with 4× CPU throttling (Chrome DevTools, iPhone profile of this project).
+for (const [device, viewport, minPeas] of [
+  ['iPhone 15', null, 90],
+  ['iPhone SE', { width: 375, height: 667 }, 60],
+] as const) {
+  test(`Feier „Oktober erledigt“ (${device}): Ø Frame-Zeit < 16 ms bei 4× CPU-Drosselung`, async ({ page, browser }) => {
+    if (viewport) await page.setViewportSize(viewport);
+    await expect(page.getByTestId('hero-done')).toBeVisible();
+    // the confetti of the first opening is over (≤ 0.9 s delay + 3.2 s fall)
+    await page.waitForTimeout(4300);
+    const speed = await speedFactor(page);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    const m = await frameWork(browser, page, `feier-${device}`, async () => {
+      await page.getByTestId('hero-check').tap();
+      await page.waitForTimeout(4300);
+    });
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+    await cdp.detach();
+    const peas = Number(await page.getByTestId('hero-confetti').getAttribute('data-count'));
+    results[`Feier ${device}`] = { ...m, ...normalised(m, speed), cpuThrottling: 4, peas };
+    expect(peas).toBe(minPeas);
+    expect(m.frames).toBeGreaterThan(30);
+    expect(m.avgFrameMs / speed.factor).toBeLessThan(16);
+  });
+}

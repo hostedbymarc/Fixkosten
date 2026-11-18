@@ -58,5 +58,25 @@
         "cls": 0
       }
     ]
+  },
+  "Feier iPhone 15": {
+    "frames": 187,
+    "avgFrameMs": 15.5,
+    "maxFrameMs": 75.8,
+    "calibrationMs": 32,
+    "factor": 1.07,
+    "avgFrameMsNormalised": 14.5,
+    "cpuThrottling": 4,
+    "peas": 90
+  },
+  "Feier iPhone SE": {
+    "frames": 166,
+    "avgFrameMs": 15.4,
+    "maxFrameMs": 58.6,
+    "calibrationMs": 25,
+    "factor": 1,
+    "avgFrameMsNormalised": 15.4,
+    "cpuThrottling": 4,
+    "peas": 60
   }
 }

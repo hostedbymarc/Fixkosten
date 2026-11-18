@@ -85,6 +85,8 @@ export interface KontoSettings {
   spielgeld: number | null;
   /** per month: where the part above the Spielgeld comes from; missing = from the surplus (Überschuss) */
   spielgeldOverflow: Partial<Record<Period, OverflowSource>>;
+  /** months whose „{Monat} erledigt“ was celebrated (the confetti plays once per month) */
+  celebratedMonths: Period[];
 }
 
 /** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
@@ -114,6 +116,7 @@ export const DEFAULT_KONTO: KontoSettings = {
   walkthroughSeen: false,
   spielgeld: null,
   spielgeldOverflow: {},
+  celebratedMonths: [],
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -175,7 +178,19 @@ export function toKontoSettings(value: unknown): KontoSettings {
     spielgeldOverflow: Object.fromEntries(
       Object.entries(isObj(v.spielgeldOverflow) ? v.spielgeldOverflow : {}).filter(([k, x]) => isPeriod(k) && (x === 'surplus' || x === 'other')),
     ) as Partial<Record<Period, OverflowSource>>,
+    celebratedMonths: (Array.isArray(v.celebratedMonths) ? v.celebratedMonths : []).filter(
+      (p, i, all): p is Period => typeof p === 'string' && isPeriod(p) && all.indexOf(p) === i,
+    ),
   };
+}
+
+/**
+ * Never touched „Fixkosten einplanen“: no entry, or one that only remembers celebrated months
+ * („{Monat} erledigt“ writes them for everyone) – the invitation card still shows.
+ */
+export function kontoUntouched(stored: KontoSettings | null): boolean {
+  if (stored === null) return true;
+  return JSON.stringify(storedKonto({ ...stored, celebratedMonths: [] })) === JSON.stringify(storedKonto(DEFAULT_KONTO));
 }
 
 const isRounding = (v: unknown) => v === 1 || v === 5 || v === 10;
@@ -215,6 +230,7 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.walkthroughSeen) out.walkthroughSeen = true;
   if (s.spielgeld !== null) out.spielgeld = s.spielgeld;
   if (Object.keys(s.spielgeldOverflow).length) out.spielgeldOverflow = s.spielgeldOverflow;
+  if (s.celebratedMonths.length) out.celebratedMonths = s.celebratedMonths;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;

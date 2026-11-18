@@ -766,9 +766,75 @@ button:active > .pea[data-pressable] {
    the screen comes in, then rest (src/screens/MonthScreen.tsx, Web Animations with id „ambient“) – box-shadow
    glows of zero-size elements, clipped to the tile (no gradient into transparency); a diagonal light
    shimmer crosses it once per month change (600 ms). The content lies above. */
-.hero > :not(.hero-lights) {
+.hero > :not(.hero-lights):not(.hero-confetti) {
   position: relative;
   z-index: 1;
+}
+.hero-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* a pea: falls from above the tile to --end, swinging by --sway, and stays there (fill both) */
+.confetti-pea {
+  position: absolute;
+  top: 0;
+  border-radius: 9999px;
+  /* flat: a gradient into transparency is captured black by iOS „Ganze Seite“ (check-glass-layers) */
+  background: var(--c);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.6, 1);
+  animation-fill-mode: both;
+}
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -24px, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  30% {
+    transform: translate3d(var(--sway), calc(var(--end) * 0.3), 0);
+  }
+  60% {
+    transform: translate3d(calc(var(--sway) * -0.6), calc(var(--end) * 0.62), 0);
+  }
+  85% {
+    transform: translate3d(calc(var(--sway) * 0.3), calc(var(--end) * 0.9), 0);
+  }
+  100% {
+    transform: translate3d(0, var(--end), 0);
+    /* lying peas stay a little transparent: the text above them stays easy to read */
+    opacity: 0.7;
+  }
+}
+/* the check pops while the peas fall: 0.5 → 1.2 → 1 */
+.hero-check[data-pop] {
+  animation: hero-check-pop 520ms cubic-bezier(0.3, 0, 0.2, 1) both;
+}
+@keyframes hero-check-pop {
+  0% {
+    transform: scale(0.5);
+  }
+  55% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-check[data-pop] {
+    animation: none;
+  }
+  .hero-confetti {
+    display: none;
+  }
 }
 .hero-lights {
   position: absolute;

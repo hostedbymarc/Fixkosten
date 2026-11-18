@@ -208,6 +208,7 @@ export function RoundingField({ settings }: { settings: KontoSettings }) {
         <div data-testid="konto-rounding-step">
           <Segmented<string>
             label={t('settings.rounding')}
+            hideLabel
             value={String(settings.rounding)}
             onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
             options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}
