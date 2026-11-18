@@ -88,11 +88,23 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await close.getByLabel('Netto-Gehalt').fill('8.302');
         await tap(close.getByRole('button', { name: 'Speichern' }));
         await expect(close).toBeHidden();
+        // default „Nächstes Gehalt“: November's salary is missing → October's, „wie im Oktober“; the tile's amount
+        await expect(split).toHaveAttribute('data-view', 'next');
         await expect(page.getByTestId('split-salary')).toHaveText(money('€ 8.302,00'));
-        await expect(split).toContainText('Gehalt am 1. Oktober');
+        await expect(page.getByTestId('split-salary-label')).toHaveText('Gehalt am 1. November (wie im Oktober)');
+        await expect(page.getByTestId('split-reserve-value')).toHaveText((await page.getByTestId('tile-amount').textContent())!.trim());
         await expect(split).toContainText('= Bleibt dir');
-        // hero: everything from the Rücklage, A + B + C = Fixkosten
-        await expect(page.getByTestId('hero-source-reserve')).toHaveText(/^aus deiner Rücklage €\s[\d.]+,\d{2}$/);
+        await shot(page, `${tag}-08-aufteilung-naechstes-gehalt`, split);
+        // „Aktuelles Gehalt“: October, actual values
+        await tap(split.getByRole('radio', { name: 'Aktuelles Gehalt' }));
+        await expect(split).toHaveAttribute('data-view', 'current');
+        await expect(page.getByTestId('split-salary-label')).toHaveText('Gehalt am 1. Oktober');
+        await shot(page, `${tag}-09-aufteilung-aktuelles-gehalt`, split);
+        // hero: everything from the Rücklage – one row, no bar; it adds up to the Fixkosten
+        await expect(page.getByTestId('hero-sources-title')).toHaveText('Woraus du bezahlst');
+        await expect(page.getByTestId('hero-source-reserve')).toContainText('Rücklage');
+        await expect(page.getByTestId('hero-source-reserve-value')).toHaveText((await page.getByTestId('hero-planned').textContent())!.replace(/^(€\s[\d.]+)$/, '$1,00'));
+        await expect(page.getByTestId('hero-sources-bar')).toHaveCount(0);
         await expect(page.getByTestId('hero-source-spielgeld')).toHaveCount(0);
 
         // Miete → Spielgeld (edit dialog): chip „Spielgeld“
@@ -135,7 +147,19 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const overflow = page.getByTestId('spielgeld-overflow');
         await expect(overflow).toContainText('Woher kommt der Rest?');
         await expect(overflow.getByRole('radio', { name: 'Aus dem Überschuss' })).toHaveAttribute('aria-checked', 'true');
-        await expect(page.getByTestId('hero-source-spielgeld')).toHaveText(/^aus Spielgeld €\s1\.008,00$/);
+        await expect(page.getByTestId('hero-source-spielgeld-value')).toHaveText(money('€ 1.008,00'));
+        // two sources: the bar with both segments, the rows add up to the Fixkosten
+        await expect(page.getByTestId('hero-sources-bar')).toBeVisible();
+        await expect(page.getByTestId('hero-sources-bar').locator('span')).toHaveCount(2);
+        const sum = amountOf((await page.getByTestId('hero-source-reserve-value').textContent())!) + amountOf((await page.getByTestId('hero-source-spielgeld-value').textContent())!);
+        expect(sum).toBeCloseTo(amountOf((await page.getByTestId('hero-planned').textContent())!), 2);
+        const barHeight = (await page.getByTestId('hero-sources-bar').boundingBox())!.height;
+        expect(barHeight).toBeCloseTo(10, 0);
+        // the overflow is part of the current month only („Nächstes Gehalt“: the limit, no overflow)
+        await tap(split.getByRole('radio', { name: 'Nächstes Gehalt' }));
+        await expect(split).toHaveAttribute('data-view', 'next');
+        await expect(page.getByTestId('split-overflow')).toHaveCount(0);
+        await tap(split.getByRole('radio', { name: 'Aktuelles Gehalt' }));
         await expect(page.getByTestId('split-overflow-value')).toHaveText(money('€ 508,00'));
         await expect(split).toContainText('= Überschuss');
         const restSurplus = amountOf((await page.getByTestId('split-rest').textContent())!);
