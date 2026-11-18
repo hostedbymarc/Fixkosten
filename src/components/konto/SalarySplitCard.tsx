@@ -58,9 +58,9 @@ export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function Sal
           </button>
         </div>
       ) : (
-        <dl className="num mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 text-[15px] leading-snug">
+        <dl className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 text-[15px] leading-snug">
           <dt className="font-semibold text-ink">{t('split.salary', { datum: dayLabel(periodStartDate(period, start)) })}</dt>
-          <dd className="text-right font-semibold text-ink" data-testid="split-salary">
+          <dd className="num text-right font-semibold text-ink" data-testid="split-salary">
             {formatEUR(split.salary, { fixed: true })}
           </dd>
           {rows.map((r) => (
@@ -69,14 +69,15 @@ export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function Sal
                 − {r.label}
                 {r.note && <span className="text-ink-mute"> ({r.note})</span>}
               </dt>
-              <dd className="text-right text-ink-soft" data-testid={`split-${r.key}-value`}>
+              <dd className="num text-right text-ink-soft" data-testid={`split-${r.key}-value`}>
                 {formatEUR(r.value, { fixed: true })}
               </dd>
             </div>
           ))}
-          <dt className="mt-1 border-t border-line pt-2 font-semibold text-ink">= {t(split.spielgeld !== null ? 'split.rest' : 'split.rest.plain')}</dt>
+          <div className="col-span-2 mt-1 border-t border-line" aria-hidden="true" />
+          <dt className="pt-1 font-semibold text-ink">= {t(split.spielgeld !== null ? 'split.rest' : 'split.rest.plain')}</dt>
           <dd
-            className={`mt-1 border-t border-line pt-2 text-right text-[17px] font-semibold ${split.rest! < 0 ? 'text-over' : 'text-ink'}`}
+            className={`num pt-1 text-right text-[17px] font-semibold ${split.rest! < 0 ? 'text-over' : 'text-ink'}`}
             data-testid="split-rest"
             data-negative={split.rest! < 0}
           >

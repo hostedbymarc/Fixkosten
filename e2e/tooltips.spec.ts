@@ -247,7 +247,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.getByRole('button', { name: 'Bearbeiten' }).click();
       await expect(page.getByTestId('position-form')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
-      await exercise(page, info(form, 'Von welchem Konto geht das weg?'), mode, seen, form);
+      await exercise(page, info(form, 'Woraus zahlst du das?'), mode, seen, form);
       await exercise(page, info(form, 'Startmonat'), mode, seen, form);
       await exercise(page, info(form, 'Fälligkeitstag'), mode, seen, form);
       await page.keyboard.press('Escape');
