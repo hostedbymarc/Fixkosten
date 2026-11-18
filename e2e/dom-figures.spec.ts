@@ -179,6 +179,7 @@ async function checkMonth(page: Page, ds: Dataset, period: Period, soll: Record<
     const planned = s('hero-planned');
     if (planned !== undefined) expect(norm(formatEUR(f.total)), 'calc = Soll hero-planned').toBe(norm(planned));
     await expect(page.getByTestId('hero-done-title')).toBeVisible();
+    await check(page.getByTestId('hero-done-sub'), f.count === 1 ? 'Deine Rechnung ist bezahlt' : `Alle ${f.count} Rechnungen bezahlt`, undefined, 'hero-done-sub');
   }
   const e = deductionsExplanation(f);
   await check(page.getByTestId('hero-deductions-value'), formatEUR(f.deductions), s('hero-deductions-value'), 'Abzüge');

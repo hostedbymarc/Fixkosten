@@ -47,7 +47,7 @@ test.describe('Sheet „Einmalige Zahlung“', () => {
 
     await addOnce(page, 'Investieren (Vermögensaufbau)', 'Test Sparen', '100');
     await expect(page.getByTestId('wealth-value')).toHaveText(eur(formatEUR(f.wealth + 100)));
-    await expect(page.getByTestId('hero-planned')).toHaveText(eur(formatEUR(f.total)));
+    await expect(page.getByTestId('hero-paid')).toHaveText(eur(formatEUR(f.total))); // Vermögensaufbau: October stays done
 
     await addOnce(page, 'Sonstiges', 'Test Reparatur', '50');
     await expect(page.getByTestId('hero-planned')).toHaveText(eur(formatEUR(f.total + 50)));
