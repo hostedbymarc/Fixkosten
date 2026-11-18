@@ -153,7 +153,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(tile).toHaveAttribute('data-view', 'lump');
         await expect(page.getByTestId('tile-monthly')).toContainText('jeden Monat am 1.');
         await expect(page.getByTestId('tile-once')).toContainText(/einmalig/);
-        await expect(page.getByTestId('tile-lump-done')).toHaveText('Einmalbetrag zur Seite gelegt');
+        await expect(page.getByTestId('tile-confirm')).toHaveText('Einmalbetrag zur Seite gelegt');
         const advice = page.getByTestId('tile-advice');
         await expect(advice).toHaveText(/^Nach deinem Spielgeld bleiben €\s[\d.]+,\d{2}\. (Du kannst die €\s[\d.]+,\d{2} auf einmal zur Seite legen\.|Leg die €\s[\d.]+,\d{2} lieber verteilt zur Seite\.)$/);
         await shot(page, `${tag}-06-kachel-auf-einmal`, tile);

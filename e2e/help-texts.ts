@@ -29,6 +29,7 @@ export const HELP_TEXTS: HelpText[] = [
   { texts: ['Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar.'], screen: 'Bearbeiten-Dialog · „Startmonat“', placement: 'tooltip' },
   { texts: ['31 = letzter Tag des Monats'], screen: 'Bearbeiten-Dialog · „Fälligkeitstag“', placement: 'tooltip' },
   { texts: ['Wird abgezogen.', 'Kommt in diesem Monat dazu.'], screen: 'Einmalbetrag-Sheet · „Betrag“', placement: 'tooltip' },
+  { texts: ['So viel willst du jeden Monat frei ausgeben.'], screen: 'Einstellungen · „Spielgeld pro Monat“', placement: 'tooltip', note: 'ruecklage-spielgeld: neu (Text aus dem Auftrag)' },
   { texts: ['Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt.'], screen: 'Einstellungen · „Neuer Monat beginnt am“', placement: 'tooltip' },
   { texts: ['Erbse nennt dir jeden Monat einen Betrag zum Zurücklegen. Damit kommst du nie ins Minus. Ohne Banklogin.'], screen: 'Einstellungen · „Fixkosten einplanen“', placement: 'tooltip' },
   { texts: ['Folgt deinem Gerät: hell oder dunkel, je nach Systemeinstellung.', 'Immer hell, auch wenn dein Gerät dunkel ist.', 'Immer dunkel, angenehm am Abend.'], screen: 'Einstellungen · „Design“', placement: 'tooltip' },

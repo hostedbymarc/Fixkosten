@@ -4,9 +4,6 @@ import { formatEUR } from '../../lib/format';
 import { streakBadge, type KontoState } from '../../lib/kontoBalance';
 import { t } from '../../lib/kontoTexts';
 import { coveredText, dayLabel, deadlinePassed, planText, reasonText, whenText } from '../../lib/kontoWords';
-import { db } from '../../db/db';
-import { confirmLump } from '../../db/kontoActions';
-import { localToday } from '../../lib/activeMonth';
 import type { LumpAdvice } from '../../lib/salarySplit';
 import { askDay } from '../../lib/walkthrough';
 import type { Period } from '../../lib/types';
@@ -103,18 +100,7 @@ export function KontoTileView({ state, start, active, onOpen, buttonRef, advice 
           <div data-testid="tile-status" data-status={state.status}>
             {state.mode === 'lump' ? <LumpFields state={state} start={start} /> : <PlanAmount state={state} start={start} testId="tile" />}
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-              {state.mode === 'lump' && state.monthDone ? (
-                <button
-                  type="button"
-                  onClick={() => void confirmLump(db, state.balance, state.lump, localToday())}
-                  className="focus-ring relative z-10 h-11 w-full rounded-xl bg-accent px-4 text-[15px] font-semibold text-white hover:bg-accent-hover sm:w-auto"
-                  data-testid="tile-lump-done"
-                >
-                  {t('tile.lump.done')}
-                </button>
-              ) : (
-                <ConfirmButton state={state} active={active} testId="tile-confirm" />
-              )}
+              <ConfirmButton state={state} active={active} testId="tile-confirm" lumpLabel={t('tile.lump.done')} />
               <SwitchModeLink state={state} testId="tile-switch" />
             </div>
             {advice && (

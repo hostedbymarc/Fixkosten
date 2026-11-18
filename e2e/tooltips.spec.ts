@@ -190,6 +190,8 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.getByTestId('import-file').setInputFiles({ name: 'erbse-backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(liveBackup())) });
       await expect(page.getByTestId('hero')).toBeVisible();
       await appSettled(page);
+      // „Frei verfügbar“ (im Ø-Monat) only without „Fixkosten einplanen“: the split replaces it
+      await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
       await page.getByTestId('konto-invite-enable').click();
       await expect(page.getByTestId('konto-tile')).toBeVisible();
       // setup without an own account, nothing set aside; a gap that can be spread asks one more question
@@ -206,7 +208,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
 
       // --- Monat
       await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
-      if (await info(page, 'im Ø-Monat').count()) await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
+      await expect(info(page, 'im Ø-Monat')).toHaveCount(0);
       await exercise(page, page.getByTestId('konto-tile-info'), mode, seen);
 
       // --- Fixkostenkonto-Sheet
@@ -260,7 +262,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
 
       // --- Einstellungen
       await goTo(page, 'einstellungen');
-      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Schon zur Seite gelegt', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
+      for (const name of ['Neuer Monat beginnt am', 'Fixkosten einplanen', 'Schon zur Seite gelegt', 'Spielgeld pro Monat', 'Design', 'Erbse wie eine App öffnen', 'Sicherung']) {
         await exercise(page, info(page, name), mode, seen);
       }
 

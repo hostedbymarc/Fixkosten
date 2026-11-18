@@ -133,7 +133,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('tile-once')).toContainText('einmalig bis 31. Jänner');
         await expect(page.getByTestId('tile-lump')).toHaveText(new RegExp(`^${E(GAP)}$`));
         await expect(page.getByTestId('tile-reason')).toHaveText(REASON);
-        await expect(page.getByTestId('tile-lump-done')).toHaveText('Einmalbetrag zur Seite gelegt');
+        await expect(page.getByTestId('tile-confirm')).toHaveText('Einmalbetrag zur Seite gelegt');
         await expect(page.getByTestId('tile-switch')).toHaveText('Lieber verteilen?');
         await card.scrollIntoViewIfNeeded();
         await shot(page, `${tag}-04-kachel-auf-einmal`);
