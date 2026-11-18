@@ -26,7 +26,7 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     await depot.getByTestId('toggle-paid').click();
     await expect(depot).toHaveAttribute('data-paid', 'true');
     await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 3.403'));
-    await expect(app.getByText('Alles abgebucht')).toBeVisible();
+    await expect(app.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
 
     await depot.getByTestId('toggle-paid').click();
     await expect(depot).toHaveAttribute('data-paid', 'false');

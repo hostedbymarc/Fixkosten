@@ -727,13 +727,13 @@ function HeroDeductions({ figures, sources, allPaid }: { figures: MonthFigures; 
   const explanation = deductionsExplanation(figures);
   return (
     <div
-      className="flex min-w-0 flex-col border-t border-edge pt-4 xl:w-[300px] xl:shrink-0 xl:self-stretch xl:justify-center xl:border-l xl:border-t-0 xl:py-1 xl:pl-8 xl:pt-1"
+      className="flex min-w-0 flex-col border-t border-edge pt-4 xl:w-[340px] xl:shrink-0 xl:self-stretch xl:justify-center xl:border-l xl:border-t-0 xl:py-1 xl:pl-8 xl:pt-1"
       data-testid="hero-deductions"
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center text-[13px] font-medium text-ink-mute">
+        <div className="flex shrink-0 items-center whitespace-nowrap text-[13px] font-medium text-ink-mute">
           Abzüge vom Netto
-          <InfoTip label="Erklärung: Abzüge vom Netto" title="Abzüge vom Netto" className="-my-3 -mr-3" testId="hero-deductions-info">
+          <InfoTip label="Erklärung: Abzüge vom Netto" title="Abzüge vom Netto" className="-my-3 -mr-3 shrink-0" testId="hero-deductions-info">
             <p className="num text-ink" data-testid="hero-deductions-formula">
               {explanation.formula}
             </p>

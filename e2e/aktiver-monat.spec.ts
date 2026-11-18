@@ -284,7 +284,7 @@ test.describe('Monat-Screen einfacher', () => {
     // everything paid (October): no filter chip
     await page.getByRole('button', { name: 'Vorheriger Monat' }).click();
     await expect(page.getByTestId('hero-open-filter')).toHaveCount(0);
-    await expect(page.getByTestId('hero')).toContainText('Alles abgebucht');
+    await expect(page.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
   });
 
   test('Kommt bald: iPhone 3 Einträge + „Alle anzeigen (5)“, iPad/Desktop alle; zwei Zeilen, Rhythmus einheitlich', async ({ page }) => {

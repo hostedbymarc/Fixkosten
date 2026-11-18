@@ -75,7 +75,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('hero-sources')).toHaveCount(0);
         await page.getByTestId('konto-invite-enable').click();
         // mode on (ruecklage-spielgeld): the Fixkosten by source, here everything from the Rücklage
-        await expect(page.getByTestId('hero-source-reserve')).toHaveText(/^aus deiner Rücklage €\s[\d.]+,\d{2}$/);
+        await expect(page.getByTestId('hero-source-reserve')).toHaveText(/^Rücklage€\s[\d.]+,\d{2}$/);
         await shot(page, `${tag}-00-monat-ruecklage`);
 
         // setup: no account, € 184,21 set aside, spread → „Fertig“ → the walkthrough by itself

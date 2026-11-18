@@ -272,8 +272,8 @@ test.describe('Offen aus Vormonat & Einmalbeträge', () => {
     await app.getByRole('button', { name: 'Vorheriger Monat' }).click();
     await expandAll(app); // October: everything settled, everything collapsed
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-status', 'skipped');
-    await expect(app.getByTestId('hero-planned')).toHaveText(eur('€ 3.368'));
-    await expect(app.getByText('Alles abgebucht')).toBeVisible();
+    await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 3.368'));
+    await expect(app.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
   });
 
   test('"Bezahlt" books it in October: € 3.403 abgebucht, November unchanged', async ({ app }) => {

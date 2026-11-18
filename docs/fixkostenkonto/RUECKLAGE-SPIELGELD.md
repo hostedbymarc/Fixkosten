@@ -116,7 +116,7 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 
 | Punkt | erledigt | Beleg |
 |---|---|---|
-| **1** Hero auf iPad und Desktop | ✅ | Ursache siehe unten. Bis 1279 px liegt alles untereinander wie auf dem iPhone. Ab 1280 px hat die rechte Spalte feste 300 px. Pillen brechen nicht mehr um. E2E `feier.spec.ts`: Betrag ≥ 2 × „Abzüge vom Netto“, ab iPad ≥ 56 px, Pille ≤ 33 px hoch, auf allen 5 Geräten hell und dunkel. |
+| **1** Hero auf iPad und Desktop | ✅ | Ursache siehe unten. Bis 1279 px liegt alles untereinander wie auf dem iPhone. Ab 1280 px hat die rechte Spalte feste 340 px. Pillen brechen nicht mehr um. E2E `feier.spec.ts`: Betrag ≥ 2 × „Abzüge vom Netto“, ab iPad ≥ 56 px, Pille ≤ 33 px hoch, auf allen 5 Geräten hell und dunkel. |
 | **2** Woraus du bezahlst | ✅ | Überschrift „Woraus du bezahlst“ bzw. „… bezahlt hast“. Darunter ein Balken (10 px, 2 px Abstand) und die Zeilen untereinander: Punkt, Name, Betrag mit Cent. Nur Quellen > 0, bei einer Quelle kein Balken. Neue Tokens `--hero-src-*` verweisen auf bestehende Tokens, es gibt keine neuen Hex-Werte. Kontrast-Test: Farben ≥ 3:1, Text ≥ 4,5:1 gegen beide Enden des Hero-Verlaufs, hell und dunkel (33 Tests). E2E: Summe der Zeilen = Fixkosten, Balkenhöhe 10 px. |
 | **3** „{Monat} erledigt“ | ✅ | Haken im hellen Brand-Kreis, „Oktober erledigt“, „Alle 16 Rechnungen bezahlt“, Betrag groß. Ab 2 Monaten kommt „{n} Monate in Folge“ dazu, aus der bestehenden Serie, nur bei aktivem „Fixkosten einplanen“. „Alles abgebucht“ entfällt. Das Konfetti läuft live beim letzten Haken und einmal beim ersten Öffnen eines kompletten Monats (`celebratedMonths`). Ein Tipp auf den Haken spielt die Feier erneut ab. Bei reduced motion gibt es weder Konfetti noch Pop. |
 | **4** Nächstes Gehalt | ✅ | Umschalter „Nächstes Gehalt \| Aktuelles Gehalt“, Standard ist „Nächstes“. Fehlt das Netto des Folgemonats, gilt das zuletzt eingetragene mit „(wie im {Monat})“. „Zur Seite legen“ ist genau der Kachel-Betrag (Unit- und E2E-Test). Die Empfehlung der Kachel rechnet immer mit dem nächsten Gehalt und dem Grundbetrag. |
@@ -129,7 +129,7 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 - Der große Betrag passt seine Schrift an die Restbreite an (`.fit`: Container-Breite ÷ Zeichenbreite).
 - Je breiter die rechte Spalte, desto kleiner der Betrag. Mit Cent („€ 5.670,48“) wurde er noch kleiner.
 - Die Pille „Alles abgebucht“ hatte kein `whitespace-nowrap`. In der schmalen Spalte brach sie um.
-- **Lösung:** Bis 1279 px untereinander, ab 1280 px rechte Spalte mit festen 300 px. Pillen mit `whitespace-nowrap`, Quellen untereinander.
+- **Lösung:** Bis 1279 px untereinander, ab 1280 px rechte Spalte mit festen 340 px. Pillen mit `whitespace-nowrap`, Quellen untereinander.
 
 ## Konfetti: Technik und Leistung
 
