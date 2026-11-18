@@ -1,7 +1,7 @@
 // Pure record migrations. Used by the Dexie upgrade functions and by the
 // backup import, so an old backup file goes through exactly the same steps.
 
-import type { Account, Frequency, Kind, Payment, PlanEntry, Position } from '../lib/types';
+import { ACCOUNTS, type Account, type Frequency, type Kind, type Payment, type PlanEntry, type Position } from '../lib/types';
 
 const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
@@ -80,7 +80,7 @@ export function defaultAccount(kind: Kind | undefined): Account {
  */
 export function upgradePositionV5(record: Record<string, unknown>, kindOfCategory: (id: string) => Kind | undefined): Position {
   const position = record as unknown as Position;
-  if (position.account !== 'fixkostenkonto' && position.account !== 'girokonto') {
+  if (!ACCOUNTS.includes(position.account as Account)) {
     position.account = defaultAccount(kindOfCategory(position.categoryId));
   }
   return position;

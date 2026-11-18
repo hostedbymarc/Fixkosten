@@ -81,7 +81,14 @@ export interface KontoSettings {
   gapMode: GapMode | null;
   /** „So funktioniert Erbse“ was shown: it opens by itself only once, right after the setup */
   walkthroughSeen: boolean;
+  /** „Spielgeld pro Monat“ (cents allowed); null = off */
+  spielgeld: number | null;
+  /** per month: where the part above the Spielgeld comes from; missing = from the surplus (Überschuss) */
+  spielgeldOverflow: Partial<Record<Period, OverflowSource>>;
 }
+
+/** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
+export type OverflowSource = 'surplus' | 'other';
 
 export const DEFAULT_KONTO: KontoSettings = {
   enabled: false,
@@ -105,6 +112,8 @@ export const DEFAULT_KONTO: KontoSettings = {
   milestonesShown: [],
   gapMode: null,
   walkthroughSeen: false,
+  spielgeld: null,
+  spielgeldOverflow: {},
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -118,7 +127,7 @@ const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2
  * new fields: with a balance it counts as set up (no setup prompt), without one it does not.
  */
 export function toKontoSettings(value: unknown): KontoSettings {
-  if (!isObj(value)) return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [] };
+  if (!isObj(value)) return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [], spielgeldOverflow: {} };
   const v = value;
   const balance = money(v.balance) ?? 0;
   const anchor = isObj(v.anchor) && money(v.anchor.amount) !== null && isTimestamp(v.anchor.at) ? { amount: money(v.anchor.amount)!, at: v.anchor.at } : null;
@@ -162,6 +171,10 @@ export function toKontoSettings(value: unknown): KontoSettings {
     ),
     gapMode: GAP_MODES.includes(v.gapMode as GapMode) ? (v.gapMode as GapMode) : null,
     walkthroughSeen: v.walkthroughSeen === true,
+    spielgeld: money(v.spielgeld) !== null && money(v.spielgeld)! > 0 ? money(v.spielgeld) : null,
+    spielgeldOverflow: Object.fromEntries(
+      Object.entries(isObj(v.spielgeldOverflow) ? v.spielgeldOverflow : {}).filter(([k, x]) => isPeriod(k) && (x === 'surplus' || x === 'other')),
+    ) as Partial<Record<Period, OverflowSource>>,
   };
 }
 
@@ -200,6 +213,8 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.milestonesShown.length) out.milestonesShown = s.milestonesShown;
   if (s.gapMode) out.gapMode = s.gapMode;
   if (s.walkthroughSeen) out.walkthroughSeen = true;
+  if (s.spielgeld !== null) out.spielgeld = s.spielgeld;
+  if (Object.keys(s.spielgeldOverflow).length) out.spielgeldOverflow = s.spielgeldOverflow;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;
