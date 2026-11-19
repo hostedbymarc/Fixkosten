@@ -64,7 +64,7 @@ test.describe('Spielgeld-Zuordnung bleibt erhalten', () => {
     await page.getByTestId('konto-invite-enable').click();
     await setUpKonto(page);
     await goTo(page, 'einstellungen');
-    await page.getByLabel('Spielgeld pro Monat').fill('2.000,00');
+    await page.getByTestId('konto-spielgeld').fill('2.000,00');
 
     // recurring: Miete → Spielgeld, saved in the edit dialog
     await goTo(page, 'positionen');

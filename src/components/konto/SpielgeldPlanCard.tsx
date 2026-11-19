@@ -76,8 +76,10 @@ export const SpielgeldPlanCard = forwardRef<HTMLButtonElement, Props>(function S
   }
 
   const limit = plan.extra ?? plan.after!;
-  const highest = Math.max(...[plan.extra?.possible ?? 0, plan.after?.possible ?? 0, spielgeld ?? 0]);
-  const max = Math.max(STEP * 10, Math.ceil((highest * 1.25) / STEP) * STEP);
+  // the range: up to a quarter above the highest possible amount (fixed while dragging); a larger stored
+  // Spielgeld widens it so the thumb never sits beyond the end
+  const possible = Math.max(plan.extra?.possible ?? 0, plan.after?.possible ?? 0);
+  const max = Math.max(STEP * 10, Math.ceil((possible * 1.25) / STEP) * STEP, Math.ceil((settings.spielgeld ?? 0) / STEP) * STEP);
   const first = plan.months[0]!;
   const parsed = text.trim() === '' ? null : parseAmount(text);
   return (
