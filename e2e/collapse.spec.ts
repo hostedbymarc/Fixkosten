@@ -189,7 +189,7 @@ test.describe('„Frei verfügbar (tatsächlich)“ entfernt', () => {
     await tap(page.getByTestId('salary-tile'));
     const sheet = page.getByTestId('bottom-sheet');
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByLabel('Netto-Gehalt')).toHaveValue('4788');
+    await expect(sheet.getByLabel('Netto-Gehalt')).toHaveValue('4.788');
     await expect(sheet.getByLabel('Frei verfügbar (tatsächlich)')).toHaveCount(0);
     await expect(sheet).not.toContainText('tatsächlich');
     await page.waitForTimeout(400);

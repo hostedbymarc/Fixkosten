@@ -148,7 +148,7 @@ test.describe('Betrag ändern', () => {
     await app.getByRole('button', { name: 'Änderung ab 01.04.2027 auf € 1.050 ändern' }).click();
     await sheetReady(app);
     const form = app.getByTestId('amount-change-form');
-    await expect(form.getByLabel('Neuer Betrag')).toHaveValue('1050');
+    await expect(form.getByLabel('Neuer Betrag')).toHaveValue('1.050');
     await form.getByLabel('Neuer Betrag').fill('1100');
     await form.getByLabel('Gültig ab').fill('2027-01-15');
     await expect(app.getByTestId('changed-on-hint')).toContainText('gilt ab Jänner 2027');

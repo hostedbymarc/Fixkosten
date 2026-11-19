@@ -183,7 +183,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-06-einstellungen`);
         await page.reload();
         await appSettled(page);
-        await expect(page.getByTestId('konto-balance')).toHaveValue('1087,43');
+        await expect(page.getByTestId('konto-balance')).toHaveValue('1.087,43');
         // a gap is open: never „Zum ersten Mal alles eingeplant“
         await expect(milestoneToast(page)).toHaveCount(0);
       });

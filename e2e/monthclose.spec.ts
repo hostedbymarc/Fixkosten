@@ -28,7 +28,7 @@ test.describe('Monatsabschluss', () => {
     await check();
 
     await app.getByTestId('free-tile').click();
-    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5.000');
   });
 
   test('comma decimals, decimal keyboard, invalid input blocks saving', async ({ app }) => {
@@ -54,7 +54,7 @@ test.describe('Monatsabschluss', () => {
     await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('');
     await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveAttribute('placeholder', '5000');
     await app.getByRole('button', { name: 'Wie Vormonat' }).click();
-    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5.000');
     await app.keyboard.press('Escape');
 
     await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');

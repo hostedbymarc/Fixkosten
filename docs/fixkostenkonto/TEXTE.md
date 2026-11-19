@@ -121,6 +121,8 @@
 | Einstellungen | `settings.spielgeld.hint` | Leer lassen, wenn du kein Spielgeld planst. | 7 |
 | Dein Plan | `plan.title` | Dein Spielgeld | 2 |
 | Dein Plan | `plan.slider` | Spielgeld pro Monat | 3 |
+| Dein Plan | `plan.edit` | Spielgeld ändern | 2 |
+| Dein Plan | `plan.lump.note` | Darin: einmalig {betrag} bis {datum}. | 5 |
 | Dein Plan | `plan.until` | Bis {monat} möglich: {betrag} | 4 |
 | Dein Plan | `plan.from` | Ab {monat} möglich: {betrag} | 4 |
 | Dein Plan | `plan.only` | Möglich: {betrag} | 2 |
@@ -128,9 +130,11 @@
 | Dein Plan | `plan.ok.until` | Du schaffst jeden Monat die {betrag} bis {monat}. | 8 |
 | Dein Plan | `plan.ok.plain` | Du schaffst jeden Monat die {betrag}. | 6 |
 | Dein Plan | `plan.ok.left` | Es bleiben dir {betrag} übrig. | 5 |
+| Dein Plan | `plan.ok.lump` | Du schaffst die {betrag} auf einmal bis {monat}. | 8 |
 | Dein Plan | `plan.over` | Zu viel. | 2 |
 | Dein Plan | `plan.over.until` | Bis {monat} fehlen dir jeden Monat {betrag} für deine Rücklage. | 10 |
 | Dein Plan | `plan.over.plain` | Dir fehlen jeden Monat {betrag} für deine Rücklage. | 8 |
+| Dein Plan | `plan.over.lump` | Bis {monat} fehlen dir {betrag} für deine Rücklage. | 8 |
 | Dein Plan | `plan.tip.until` | Bis {monat} kannst du dir bis zu {betrag} Spielgeld erlauben. | 10 |
 | Dein Plan | `plan.tip.from` | Ab {monat} bis zu {betrag}. | 5 |
 | Dein Plan | `plan.tip.plain` | Du kannst dir bis zu {betrag} Spielgeld erlauben. | 8 |
