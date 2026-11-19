@@ -47,7 +47,7 @@ export function Confetti({ seed, falling }: { seed: string; falling: boolean }) 
       aria-hidden="true"
       data-testid="hero-confetti"
       data-count={peas.length}
-      data-falling={falling || undefined}
+      data-falling={falling ? '' : undefined}
     >
       {peas.map((p, i) => (
         <span
