@@ -280,4 +280,13 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 
 ## Testergebnisse der Ergänzung 2
 
-TESTERGEBNISSE2
+- **Unit-Tests:** 1.189 grün. Neu: `spielgeld-zuordnung.test.ts` mit 5 Tests, dazu neue Fälle in `salarySplit.test.ts` und `celebration.test.ts`.
+- **Volle E2E-Suite (Chromium):** alle sechs Projekte gelaufen. Desktop 511, iPhone 15 268, iPhone Pro Max 240, iPad hoch 256, iPad quer 244, Perf 3 grün.
+- **Zwei Tests waren rot:**
+  - `luxe2`, Hochzählen beim Monatswechsel, in allen fünf Geräte-Projekten. Der Test suchte die alte Kopie über der Zahl. Er prüft jetzt den einen Textknoten: Während des Zählens weicht der Text vom Endwert ab.
+  - Perf, Feier auf dem iPhone 15: 16,7 ms statt unter 16 ms. Ursache: Ich hatte `will-change` auch von den Erbsen genommen. Die Erbsen haben es wieder, der Text nicht. Danach dreimal grün, zuletzt 11,5 ms normiert.
+  - Beide gefixt und neu gelaufen: `luxe2`, `feier`, `monatswechsel` auf Desktop, iPhone 15 und iPad, 25 grün.
+- **Neue Specs:** `monatswechsel` 6 grün, `spielgeld-zuordnung` 2 grün, `feier` 15 grün, `ruecklage-spielgeld` 20 grün.
+- **WebKit:** `feier`, `hero-abzuege`, `ruecklage-spielgeld`, `monatswechsel`, 50 grün.
+- **Build-Prüfungen:** Farben nur in `tokens.css`, keine Verläufe ins Transparente, Bundle-Größe: alle grün.
+- Die Screenshots stammen aus Chromium. Die WebKit-Bilder habe ich verworfen.
