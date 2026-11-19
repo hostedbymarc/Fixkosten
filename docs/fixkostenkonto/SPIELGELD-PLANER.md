@@ -57,6 +57,25 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
   - Dauerauftrag, `kontoState`, Gehalts-Aufteilung
 - `nicht-eingeplant-regression.test.ts` vergleicht den neuen Code damit. Alle Werte sind identisch.
 
+## Abschluss PR #49 · Punkt · erledigt · Beleg
+
+| Punkt | erledigt | Beleg |
+|---|---|---|
+| **1** Perf-Feier isoliert | ✅ | Eigenes Playwright-Projekt `perf-feier`: ein Worker, eigener Browser, nach `perf`. `perf` lässt die Feier aus (`grepInvert`). 90 / 60 Erbsen, Grenze 16 ms unverändert. Werte unten. |
+| **2** Liegende Erbsen in vergangenen Monaten | ✅ | Freigegeben, bleibt so. |
+| **3** „Nicht einplanen“ ohne Modus | ✅ | Freigegeben, bleibt so. |
+| **4** Kein Spielgeld gesetzt | ✅ | Freigegeben, bleibt so. |
+| **5** Regler-Skala und 250 ms | ✅ | Freigegeben, bleibt so. |
+| **6** „Auf einmal“ in der Rechnung | ✅ | Der offene Einmalbetrag zählt in dem Monat, bis zu dem er fällig ist (Monat vor dem ersten Monat danach, wie in `kontoState`). Karte: „Bis {Monat} möglich: € A“, darunter „Darin: einmalig € X bis {Datum}.“, dann „Ab {Folgemonat} möglich: € B“. Status: „Du schaffst die € X auf einmal bis {Monat}.“ bzw. „Bis {Monat} fehlen dir € X für deine Rücklage.“ Tipp wie beim Extra. Ist der Betrag bestätigt, fällt er weg: nur noch „Möglich: € B“. Unit: `spielgeld-planer.test.ts` („Auf einmal“, deine nachgebauten Zahlen). E2E: `spielgeld-planer.spec.ts` (Einrichtung „auf einmal“, Bestätigen über die Zur-Seite-Kachel). |
+| **8** Betrag direkt bearbeiten, Tausenderpunkt | ✅ | Das Feld in der Karte ist weg. Antippen des großen Betrags macht ihn editierbar: Zahlentastatur (`inputmode=decimal`), Cent erlaubt. Enter oder Antippen außerhalb speichert, Esc bricht ab. In den Einstellungen bleibt das Feld. Alle Betragsfelder (Formular, Monatsabschluss, Zahlung, Einstellungen, Karte) nutzen `AmountInput`: Tausenderpunkt auch beim Tippen, Cursor bleibt an der Ziffer. Einfügen von „1.200“, „1200“, „1.200,50“ ergibt 1.200 / 1.200 / 1.200,50. Unit: `format.test.ts` (`groupAmountInput`). E2E: `spielgeld-planer.spec.ts`, angepasst `collapse`, `fixkosten-ein-betrag`, `monthclose`, `phase31`. |
+
+**„Auf einmal“ mit deinen Zahlen (Unit-Test, nachgebaut):**
+- Einmalbetrag € 980,43, fällig bis 24. Jänner, Starttag 25.
+- November und Dezember möglich: € 4.113,00. Jänner möglich: € 3.132,57 (€ 980,43 weniger). Ab Februar: € 4.113,00.
+- Spielgeld € 1.200: „Passt.“, es bleiben € 1.932,57. Tipp € 3.100 und € 4.100.
+- Spielgeld € 3.500: „Zu viel.“, es fehlen € 367,43.
+- Nach Bestätigung: jeder Monat € 4.113,00, genau wie ohne Einmalbetrag.
+
 ## Rechnung „Dein Spielgeld“
 
 - Gerechnet wird je Monat m ab dem nächsten Zur-Seite-Betrag (`state.next`), so weit `kontoState` plant.
@@ -65,7 +84,8 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
 - Läuft ein Extra:
   - A ist das Minimum über die Extra-Monate.
   - B ist das Minimum über die Monate danach.
-- Ohne Extra gibt es nur B.
+- Bei „auf einmal“ zählt der offene Einmalbetrag im Monat, bis zu dem er fällig ist. A ist dann das Minimum bis zu diesem Monat.
+- Ohne Extra und ohne offenen Einmalbetrag gibt es nur B.
 - Status:
   - Spielgeld ≤ A (sonst B) heißt „Passt.“.
   - Darüber heißt es „Zu viel.“.
@@ -77,12 +97,11 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
 - Bei Spielgeld € 1.200 heißt es „Passt.“, es bleiben € 2.586,19 übrig. Der Tipp nennt € 3.750 und € 4.100.
 - Zwei Einmalzahlungen sind nicht eingeplant (€ 1.800 und € 1.228,45). Sie stehen nicht im Hero, nicht in den Summen und nicht in der Rechnung.
 
-## Entscheidungen, bitte prüfen
+## Entscheidungen (von dir freigegeben)
 
 - **Liegende Erbsen in vergangenen Monaten:**
   - Ein vergangener Monat im Erledigt-Zustand zeigt die Erbsen liegend.
   - Fallen tut dort nie etwas.
-  - Wenn sie dort gar nicht liegen sollen, ändere ich es.
 - **„Nicht einplanen“ auch ohne „Fixkosten einplanen“:**
   - Der Schalter steht immer im Dialog.
   - Der Chip „nicht eingeplant“ erscheint immer.
@@ -97,10 +116,8 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
 - **Speichern:**
   - Regler und Feld ändern den Status sofort.
   - Die Einstellung wird 250 ms nach der letzten Änderung geschrieben.
-- **Lump-Modus:**
-  - Bei „auf einmal“ gibt es kein Extra in den Monatsbeträgen.
-  - Die Karte zeigt dann eine Zeile „Möglich“.
-  - Den Einmalbetrag behandelt weiter die Empfehlung der Zur-Seite-Kachel.
+- **Lump-Modus:** geändert, siehe Abschluss Punkt 6.
+- **Perf-Feier:** isoliert gemessen, Erbsenzahl und Grenze unverändert.
 - **Prüfskript:** Das Namens-Prüfskript erlaubt jetzt genau den diktierten Satz „Zählt nicht zu Fixkosten, Rücklage und Aufteilung“.
 
 ## Neue und geänderte Texte
@@ -123,6 +140,9 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
 | Tipp | – | „Bis {Monat} kannst du dir bis zu € A Spielgeld erlauben. Ab {Monat} bis zu € B.“ · ohne Extra: „Du kannst dir bis zu € B Spielgeld erlauben.“ |
 | Rechnung | – | „Gerechnet mit: Netto … − Zur Seite … − Direkt … − Vermögensaufbau …“ · „Netto geschätzt wie zuletzt.“ |
 | Ohne Netto | – | „Trag dein Netto-Gehalt ein, dann rechnet Erbse dein Spielgeld.“ · „Gehalt eintragen“ |
+| Karte „Dein Spielgeld“, Feld | „Spielgeld pro Monat“ (Betragsfeld in der Karte) | (entfällt) · großer Betrag antippbar: „Spielgeld ändern: € …“ (Vorlesetext) |
+| Karte, „auf einmal“ | – | „Darin: einmalig € X bis {Datum}.“ |
+| Status, „auf einmal“ | – | „Passt. Du schaffst die € X auf einmal bis {Monat}. Es bleiben dir € Y übrig.“ · „Zu viel. Bis {Monat} fehlen dir € X für deine Rücklage.“ |
 | Walkthrough 3 | „Manches zahlst du direkt vom Gehalt oder aus deinem Spielgeld.“ · „Gehalt direkt“ | „Manches zahlst du direkt. Spielgeld planst du nur ein.“ · „Direkt bezahlt“ |
 
 Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
@@ -132,6 +152,10 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 - `docs/screenshots/feier/*-03-hero-erledigt-liegend`: Hero erledigt mit liegenden Erbsen
 - `docs/screenshots/feier/*-02-hero-erledigt`: direkt nach dem einen Fallen
 - `docs/screenshots/spielgeld-planer/*-02-dein-spielgeld-passt`, `*-03-dein-spielgeld-zu-viel`, `*-01-dein-spielgeld-ohne-netto`
+- `docs/screenshots/spielgeld-planer/*-06-betrag-bearbeiten`: der Betrag im Bearbeiten-Modus („1.200“)
+- `docs/screenshots/spielgeld-planer/*-07-dein-spielgeld-auf-einmal`: Karte bei „auf einmal“
+- `docs/screenshots/spielgeld-planer/*-08-eingabe-tausenderpunkt`: Einstellungen, Feld mit „25.000“
+- `docs/screenshots/spielgeld-planer/*-02-dein-spielgeld-passt` zeigt „verteilt“ (Extra bis {Monat})
 - `docs/screenshots/spielgeld-planer/*-04-nicht-einplanen`: Bearbeiten-Dialog
 - `docs/screenshots/spielgeld-planer/*-05-monat-nicht-eingeplant`: die gedämpfte Zeile im Monat
 - `docs/screenshots/ruecklage-spielgeld/*-01-woraus-zahlst-du`, `*-02-chip-direkt`, `*-04-gehalt-aufteilung`
