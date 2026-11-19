@@ -61,7 +61,7 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
 
 | Punkt | erledigt | Beleg |
 |---|---|---|
-| **1** Perf-Feier isoliert | ✅ | Eigenes Playwright-Projekt `perf-feier`: ein Worker, eigener Browser, nach `perf`. `perf` lässt die Feier aus (`grepInvert`). 90 / 60 Erbsen, Grenze 16 ms unverändert. Werte unten. |
+| **1** Perf-Feier isoliert | ❌ iPhone 15 rot | Eigenes Playwright-Projekt `perf-feier`: ein Worker, eigener Browser, nach `perf`. `perf` lässt die Feier aus (`grepInvert`). 90 / 60 Erbsen, Grenze 16 ms unverändert. iPhone SE isoliert grün, iPhone 15 isoliert meist rot. Werte unten. |
 | **2** Liegende Erbsen in vergangenen Monaten | ✅ | Freigegeben, bleibt so. |
 | **3** „Nicht einplanen“ ohne Modus | ✅ | Freigegeben, bleibt so. |
 | **4** Kein Spielgeld gesetzt | ✅ | Freigegeben, bleibt so. |
@@ -184,12 +184,20 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 
 **Viewports:** iPhone SE, iPhone 15, iPad hoch und quer, Desktop 1440, je hell und dunkel. Das gilt in `feier`, `spielgeld-planer` und `ruecklage-spielgeld`.
 
-**Offen: Perf-Messung der Feier:**
-- Bisher hat der Test die Feier per Tipp auf den Haken neu gestartet. Das geht nicht mehr.
-- Jetzt hakt er die letzte Position live ab und misst das Fallen ab 1,5 s danach.
-- Allein läuft er grün: Ø 11,9 ms (iPhone 15) und 14,2 ms (iPhone SE), normalisiert, 4× gedrosselt.
-- Im Lauf des ganzen Perf-Projekts ist iPhone 15 rot: 18,1 bis 21,3 ms.
-- Mit den ersten 1,5 s gemessen sind es etwa 20 ms. Dann schaltet der Hero auf „erledigt“ und die Kategorie klappt zu.
-- Ohne Fallen ist es ruhig: 2 Frames in 2,6 s. Die liegenden Erbsen kosten also nichts.
-- Die Grenze 16 ms habe ich nicht geändert. Sag mir, ob ich das Fallen leichter machen soll, zum Beispiel mit weniger Erbsen.
+**Perf-Feier isoliert (Projekt `perf-feier`, 1 Worker, 4× gedrosselt, normalisiert):**
+
+| Lauf | iPhone 15 (90 Erbsen) | iPhone SE (60 Erbsen) |
+|---|---|---|
+| nach `perf` im Gesamtlauf | 20,0 ms ❌ (roh 21,4) | nicht gelaufen |
+| allein 1 | 15,7 ms ✅ (roh 20,4) | 10,4 ms ✅ (roh 15,9) |
+| allein 2 | 19,5 ms ❌ (roh 23,4) | – |
+| allein 3–7 | 19,5 · 20,1 · 14,3 ✅ · 19,6 · 14,6 ✅ (roh 22,1–23,3) | 15,0 · 15,3 ✅ (roh 16,0–16,4) |
+| Stand vor Punkt 6 und 8 (443a9b7), 3 Läufe | 21,3 · 21,0 · 19,5 ❌ (roh 22,8–24,1) | – |
+
+- iPhone 15 braucht roh stabil 22–23 ms pro Frame. Ob er grün wird, entscheidet nur der Kalibrierfaktor (1,1 bis 1,6).
+- Grün in 3 von 8 Läufen. Das ist nicht verlässlich grün.
+- Das liegt nicht an Punkt 6 oder 8: Der Stand davor misst gleich.
+- Die frühere Einzelmessung 11,9 ms war ein günstiger Kalibrierwert.
+- Das Fallen läuft schon nur über transform und opacity, auf dem Compositor.
+- Ohne weniger Erbsen sehe ich keine sichere schnelle Einsparung.
 - `docs/perf/liquid-glass.json` bleibt auf dem Stand von main.
