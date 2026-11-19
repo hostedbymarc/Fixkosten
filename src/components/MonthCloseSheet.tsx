@@ -1,3 +1,4 @@
+import { AmountInput } from './form';
 import { useId, useState } from 'react';
 import { freeAfterFixedAvgWith, freeAfterFixedWith, monthCloseFor } from '../lib/calc';
 import { amountToInput, currencySymbol, formatAvg, formatEUR, parseAmount } from '../lib/format';
@@ -46,14 +47,12 @@ function AmountField({
         }`}
       >
         <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
-        <input
+        <AmountInput
           id={id}
-          inputMode="decimal"
-          autoComplete="off"
           enterKeyHint="next"
           value={value}
           placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           aria-invalid={invalid}
           aria-describedby={`${id}-hint`}
           className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"

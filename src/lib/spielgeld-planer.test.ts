@@ -161,8 +161,68 @@ describe('„Dein Spielgeld“: möglich je Monat, Status, Tipp', () => {
   });
 });
 
+// „Auf einmal“ with data like yours: the open one-time amount € 980,43, to set aside by 24. Jänner
+// („Neuer Monat beginnt am 25.“: February begins on 25 January, so it is due in the January period)
+describe('„Auf einmal“: der Einmalbetrag im Monat, bis zu dem er fällig ist', () => {
+  const LUMP = 980.43;
+  const balance = Math.round((kontoState(DATA, NOV, settings(0), 25).gap - LUMP) * 100) / 100;
+  const SL = settings(balance, { gapMode: 'lump' });
+  const lumpState = kontoState(DATA, NOV, SL, 25);
+  const plan = spielgeldPlan(DATA, lumpState, 1200)!;
+  it('kontoState: auf einmal € 980,43 bis 24. Jänner, jeden Monat € 2.909', () => {
+    expect(lumpState.mode).toBe('lump');
+    expect(lumpState.lump).toBe(LUMP);
+    expect(lumpState.gapFrom).toBe('2027-02');
+    expect(lumpState.gapBy).toEqual(new Date(2027, 0, 24));
+    expect(lumpState.months.slice(0, 4).every((m) => m.amount === 2909 && m.extra === 0)).toBe(true);
+  });
+  it('im Fälligkeitsmonat (Jänner) € 980,43 weniger möglich, die Monate davor nicht', () => {
+    expect(plan.months.map((m) => [m.period, m.lump, m.possible]).slice(0, 4)).toEqual([
+      [NOV, 0, 4113],
+      ['2026-12', 0, 4113],
+      ['2027-01', LUMP, 3132.57],
+      ['2027-02', 0, 4113],
+    ]);
+  });
+  it('„Bis Jänner möglich: € 3.132,57“ (mit Einmalbetrag), „Ab Februar möglich: € 4.113,00“', () => {
+    expect(plan.extra).toMatchObject({ from: NOV, to: '2027-01', possible: 3132.57, reserve: 2909, lump: LUMP });
+    expect(plan.after).toMatchObject({ from: '2027-02', possible: 4113, lump: 0 });
+  });
+  it('Status und Tipp gegen den Monat mit dem Einmalbetrag', () => {
+    expect(plan.status).toBe('ok');
+    expect(plan.difference).toBe(1932.57);
+    expect(plan.tipExtra).toBe(3100);
+    expect(plan.tipAfter).toBe(4100);
+    const over = spielgeldPlan(DATA, lumpState, 3500)!;
+    expect(over.status).toBe('over');
+    expect(over.difference).toBe(367.43);
+  });
+  it('als zur Seite gelegt bestätigt: fällt weg, wieder wie ohne', () => {
+    // confirmLump: the amount set aside grows by the one-time amount (a new anchor)
+    const confirmed = kontoState(DATA, NOV, settings(balance + LUMP, { gapMode: 'lump' }), 25);
+    expect(confirmed.mode).toBeNull();
+    const after = spielgeldPlan(DATA, confirmed, 1200)!;
+    expect(after.extra).toBeNull();
+    expect(after.months.every((m) => m.lump === 0 && m.possible === 4113)).toBe(true);
+    expect(after.after).toMatchObject({ from: NOV, possible: 4113 });
+    // the same as without any gap
+    const none = kontoState(DATA, NOV, settings(balance + LUMP), 25);
+    expect(spielgeldPlan(DATA, none, 1200)).toEqual(after);
+  });
+  it('verteilt bleibt wie bisher (kein Einmalbetrag)', () => {
+    expect(spielgeldPlan(DATA, STATE, 1200)!.months.every((m) => m.lump === 0)).toBe(true);
+  });
+  it('fällig vor dem ersten Monat des Plans: im ersten Monat', () => {
+    // gapFrom = the active month: no month before it, the one-time amount is due now
+    const now = { ...lumpState, gapFrom: NOV, months: lumpState.months };
+    const p = spielgeldPlan(DATA, now, 1200)!;
+    expect(p.months[0]).toMatchObject({ period: NOV, lump: LUMP, possible: 3132.57 });
+    expect(p.extra).toMatchObject({ from: NOV, to: NOV });
+  });
+});
+
 describe('Rechnung rein aus Monaten (planFromMonths)', () => {
-  const m = (period: string, possible: number, extra = 0, reserve = 2909): SpielgeldMonth => ({ period, salary: 8302, estimated: false, reserve, extra, direct: 0, wealth: 0, possible });
+  const m = (period: string, possible: number, extra = 0, reserve = 2909): SpielgeldMonth => ({ period, salary: 8302, estimated: false, reserve, extra, lump: 0, direct: 0, wealth: 0, possible });
   it('Minimum je Gruppe; Extra-Monate vorne', () => {
     const p = planFromMonths([m('2026-11', 3800, 1, 3200), m('2026-12', 3700, 1, 3300), m('2027-01', 4200), m('2027-02', 4000)], 1200);
     expect(p.extra).toMatchObject({ from: '2026-11', to: '2026-12', possible: 3700, reserve: 3300 });

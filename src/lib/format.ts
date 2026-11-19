@@ -140,11 +140,42 @@ export function parseAmount(input: string): number | null {
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
 }
 
-/** Value for an <input>: '12,50' / '735' */
+/**
+ * An amount field while typing (spielgeld-planer): the thousands dot is shown at once – „1.200“, „1.200,50“.
+ * Pasting „1.200“, „1200“, „1.200,50“ or „1200.50“ works. A dot followed by one or two digits at the end, or a
+ * dot at the end, is the decimal comma; groups of three after a dot are thousands. At most two decimals.
+ */
+export function groupAmountInput(raw: string): string {
+  let s = raw.replace(/CHF|Fr\./gi, '').replace(/[€\s\u00a0\u202f'’]/g, '');
+  const sign = /^[-\u2212\u2010-\u2014]/.test(s) ? '-' : '';
+  if (sign) s = s.slice(1);
+  let int: string;
+  let dec: string | null = null;
+  const comma = s.indexOf(',');
+  if (comma >= 0) {
+    int = s.slice(0, comma);
+    dec = s.slice(comma + 1);
+  } else if (/\.\d{0,2}$/.test(s) && !/^\d{1,3}(\.\d{3})+$/.test(s)) {
+    const dot = s.lastIndexOf('.');
+    int = s.slice(0, dot);
+    dec = s.slice(dot + 1);
+  } else {
+    int = s;
+  }
+  int = int.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+  if (dec !== null) {
+    dec = dec.replace(/\D/g, '').slice(0, 2);
+    if (int === '') int = '0';
+  }
+  if (int === '' && dec === null) return sign;
+  return `${sign}${int.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}${dec === null ? '' : `,${dec}`}`;
+}
+
+/** Value for an <input>: '12,50' / '735' / '1.200' (with the thousands dot, spielgeld-planer) */
 export function amountToInput(value: number): string {
   const cents = Math.round(value * 100);
-  if (cents % 100 === 0) return String(cents / 100);
-  return (cents / 100).toFixed(2).replace('.', ',');
+  if (cents % 100 === 0) return groupAmountInput(String(cents / 100));
+  return groupAmountInput((cents / 100).toFixed(2).replace('.', ','));
 }
 
 /** 0.16 → '16,0 %' */

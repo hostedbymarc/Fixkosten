@@ -128,9 +128,17 @@ test.beforeEach(async ({ page }) => {
   await observe(page);
 });
 
+// „perf“ and „perf-feier“ (the confetti, isolated) each write their own keys: merged with what is there
 test.afterAll(() => {
   mkdirSync(OUT, { recursive: true });
-  writeFileSync(`${OUT}/liquid-glass.json`, `${JSON.stringify(results, null, 2)}\n`);
+  const file = `${OUT}/liquid-glass.json`;
+  let before: Record<string, unknown> = {};
+  try {
+    before = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+  } catch {
+    // no file yet
+  }
+  writeFileSync(file, `${JSON.stringify({ ...before, ...results }, null, 2)}\n`);
 });
 
 test('Scrollen Monat: Ø Frame-Zeit < 16 ms, kein Long Task, CLS 0', async ({ page, browser }) => {

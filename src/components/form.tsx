@@ -1,7 +1,7 @@
-import { useId, type ReactNode } from 'react';
+import { forwardRef, useId, useImperativeHandle, useLayoutEffect, useRef, type InputHTMLAttributes, type ReactNode } from 'react';
 import { InfoTip } from './InfoTip';
 import { localToday } from '../lib/activeMonth';
-import { currencySymbol, parseAmount } from '../lib/format';
+import { currencySymbol, groupAmountInput, parseAmount } from '../lib/format';
 import { addPeriods, periodLabel, shortMonthName } from '../lib/period';
 import type { Period } from '../lib/types';
 
@@ -40,6 +40,56 @@ const boxClass = (invalid: boolean) =>
     invalid ? 'border-over focus-within:ring-over/30' : 'border-edge focus-within:border-accent-ink focus-within:ring-focus/25'
   }`;
 
+/**
+ * The input of every amount (spielgeld-planer): the thousands dot while typing („1.200“, „1.200,50“), pasting
+ * „1.200“, „1200“ or „1.200,50“ works. The caret stays behind the same digit when a dot comes or goes.
+ */
+export const AmountInput = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & { value: string; onChange: (v: string) => void }>(
+  function AmountInput({ value, onChange, ...rest }, ref) {
+    const input = useRef<HTMLInputElement>(null);
+    useImperativeHandle(ref, () => input.current!);
+    // digits (and the comma) before the caret after the last change: the caret goes back behind them
+    const caret = useRef<number | null>(null);
+    const shown = groupAmountInput(value);
+    useLayoutEffect(() => {
+      const el = input.current;
+      if (caret.current === null || !el || document.activeElement !== el) return;
+      let seen = 0;
+      let pos = 0;
+      while (pos < shown.length && seen < caret.current) {
+        if (/[\d,]/.test(shown[pos]!)) seen++;
+        pos++;
+      }
+      caret.current = null;
+      el.setSelectionRange(pos, pos);
+    });
+    return (
+      <input
+        ref={input}
+        inputMode="decimal"
+        autoComplete="off"
+        {...rest}
+        value={shown}
+        onChange={(e) => {
+          const raw = e.target.value;
+          const at = e.target.selectionStart ?? raw.length;
+          // one key: the dots shown are thousands (deleting „1.200“ to „1.20“ is 120); a dot typed now is
+          // the decimal comma. A paste (more at once) goes through as it is („1.200,50“, „1200.50“).
+          const typedDot = raw.length === shown.length + 1 && raw[at - 1] === '.';
+          const oneKey = Math.abs(raw.length - shown.length) <= 1;
+          const next = typedDot
+            ? `${raw.slice(0, at - 1).replace(/\./g, '')},${raw.slice(at).replace(/\./g, '')}`
+            : oneKey
+              ? raw.replace(/\./g, '')
+              : raw;
+          caret.current = raw.slice(0, at).replace(/[^\d,]/g, '').length + (typedDot ? 1 : 0);
+          onChange(groupAmountInput(next));
+        }}
+      />
+    );
+  },
+);
+
 export function AmountField({
   label,
   value,
@@ -67,14 +117,12 @@ export function AmountField({
       <FieldLabel id={id} label={label} info={info} />
       <div className={`flex h-14 items-center px-4 ${boxClass(!!error)}`}>
         <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
-        <input
+        <AmountInput
           id={id}
-          inputMode="decimal"
-          autoComplete="off"
           enterKeyHint="next"
           value={value}
           placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
           aria-invalid={!!error}
           aria-describedby={error || hint ? `${id}-hint` : undefined}
           data-testid={testId}

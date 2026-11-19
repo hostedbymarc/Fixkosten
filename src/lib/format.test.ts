@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { amountToInput, formatDate, formatDelta, formatEUR, formatEURSet, needsCents, parseAmount } from './format';
+import { amountToInput, groupAmountInput, formatDate, formatDelta, formatEUR, formatEURSet, needsCents, parseAmount } from './format';
 import { addPeriods, periodLabel, periodRange } from './period';
 
 // Intl separates '€' and the number with a no-break space
@@ -55,9 +55,11 @@ describe('format (de-AT)', () => {
     expect(parseAmount('12,345')).toBeNull();
     expect(parseAmount('1,2,3')).toBeNull();
     // shown with a comma, always
-    expect(amountToInput(1087.43)).toBe('1087,43');
+    expect(amountToInput(1087.43)).toBe('1.087,43');
     expect(amountToInput(0.5)).toBe('0,50');
-    expect(amountToInput(parseAmount('1.087,43')!)).toBe('1087,43');
+    expect(amountToInput(parseAmount('1.087,43')!)).toBe('1.087,43');
+    expect(amountToInput(1200)).toBe('1.200');
+    expect(amountToInput(1234567.5)).toBe('1.234.567,50');
     expect(formatEUR(1087.43).replace(/\s/g, ' ')).toBe('€ 1.087,43');
     expect(formatEUR(362.48).replace(/\s/g, ' ')).toBe('€ 362,48');
   });
@@ -86,5 +88,42 @@ describe('gleiche Genauigkeit für direkt verglichene Beträge', () => {
     expect(formatDelta(0.5, { fixed: true }).replace(/\u00a0/g, ' ')).toBe('+€ 0,50');
     expect(formatDelta(12, { fixed: true }).replace(/\u00a0/g, ' ')).toBe('+€ 12,00');
     expect(formatDelta(12).replace(/\u00a0/g, ' ')).toBe('+€ 12');
+  });
+});
+
+// spielgeld-planer: every amount field shows the thousands dot, also while typing
+describe('groupAmountInput: Tausenderpunkt beim Tippen und Einfügen', () => {
+  it('Tippen Ziffer für Ziffer', () => {
+    const typed = ['1', '12', '120', '1200', '12000', '120000', '1200000'].map(groupAmountInput);
+    expect(typed).toEqual(['1', '12', '120', '1.200', '12.000', '120.000', '1.200.000']);
+    expect(['1.200,', '1.200,5', '1.200,50'].map(groupAmountInput)).toEqual(['1.200,', '1.200,5', '1.200,50']);
+  });
+  it('Einfügen: „1.200“, „1200“, „1.200,50“, „1200.50“, „€ 1 200“', () => {
+    expect(groupAmountInput('1.200')).toBe('1.200');
+    expect(groupAmountInput('1200')).toBe('1.200');
+    expect(groupAmountInput('1.200,50')).toBe('1.200,50');
+    expect(groupAmountInput('1200.50')).toBe('1.200,50');
+    expect(groupAmountInput('1200.5')).toBe('1.200,5');
+    expect(groupAmountInput('€ 1 200')).toBe('1.200');
+    expect(groupAmountInput('12.345.678')).toBe('12.345.678');
+    expect(['1.200', '1200', '1.200,50', '1200.50'].map((v) => parseAmount(groupAmountInput(v)))).toEqual([1200, 1200, 1200.5, 1200.5]);
+  });
+  it('Löschen: ein Punkt zu wenig wird neu gesetzt', () => {
+    expect(groupAmountInput('1.20')).toBe('1,20');
+    expect(groupAmountInput('120')).toBe('120');
+    expect(groupAmountInput('1.2000')).toBe('12.000');
+  });
+  it('Komma und Punkt am Ende, führende Nullen, höchstens zwei Dezimalen', () => {
+    expect(groupAmountInput('12,')).toBe('12,');
+    expect(groupAmountInput('12.')).toBe('12,');
+    expect(groupAmountInput(',5')).toBe('0,5');
+    expect(groupAmountInput('007')).toBe('7');
+    expect(groupAmountInput('1,234')).toBe('1,23');
+    expect(groupAmountInput('')).toBe('');
+    expect(groupAmountInput('-1200')).toBe('-1.200');
+    expect(groupAmountInput('−50')).toBe('-50');
+  });
+  it('jeder gruppierte Wert ist ein gültiger Betrag', () => {
+    for (const v of [0.5, 12, 1200, 1200.5, 3282.48, 1234567.89]) expect(parseAmount(amountToInput(v))).toBe(v);
   });
 });

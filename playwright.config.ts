@@ -105,7 +105,22 @@ export default defineConfig({
       // iPhone profile for the performance measurements (Sprint B), after every other project
       name: 'perf',
       testMatch: /perf\.spec\.ts/,
+      grepInvert: /Feier/,
       dependencies: ['iphone-15', 'iphone-pro-max', 'ipad-portrait', 'ipad-landscape', 'desktop'],
+      use: {
+        viewport: { width: 393, height: 852 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      // the confetti measured isolated (spielgeld-planer): its own worker and browser, after „perf“, so no
+      // earlier measurement in the same browser weighs on it
+      name: 'perf-feier',
+      testMatch: /perf\.spec\.ts/,
+      grep: /Feier/,
+      dependencies: ['perf'],
       use: {
         viewport: { width: 393, height: 852 },
         deviceScaleFactor: 3,
