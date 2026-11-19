@@ -84,13 +84,32 @@ export interface KontoSettings {
   /** „Spielgeld pro Monat“ (cents allowed); null = off */
   spielgeld: number | null;
   /** per month: where the part above the Spielgeld comes from; missing = from the surplus (Überschuss) */
-  spielgeldOverflow: Partial<Record<Period, OverflowSource>>;
+  spielgeldOverflow: Partial<Record<Period, OverflowAnswer>>;
   /** months whose „{Monat} erledigt“ was celebrated (the confetti plays once per month) */
   celebratedMonths: Period[];
 }
 
 /** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
 export type OverflowSource = 'surplus' | 'other';
+/** „Teilweise“: `otherAmount` (cents allowed, at most the overflow) from another source, the rest from the surplus */
+export interface OverflowPart {
+  mode: 'part';
+  otherAmount: number;
+}
+/** The stored answer per month: the old values „surplus“/„other“ stay as they are; a part is an object (additive). */
+export type OverflowAnswer = OverflowSource | OverflowPart;
+export type OverflowMode = OverflowSource | 'part';
+
+export const overflowMode = (a: OverflowAnswer | undefined): OverflowMode => (a === undefined ? 'surplus' : typeof a === 'string' ? a : 'part');
+
+function parseOverflow(x: unknown): OverflowAnswer | null {
+  if (x === 'surplus' || x === 'other') return x;
+  if (isObj(x) && x.mode === 'part') {
+    const amount = money(x.otherAmount);
+    if (amount !== null && amount >= 0) return { mode: 'part', otherAmount: amount };
+  }
+  return null;
+}
 
 export const DEFAULT_KONTO: KontoSettings = {
   enabled: false,
@@ -176,8 +195,10 @@ export function toKontoSettings(value: unknown): KontoSettings {
     walkthroughSeen: v.walkthroughSeen === true,
     spielgeld: money(v.spielgeld) !== null && money(v.spielgeld)! > 0 ? money(v.spielgeld) : null,
     spielgeldOverflow: Object.fromEntries(
-      Object.entries(isObj(v.spielgeldOverflow) ? v.spielgeldOverflow : {}).filter(([k, x]) => isPeriod(k) && (x === 'surplus' || x === 'other')),
-    ) as Partial<Record<Period, OverflowSource>>,
+      Object.entries(isObj(v.spielgeldOverflow) ? v.spielgeldOverflow : {})
+        .map(([k, x]) => [k, parseOverflow(x)] as const)
+        .filter(([k, x]) => isPeriod(k) && x !== null),
+    ) as Partial<Record<Period, OverflowAnswer>>,
     celebratedMonths: (Array.isArray(v.celebratedMonths) ? v.celebratedMonths : []).filter(
       (p, i, all): p is Period => typeof p === 'string' && isPeriod(p) && all.indexOf(p) === i,
     ),

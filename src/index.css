@@ -777,6 +777,17 @@ button:active > .pea[data-pressable] {
   border-radius: inherit;
   pointer-events: none;
 }
+/* the decorative layers can never leave the tile: WebKit does not clip a child on its own compositing
+   layer (an animated transform) with overflow + border-radius alone; clip-path and paint containment do */
+.hero-confetti,
+.hero-lights {
+  contain: paint;
+  clip-path: inset(0 round var(--r-lg));
+}
+/* „{Monat} erledigt“: a strip at the bottom of the tile where the peas come to rest, below every text */
+.hero[data-done] {
+  padding-bottom: 52px;
+}
 /* a pea: falls from above the tile to --end, swinging by --sway, and stays there (fill both) */
 .confetti-pea {
   position: absolute;
@@ -785,7 +796,6 @@ button:active > .pea[data-pressable] {
   /* flat: a gradient into transparency is captured black by iOS „Ganze Seite“ (check-glass-layers) */
   background: var(--c);
   opacity: 0;
-  will-change: transform, opacity;
   animation-name: confetti-fall;
   animation-timing-function: cubic-bezier(0.35, 0, 0.6, 1);
   animation-fill-mode: both;
@@ -809,8 +819,8 @@ button:active > .pea[data-pressable] {
   }
   100% {
     transform: translate3d(0, var(--end), 0);
-    /* lying peas stay a little transparent: the text above them stays easy to read */
-    opacity: 0.7;
+    /* lying peas rest in the strip below the text */
+    opacity: 0.85;
   }
 }
 /* the check pops while the peas fall: 0.5 → 1.2 → 1 */

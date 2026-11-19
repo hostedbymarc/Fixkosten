@@ -230,10 +230,12 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           sources={konto.enabled ? costSources(ds, period) : null}
           openOnly={filtering}
           onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)}
+          active={today}
           celebrated={kontoStored === undefined ? null : konto.celebratedMonths}
           streak={konto.enabled && konto.setupDone && period === today ? streakBadge(streakOf(konto.checks, today)) : null}
         />
-        <KontoTile ds={ds} active={today} />
+        {/* „Zur Seite legen“ and its advice: only in the active month */}
+        {period === today && <KontoTile ds={ds} active={today} />}
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
         {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
             size – the one that fits the longest of them – so a row keeps one baseline */}
@@ -568,10 +570,13 @@ function HeroCard({
   sources,
   openOnly,
   onToggleOpenOnly,
+  active,
   celebrated,
   streak,
 }: {
   period: Period;
+  /** the active month: only it celebrates (past months never, not even when first opened) */
+  active: Period;
   figures: MonthFigures;
   /** months celebrated already (null while the settings load: no confetti yet) */
   celebrated: readonly Period[] | null;
@@ -587,31 +592,43 @@ function HeroCard({
   const [run, setRun] = useState(0);
   const handled = useRef<Period | null>(null);
   useEffect(() => {
-    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid);
+    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, active, allPaid);
     Object.assign(heroLast, { period, done: allPaid });
     if (celebrated === null) return;
-    const open = handled.current !== period && celebrateOnOpen(period, allPaid, celebrated);
+    const open = handled.current !== period && celebrateOnOpen(period, active, allPaid, celebrated);
     if (celebrated !== null) handled.current = period;
     if (live || open) {
       setRun((n) => n + 1);
       if (!celebrated.includes(period)) void markCelebrated(db, period);
     }
-  }, [period, allPaid, celebrated]);
+  }, [period, allPaid, celebrated, active]);
+  // another month: no confetti layer from before (a new run only for this month)
+  const [runFor, setRunFor] = useState(period);
+  if (runFor !== period) {
+    setRunFor(period);
+    setRun(0);
+  }
   // a diagonal shimmer once per month change (not when the screen first shows; survives the remount of a swipe)
-  const [shimmer] = useState(() => heroShown.period !== null && heroShown.period !== period);
+  // the shimmer element exists only while it runs: removed when its animation ends
+  const [shimmer, setShimmer] = useState<Period | null>(() => (heroShown.period !== null && heroShown.period !== period ? period : null));
   useLayoutEffect(() => {
+    if (heroShown.period !== null && heroShown.period !== period) setShimmer(period);
     heroShown.period = period;
   }, [period]);
   const lights = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => driftHeroLights(lights.current), []);
   return (
-    <div className="hero surface flex flex-col gap-5 p-6 md:p-7 lg:p-8 xl:flex-row xl:items-center xl:gap-8" data-testid="hero">
+    <div
+      className="hero surface flex flex-col gap-5 p-6 md:p-7 lg:p-8 xl:flex-row xl:items-center xl:gap-8"
+      data-done={allPaid || undefined}
+      data-testid="hero"
+    >
       {/* two soft colour fields drifting slowly inside the tile (box-shadow glows, clipped) */}
       <span ref={lights} className="hero-lights" aria-hidden="true">
         <span className="hero-light hero-light-a" />
         <span className="hero-light hero-light-b" />
-        {shimmer && (
-          <span key={period} className="hero-shimmer-track">
+        {shimmer !== null && !reducedMotion() && (
+          <span key={shimmer} className="hero-shimmer-track" data-testid="hero-shimmer" onAnimationEnd={() => setShimmer(null)}>
             <span className="hero-shimmer" />
           </span>
         )}

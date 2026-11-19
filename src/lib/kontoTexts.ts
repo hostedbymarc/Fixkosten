@@ -149,12 +149,17 @@ export const KONTO_TEXTS = {
   'spiel.question': 'Woher kommt der Rest?',
   'spiel.surplus': 'Aus dem Überschuss',
   'spiel.other': 'Andere Quelle (z. B. Mieteinnahmen)',
+  'spiel.part': 'Teilweise',
+  'spiel.part.amount': 'Davon aus anderer Quelle',
+  'spiel.part.rest': 'Aus dem Überschuss: {betrag}.',
+  'spiel.part.max': 'Höchstens {betrag}.',
   'spiel.empty': 'Diesen Monat noch nichts aus dem Spielgeld.',
 
   // · So teilt sich dein Gehalt (statt „Frei verfügbar“, nur mit Fixkosten einplanen)
+  'analyse.order.until': '{betrag} bis {monat}, danach {basis}',
   'split.title': 'So teilt sich dein Gehalt',
   'split.salary': 'Gehalt am {datum}',
-  'split.salary.like': 'wie im {monat}',
+  'split.salary.like': 'geschätzt wie zuletzt',
   'split.view': 'Welches Gehalt?',
   'split.view.next': 'Nächstes Gehalt',
   'split.view.current': 'Aktuelles Gehalt',
@@ -173,9 +178,8 @@ export const KONTO_TEXTS = {
   'tile.once': 'einmalig bis {datum}',
   'tile.once.now': 'einmalig, jetzt',
   'tile.lump.done': 'Einmalbetrag zur Seite gelegt',
-  'advice.rest': 'Nach deinem Spielgeld bleiben {rest}.',
-  'advice.lump': 'Du kannst die {betrag} auf einmal zur Seite legen.',
-  'advice.spread': 'Leg die {betrag} lieber verteilt zur Seite.',
+  'advice.lump': 'Leg die {betrag} auf einmal zur Seite. Danach bleiben dir {rest}.',
+  'advice.spread': 'Auf einmal blieben dir nur {rest}. Leg es lieber verteilt zur Seite.',
 
   // · Walkthrough „So funktioniert Erbse“ (5 Karten)
   'walk.title': 'So funktioniert Erbse',

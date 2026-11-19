@@ -5,7 +5,6 @@ import { periodStartDate } from '../../lib/kontoBalance';
 import { t } from '../../lib/kontoTexts';
 import { dayLabel } from '../../lib/kontoWords';
 import { nextSalarySplit, salarySplit } from '../../lib/salarySplit';
-import { monthName } from '../../lib/period';
 import { Segmented } from '../form';
 import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
@@ -25,17 +24,20 @@ interface Props {
  * „So teilt sich dein Gehalt“ (instead of „Frei verfügbar“ while „Fixkosten einplanen“ is on):
  * Gehalt am {Tag} − Zur Seite legen − Direkt vom Gehalt − Vermögensaufbau − Spielgeld (− Spielgeld-Überzug)
  * = Überschuss („Bleibt dir“ without a Spielgeld). Numbers: salarySplit over kontoState.
- * A switch „Nächstes Gehalt | Aktuelles Gehalt“, default the next one (planned, with the amount of the
- * Zur-Seite-Kachel); the current one shows the actual values and the Spielgeld-Überzug.
+ * Only in the active month a switch „Nächstes Gehalt | Aktuelles Gehalt“, default the next one (planned,
+ * with the amount of the Zur-Seite-Kachel); the current one shows the actual values and the
+ * Spielgeld-Überzug. Every other month: no switch, only its own actual values with its own net salary.
  */
 export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function SalarySplitCard({ ds, period, active, onOpenSalary }, ref) {
   const { settings } = useKonto();
   const start = useMonthStart();
   const state = useKontoState(ds, active);
-  const [view, setView] = useState<'next' | 'current'>('next');
+  const [chosen, setView] = useState<'next' | 'current'>('next');
+  const isActive = period === active;
+  const view = isActive ? chosen : 'current';
   const split = useMemo(
-    () => (view === 'next' ? nextSalarySplit(ds, period, state, settings, period === active ? state.next.amount : undefined) : salarySplit(ds, period, state, settings)),
-    [view, ds, period, active, state, settings],
+    () => (view === 'next' ? nextSalarySplit(ds, period, state, settings, state.next.amount) : salarySplit(ds, period, state, settings)),
+    [view, ds, period, state, settings],
   );
   const names = split.directItems.length > 0 && split.directItems.length <= 2 ? split.directItems.map((i) => i.name).join(', ') : null;
   const rows: { key: string; label: string; note?: string | null; value: number }[] = [
@@ -55,18 +57,20 @@ export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function Sal
       <h2 id="salary-split-title" className="text-[13px] font-medium leading-5 text-ink-mute">
         {t('split.title')}
       </h2>
-      <div className="mt-2 max-w-[420px]" data-testid="salary-split-view">
-        <Segmented<'next' | 'current'>
-          label={t('split.view')}
-          hideLabel
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'next', label: t('split.view.next') },
-            { value: 'current', label: t('split.view.current') },
-          ]}
-        />
-      </div>
+      {isActive && (
+        <div className="mt-2 max-w-[420px]" data-testid="salary-split-view">
+          <Segmented<'next' | 'current'>
+            label={t('split.view')}
+            hideLabel
+            value={view}
+            onChange={setView}
+            options={[
+              { value: 'next', label: t('split.view.next') },
+              { value: 'current', label: t('split.view.current') },
+            ]}
+          />
+        </div>
+      )}
       {split.salary === null ? (
         <div className="mt-2 flex flex-col items-start gap-2">
           <p className="text-[15px] leading-snug text-ink-soft" data-testid="salary-split-empty">
@@ -89,7 +93,7 @@ export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function Sal
             {split.salaryFrom && (
               <span className="font-normal text-ink-mute" data-testid="split-salary-like">
                 {' '}
-                ({t('split.salary.like', { monat: monthName(split.salaryFrom) })})
+                ({t('split.salary.like')})
               </span>
             )}
           </dt>
@@ -100,7 +104,12 @@ export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function Sal
             <div key={r.key} className="contents" data-testid={`split-${r.key}`}>
               <dt className="min-w-0 text-ink-soft">
                 − {r.label}
-                {r.note && <span className="text-ink-mute"> ({r.note})</span>}
+                {/* the names: a second line of their own, never broken into the label */}
+                {r.note && (
+                  <span className="block text-[13px] leading-5 text-ink-mute" data-testid={`split-${r.key}-note`}>
+                    {r.note}
+                  </span>
+                )}
               </dt>
               <dd className="num text-right text-ink-soft" data-testid={`split-${r.key}-value`}>
                 {formatEUR(r.value, { fixed: true })}

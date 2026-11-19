@@ -11,17 +11,21 @@ describe('Feier-Zustand nur, wenn alles bezahlt ist', () => {
 
 describe('Konfetti: live und einmal beim Öffnen', () => {
   it('die letzte Position abgehakt (gleicher Monat, vorher offen)', () => {
-    expect(celebrateLive({ period: '2026-10', done: false }, '2026-10', true)).toBe(true);
+    expect(celebrateLive({ period: '2026-10', done: false }, '2026-10', '2026-10', true)).toBe(true);
   });
   it('kein Live-Konfetti beim Monatswechsel oder ohne Wechsel', () => {
-    expect(celebrateLive({ period: '2026-09', done: false }, '2026-10', true)).toBe(false);
-    expect(celebrateLive({ period: '2026-10', done: true }, '2026-10', true)).toBe(false);
-    expect(celebrateLive(null, '2026-10', true)).toBe(false);
+    expect(celebrateLive({ period: '2026-09', done: false }, '2026-10', '2026-10', true)).toBe(false);
+    expect(celebrateLive({ period: '2026-10', done: true }, '2026-10', '2026-10', true)).toBe(false);
+    expect(celebrateLive(null, '2026-10', '2026-10', true)).toBe(false);
+  });
+  it('vergangene Monate feiern nie, auch nicht beim ersten Öffnen oder live', () => {
+    expect(celebrateOnOpen('2026-09', '2026-10', true, [])).toBe(false);
+    expect(celebrateLive({ period: '2026-09', done: false }, '2026-09', '2026-10', true)).toBe(false);
   });
   it('beim Öffnen: einmal, celebratedMonths verhindert die Wiederholung', () => {
-    expect(celebrateOnOpen('2026-10', true, [])).toBe(true);
-    expect(celebrateOnOpen('2026-10', true, ['2026-10'])).toBe(false);
-    expect(celebrateOnOpen('2026-10', false, [])).toBe(false);
+    expect(celebrateOnOpen('2026-10', '2026-10', true, [])).toBe(true);
+    expect(celebrateOnOpen('2026-10', '2026-10', true, ['2026-10'])).toBe(false);
+    expect(celebrateOnOpen('2026-10', '2026-10', false, [])).toBe(false);
   });
 });
 
@@ -67,6 +71,14 @@ describe('Konfetti-Erbsen', () => {
     }
     expect(Math.min(...peas.map((p) => p.x))).toBeLessThan(40);
     expect(Math.max(...peas.map((p) => p.x))).toBeGreaterThan(300);
+  });
+  it('sie ruhen im Streifen am Unterrand (Padding 52 px): oberhalb liegt kein Text', () => {
+    for (const p of peas) {
+      expect(p.endY).toBeGreaterThanOrEqual(240 - CONFETTI.stripInset - CONFETTI.strip);
+      expect(p.endY + p.size).toBeLessThanOrEqual(240 - CONFETTI.stripInset);
+    }
+    // the strip lies inside the hero's bottom padding with room to spare
+    expect(CONFETTI.strip + CONFETTI.stripInset).toBeLessThanOrEqual(52 - 8);
   });
   it('gleicher Monat, gleiches Bild (deterministisch)', () => {
     expect(confettiPeas(360, 240, 90, 8, '2026-10-1')).toEqual(peas);

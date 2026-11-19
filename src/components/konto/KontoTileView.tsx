@@ -23,7 +23,7 @@ export interface KontoTileProps {
   /** the card: the sheet (set up) or the setup (not set up) */
   onOpen: () => void;
   buttonRef?: Ref<HTMLButtonElement>;
-  /** with a Spielgeld: „Nach deinem Spielgeld bleiben …“ (only a hint, the choice stays with the user) */
+  /** with a Spielgeld: „Leg die … auf einmal zur Seite. Danach bleiben dir …“ (only a hint, the choice stays with the user) */
   advice?: LumpAdvice | null;
 }
 
@@ -105,8 +105,10 @@ export function KontoTileView({ state, start, active, onOpen, buttonRef, advice 
             </div>
             {advice && (
               <p className="num mt-2 text-[14px] leading-snug text-ink-soft" data-testid="tile-advice" data-advice={advice.advice}>
-                {t('advice.rest', { rest: formatEUR(advice.rest, { fixed: true }) })}{' '}
-                {t(advice.advice === 'lump' ? 'advice.lump' : 'advice.spread', { betrag: formatEUR(advice.amount, { fixed: true }) })}
+                {t(advice.advice === 'lump' ? 'advice.lump' : 'advice.spread', {
+                  betrag: formatEUR(advice.amount, { fixed: true }),
+                  rest: formatEUR(advice.left, { fixed: true }),
+                })}
               </p>
             )}
           </div>

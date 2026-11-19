@@ -43,7 +43,7 @@ export function Confetti({ run, seed }: { run: number; seed: string }) {
               height: p.size,
               left: p.x,
               '--c': COLORS[p.color],
-              '--end': `${p.endY + p.size}px`,
+              '--end': `${p.endY}px`,
               '--sway': `${p.sway}px`,
               animationDuration: `${p.duration}s`,
               animationDelay: `${p.delay}s`,

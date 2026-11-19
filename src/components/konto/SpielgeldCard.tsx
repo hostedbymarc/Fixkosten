@@ -1,14 +1,14 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { db } from '../../db/db';
 import { setSpielgeldOverflow } from '../../db/kontoActions';
-import type { OverflowSource } from '../../db/settings';
+import type { OverflowMode } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
-import { formatEUR } from '../../lib/format';
+import { amountToInput, formatEUR, parseAmount } from '../../lib/format';
 import { t } from '../../lib/kontoTexts';
 import { monthName } from '../../lib/period';
 import { salarySplit } from '../../lib/salarySplit';
 import type { Dataset, Period } from '../../lib/types';
-import { Segmented } from '../form';
+import { AmountField, Segmented } from '../form';
 import { useKontoState } from './KontoSheet';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
@@ -16,7 +16,8 @@ const money = (v: number) => formatEUR(v, { fixed: true });
 /**
  * „Spielgeld {Monat}“ (only with a Spielgeld set): limit, spent (everything due on the Spielgeld this month),
  * a bar and the list. Above the limit: „€ X über dem Spielgeld“ and „Woher kommt der Rest?“ – „Aus dem
- * Überschuss“ (default until answered) / „Andere Quelle“, stored per month, changeable at any time.
+ * Überschuss“ (default until answered) / „Andere Quelle“ / „Teilweise“ with „Davon aus anderer Quelle: € …“
+ * (cents allowed, at most the overflow; the rest counts from the surplus), stored per month, changeable at any time.
  */
 export function SpielgeldCard({ ds, period, active }: { ds: Dataset; period: Period; active: Period }) {
   const { settings } = useKonto();
@@ -78,18 +79,45 @@ export function SpielgeldCard({ ds, period, active }: { ds: Dataset; period: Per
             {t('spiel.over', { betrag: money(split.overflow) })}
           </p>
           <div data-testid="spielgeld-overflow">
-            <Segmented<OverflowSource>
+            <Segmented<OverflowMode>
               label={t('spiel.question')}
-              value={split.overflowSource}
-              onChange={(v) => void setSpielgeldOverflow(db, period, v)}
+              value={split.overflowMode}
+              gridClass="grid-cols-1 sm:grid-cols-3"
+              onChange={(v) => void setSpielgeldOverflow(db, period, v === 'part' ? { mode: 'part', otherAmount: split.overflowOther } : v)}
               options={[
                 { value: 'surplus', label: t('spiel.surplus') },
                 { value: 'other', label: t('spiel.other') },
+                { value: 'part', label: t('spiel.part') },
               ]}
             />
           </div>
+          {split.overflowMode === 'part' && <OverflowPartField key={period} period={period} overflow={split.overflow} other={split.overflowOther} counted={split.overflowCounted} />}
         </div>
       )}
     </section>
+  );
+}
+
+/** „Davon aus anderer Quelle: € …“ – cents allowed, at most the overflow; every valid entry is stored at once. */
+function OverflowPartField({ period, overflow, other, counted }: { period: Period; overflow: number; other: number; counted: number }) {
+  const [text, setText] = useState(() => (other > 0 ? amountToInput(other) : ''));
+  const parsed = text.trim() === '' ? 0 : parseAmount(text);
+  const tooMuch = parsed !== null && Math.round(parsed * 100) > Math.round(overflow * 100);
+  useEffect(() => {
+    if (parsed === null || tooMuch || Math.round(parsed * 100) === Math.round(other * 100)) return;
+    void setSpielgeldOverflow(db, period, { mode: 'part', otherAmount: parsed });
+  }, [parsed, tooMuch, other, period]);
+  return (
+    <div data-testid="spielgeld-part">
+      <AmountField
+        label={t('spiel.part.amount')}
+        value={text}
+        onChange={setText}
+        placeholder="0"
+        error={tooMuch ? t('spiel.part.max', { betrag: money(overflow) }) : parsed === null ? 'Bitte einen Betrag eingeben, z. B. 800,00' : null}
+        hint={<span className="num" data-testid="spielgeld-part-rest">{t('spiel.part.rest', { betrag: money(counted) })}</span>}
+        testId="spielgeld-part-input"
+      />
+    </div>
   );
 }

@@ -134,7 +134,7 @@ describe('Empfehlung auf der Zur-Seite-Kachel', () => {
   it('Überschuss ≥ Einmalbetrag: auf einmal (€ 990,43)', () => {
     const s = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'other' } });
     const st = kontoState(DATA, NOV, s);
-    expect(lumpAdvice(st, salarySplit(DATA, NOV, st, s))).toEqual({ advice: 'lump', rest: 2451, amount: 990.43 });
+    expect(lumpAdvice(st, salarySplit(DATA, NOV, st, s))).toEqual({ advice: 'lump', rest: 2451, amount: 990.43, left: 1460.57 });
   });
   it('Überschuss < Einmalbetrag: verteilt', () => {
     const s = settings(BALANCE - 1000, { spielgeldOverflow: { [NOV]: 'surplus' } });
@@ -147,6 +147,50 @@ describe('Empfehlung auf der Zur-Seite-Kachel', () => {
     const s = settings(BALANCE, { spielgeld: null });
     const st = kontoState(DATA, NOV, s);
     expect(lumpAdvice(st, salarySplit(DATA, NOV, st, s))).toBeNull();
+  });
+});
+
+describe('Empfehlung: dieselbe Rechnung wie die Aufteilung', () => {
+  it('reicht es: „Danach bleiben dir“ = Überschuss mit Grundbetrag − Einmalbetrag', () => {
+    const s = settings(BALANCE);
+    const st = kontoState(DATA, NOV, s);
+    const split = nextSalarySplit(DATA, NOV, st, s, st.order);
+    const advice = tileAdvice(DATA, NOV, st, s)!;
+    expect(advice.rest).toBe(split.rest);
+    expect(advice.left).toBe(Math.round((split.rest! - advice.amount) * 100) / 100);
+    expect(advice.advice).toBe('lump');
+  });
+  it('reicht es nicht: „blieben dir nur“ ist negativ, lieber verteilt', () => {
+    const s = settings(BALANCE - 2000);
+    const st = kontoState(DATA, NOV, s);
+    const advice = tileAdvice(DATA, NOV, st, s)!;
+    expect(advice.advice).toBe('spread');
+    expect(advice.left).toBeLessThan(0);
+    expect(advice.left).toBe(Math.round((advice.rest - advice.amount) * 100) / 100);
+  });
+});
+
+describe('Spielgeld-Überzug teilweise aus anderer Quelle', () => {
+  it('Überzug € 1.828,45, andere Quelle € 800 → aus dem Überschuss € 1.028,45', () => {
+    const s = settings(BALANCE, { spielgeld: 1200, spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 800 } } });
+    const split = salarySplit(DATA, NOV, kontoState(DATA, NOV, s), s);
+    expect(split.overflow).toBe(1828.45);
+    expect(split.overflowMode).toBe('part');
+    expect(split.overflowOther).toBe(800);
+    expect(split.overflowCounted).toBe(1028.45);
+    expect(split.rest).toBe(Math.round((8302 - split.reserve - 450 - 1283 - 1200 - 1028.45) * 100) / 100);
+  });
+  it('höchstens der Überzug; 0 zählt alles aus dem Überschuss', () => {
+    const big = settings(BALANCE, { spielgeld: 1200, spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 5000 } } });
+    expect(salarySplit(DATA, NOV, kontoState(DATA, NOV, big), big).overflowCounted).toBe(0);
+    const zero = settings(BALANCE, { spielgeld: 1200, spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 0 } } });
+    expect(salarySplit(DATA, NOV, kontoState(DATA, NOV, zero), zero).overflowCounted).toBe(1828.45);
+  });
+  it('alte Werte „surplus“/„other“ werden weiter gelesen; der Teilbetrag ist additiv gespeichert', () => {
+    const s = toKontoSettings({ spielgeldOverflow: { '2026-10': 'other', '2026-11': 'surplus', '2026-12': { mode: 'part', otherAmount: 800.555 }, '2027-01': { mode: 'part' }, '2027-02': { mode: 'quatsch' } } });
+    expect(s.spielgeldOverflow).toEqual({ '2026-10': 'other', '2026-11': 'surplus', '2026-12': { mode: 'part', otherAmount: 800.56 } });
+    expect(toKontoSettings(storedKonto(s))).toEqual(s);
+    expect(storedKonto(s).spielgeldOverflow).toEqual({ '2026-10': 'other', '2026-11': 'surplus', '2026-12': { mode: 'part', otherAmount: 800.56 } });
   });
 });
 
@@ -237,7 +281,7 @@ describe('Empfehlung aus dem nächsten Gehalt, mit dem Grundbetrag', () => {
   it('Daten wie deine: Überschuss € 2.451 ≥ € 990,43 → auf einmal', () => {
     const s = settings(BALANCE);
     const st = kontoState(DATA, NOV, s);
-    expect(tileAdvice(DATA, NOV, st, s)).toEqual({ advice: 'lump', rest: 2451, amount: 990.43 });
+    expect(tileAdvice(DATA, NOV, st, s)).toEqual({ advice: 'lump', rest: 2451, amount: 990.43, left: 1460.57 });
   });
   it('rechnet mit dem Grundbetrag, nicht mit dem Extra', () => {
     const s = settings(BALANCE - 3500, { gapMode: 'spread', receivedFor: null });

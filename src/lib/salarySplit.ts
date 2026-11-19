@@ -2,7 +2,7 @@
 // Rücklage (the monthly amount from kontoState), what is paid straight from the salary, the
 // Vermögensaufbau from the net salary, the Spielgeld (and, when the answer is „Aus dem Überschuss“, what
 // was spent above it) – the rest is the Überschuss. Only reads: kontoState, monthItems, monthFigures.
-import type { KontoSettings, OverflowSource } from '../db/settings';
+import { overflowMode, type KontoSettings, type OverflowAnswer, type OverflowMode } from '../db/settings';
 import { monthItems, netSalaryForPeriod, type SourceItem } from './calc';
 import { addPeriods } from './period';
 import type { KontoState } from './kontoBalance';
@@ -35,8 +35,11 @@ export interface SalarySplit {
   /** spent above the Spielgeld (0 without one) */
   overflow: number;
   /** where the overflow comes from (stored answer, else from the surplus) */
-  overflowSource: OverflowSource;
-  /** the overflow as a line of the split: only „Aus dem Überschuss“ */
+  overflowSource: OverflowAnswer;
+  overflowMode: OverflowMode;
+  /** the part of the overflow from another source (all, nothing, or the amount given, at most the overflow) */
+  overflowOther: number;
+  /** the overflow as a line of the split: what comes from the surplus (overflow − overflowOther) */
   overflowCounted: number;
   /** „Überschuss“ (with Spielgeld) / „Bleibt dir“ (without); null without salary */
   rest: number | null;
@@ -54,7 +57,10 @@ export function salarySplit(ds: Dataset, period: Period, state: KontoState, sett
   const spielgeld = settings.spielgeld;
   const overflow = spielgeld === null ? 0 : euros(Math.max(cents(spent) - cents(spielgeld), 0));
   const overflowSource = settings.spielgeldOverflow[period] ?? 'surplus';
-  const overflowCounted = overflowSource === 'surplus' ? overflow : 0;
+  const mode = overflowMode(overflowSource);
+  const overflowOther =
+    mode === 'other' ? overflow : mode === 'part' && typeof overflowSource === 'object' ? euros(Math.min(cents(overflowSource.otherAmount), cents(overflow))) : 0;
+  const overflowCounted = euros(cents(overflow) - cents(overflowOther));
   // without a Spielgeld, what is paid from it still leaves the salary
   const play = spielgeld ?? spent;
   const salary = netSalaryForPeriod(ds, period);
@@ -62,7 +68,7 @@ export function salarySplit(ds: Dataset, period: Period, state: KontoState, sett
     salary === null
       ? null
       : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(play) - cents(overflowCounted));
-  return { kind: 'current', period, salaryFrom: null, salary, reserve, direct, directItems, wealth, spielgeld, spent, spentItems, overflow, overflowSource, overflowCounted, rest };
+  return { kind: 'current', period, salaryFrom: null, salary, reserve, direct, directItems, wealth, spielgeld, spent, spentItems, overflow, overflowSource, overflowMode: mode, overflowOther, overflowCounted, rest };
 }
 
 /** The last net salary entered up to `period` (at most two years back): the amount and its month. */
@@ -116,6 +122,8 @@ export function nextSalarySplit(
     spentItems,
     overflow: 0,
     overflowSource: 'surplus',
+    overflowMode: 'surplus',
+    overflowOther: 0,
     overflowCounted: 0,
     rest,
   };
@@ -127,16 +135,19 @@ export function nextSalarySplit(
  */
 export interface LumpAdvice {
   advice: 'lump' | 'spread';
-  /** Überschuss after the Spielgeld */
+  /** Überschuss of the split with the base amount set aside (the same calculation as „So teilt sich dein Gehalt“) */
   rest: number;
-  /** the one-time amount (lump) or the gap (spread) */
+  /** the one-time amount (lump) or the gap (spread): what would be set aside at once */
   amount: number;
+  /** what stays after setting `amount` aside at once: rest − amount („Danach bleiben dir …“ / „blieben dir nur …“) */
+  left: number;
 }
 
 export function lumpAdvice(state: KontoState, split: SalarySplit): LumpAdvice | null {
   if (split.spielgeld === null || split.rest === null || state.gap <= 0 || !state.mode) return null;
   const amount = state.mode === 'lump' ? state.lump : state.gap;
-  return { advice: cents(split.rest) >= cents(amount) ? 'lump' : 'spread', rest: split.rest, amount };
+  const left = euros(cents(split.rest) - cents(amount));
+  return { advice: left >= 0 ? 'lump' : 'spread', rest: split.rest, amount, left };
 }
 
 /**
