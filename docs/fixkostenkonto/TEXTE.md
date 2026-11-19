@@ -127,10 +127,15 @@
 | Spielgeld-Karte | `spiel.question` | Woher kommt der Rest? | 4 |
 | Spielgeld-Karte | `spiel.surplus` | Aus dem Überschuss | 3 |
 | Spielgeld-Karte | `spiel.other` | Andere Quelle (z. B. Mieteinnahmen) | 3 · 1 · 1 |
+| Spielgeld-Karte | `spiel.part` | Teilweise | 1 |
+| Spielgeld-Karte | `spiel.part.amount` | Davon aus anderer Quelle | 4 |
+| Spielgeld-Karte | `spiel.part.rest` | Aus dem Überschuss: {betrag}. | 4 |
+| Spielgeld-Karte | `spiel.part.max` | Höchstens {betrag}. | 2 |
 | Spielgeld-Karte | `spiel.empty` | Diesen Monat noch nichts aus dem Spielgeld. | 7 |
+| Analyse | `analyse.order.until` | {betrag} bis {monat}, danach {basis} | 5 |
 | Gehalts-Aufteilung | `split.title` | So teilt sich dein Gehalt | 5 |
 | Gehalts-Aufteilung | `split.salary` | Gehalt am {datum} | 3 |
-| Gehalts-Aufteilung | `split.salary.like` | wie im {monat} | 3 |
+| Gehalts-Aufteilung | `split.salary.like` | geschätzt wie zuletzt | 3 |
 | Gehalts-Aufteilung | `split.view` | Welches Gehalt? | 2 |
 | Gehalts-Aufteilung | `split.view.next` | Nächstes Gehalt | 2 |
 | Gehalts-Aufteilung | `split.view.current` | Aktuelles Gehalt | 2 |
@@ -147,9 +152,8 @@
 | Kachel | `tile.once` | einmalig bis {datum} | 3 |
 | Kachel | `tile.once.now` | einmalig, jetzt | 2 |
 | Kachel | `tile.lump.done` | Einmalbetrag zur Seite gelegt | 4 |
-| Empfehlung | `advice.rest` | Nach deinem Spielgeld bleiben {rest}. | 5 |
-| Empfehlung | `advice.lump` | Du kannst die {betrag} auf einmal zur Seite legen. | 9 |
-| Empfehlung | `advice.spread` | Leg die {betrag} lieber verteilt zur Seite. | 7 |
+| Empfehlung | `advice.lump` | Leg die {betrag} auf einmal zur Seite. Danach bleiben dir {rest}. | 7 · 4 |
+| Empfehlung | `advice.spread` | Auf einmal blieben dir nur {rest}. Leg es lieber verteilt zur Seite. | 6 · 6 |
 | Walkthrough | `walk.title` | So funktioniert Erbse | 3 |
 | Walkthrough | `walk.link` | So funktioniert's | 2 |
 | Walkthrough | `walk.example` | Beispiel | 1 |

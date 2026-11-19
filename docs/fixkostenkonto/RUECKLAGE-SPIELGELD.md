@@ -192,3 +192,91 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
   - perf: 5 grün.
 - **WebKit** (feier, ruecklage-spielgeld, walkthrough, ein-popover, fixkostenkonto, hero-abzuege): 120 grün.
 - **Screenshots** stammen aus Chromium; die WebKit-Bilder wurden verworfen.
+
+# Ergänzung 2 (im selben PR)
+
+**Reihenfolge nach Freigabe:** zuerst #47 mergen, dann #48. Rahmen wie oben: Datenbankname, Subdomain und Export-Format sind unverändert. Neue Felder sind nur additiv. Alle Zahlen kommen aus `kontoState()` und den bestehenden Rechenfunktionen. Es gibt keine neuen Hex-Werte.
+
+## Punkt · erledigt · Beleg
+
+| Punkt | erledigt | Beleg |
+|---|---|---|
+| **1** Desktop Dezember überdeckt | ✅ | Ursache unten. `monatswechsel.spec.ts`: Desktop 1440, iPad hoch und quer, hell und dunkel. Mehrfach vor und zurück bis Dezember, schnell und langsam. Dann Pixel-Check: Hero-Betrag, „Abzüge vom Netto“ und Kachel-Betrag haben sichtbare Pixel. Über der Mitte des Betrags liegt nichts. Die Zier-Ebenen bleiben in der Kachel. Der Schimmer ist nach seinem Lauf weg. |
+| **2** Feier nur im aktiven Monat | ✅ | `celebrateOnOpen` und `celebrateLive` prüfen den aktiven Monat (Unit-Test). E2E `feier.spec.ts`: Heute ist der 5. November. Oktober wird über „Offen aus Oktober“ fertig, ohne Konfetti. Auch beim ersten Öffnen des Oktobers und nach dem Neuladen gibt es keins. |
+| **3** Erbsen im Streifen unten | ✅ | Im Feier-Zustand hat der Hero unten 52 px Padding. Die Erbsen landen in einem 28 px hohen Streifen, 10 px über dem Rand (Unit-Test). E2E auf allen 5 Geräten: Keine ruhende Erbse überschneidet eine Textbox des Hero. Gemessen wird mit den Rechtecken jedes Textknotens. |
+| **4** Kachel, Empfehlung, Umschalter nur im aktiven Monat | ✅ | Andere Monate zeigen keine Zur-Seite-Kachel und keinen Umschalter. Die Aufteilung zeigt dort nur die Ist-Werte des Monats mit dessen eigenem Netto. E2E: Heute ist der 5. November. Im Oktober steht „Gehalt am 1. Oktober“ mit € 4.788,00, ohne Einmalzahlungen aus dem November. Rest = Netto minus die eigenen Zeilen. |
+| **5** „(geschätzt wie zuletzt)“ | ✅ | Text ersetzt, E2E prüft „Gehalt am 1. November (geschätzt wie zuletzt)“. |
+| **6** Empfehlung wie die Aufteilung | ✅ | Reicht es: „Leg die € Y auf einmal zur Seite. Danach bleiben dir € R.“ Reicht es nicht: „Auf einmal blieben dir nur € R. Leg es lieber verteilt zur Seite.“ R = Überschuss mit Grundbetrag − Y. Unit-Test: R = `nextSalarySplit(…, order).rest` − Y. E2E: R = angezeigter Überschuss bei „Nächstes Gehalt“ − Y. Beide Fälle haben einen Screenshot. |
+| **7** Analyse „bis …, danach …“ | ✅ | „€ 3.239,15 bis Februar, danach € 2.909“, solange ein Extra läuft. Der Monat ist der letzte mit Extra aus `kontoState().months`. Ohne Extra bleibt „€ X / Monat“. E2E prüft die Form. |
+| **8** Betrag doppelt nach der Feier | ✅ | Ursache unten. Zu jedem Zeitpunkt gibt es genau einen Textknoten. E2E: Während der Feier ist zu drei Zeitpunkten genau ein Betrags-Element im Hero. Am Betrag und seinen Eltern gibt es kein `transform`, `filter` oder `will-change`. Der Betrag nach der Feier ist pixelgleich mit dem Ruhezustand nach dem Neuladen (Toleranz 8 von 255 für das Dithering des Lichts). Läuft auch in WebKit. |
+| **9** Spielgeld-Zuordnung | ✅ | Ergebnis unten. Unit: `spielgeld-zuordnung.test.ts` (5 Tests). E2E: `spielgeld-zuordnung.spec.ts` auf Desktop und iPhone 15. |
+| **10** Namen als zweite Zeile | ✅ | Die Namen stehen ohne Klammern auf einer eigenen Zeile unter dem Label, in gedämpfter Schrift. E2E: die Zeile liegt unter dem Label und bricht nicht um. |
+| **11** Überzug teilweise aus anderer Quelle | ✅ | Dritte Wahl „Teilweise“ mit „Davon aus anderer Quelle: € …“. Cent sind erlaubt, höchstens der Überzug („Höchstens € X.“). Gespeichert als `{ mode: 'part', otherAmount }`. Alte Werte „surplus“ und „other“ werden weiter gelesen und unverändert gespeichert. Unit: Überzug € 1.828,45, andere Quelle € 800, aus dem Überschuss € 1.028,45. E2E: € 508 Überzug, € 200 andere Quelle, € 308 aus dem Überschuss, auch nach dem Neuladen. |
+
+## Ursache zu 1 (Dezember überdeckt)
+
+- **Nachgestellt:** Mit nachgebauten Daten sah ich die Fläche nicht 1:1, weder in Chromium noch in WebKit. Dabei waren Desktop 1280 und 1440, iPad, schnelle Wechsel und das Monatsraster.
+- **Zwei Mechanismen passen genau zu deinem Bild. Beide sind belegt und behoben:**
+  - **Hochzählen mit zwei Ebenen:**
+    - Beim Monatswechsel wurde die echte Zahl durchsichtig geschaltet. Eine Kopie darüber zeigte die Zwischenwerte, Frame für Frame.
+    - Stockt dieser Frame-Takt, bleibt die echte Zahl unsichtbar. Safari drosselt ihn, etwa bei Last.
+    - Im WebKit-Lauf hing ein Wechsel nachweislich: Nach 30 s stand die Kopie noch auf „€ 1.365“, die echte Zahl war durchsichtig.
+    - „0%“ und die Labels zählen nicht hoch und bleiben sichtbar. Genau so sah dein Hero aus.
+  - **Zier-Ebenen außerhalb der Kachel:**
+    - Der Hero hat zwei grüne Lichtfelder (110–120 px weicher Schein) und einen diagonalen Schimmer (22°).
+    - Sie laufen auf eigenen Compositing-Ebenen. WebKit beschneidet solche Ebenen mit `overflow` und `border-radius` allein nicht zuverlässig.
+    - Dann liegt ein grüner, diagonal auslaufender Schein über dem Inhalt.
+    - Das Schimmer-Element blieb außerdem nach seinem Lauf im DOM stehen.
+- **Behoben:**
+  - Die Zahl ist ein einziger Textknoten. Das Hochzählen schreibt in denselben Knoten. Ein Timer setzt den Endwert, falls kein Frame kommt.
+  - Lichtfelder und Konfetti werden zusätzlich mit `clip-path` und `contain: paint` beschnitten.
+  - Der Schimmer wird nach seinem Lauf entfernt. Beim Monatswechsel startet keine alte Konfetti-Ebene mit.
+
+## Ursache zu 8 (Betrag doppelt und unscharf)
+
+- `CountUp` hatte zwei Ebenen: die echte Zahl und eine Kopie darüber, nur für die Zwischenwerte.
+- Die Kopie hatte eine eigene Schriftgröße, passend für den breiteren der beiden Werte. Deshalb lag sie leicht versetzt.
+- Beim Öffnen eines Monats mit Feier fallen Hochzählen und Feier zusammen. In Safari waren dann beide Ebenen kurz gleichzeitig sichtbar: zwei versetzte Kopien.
+- Dazu hatten die 90 Erbsen `will-change: transform`. Safari legt dann auch den Hero-Text auf eigene Ebenen und rastert ihn neu. Das macht ihn während der Feier weich.
+- **Behoben:** genau ein Textknoten, kein `will-change` mehr auf den Erbsen. Der Pop betrifft nur den Haken-Kreis. Am Text gibt es kein `transform`, `filter` oder `will-change`.
+
+## Ergebnis zu 9 (Spielgeld-Zuordnung)
+
+- **Kein Fehler gefunden.** `account: spielgeld` bleibt in allen geprüften Fällen erhalten:
+  - beim Speichern im Bearbeiten-Dialog, wiederkehrend (Miete) und einmalig (Konzert), auch wenn nur Name oder Notiz geändert werden
+  - bei Betragsänderungen ab einem Monat und bei Korrekturen
+  - beim Monatswechsel vor und zurück
+  - beim Neuladen
+  - im Abgleich Position ↔ Monats-Instanz: Chip in Positionen, Dialog, Hero-Zeile „Spielgeld“, Spielgeld-Karte, bezahlte Instanz, Einmalbetrag zur Position
+  - bei Export → Import in eine leere App, beim Zusammenführen und beim Ersetzen
+  - bei der v5-Hochstufung
+- Dein Fund auf dem iPhone passt zum getrennten Speicher eines privaten Tabs. Dort fehlt einfach die Zuordnung aus dem normalen Tab.
+
+## Entscheidungen, bitte prüfen
+
+- **Negativer Rest:** Reicht es nicht, steht der echte Wert, auch wenn er negativ ist. Beispiel: „Auf einmal blieben dir nur −€ 3.084,30.“ Wenn dir „0“ lieber ist, ändere ich es.
+- **Vergangene Monate, „Zur Seite legen“:** Es gilt der Betrag des Monats aus `kontoState`. Liegt der Monat vor der Simulation, gilt der Grundbetrag.
+- **„Teilweise“ ohne Betrag:** Er zählt als € 0 aus anderer Quelle. Dann kommt der ganze Überzug aus dem Überschuss.
+- **Feier-Padding:** Nur im Zustand „{Monat} erledigt“ ist der Hero unten 52 px statt 24–32 px hoch.
+
+## Neue und geänderte Texte
+
+| Wo | vorher | jetzt |
+|---|---|---|
+| Gehalts-Aufteilung | „(wie im {Monat})“ | „(geschätzt wie zuletzt)“ |
+| Empfehlung, reicht | „Nach deinem Spielgeld bleiben € Ü. Du kannst die € Y auf einmal zur Seite legen.“ | „Leg die € Y auf einmal zur Seite. Danach bleiben dir € R.“ |
+| Empfehlung, reicht nicht | „Nach deinem Spielgeld bleiben € Ü. Leg die € Y lieber verteilt zur Seite.“ | „Auf einmal blieben dir nur € R. Leg es lieber verteilt zur Seite.“ |
+| Analyse | „€ X / Monat“ | „€ X bis {Monat}, danach € Y“ (solange ein Extra läuft) |
+| Spielgeld-Karte | – | „Teilweise“ · „Davon aus anderer Quelle“ · „Aus dem Überschuss: € X.“ · „Höchstens € X.“ |
+
+## Screenshots der Ergänzung 2 (Chromium)
+
+- `docs/screenshots/feier/*-02-hero-erledigt`: Endzustand, Erbsen im Streifen unten
+- `docs/screenshots/monatswechsel/*-dezember-nach-monatswechsel`: Desktop 1440 und iPad, hell und dunkel
+- `docs/screenshots/ruecklage-spielgeld/*-12-oktober-aufteilung`: Oktober, nicht aktiv, eigenes Netto, Name als zweite Zeile
+- `docs/screenshots/ruecklage-spielgeld/*-06-kachel-auf-einmal` und `*-11-empfehlung-verteilt`: Empfehlung, beide Fälle
+- `docs/screenshots/ruecklage-spielgeld/*-10-spielgeld-teilbetrag`: Spielgeld-Karte mit Teilbetrag
+
+## Testergebnisse der Ergänzung 2
+
+TESTERGEBNISSE2
