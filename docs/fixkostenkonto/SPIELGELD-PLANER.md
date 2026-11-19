@@ -138,4 +138,34 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+**Unit und Build:**
+- Unit (vitest): 49 Dateien, 1232 Tests grün.
+- `tsc -b` ist ohne Fehler.
+- `pnpm build` ist grün, mit check-colors, check-glass-layers und check-bundle.
+
+**Volle E2E-Suite (Chromium), einmal komplett:**
+
+| Projekt | Ergebnis |
+|---|---|
+| desktop | 513 grün, 32 übersprungen. 16 rot, nur alte Texte: `fixkostenkonto` (Radio „Gehalt“), `tooltips` (alte ⓘ-Texte), `walkthrough` (Karte 3). Angepasst und neu gelaufen: 76 grün, danach `tooltips` mit dem neuen ⓘ „Nicht einplanen“ 10 grün. |
+| iphone-15 | 269 grün |
+| iphone-pro-max | 240 grün, 320 übersprungen. 1 rot: Screenshot-Test Positionen, Zeitlimit 30 s. Allein braucht er 25 s. Er hat jetzt `test.slow()` und läuft allein grün. |
+| ipad-portrait | 257 grün |
+| ipad-landscape | 245 grün |
+| perf | Scrollen Monat, Scrollen Analyse, Tabwechsel grün. Feier: offen, siehe unten. |
+
+Übersprungen heißt: Das Spec läuft absichtlich nur in bestimmten Projekten.
+
+**WebKit:** `feier`, `hero-abzuege`, `spielgeld-planer`: 41 grün, 8 absichtlich übersprungen. Die WebKit-Screenshots sind verworfen und in Chromium neu erzeugt.
+
+**Viewports:** iPhone SE, iPhone 15, iPad hoch und quer, Desktop 1440, je hell und dunkel. Das gilt in `feier`, `spielgeld-planer` und `ruecklage-spielgeld`.
+
+**Offen: Perf-Messung der Feier:**
+- Bisher hat der Test die Feier per Tipp auf den Haken neu gestartet. Das geht nicht mehr.
+- Jetzt hakt er die letzte Position live ab und misst das Fallen ab 1,5 s danach.
+- Allein läuft er grün: Ø 11,9 ms (iPhone 15) und 14,2 ms (iPhone SE), normalisiert, 4× gedrosselt.
+- Im Lauf des ganzen Perf-Projekts ist iPhone 15 rot: 18,1 bis 21,3 ms.
+- Mit den ersten 1,5 s gemessen sind es etwa 20 ms. Dann schaltet der Hero auf „erledigt“ und die Kategorie klappt zu.
+- Ohne Fallen ist es ruhig: 2 Frames in 2,6 s. Die liegenden Erbsen kosten also nichts.
+- Die Grenze 16 ms habe ich nicht geändert. Sag mir, ob ich das Fallen leichter machen soll, zum Beispiel mit weniger Erbsen.
+- `docs/perf/liquid-glass.json` bleibt auf dem Stand von main.
