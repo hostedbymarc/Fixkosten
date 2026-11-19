@@ -219,12 +219,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-06-kachel-auf-einmal`, tile);
         await shot(page, `${tag}-07-hero-quellen`, page.getByTestId('hero'));
 
-        // it does not reach (a large Spielgeld): „Auf einmal blieben dir nur € R. Leg es lieber verteilt zur Seite.“
+        // it does not reach (a large Spielgeld): „Auf einmal würden dir € X fehlen. Leg es lieber verteilt zur Seite.“ (X positive)
         await goTo(page, 'einstellungen');
         await page.getByLabel('Spielgeld pro Monat').fill('7.500,00');
         await goTo(page, 'monat');
         await expect(advice).toHaveAttribute('data-advice', 'spread');
-        await expect(advice).toHaveText(/^Auf einmal blieben dir nur −?\s?€\s?[\d.]+,\d{2}\. Leg es lieber verteilt zur Seite\.$/);
+        await expect(advice).toHaveText(/^Auf einmal würden dir €\s[\d.]+,\d{2} fehlen\. Leg es lieber verteilt zur Seite\.$/);
         await advice.evaluate((e) => e.scrollIntoView({ block: 'center' }));
         await shot(page, `${tag}-11-empfehlung-verteilt`);
       });

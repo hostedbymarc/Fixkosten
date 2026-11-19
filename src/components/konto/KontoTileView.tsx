@@ -108,6 +108,7 @@ export function KontoTileView({ state, start, active, onOpen, buttonRef, advice 
                 {t(advice.advice === 'lump' ? 'advice.lump' : 'advice.spread', {
                   betrag: formatEUR(advice.amount, { fixed: true }),
                   rest: formatEUR(advice.left, { fixed: true }),
+                  fehlt: formatEUR(advice.missing, { fixed: true }),
                 })}
               </p>
             )}

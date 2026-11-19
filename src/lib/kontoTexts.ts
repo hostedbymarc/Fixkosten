@@ -179,7 +179,7 @@ export const KONTO_TEXTS = {
   'tile.once.now': 'einmalig, jetzt',
   'tile.lump.done': 'Einmalbetrag zur Seite gelegt',
   'advice.lump': 'Leg die {betrag} auf einmal zur Seite. Danach bleiben dir {rest}.',
-  'advice.spread': 'Auf einmal blieben dir nur {rest}. Leg es lieber verteilt zur Seite.',
+  'advice.spread': 'Auf einmal würden dir {fehlt} fehlen. Leg es lieber verteilt zur Seite.',
 
   // · Walkthrough „So funktioniert Erbse“ (5 Karten)
   'walk.title': 'So funktioniert Erbse',

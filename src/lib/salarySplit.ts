@@ -139,15 +139,17 @@ export interface LumpAdvice {
   rest: number;
   /** the one-time amount (lump) or the gap (spread): what would be set aside at once */
   amount: number;
-  /** what stays after setting `amount` aside at once: rest − amount („Danach bleiben dir …“ / „blieben dir nur …“) */
+  /** what stays after setting `amount` aside at once: rest − amount („Danach bleiben dir …“) */
   left: number;
+  /** what would be missing at once, as a positive amount (−left when left < 0, else 0): „würden dir … fehlen“ */
+  missing: number;
 }
 
 export function lumpAdvice(state: KontoState, split: SalarySplit): LumpAdvice | null {
   if (split.spielgeld === null || split.rest === null || state.gap <= 0 || !state.mode) return null;
   const amount = state.mode === 'lump' ? state.lump : state.gap;
   const left = euros(cents(split.rest) - cents(amount));
-  return { advice: left >= 0 ? 'lump' : 'spread', rest: split.rest, amount, left };
+  return { advice: left >= 0 ? 'lump' : 'spread', rest: split.rest, amount, left, missing: left < 0 ? -left : 0 };
 }
 
 /**

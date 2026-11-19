@@ -153,7 +153,7 @@
 | Kachel | `tile.once.now` | einmalig, jetzt | 2 |
 | Kachel | `tile.lump.done` | Einmalbetrag zur Seite gelegt | 4 |
 | Empfehlung | `advice.lump` | Leg die {betrag} auf einmal zur Seite. Danach bleiben dir {rest}. | 7 · 4 |
-| Empfehlung | `advice.spread` | Auf einmal blieben dir nur {rest}. Leg es lieber verteilt zur Seite. | 6 · 6 |
+| Empfehlung | `advice.spread` | Auf einmal würden dir {fehlt} fehlen. Leg es lieber verteilt zur Seite. | 6 · 6 |
 | Walkthrough | `walk.title` | So funktioniert Erbse | 3 |
 | Walkthrough | `walk.link` | So funktioniert's | 2 |
 | Walkthrough | `walk.example` | Beispiel | 1 |

@@ -206,7 +206,7 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 | **3** Erbsen im Streifen unten | ✅ | Im Feier-Zustand hat der Hero unten 52 px Padding. Die Erbsen landen in einem 28 px hohen Streifen, 10 px über dem Rand (Unit-Test). E2E auf allen 5 Geräten: Keine ruhende Erbse überschneidet eine Textbox des Hero. Gemessen wird mit den Rechtecken jedes Textknotens. |
 | **4** Kachel, Empfehlung, Umschalter nur im aktiven Monat | ✅ | Andere Monate zeigen keine Zur-Seite-Kachel und keinen Umschalter. Die Aufteilung zeigt dort nur die Ist-Werte des Monats mit dessen eigenem Netto. E2E: Heute ist der 5. November. Im Oktober steht „Gehalt am 1. Oktober“ mit € 4.788,00, ohne Einmalzahlungen aus dem November. Rest = Netto minus die eigenen Zeilen. |
 | **5** „(geschätzt wie zuletzt)“ | ✅ | Text ersetzt, E2E prüft „Gehalt am 1. November (geschätzt wie zuletzt)“. |
-| **6** Empfehlung wie die Aufteilung | ✅ | Reicht es: „Leg die € Y auf einmal zur Seite. Danach bleiben dir € R.“ Reicht es nicht: „Auf einmal blieben dir nur € R. Leg es lieber verteilt zur Seite.“ R = Überschuss mit Grundbetrag − Y. Unit-Test: R = `nextSalarySplit(…, order).rest` − Y. E2E: R = angezeigter Überschuss bei „Nächstes Gehalt“ − Y. Beide Fälle haben einen Screenshot. |
+| **6** Empfehlung wie die Aufteilung | ✅ | Reicht es: „Leg die € Y auf einmal zur Seite. Danach bleiben dir € R.“ Reicht es nicht: „Auf einmal würden dir € X fehlen. Leg es lieber verteilt zur Seite.“ (X = Y − Überschuss, positiv) R = Überschuss mit Grundbetrag − Y. Unit-Test: R = `nextSalarySplit(…, order).rest` − Y. E2E: R = angezeigter Überschuss bei „Nächstes Gehalt“ − Y. Beide Fälle haben einen Screenshot. |
 | **7** Analyse „bis …, danach …“ | ✅ | „€ 3.239,15 bis Februar, danach € 2.909“, solange ein Extra läuft. Der Monat ist der letzte mit Extra aus `kontoState().months`. Ohne Extra bleibt „€ X / Monat“. E2E prüft die Form. |
 | **8** Betrag doppelt nach der Feier | ✅ | Ursache unten. Zu jedem Zeitpunkt gibt es genau einen Textknoten. E2E: Während der Feier ist zu drei Zeitpunkten genau ein Betrags-Element im Hero. Am Betrag und seinen Eltern gibt es kein `transform`, `filter` oder `will-change`. Der Betrag nach der Feier ist pixelgleich mit dem Ruhezustand nach dem Neuladen (Toleranz 8 von 255 für das Dithering des Lichts). Läuft auch in WebKit. |
 | **9** Spielgeld-Zuordnung | ✅ | Ergebnis unten. Unit: `spielgeld-zuordnung.test.ts` (5 Tests). E2E: `spielgeld-zuordnung.spec.ts` auf Desktop und iPhone 15. |
@@ -255,7 +255,7 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 
 ## Entscheidungen, bitte prüfen
 
-- **Negativer Rest:** Reicht es nicht, steht der echte Wert, auch wenn er negativ ist. Beispiel: „Auf einmal blieben dir nur −€ 3.084,30.“ Wenn dir „0“ lieber ist, ändere ich es.
+- **Negativer Rest:** Freigegeben mit neuem Text: „Auf einmal würden dir € 3.084,30 fehlen.“ Der Betrag steht positiv.
 - **Vergangene Monate, „Zur Seite legen“:** Es gilt der Betrag des Monats aus `kontoState`. Liegt der Monat vor der Simulation, gilt der Grundbetrag.
 - **„Teilweise“ ohne Betrag:** Er zählt als € 0 aus anderer Quelle. Dann kommt der ganze Überzug aus dem Überschuss.
 - **Feier-Padding:** Nur im Zustand „{Monat} erledigt“ ist der Hero unten 52 px statt 24–32 px hoch.
@@ -266,7 +266,7 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 |---|---|---|
 | Gehalts-Aufteilung | „(wie im {Monat})“ | „(geschätzt wie zuletzt)“ |
 | Empfehlung, reicht | „Nach deinem Spielgeld bleiben € Ü. Du kannst die € Y auf einmal zur Seite legen.“ | „Leg die € Y auf einmal zur Seite. Danach bleiben dir € R.“ |
-| Empfehlung, reicht nicht | „Nach deinem Spielgeld bleiben € Ü. Leg die € Y lieber verteilt zur Seite.“ | „Auf einmal blieben dir nur € R. Leg es lieber verteilt zur Seite.“ |
+| Empfehlung, reicht nicht | „Nach deinem Spielgeld bleiben € Ü. Leg die € Y lieber verteilt zur Seite.“ | „Auf einmal würden dir € X fehlen. Leg es lieber verteilt zur Seite.“ |
 | Analyse | „€ X / Monat“ | „€ X bis {Monat}, danach € Y“ (solange ein Extra läuft) |
 | Spielgeld-Karte | – | „Teilweise“ · „Davon aus anderer Quelle“ · „Aus dem Überschuss: € X.“ · „Höchstens € X.“ |
 
