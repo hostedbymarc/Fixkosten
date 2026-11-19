@@ -184,7 +184,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
   }
 }
 
-test('Position aufs Alltagskonto: Grundbetrag sinkt um ihren Monatsanteil', async ({ page }) => {
+test('Position auf „Gehalt“: Grundbetrag sinkt um ihren Monatsanteil', async ({ page }) => {
   test.skip(test.info().project.name !== 'desktop');
   await importApp(page);
   await page.getByTestId('konto-invite-enable').click();
@@ -199,13 +199,13 @@ test('Position aufs Alltagskonto: Grundbetrag sinkt um ihren Monatsanteil', asyn
   await goTo(page, 'positionen');
   await page.getByRole('button', { name: 'Miete – Details' }).click();
   await page.getByRole('button', { name: 'Bearbeiten' }).click();
-  await page.getByTestId('account-field').getByRole('radio', { name: 'Alltagskonto' }).click();
+  await page.getByTestId('account-field').getByRole('radio', { name: 'Gehalt' }).click();
   await page.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByTestId('position-form')).toHaveCount(0);
   await expect(page.getByRole('dialog', { name: 'Miete' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip')).toHaveText('Alltagskonto');
+  await expect(page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip')).toHaveText('Gehalt');
   await goTo(page, 'monat');
   await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
   await expect.poll(exact).toBeLessThan(before);

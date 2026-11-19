@@ -6,7 +6,7 @@ import { t } from '../../lib/kontoTexts';
 import { monthOf, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
-import { WALK_CARDS, walkthrough, type WalkBar } from '../../lib/walkthrough';
+import { directCount, WALK_CARDS, walkthrough, type WalkBar } from '../../lib/walkthrough';
 import { COLORS } from '../analysis/chartTheme';
 import { BottomSheet } from '../BottomSheet';
 import { ChevronRight } from '../Icons';
@@ -26,7 +26,10 @@ const SWIPE = 48;
 export default function WalkthroughSheet({ ds, active, onClose }: { ds: Dataset; active: Period; onClose: () => void }) {
   const { settings } = useKonto();
   const start = useMonthStart();
-  const w = useMemo(() => walkthrough(settings.enabled ? kontoState(ds, active, settings, start) : null, active, start), [ds, active, settings, start]);
+  const w = useMemo(
+    () => walkthrough(settings.enabled ? kontoState(ds, active, settings, start) : null, active, start, undefined, directCount(ds, active)),
+    [ds, active, settings, start],
+  );
   const [index, setIndex] = useState(0);
   const [dx, setDx] = useState(0);
   const drag = useRef<{ x: number; y: number; horizontal: boolean | null } | null>(null);
@@ -53,8 +56,16 @@ export default function WalkthroughSheet({ ds, active, onClose }: { ds: Dataset;
 
   const cards: ReactNode[] = [
     <Card key={1} n={1} title={t('walk.1.title')} chip={chip}>
+      <p className="-mt-2 text-[14px] leading-snug text-ink-mute" data-testid="walkthrough-sub-1">
+        {t('walk.1.sub')}
+      </p>
       <Bars bars={w.bars} maxIndex={w.maxIndex} minIndex={w.minIndex} label={w.card1} />
       <Text testId="walkthrough-text-1">{w.card1}</Text>
+      {w.card1Direct && (
+        <p className="text-[14px] leading-snug text-ink-soft" data-testid="walkthrough-direct">
+          {w.card1Direct}
+        </p>
+      )}
       {w.example && <p className="text-[13px] leading-snug text-ink-mute">{t('walk.example.note')}</p>}
     </Card>,
     <Card key={2} n={2} title={t('walk.2.title')} chip={chip}>
@@ -181,7 +192,6 @@ function Bars({ bars, maxIndex, minIndex, base, label }: { bars: WalkBar[]; maxI
   const slot = W / bars.length;
   const top = Math.max(...bars.map((b) => b.amount), base ?? 0, 1);
   const y = (v: number) => H - BOTTOM - ((H - BOTTOM - TOP) * v) / top;
-  const clampX = (x: number) => Math.min(Math.max(x, 26), W - 26);
   const marked = base === undefined ? [maxIndex, minIndex] : [];
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label} data-testid={base === undefined ? 'walkthrough-bars' : 'walkthrough-bars-base'}>
@@ -197,11 +207,18 @@ function Bars({ bars, maxIndex, minIndex, base, label }: { bars: WalkBar[]; maxI
           </g>
         );
       })}
-      {marked.map((i) => (
-        <text key={i} x={clampX(i * slot + slot / 2)} y={y(bars[i]!.amount) - 7} textAnchor="middle" fontSize={11.5} fontWeight={600} fill={COLORS.ink} data-testid={i === maxIndex ? 'walkthrough-max' : 'walkthrough-min'}>
-          {formatEUR(bars[i]!.amount)}
-        </text>
-      ))}
+      {marked.map((i) => {
+        // a label near the edge is anchored to the edge, never cut (e.g. „€ 2.192,03“ over the first bar)
+        const text = formatEUR(bars[i]!.amount);
+        const half = text.length * 3.4;
+        const mid = i * slot + slot / 2;
+        const [x, anchor]: [number, 'start' | 'middle' | 'end'] = mid - half < 0 ? [1, 'start'] : mid + half > W ? [W - 1, 'end'] : [mid, 'middle'];
+        return (
+          <text key={i} x={x} y={y(bars[i]!.amount) - 7} textAnchor={anchor} fontSize={11.5} fontWeight={600} fill={COLORS.ink} data-testid={i === maxIndex ? 'walkthrough-max' : 'walkthrough-min'}>
+            {text}
+          </text>
+        );
+      })}
       {base !== undefined && (
         <g data-testid="walkthrough-base-line">
           <line x1={0} x2={W} y1={y(base)} y2={y(base)} stroke={COLORS.ink} strokeWidth={1.5} strokeDasharray="5 4" />
@@ -214,32 +231,27 @@ function Bars({ bars, maxIndex, minIndex, base, label }: { bars: WalkBar[]; maxI
   );
 }
 
-/** Gehalt → Topf → Rechnungen */
+/** Gehalt → Rücklage / Gehalt direkt / Spielgeld / Vermögensaufbau */
 function Flow() {
-  const box = 'flex min-w-0 flex-1 flex-col items-center gap-1.5 rounded-2xl border border-edge bg-field px-1.5 py-3 text-center text-[13px] font-semibold text-ink sm:px-2 sm:text-[14px]';
-  const arrow = <ChevronRight className="h-5 w-5 shrink-0 text-ink-mute" aria-hidden="true" />;
+  const target = 'flex min-h-10 items-center gap-2 rounded-xl border border-edge bg-field px-3 py-1.5 text-[14px] font-semibold text-ink';
   return (
-    <div className="flex items-center gap-1.5 py-1" data-testid="walkthrough-flow">
-      <div className={box}>
+    <div className="flex items-center gap-2 py-1" data-testid="walkthrough-flow">
+      <div className="flex w-[30%] min-w-0 shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-edge bg-field px-1.5 py-4 text-center text-[14px] font-semibold text-ink">
         <span className="text-[22px] leading-none" aria-hidden="true">
           €
         </span>
         {t('walk.3.salary')}
       </div>
-      {arrow}
-      <div className={`${box} border-accent`}>
-        <Pea size={24} />
-        {t('walk.3.pot')}
-      </div>
-      {arrow}
-      <div className={box}>
-        <span className="flex h-[22px] items-center gap-0.5" aria-hidden="true">
-          <span className="h-4 w-3 rounded-[3px] bg-control-edge" />
-          <span className="h-[22px] w-3 rounded-[3px] bg-control-edge" />
-          <span className="h-3 w-3 rounded-[3px] bg-control-edge" />
-        </span>
-        {t('walk.3.bills')}
-      </div>
+      <ChevronRight className="h-5 w-5 shrink-0 text-ink-mute" aria-hidden="true" />
+      <ul className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <li className={`${target} border-accent`} data-testid="walkthrough-flow-reserve">
+          <Pea size={16} />
+          {t('walk.3.pot')}
+        </li>
+        <li className={target}>{t('walk.3.direct')}</li>
+        <li className={target}>{t('walk.3.spielgeld')}</li>
+        <li className={target}>{t('walk.3.wealth')}</li>
+      </ul>
     </div>
   );
 }

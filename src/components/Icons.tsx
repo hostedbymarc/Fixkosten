@@ -106,3 +106,10 @@ export const AlertIcon = (p: IconProps) => (
     <path d="M12 7.5v5.5M12 16.5v.01" />
   </Icon>
 );
+
+/** ✓ – „{Monat} erledigt“ */
+export const CheckIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+);

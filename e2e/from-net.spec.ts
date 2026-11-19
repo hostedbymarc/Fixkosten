@@ -65,7 +65,7 @@ test.describe('Schalter „Von ‚Frei verfügbar‘ abziehen“ (Einmalige im V
     }
     await expect(row.getByTestId('not-from-net')).toHaveText('nicht vom Netto');
     // unchanged: Fixkosten, im Ø-Monat, Investieren header
-    await expect(page.getByTestId('hero-planned')).toHaveText(eur('€ 3.488,50'));
+    await expect(page.getByTestId('hero-paid')).toHaveText(eur('€ 3.488,50')); // October done: the paid sum
     await expect(page.getByTestId('free-average')).toHaveText(eur('im Ø-Monat € 1.035,83'));
     await expect(page.getByRole('region', { name: 'Investieren' }).getByTestId('group-sum')).toHaveText(eur('€ 1.860'));
     // ⓘ names the part that is not deducted

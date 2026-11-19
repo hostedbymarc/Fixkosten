@@ -81,6 +81,34 @@ export interface KontoSettings {
   gapMode: GapMode | null;
   /** „So funktioniert Erbse“ was shown: it opens by itself only once, right after the setup */
   walkthroughSeen: boolean;
+  /** „Spielgeld pro Monat“ (cents allowed); null = off */
+  spielgeld: number | null;
+  /** per month: where the part above the Spielgeld comes from; missing = from the surplus (Überschuss) */
+  spielgeldOverflow: Partial<Record<Period, OverflowAnswer>>;
+  /** months whose „{Monat} erledigt“ was celebrated (the confetti plays once per month) */
+  celebratedMonths: Period[];
+}
+
+/** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
+export type OverflowSource = 'surplus' | 'other';
+/** „Teilweise“: `otherAmount` (cents allowed, at most the overflow) from another source, the rest from the surplus */
+export interface OverflowPart {
+  mode: 'part';
+  otherAmount: number;
+}
+/** The stored answer per month: the old values „surplus“/„other“ stay as they are; a part is an object (additive). */
+export type OverflowAnswer = OverflowSource | OverflowPart;
+export type OverflowMode = OverflowSource | 'part';
+
+export const overflowMode = (a: OverflowAnswer | undefined): OverflowMode => (a === undefined ? 'surplus' : typeof a === 'string' ? a : 'part');
+
+function parseOverflow(x: unknown): OverflowAnswer | null {
+  if (x === 'surplus' || x === 'other') return x;
+  if (isObj(x) && x.mode === 'part') {
+    const amount = money(x.otherAmount);
+    if (amount !== null && amount >= 0) return { mode: 'part', otherAmount: amount };
+  }
+  return null;
 }
 
 export const DEFAULT_KONTO: KontoSettings = {
@@ -105,6 +133,9 @@ export const DEFAULT_KONTO: KontoSettings = {
   milestonesShown: [],
   gapMode: null,
   walkthroughSeen: false,
+  spielgeld: null,
+  spielgeldOverflow: {},
+  celebratedMonths: [],
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -118,7 +149,7 @@ const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2
  * new fields: with a balance it counts as set up (no setup prompt), without one it does not.
  */
 export function toKontoSettings(value: unknown): KontoSettings {
-  if (!isObj(value)) return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [] };
+  if (!isObj(value)) return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [], spielgeldOverflow: {} };
   const v = value;
   const balance = money(v.balance) ?? 0;
   const anchor = isObj(v.anchor) && money(v.anchor.amount) !== null && isTimestamp(v.anchor.at) ? { amount: money(v.anchor.amount)!, at: v.anchor.at } : null;
@@ -162,7 +193,25 @@ export function toKontoSettings(value: unknown): KontoSettings {
     ),
     gapMode: GAP_MODES.includes(v.gapMode as GapMode) ? (v.gapMode as GapMode) : null,
     walkthroughSeen: v.walkthroughSeen === true,
+    spielgeld: money(v.spielgeld) !== null && money(v.spielgeld)! > 0 ? money(v.spielgeld) : null,
+    spielgeldOverflow: Object.fromEntries(
+      Object.entries(isObj(v.spielgeldOverflow) ? v.spielgeldOverflow : {})
+        .map(([k, x]) => [k, parseOverflow(x)] as const)
+        .filter(([k, x]) => isPeriod(k) && x !== null),
+    ) as Partial<Record<Period, OverflowAnswer>>,
+    celebratedMonths: (Array.isArray(v.celebratedMonths) ? v.celebratedMonths : []).filter(
+      (p, i, all): p is Period => typeof p === 'string' && isPeriod(p) && all.indexOf(p) === i,
+    ),
   };
+}
+
+/**
+ * Never touched „Fixkosten einplanen“: no entry, or one that only remembers celebrated months
+ * („{Monat} erledigt“ writes them for everyone) – the invitation card still shows.
+ */
+export function kontoUntouched(stored: KontoSettings | null): boolean {
+  if (stored === null) return true;
+  return JSON.stringify(storedKonto({ ...stored, celebratedMonths: [] })) === JSON.stringify(storedKonto(DEFAULT_KONTO));
 }
 
 const isRounding = (v: unknown) => v === 1 || v === 5 || v === 10;
@@ -200,6 +249,9 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.milestonesShown.length) out.milestonesShown = s.milestonesShown;
   if (s.gapMode) out.gapMode = s.gapMode;
   if (s.walkthroughSeen) out.walkthroughSeen = true;
+  if (s.spielgeld !== null) out.spielgeld = s.spielgeld;
+  if (Object.keys(s.spielgeldOverflow).length) out.spielgeldOverflow = s.spielgeldOverflow;
+  if (s.celebratedMonths.length) out.celebratedMonths = s.celebratedMonths;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;

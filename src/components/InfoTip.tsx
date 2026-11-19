@@ -128,7 +128,11 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         className={`focus-ring flex h-11 w-11 items-center justify-center rounded-full text-ink-mute hover:text-ink ${className}`}
         style={style}
         data-testid={testId}
-        onPointerDown={(e) => (pointer.current = e.pointerType)}
+        onPointerDown={(e) => {
+          pointer.current = e.pointerType;
+          // opened by a hover, the mouse just left, then a tap: the tap keeps it open (no close after LEAVE_MS)
+          window.clearTimeout(leaveTimer.current);
+        }}
         onPointerEnter={(e) => e.pointerType === 'mouse' && window.clearTimeout(leaveTimer.current)}
         // hover opens on a real mouse movement over the icon: content that moved under a resting
         // cursor (a sheet closed, the page scrolled) or the echo of a tap opens nothing

@@ -55,7 +55,7 @@ test.describe('Hero: Abzüge vom Netto', () => {
   });
 
   for (const dark of [false, true]) {
-    test(`Layout ${dark ? 'dunkel' : 'hell'}: iPhone eigene Zeile, ab iPad rechts; nichts abgeschnitten`, async ({ page }) => {
+    test(`Layout ${dark ? 'dunkel' : 'hell'}: bis 1280 px eigene Zeile, ab Desktop rechts; nichts abgeschnitten`, async ({ page }) => {
       if (dark) await page.emulateMedia({ colorScheme: 'dark' });
       await importNovember(page);
       const hero = await box(page, 'hero');
@@ -63,14 +63,14 @@ test.describe('Hero: Abzüge vom Netto', () => {
       const deductions = await box(page, 'hero-deductions');
       const value = await box(page, 'hero-deductions-value');
       const width = page.viewportSize()!.width;
-      if (width < 768) {
+      if (width < 1280) {
         expect(deductions.y, 'below ring and amount').toBeGreaterThanOrEqual(paid.y + paid.height);
       } else {
         expect(deductions.x, 'right of ring and amount').toBeGreaterThan(paid.x + paid.width);
         expect(Math.abs(deductions.y + deductions.height / 2 - (hero.y + hero.height / 2)), 'vertically centred').toBeLessThan(12);
       }
       expect(value.x + value.width).toBeLessThanOrEqual(hero.x + hero.width);
-      // breakdown on one line where it fits (always from iPad on)
+      // breakdown on one line where it fits (from iPad on)
       if (width >= 768) {
         const line = page.getByTestId('hero-deductions-breakdown');
         const [h, lh] = await line.evaluate((e) => [e.getBoundingClientRect().height, parseFloat(getComputedStyle(e).lineHeight)]);

@@ -8,7 +8,7 @@ import { animationsDone, appSettled, expect, FIXTURE, openInfo, test, TODAY, tou
 //   closable at any time (×, Esc)
 // - the other two ways in: Einstellungen → „So funktioniert Erbse“, the tile's ⓘ → „So funktioniert's“
 // - without a setup: example numbers with the chip „Beispiel“
-// - month screen: under „Abzüge vom Netto“ the line „Bezahlt aus deinem Topf“ with ⓘ (only with the mode on)
+// - month screen: under „Abzüge vom Netto“ the Fixkosten by source (only with the mode on)
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to
 // docs/screenshots/walkthrough/. Runs in the desktop project; every viewport is its own context.
 
@@ -71,20 +71,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
       test('nach der Einrichtung einmal von selbst; fünf Karten durchwischen; Einstellungen und ⓘ öffnen ihn wieder', async ({ page }) => {
         await startApp(page);
-        // mode off: no line under „Abzüge vom Netto“
-        await expect(page.getByTestId('hero-pot')).toHaveCount(0);
+        // mode off: no source lines under „Abzüge vom Netto“
+        await expect(page.getByTestId('hero-sources')).toHaveCount(0);
         await page.getByTestId('konto-invite-enable').click();
-        // mode on: „Bezahlt aus deinem Topf“ with ⓘ
-        const pot = page.getByTestId('hero-pot');
-        await expect(pot).toHaveText(/^Bezahlt aus deinem Topf/);
-        await pot.scrollIntoViewIfNeeded();
-        const potInfo = await openInfo(page, page.getByTestId('hero-pot-info'));
-        await expect(potInfo).toContainText('Diese Fixkosten zahlst du aus dem Geld, das du zur Seite legst.');
-        await shot(page, `${tag}-00-monat-topf`);
-        await page.keyboard.press('Escape');
-        await expect(page.getByRole('tooltip')).toHaveCount(0);
-        // focus off the ⓘ: a sheet gives the focus back when it closes (after Esc that counts as keyboard focus)
-        await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+        // mode on (ruecklage-spielgeld): the Fixkosten by source, here everything from the Rücklage
+        await expect(page.getByTestId('hero-source-reserve')).toHaveText(/^Rücklage€\s[\d.]+,\d{2}$/);
+        await shot(page, `${tag}-00-monat-ruecklage`);
 
         // setup: no account, € 184,21 set aside, spread → „Fertig“ → the walkthrough by itself
         await page.getByTestId('konto-tile').scrollIntoViewIfNeeded();
@@ -116,7 +108,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await forward(page);
         await expect(walk(page)).toHaveAttribute('data-card', '2');
         await expect(visibleCard(page, 2)).toContainText('Darum legst du jeden Monat gleich viel zur Seite.');
-        await expect(page.getByTestId('walkthrough-text-2')).toHaveText(new RegExp(`^Das sind ${AMOUNT} pro Monat\\. Teure Monate gleicht dein Topf aus\\.$`));
+        await expect(page.getByTestId('walkthrough-text-2')).toHaveText(new RegExp(`^Das sind ${AMOUNT} pro Monat\\. Teure Monate gleicht deine Rücklage aus\\.$`));
         await expect(page.getByTestId('walkthrough-base-line')).toBeVisible();
         await shot(page, `${tag}-02-gleich-viel`);
 
@@ -126,19 +118,19 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await forward(page);
         await expect(walk(page)).toHaveAttribute('data-card', '2');
 
-        // card 3: salary → pot → bills
+        // card 3: salary → Rücklage / direct / Spielgeld / Vermögensaufbau
         await forward(page);
         await expect(walk(page)).toHaveAttribute('data-card', '3');
-        await expect(page.getByTestId('walkthrough-flow')).toHaveText(/Gehalt.*Topf.*Rechnungen/);
-        await expect(page.getByTestId('walkthrough-text-3')).toHaveText('Das ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt.');
-        await expect(visibleCard(page, 3)).toContainText('Oben in der App siehst du, was diesen Monat abgebucht wird. Bezahlt wird es aus deinem Topf.');
-        await shot(page, `${tag}-03-topf`);
+        await expect(page.getByTestId('walkthrough-flow')).toHaveText(/Gehalt.*Rücklage.*Gehalt direkt.*Spielgeld.*Vermögensaufbau/);
+        await expect(page.getByTestId('walkthrough-text-3')).toHaveText('Die Rücklage ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt.');
+        await expect(visibleCard(page, 3)).toContainText('Manches zahlst du direkt vom Gehalt oder aus deinem Spielgeld.');
+        await shot(page, `${tag}-03-ruecklage`);
 
         // card 4: the gap, spread
         await tap(page.getByTestId('walkthrough-next'));
         await expect(walk(page)).toHaveAttribute('data-card', '4');
         const four = page.getByTestId('walkthrough-text-4');
-        await expect(four).toContainText('Dein Topf ist bis dahin noch nicht voll.');
+        await expect(four).toContainText('Deine Rücklage ist bis dahin noch nicht voll.');
         await expect(four.locator('p').last()).toHaveText(new RegExp(`^Darum bis dahin ${AMOUNT} extra pro Monat\\. Das fällt nur einmal an\\.$`));
         await shot(page, `${tag}-04-anfang`);
 

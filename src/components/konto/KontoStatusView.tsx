@@ -59,7 +59,20 @@ export function pendingConfirm(state: KontoState): 'month' | 'lump' | null {
  * „Zur Seite gelegt“: confirms this month (its amount, base plus extra) or the one-time amount –
  * the amount set aside grows by it.
  */
-export function ConfirmButton({ state, active, testId = 'konto-confirm', className = '' }: { state: KontoState; active: string; testId?: string; className?: string }) {
+export function ConfirmButton({
+  state,
+  active,
+  testId = 'konto-confirm',
+  className = '',
+  lumpLabel,
+}: {
+  state: KontoState;
+  active: string;
+  testId?: string;
+  className?: string;
+  /** the label when the one-time amount is confirmed (the tile: „Einmalbetrag zur Seite gelegt“) */
+  lumpLabel?: string;
+}) {
   const what = pendingConfirm(state);
   if (!what) return null;
   const onClick = () =>
@@ -74,7 +87,7 @@ export function ConfirmButton({ state, active, testId = 'konto-confirm', classNa
       data-testid={testId}
       data-confirm={what}
     >
-      {t('plan.confirm')}
+      {what === 'lump' && lumpLabel ? lumpLabel : t('plan.confirm')}
     </button>
   );
 }

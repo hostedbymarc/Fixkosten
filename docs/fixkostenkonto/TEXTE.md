@@ -20,7 +20,7 @@
 | Kachel | `tile.title.next` | Nächsten Monat zur Seite legen | 5 |
 | Kachel | `tile.setup` | Fixkosten einplanen | 2 |
 | Kachel | `tile.info.title` | Monatsbetrag | 1 |
-| Kachel | `tile.info` | Dieser Betrag deckt alle Fixkosten der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu. | 9 · 9 |
+| Kachel | `tile.info` | Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu. | 12 · 9 |
 | Kachel | `tile.start` | Jetzt starten | 2 |
 | Kachel | `tile.streak` | {n} Monate in Folge | 4 |
 | Kachel | `tile.streak.new` | Neue Serie startet. | 3 |
@@ -74,7 +74,7 @@
 | Sheet | `sheet.month.picked` | Gezeigt: {monat}. | 2 |
 | Sheet | `sheet.chart` | Verlauf mit Plan | 3 |
 | Sheet | `sheet.chart.info` | So entwickelt sich dein Geld, wenn du den Betrag immer am {tag} zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen. | 15 · 7 |
-| Sheet | `sheet.positions.info` | Diese Rechnungen deckt dein Monatsbetrag. Zahlst du eine vom Alltagskonto? Stell sie unter Positionen um. | 5 · 5 · 5 |
+| Sheet | `sheet.positions.info` | Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt vom Gehalt? Stell sie unter Positionen um. | 7 · 6 · 5 |
 | Sheet | `sheet.allMonths` | Alle Monate | 2 |
 | Sheet | `sheet.positions` | Eingeplante Rechnungen ({n}) | 3 |
 | Sheet | `sheet.col.deposit` | Einzahlung | 1 |
@@ -102,8 +102,58 @@
 | Einstellungen | `settings.buffer.info` | Ein kleines Polster, falls eine Rechnung teurer wird. | 8 |
 | Einstellungen | `settings.edit` | Einrichtung ändern | 2 |
 | Einstellungen | `settings.walkthrough` | So funktioniert Erbse | 3 |
-| Monats-Screen | `hero.pot` | Bezahlt aus deinem Topf | 4 |
-| Monats-Screen | `hero.pot.info` | Diese Fixkosten zahlst du aus dem Geld, das du zur Seite legst. | 12 |
+| Monats-Screen | `hero.done.title` | {monat} erledigt | 2 |
+| Monats-Screen | `hero.done.sub` | Alle {n} Rechnungen bezahlt | 4 |
+| Monats-Screen | `hero.done.sub.one` | Deine Rechnung ist bezahlt | 4 |
+| Monats-Screen | `hero.done.replay` | Feier noch einmal abspielen | 4 |
+| Monats-Screen | `hero.src.title` | Woraus du bezahlst | 3 |
+| Monats-Screen | `hero.src.title.done` | Woraus du bezahlt hast | 4 |
+| Monats-Screen | `hero.src.reserve` | Rücklage | 1 |
+| Monats-Screen | `hero.src.salary` | Gehalt | 1 |
+| Monats-Screen | `hero.src.spielgeld` | Spielgeld | 1 |
+| Bearbeiten-Dialog | `account.question` | Woraus zahlst du das? | 4 |
+| Bearbeiten-Dialog | `account.reserve` | Rücklage | 1 |
+| Bearbeiten-Dialog | `account.salary` | Gehalt | 1 |
+| Bearbeiten-Dialog | `account.spielgeld` | Spielgeld | 1 |
+| Bearbeiten-Dialog | `account.info` | Rücklage: Geld, das du jeden Monat zur Seite legst. Gehalt: zahlst du direkt. Spielgeld: aus deinem Spielgeld. | 9 · 4 · 4 |
+| Einstellungen | `settings.spielgeld` | Spielgeld pro Monat | 3 |
+| Einstellungen | `settings.spielgeld.info` | So viel willst du jeden Monat frei ausgeben. | 8 |
+| Einstellungen | `settings.spielgeld.hint` | Leer lassen, wenn du kein Spielgeld planst. | 7 |
+| Spielgeld-Karte | `spiel.title` | Spielgeld {monat} | 2 |
+| Spielgeld-Karte | `spiel.limit` | Limit | 1 |
+| Spielgeld-Karte | `spiel.spent` | Ausgegeben | 1 |
+| Spielgeld-Karte | `spiel.left` | Noch {betrag} übrig. | 3 |
+| Spielgeld-Karte | `spiel.over` | {betrag} über dem Spielgeld | 4 |
+| Spielgeld-Karte | `spiel.question` | Woher kommt der Rest? | 4 |
+| Spielgeld-Karte | `spiel.surplus` | Aus dem Überschuss | 3 |
+| Spielgeld-Karte | `spiel.other` | Andere Quelle (z. B. Mieteinnahmen) | 3 · 1 · 1 |
+| Spielgeld-Karte | `spiel.part` | Teilweise | 1 |
+| Spielgeld-Karte | `spiel.part.amount` | Davon aus anderer Quelle | 4 |
+| Spielgeld-Karte | `spiel.part.rest` | Aus dem Überschuss: {betrag}. | 4 |
+| Spielgeld-Karte | `spiel.part.max` | Höchstens {betrag}. | 2 |
+| Spielgeld-Karte | `spiel.empty` | Diesen Monat noch nichts aus dem Spielgeld. | 7 |
+| Analyse | `analyse.order.until` | {betrag} bis {monat}, danach {basis} | 5 |
+| Gehalts-Aufteilung | `split.title` | So teilt sich dein Gehalt | 5 |
+| Gehalts-Aufteilung | `split.salary` | Gehalt am {datum} | 3 |
+| Gehalts-Aufteilung | `split.salary.like` | geschätzt wie zuletzt | 3 |
+| Gehalts-Aufteilung | `split.view` | Welches Gehalt? | 2 |
+| Gehalts-Aufteilung | `split.view.next` | Nächstes Gehalt | 2 |
+| Gehalts-Aufteilung | `split.view.current` | Aktuelles Gehalt | 2 |
+| Gehalts-Aufteilung | `split.reserve` | Zur Seite legen | 3 |
+| Gehalts-Aufteilung | `split.direct` | Direkt vom Gehalt | 3 |
+| Gehalts-Aufteilung | `split.wealth` | Vermögensaufbau | 1 |
+| Gehalts-Aufteilung | `split.spielgeld` | Spielgeld | 1 |
+| Gehalts-Aufteilung | `split.overflow` | Spielgeld-Überzug | 1 |
+| Gehalts-Aufteilung | `split.rest` | Überschuss | 1 |
+| Gehalts-Aufteilung | `split.rest.plain` | Bleibt dir | 2 |
+| Gehalts-Aufteilung | `split.noSalary` | Trag dein Netto-Gehalt ein, dann siehst du die Aufteilung. | 9 |
+| Gehalts-Aufteilung | `split.noSalary.action` | Gehalt eintragen | 2 |
+| Kachel | `tile.monthly` | jeden Monat am {tag} | 4 |
+| Kachel | `tile.once` | einmalig bis {datum} | 3 |
+| Kachel | `tile.once.now` | einmalig, jetzt | 2 |
+| Kachel | `tile.lump.done` | Einmalbetrag zur Seite gelegt | 4 |
+| Empfehlung | `advice.lump` | Leg die {betrag} auf einmal zur Seite. Danach bleiben dir {rest}. | 7 · 4 |
+| Empfehlung | `advice.spread` | Auf einmal würden dir {fehlt} fehlen. Leg es lieber verteilt zur Seite. | 6 · 6 |
 | Walkthrough | `walk.title` | So funktioniert Erbse | 3 |
 | Walkthrough | `walk.link` | So funktioniert's | 2 |
 | Walkthrough | `walk.example` | Beispiel | 1 |
@@ -113,17 +163,22 @@
 | Walkthrough | `walk.back` | Zurück | 1 |
 | Walkthrough | `walk.done` | Fertig | 1 |
 | Walkthrough | `walk.1.title` | Deine Fixkosten schwanken. | 3 |
+| Walkthrough | `walk.1.sub` | Nur Rechnungen aus deiner Rücklage | 5 |
+| Walkthrough | `walk.1.direct` | {n} Posten zahlst du direkt. | 5 |
 | Walkthrough | `walk.1.text` | Im {teuer} zahlst du {max}, im {guenstig} nur {min}. | 9 |
 | Walkthrough | `walk.2.title` | Darum legst du jeden Monat gleich viel zur Seite. | 9 |
-| Walkthrough | `walk.2.text` | Das sind {betrag} pro Monat. Teure Monate gleicht dein Topf aus. | 5 · 6 |
-| Walkthrough | `walk.3.title` | Aus diesem Topf zahlst du alle Rechnungen. | 7 |
-| Walkthrough | `walk.3.text` | Das ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt. | 4 · 7 |
-| Walkthrough | `walk.3.app` | Oben in der App siehst du, was diesen Monat abgebucht wird. Bezahlt wird es aus deinem Topf. | 11 · 6 |
+| Walkthrough | `walk.2.text` | Das sind {betrag} pro Monat. Teure Monate gleicht deine Rücklage aus. | 5 · 6 |
+| Walkthrough | `walk.3.title` | Aus deiner Rücklage zahlst du die Rechnungen. | 7 |
+| Walkthrough | `walk.3.text` | Die Rücklage ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt. | 5 · 7 |
+| Walkthrough | `walk.3.app` | Manches zahlst du direkt vom Gehalt oder aus deinem Spielgeld. | 10 |
 | Walkthrough | `walk.3.salary` | Gehalt | 1 |
-| Walkthrough | `walk.3.pot` | Topf | 1 |
+| Walkthrough | `walk.3.pot` | Rücklage | 1 |
+| Walkthrough | `walk.3.direct` | Gehalt direkt | 2 |
+| Walkthrough | `walk.3.spielgeld` | Spielgeld | 1 |
+| Walkthrough | `walk.3.wealth` | Vermögensaufbau | 1 |
 | Walkthrough | `walk.3.bills` | Rechnungen | 1 |
 | Walkthrough | `walk.4.title` | Am Anfang fehlt manchmal etwas. | 5 |
-| Walkthrough | `walk.4.notFull` | Dein Topf ist bis dahin noch nicht voll. | 8 |
+| Walkthrough | `walk.4.notFull` | Deine Rücklage ist bis dahin noch nicht voll. | 8 |
 | Walkthrough | `walk.4.spread` | Darum bis dahin {betrag} extra pro Monat. | 7 |
 | Walkthrough | `walk.4.lump` | Darum einmalig {betrag} bis {datum}. | 5 |
 | Walkthrough | `walk.4.lump.now` | Darum jetzt einmalig {betrag}. | 4 |

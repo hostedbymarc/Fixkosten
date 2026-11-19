@@ -8,8 +8,10 @@
 // carried as integer "cents × due months per year" numerators and divided by 12
 // only once at the end, so category sums and totals stay exactly consistent.
 
+import { defaultAccount } from '../db/migrations';
 import { addPeriods, monthOf } from './period';
 import type {
+  Account,
   Category,
   Dataset,
   Frequency,
@@ -370,6 +372,10 @@ interface MonthEntry {
   paid: boolean;
   /** comes out of the net salary (countsFromNet); one-offs of the old table always do */
   fromNet: boolean;
+  /** what it is paid from (Position.account, else the default by kind); a one-off without position: from the salary */
+  account: Account;
+  /** position name (a one-off without position: its label) */
+  name: string;
 }
 
 function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
@@ -379,13 +385,24 @@ function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
     cents: toCents(i.status === 'paid' ? i.payment!.actualAmount : i.planned),
     paid: i.status === 'paid',
     fromNet: i.fromNet,
+    account: i.position.account ?? defaultAccount(i.kind),
+    name: i.position.name,
   }));
   const cats = categoryMap(ds);
   for (const o of ds.oneOffs) {
     if (o.period !== period) continue;
     const position = o.positionId ? ds.positions.find((p) => p.id === o.positionId) : undefined;
     const category = position ? cats.get(position.categoryId) : undefined;
-    entries.push({ kind: category?.kind ?? 'expense', categoryId: category?.id ?? null, cents: toCents(o.amount), paid: !!o.paidAt, fromNet: true });
+    const kind = category?.kind ?? 'expense';
+    entries.push({
+      kind,
+      categoryId: category?.id ?? null,
+      cents: toCents(o.amount),
+      paid: !!o.paidAt,
+      fromNet: true,
+      account: position ? (position.account ?? defaultAccount(kind)) : 'girokonto',
+      name: position ? `${position.name}: ${o.label}` : o.label,
+    });
   }
   return entries;
 }
@@ -468,6 +485,34 @@ export function monthFigures(ds: Dataset, period: Period): MonthFigures {
     categories,
     unassigned: fromCents(unassigned),
   };
+}
+
+/** What pays the month's Fixkosten (Gesamt): the Rücklage, the salary directly, the Spielgeld. reserve + salary + spielgeld = Gesamt. */
+export interface CostSources {
+  reserve: number;
+  salary: number;
+  spielgeld: number;
+}
+
+export function costSources(ds: Dataset, period: Period): CostSources {
+  const sum = (a: Account) =>
+    fromCents(monthEntries(ds, period).filter((e) => e.kind === 'expense' && e.account === a).reduce((acc, e) => acc + e.cents, 0));
+  return { reserve: sum('fixkostenkonto'), salary: sum('girokonto'), spielgeld: sum('spielgeld') };
+}
+
+/** One thing due in a month with what pays it (Gehalts-Aufteilung, Spielgeld-Karte). */
+export interface SourceItem {
+  name: string;
+  amount: number;
+  kind: Kind;
+  account: Account;
+  fromNet: boolean;
+  paid: boolean;
+}
+
+/** Everything due in `period` (positions and one-offs, as in monthFigures) with its source. */
+export function monthItems(ds: Dataset, period: Period): SourceItem[] {
+  return monthEntries(ds, period).map((e) => ({ name: e.name, amount: fromCents(e.cents), kind: e.kind, account: e.account, fromNet: e.fromNet, paid: e.paid }));
 }
 
 /** The figures of one category in a month (empty tally when nothing is due). */

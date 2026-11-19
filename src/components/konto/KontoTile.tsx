@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { db } from '../../db/db';
 import { adoptLegacyBalance, finishSetup, markMilestones, setGapMode } from '../../db/kontoActions';
-import { writeKonto } from '../../db/settings';
+import { kontoUntouched, writeKonto } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
 import { localToday } from '../../lib/activeMonth';
 import { newMilestones, type KontoState } from '../../lib/kontoBalance';
@@ -10,6 +10,7 @@ import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { Pea } from '../Pea';
 import { openWalkthrough } from '../../lib/walkthroughBus';
+import { tileAdvice } from '../../lib/salarySplit';
 import { useToast } from '../Toast';
 import { KontoSetupSheet } from './KontoSetupSheet';
 import { KontoSheet, useKontoState } from './KontoSheet';
@@ -43,7 +44,14 @@ function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
   }, [settings.setupDone, settings.anchor]);
   return (
     <>
-      <KontoTileView state={state} start={start} active={active} onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')} buttonRef={button} />
+      <KontoTileView
+        state={state}
+        start={start}
+        active={active}
+        onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')}
+        buttonRef={button}
+        advice={tileAdvice(ds, active, state, settings)}
+      />
       {open === 'sheet' && <KontoSheet ds={ds} active={active} onClose={() => setOpen(null)} returnFocusTo={button.current} />}
       {open === 'setup' && <KontoSetup ds={ds} active={active} restart={!settings.setupDone} onClose={() => setOpen(null)} />}
     </>
@@ -96,7 +104,7 @@ export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Datas
  */
 export function KontoInvite() {
   const { stored } = useKonto();
-  if (stored !== null) return null;
+  if (stored === undefined || !kontoUntouched(stored)) return null;
   return (
     <section
       className="glass surface flex flex-col gap-3 p-4 md:flex-row md:items-center md:p-5"

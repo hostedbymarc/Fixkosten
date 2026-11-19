@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
@@ -6,11 +6,19 @@ import { Disclosure } from '../components/Disclosure';
 import { GlassGroup } from '../components/GlassGroup';
 import { Pea } from '../components/Pea';
 import { useKonto } from '../db/useKonto';
+import { SalarySplitCard } from '../components/konto/SalarySplitCard';
+import { SpielgeldCard } from '../components/konto/SpielgeldCard';
 import { t } from '../lib/kontoTexts';
+import { heroSourceRows } from '../lib/heroSources';
+import { celebrateLive, celebrateOnOpen, monthDone } from '../lib/celebration';
+import { Confetti } from '../components/Confetti';
+import { markCelebrated } from '../db/kontoActions';
+import { reducedMotion } from '../lib/entrance';
+import { streakBadge, streakOf } from '../lib/kontoBalance';
 import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
-import { AlertIcon, BellIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
+import { AlertIcon, BellIcon, CheckIcon, ChevronLeft, ChevronRight, ClockIcon } from '../components/Icons';
 import { MonthCloseSheet } from '../components/MonthCloseSheet';
 import { MonthNoteCard, MonthNoteSheet } from '../components/MonthNote';
 import { OneOffSheet } from '../components/OneOffSheet';
@@ -63,6 +71,8 @@ import {
   type CategoryGroup,
   type DueItem,
   type OpenGroup,
+  costSources,
+  type CostSources,
 } from '../lib/calc';
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
@@ -102,6 +112,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const groups = useMemo(() => groupByCategory(items), [items]);
   // every amount of the month comes from here (hero, tiles, category headers)
   const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
+  // „Fixkosten einplanen“: Hero by source, „So teilt sich dein Gehalt“ and the Spielgeld card instead of „Frei verfügbar“ / „Ø pro Monat“
+  const { settings: konto, stored: kontoStored } = useKonto();
   // fully paid categories start collapsed, categories with something open expanded
   const collapse = useMonthCollapse(period, (id) => {
     const t = categoryFigures(figures, id);
@@ -212,8 +224,18 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
 
       <div className="grid gap-3 md:gap-4">
         <KontoCheckCard ds={ds} active={today} />
-        <HeroCard period={period} figures={figures} openOnly={filtering} onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)} />
-        <KontoTile ds={ds} active={today} />
+        <HeroCard
+          period={period}
+          figures={figures}
+          sources={konto.enabled ? costSources(ds, period) : null}
+          openOnly={filtering}
+          onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)}
+          active={today}
+          celebrated={kontoStored === undefined ? null : konto.celebratedMonths}
+          streak={konto.enabled && konto.setupDone && period === today ? streakBadge(streakOf(konto.checks, today)) : null}
+        />
+        {/* „Zur Seite legen“ and its advice: only in the active month */}
+        {period === today && <KontoTile ds={ds} active={today} />}
         {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
         {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
             size – the one that fits the longest of them – so a row keeps one baseline */}
@@ -227,29 +249,37 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             ]),
           )}
         >
-        <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {/* „Fixkosten einplanen“ on: Netto-Gehalt and Vermögensaufbau, then „So teilt sich dein Gehalt“ across
+            (no „Ø pro Monat“, no „Frei verfügbar“); off: the four tiles as before */}
+        <GlassGroup className={`grid grid-cols-2 gap-3 md:gap-4 ${konto.enabled ? '' : 'md:grid-cols-4'}`}>
           <SalaryTile
             ref={salaryTile}
             period={period}
             salary={netSalaryForPeriod(ds, period)}
             onOpen={() => openClose(salaryTile.current)}
           />
-          <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
-            <span data-testid="kpi-hint">
-              davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
-            </span>
-          </KpiTile>
-          <FreeTile
-            ref={closeTile}
-            period={period}
-            calculated={figures.free}
-            average={freeAfterFixedAvg(ds, period)}
-            explanation={averageMonthExplanation(ds, period)}
-            onOpen={() => openClose(closeTile.current)}
-          />
+          {!konto.enabled && (
+            <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
+              <span data-testid="kpi-hint">
+                davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
+              </span>
+            </KpiTile>
+          )}
+          {!konto.enabled && (
+            <FreeTile
+              ref={closeTile}
+              period={period}
+              calculated={figures.free}
+              average={freeAfterFixedAvg(ds, period)}
+              explanation={averageMonthExplanation(ds, period)}
+              onOpen={() => openClose(closeTile.current)}
+            />
+          )}
           <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
+          {konto.enabled && <SalarySplitCard ref={closeTile} ds={ds} period={period} active={today} onOpenSalary={() => openClose(closeTile.current)} />}
         </GlassGroup>
         </TileFit.Provider>
+        {konto.enabled && <SpielgeldCard ds={ds} period={period} active={today} />}
         <KontoInvite />
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
@@ -531,43 +561,87 @@ function MonthHeader({
 
 /** The month the hero showed last (module level: a swipe re-creates the hero). */
 const heroShown: { period: Period | null } = { period: null };
+/** what the hero showed last (survives the remount of a swipe): ticking the last position celebrates live */
+const heroLast: { period: Period; done: boolean } | { period: null; done: false } = { period: null, done: false };
 
 function HeroCard({
   period,
   figures,
+  sources,
   openOnly,
   onToggleOpenOnly,
+  active,
+  celebrated,
+  streak,
 }: {
   period: Period;
+  /** the active month: only it celebrates (past months never, not even when first opened) */
+  active: Period;
   figures: MonthFigures;
+  /** months celebrated already (null while the settings load: no confetti yet) */
+  celebrated: readonly Period[] | null;
+  /** „{n} Monate in Folge“ (Fixkosten einplanen, from 2 on) */
+  streak: number | 'new' | null;
+  /** „Fixkosten einplanen“ on: what pays the Fixkosten (Rücklage, Gehalt, Spielgeld); off: null */
+  sources: CostSources | null;
   openOnly: boolean;
   onToggleOpenOnly: () => void;
 }) {
-  const allPaid = figures.count > 0 && figures.openCount === 0;
+  const allPaid = monthDone(figures);
+  // confetti: live when the last position is ticked, once when a month complete since is opened, on a tap of the check
+  const [run, setRun] = useState(0);
+  const handled = useRef<Period | null>(null);
+  useEffect(() => {
+    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, active, allPaid);
+    Object.assign(heroLast, { period, done: allPaid });
+    if (celebrated === null) return;
+    const open = handled.current !== period && celebrateOnOpen(period, active, allPaid, celebrated);
+    if (celebrated !== null) handled.current = period;
+    if (live || open) {
+      setRun((n) => n + 1);
+      if (!celebrated.includes(period)) void markCelebrated(db, period);
+    }
+  }, [period, allPaid, celebrated, active]);
+  // another month: no confetti layer from before (a new run only for this month)
+  const [runFor, setRunFor] = useState(period);
+  if (runFor !== period) {
+    setRunFor(period);
+    setRun(0);
+  }
   // a diagonal shimmer once per month change (not when the screen first shows; survives the remount of a swipe)
-  const [shimmer] = useState(() => heroShown.period !== null && heroShown.period !== period);
+  // the shimmer element exists only while it runs: removed when its animation ends
+  const [shimmer, setShimmer] = useState<Period | null>(() => (heroShown.period !== null && heroShown.period !== period ? period : null));
   useLayoutEffect(() => {
+    if (heroShown.period !== null && heroShown.period !== period) setShimmer(period);
     heroShown.period = period;
   }, [period]);
   const lights = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => driftHeroLights(lights.current), []);
   return (
-    <div className="hero surface flex flex-col gap-5 p-6 md:flex-row md:items-center md:gap-8 md:p-7 lg:p-8" data-testid="hero">
+    <div
+      className="hero surface flex flex-col gap-5 p-6 md:p-7 lg:p-8 xl:flex-row xl:items-center xl:gap-8"
+      data-done={allPaid || undefined}
+      data-testid="hero"
+    >
       {/* two soft colour fields drifting slowly inside the tile (box-shadow glows, clipped) */}
       <span ref={lights} className="hero-lights" aria-hidden="true">
         <span className="hero-light hero-light-a" />
         <span className="hero-light hero-light-b" />
-        {shimmer && (
-          <span key={period} className="hero-shimmer-track">
+        {shimmer !== null && !reducedMotion() && (
+          <span key={shimmer} className="hero-shimmer-track" data-testid="hero-shimmer" onAnimationEnd={() => setShimmer(null)}>
             <span className="hero-shimmer" />
           </span>
         )}
       </span>
+      {allPaid && run > 0 && !reducedMotion() && <Confetti run={run} seed={period} />}
+      {allPaid ? (
+        <HeroDone period={period} figures={figures} streak={streak} run={run} onReplay={() => setRun((n) => n + 1)} />
+      ) : (
       <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7">
         <ProgressRing
           ratio={figures.ratio}
           percent={progressPercent(figures)}
-          done={allPaid}
+          done={false}
           label={`${progressPercent(figures)} Prozent abgebucht`}
           className="h-[84px] w-[84px] md:h-[124px] md:w-[124px]"
           hero
@@ -587,11 +661,7 @@ function HeroCard({
             von <span className="num font-medium text-ink" data-testid="hero-planned">{formatEUR(figures.total)}</span> abgebucht
           </div>
           <div className="mt-3">
-            {allPaid ? (
-              <span className="hero-chip inline-flex h-8 items-center rounded-full px-3.5 text-[13px] font-semibold">
-                Alles abgebucht
-              </span>
-            ) : figures.count === 0 ? (
+            {figures.count === 0 ? (
               <span className="text-[14px] text-ink-mute">Nichts fällig</span>
             ) : (
               // a filter: only the open positions; tapping again shows all
@@ -603,7 +673,7 @@ function HeroCard({
                 data-testid="hero-open-filter"
               >
                 <span
-                  className="hero-chip num inline-flex h-8 items-center rounded-full px-3.5 text-[13px] font-semibold"
+                  className="hero-chip num inline-flex h-8 items-center whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold"
                   data-on={openOnly || undefined}
                   data-testid="hero-open"
                 >
@@ -614,59 +684,135 @@ function HeroCard({
           </div>
         </div>
       </div>
-      <HeroDeductions figures={figures} />
+      )}
+      <HeroDeductions figures={figures} sources={sources} allPaid={allPaid} />
     </div>
   );
 }
 
 /**
- * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau vom Netto (monthFigures.deductions). Phone: an extra
- * row under ring and amount; from iPad on it uses the free space on the right of the hero.
+ * „{Monat} erledigt“: every position of the month is paid. A big check in a light brand circle (a tap
+ * plays the celebration again), title and subtitle, the amount big, „{n} Monate in Folge“ from 2 on.
  */
-function HeroDeductions({ figures }: { figures: MonthFigures }) {
+function HeroDone({ period, figures, streak, run, onReplay }: { period: Period; figures: MonthFigures; streak: number | 'new' | null; run: number; onReplay: () => void }) {
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7" data-testid="hero-done">
+      <button
+        // a new key on every run: the pop plays again
+        key={run}
+        type="button"
+        onClick={onReplay}
+        className="hero-check focus-ring flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 shadow-card md:h-[124px] md:w-[124px]"
+        data-pop={run > 0 && !reducedMotion() ? '' : undefined}
+        aria-label={t('hero.done.replay')}
+        data-testid="hero-check"
+      >
+        <CheckIcon size={56} strokeWidth={2.6} className="h-[44px] w-[44px] md:h-[64px] md:w-[64px]" />
+      </button>
+      <div className="fit-box flex-1">
+        <p className="text-[20px] font-semibold leading-7 tracking-[-0.01em] text-ink md:text-[24px] md:leading-8" data-testid="hero-done-title">
+          {t('hero.done.title', { monat: monthName(period) })}
+        </p>
+        <p className="text-[14px] leading-5 text-ink-mute md:text-[15px]" data-testid="hero-done-sub">
+          {figures.count === 1 ? t('hero.done.sub.one') : t('hero.done.sub', { n: figures.count })}
+        </p>
+        <CountUp
+          value={figures.paid}
+          format={formatEUR}
+          trigger={period}
+          className="num num-display fit fit-hero mt-1 block text-ink"
+          style={fitStyle(formatEUR(figures.paid))}
+          testId="hero-paid"
+        />
+        {typeof streak === 'number' && (
+          <span className="hero-chip mt-2 inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold" data-testid="hero-streak">
+            <Pea size={10} />
+            {t('tile.streak', { n: streak })}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau vom Netto (monthFigures.deductions). Up to desktop a
+ * row under ring and amount (the amount keeps the whole width); from 1280 px a column of fixed width on
+ * the right, so the big number never shrinks for it. „Fixkosten einplanen“ on: „Woraus du bezahlst“.
+ */
+function HeroDeductions({ figures, sources, allPaid }: { figures: MonthFigures; sources: CostSources | null; allPaid: boolean }) {
   const explanation = deductionsExplanation(figures);
-  // „Fixkosten einplanen“ on: these Fixkosten are paid from the money set aside (the pot)
-  const { settings: konto } = useKonto();
   return (
     <div
-      className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t border-edge pt-4 md:ml-auto md:shrink-0 md:grid-cols-1 md:justify-items-end md:border-l md:border-t-0 md:py-1 md:pl-8 md:text-right"
+      className="flex min-w-0 flex-col border-t border-edge pt-4 xl:w-[340px] xl:shrink-0 xl:self-stretch xl:justify-center xl:border-l xl:border-t-0 xl:py-1 xl:pl-8 xl:pt-1"
       data-testid="hero-deductions"
     >
-      <div className="col-start-1 row-start-1 flex items-center text-[13px] font-medium text-ink-mute">
-        Abzüge vom Netto
-        <InfoTip label="Erklärung: Abzüge vom Netto" title="Abzüge vom Netto" className="-my-3 -mr-3" testId="hero-deductions-info">
-          <p className="num text-ink" data-testid="hero-deductions-formula">
-            {explanation.formula}
-          </p>
-          {explanation.notFromNet && (
-            <p className="num text-ink" data-testid="hero-deductions-not-from-net">
-              {explanation.notFromNet}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex shrink-0 items-center whitespace-nowrap text-[13px] font-medium text-ink-mute">
+          Abzüge vom Netto
+          <InfoTip label="Erklärung: Abzüge vom Netto" title="Abzüge vom Netto" className="-my-3 -mr-3 shrink-0" testId="hero-deductions-info">
+            <p className="num text-ink" data-testid="hero-deductions-formula">
+              {explanation.formula}
             </p>
-          )}
-          <p>Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.</p>
-        </InfoTip>
-      </div>
-      <div
-        className="num col-start-2 row-start-1 text-right text-[20px] font-semibold leading-7 tracking-[-0.02em] text-ink md:col-start-1 md:row-start-2 md:text-[24px] md:leading-8 lg:text-[28px] lg:leading-9"
-        data-testid="hero-deductions-value"
-      >
-        {formatEUR(figures.deductions)}
-      </div>
-      <div className="num col-span-2 col-start-1 row-start-2 text-[12px] leading-4 text-ink-mute md:col-span-1 md:row-start-3 lg:text-[13px]" data-testid="hero-deductions-breakdown">
-        {explanation.breakdown}
-      </div>
-      {konto.enabled && (
-        <div
-          className="col-span-2 col-start-1 row-start-3 -mb-2 flex items-center text-[12px] font-medium leading-4 text-ink-soft md:col-span-1 md:row-start-4 md:justify-end lg:text-[13px]"
-          data-testid="hero-pot"
-        >
-          <Pea size={12} className="mr-1.5 shrink-0" />
-          {t('hero.pot')}
-          <InfoTip label={`Erklärung: ${t('hero.pot')}`} title={t('hero.pot')} className="-my-3 -mr-3" testId="hero-pot-info">
-            <p>{t('hero.pot.info')}</p>
+            {explanation.notFromNet && (
+              <p className="num text-ink" data-testid="hero-deductions-not-from-net">
+                {explanation.notFromNet}
+              </p>
+            )}
+            <p>Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.</p>
           </InfoTip>
         </div>
+        <div className="num whitespace-nowrap text-right text-[20px] font-semibold leading-7 tracking-[-0.02em] text-ink md:text-[24px] md:leading-8" data-testid="hero-deductions-value">
+          {formatEUR(figures.deductions)}
+        </div>
+      </div>
+      <div className="num mt-0.5 text-[12px] leading-4 text-ink-mute lg:text-[13px]" data-testid="hero-deductions-breakdown">
+        {explanation.breakdown}
+      </div>
+      {sources && <HeroSources sources={sources} allPaid={allPaid} />}
+    </div>
+  );
+}
+
+/**
+ * „Woraus du bezahlst“ („… bezahlt hast“ when everything is paid): a segmented bar of the shares (only
+ * with two or more sources) and one row per source – dot, name, amount with cents. Only sources > 0;
+ * the rows add up to the Fixkosten (costSources).
+ */
+function HeroSources({ sources, allPaid }: { sources: CostSources; allPaid: boolean }) {
+  const rows = heroSourceRows(sources);
+  if (rows.length === 0) return null;
+  const total = rows.reduce((sum, r) => sum + r.value, 0);
+  return (
+    <div className="mt-4" data-testid="hero-sources" data-count={rows.length}>
+      <p className="text-[13px] font-medium text-ink-mute" data-testid="hero-sources-title">
+        {t(allPaid ? 'hero.src.title.done' : 'hero.src.title')}
+      </p>
+      {rows.length > 1 && (
+        <div className="mt-2 flex h-[10px] gap-[2px] overflow-hidden rounded-full" role="img" aria-label={rows.map((r) => `${r.label} ${formatEUR(r.value, { fixed: true })}`).join(', ')} data-testid="hero-sources-bar">
+          {rows.map((r) => (
+            <span
+              key={r.key}
+              className="h-full min-w-[4px]"
+              style={{ flexGrow: r.value / total, flexBasis: 0, backgroundColor: `rgb(var(--hero-src-${r.key}))` }}
+              data-testid={`hero-sources-bar-${r.key}`}
+            />
+          ))}
+        </div>
       )}
+      <ul className="num mt-2 flex flex-col gap-1 text-[14px] leading-5">
+        {rows.map((r) => (
+          <li key={r.key} className="flex items-center justify-between gap-3" data-testid={`hero-source-${r.key}`}>
+            <span className="flex min-w-0 items-center gap-2 text-ink">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: `rgb(var(--hero-src-${r.key}))` }} aria-hidden="true" />
+              <span className="truncate">{r.label}</span>
+            </span>
+            <span className="whitespace-nowrap font-semibold text-ink" data-testid={`hero-source-${r.key}-value`}>
+              {formatEUR(r.value, { fixed: true })}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

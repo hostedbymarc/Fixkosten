@@ -4,7 +4,7 @@
 import { dayKey } from '../lib/kontoBalance';
 import type { Period } from '../lib/types';
 import type { FixkostenDB } from './db';
-import { readKonto, writeKonto, type GapMode, type KontoCheck, type Milestone } from './settings';
+import { readKonto, writeKonto, type GapMode, type KontoCheck, type Milestone, type OverflowAnswer } from './settings';
 
 /** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
@@ -106,4 +106,21 @@ export async function adoptLegacyBalance(db: FixkostenDB, now: Date): Promise<vo
 export async function markWalkthroughSeen(db: FixkostenDB): Promise<void> {
   const current = await readKonto(db);
   if (!current.walkthroughSeen) await writeKonto(db, { walkthroughSeen: true });
+}
+
+/** „{Monat} erledigt“ was celebrated: the confetti does not play again for this month by itself. */
+export async function markCelebrated(db: FixkostenDB, period: Period): Promise<void> {
+  const current = await readKonto(db);
+  if (!current.celebratedMonths.includes(period)) await writeKonto(db, { celebratedMonths: [...current.celebratedMonths, period].slice(-36) });
+}
+
+/** „Spielgeld pro Monat“: an amount (cents allowed) or null = off. */
+export async function setSpielgeld(db: FixkostenDB, amount: number | null): Promise<void> {
+  await writeKonto(db, { spielgeld: amount !== null && amount > 0 ? Math.round(amount * 100) / 100 : null });
+}
+
+/** Where the part above the Spielgeld of `period` comes from („Aus dem Überschuss“ / „Andere Quelle“ / a part from another source). */
+export async function setSpielgeldOverflow(db: FixkostenDB, period: Period, source: OverflowAnswer): Promise<void> {
+  const current = await readKonto(db);
+  await writeKonto(db, { spielgeldOverflow: { ...current.spielgeldOverflow, [period]: source } });
 }

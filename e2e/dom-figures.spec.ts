@@ -169,12 +169,17 @@ async function checkMonth(page: Page, ds: Dataset, period: Period, soll: Record<
   expect((await uncheckedNumbers(page, allowList(ds))).length, 'scan finds figures').toBeGreaterThan(20);
   const s = (k: string) => soll[k];
   await check(page.getByTestId('hero-paid'), formatEUR(f.paid), s('hero-paid'), 'hero-paid');
-  await check(page.getByTestId('hero-planned'), formatEUR(f.total), s('hero-planned'), 'hero-planned');
   if (f.openCount > 0) {
+    await check(page.getByTestId('hero-planned'), formatEUR(f.total), s('hero-planned'), 'hero-planned');
     await check(page.getByTestId('hero-open'), `${f.openCount} offen · ${formatEUR(shownOpen(f))}`, s('hero-open'), 'hero-open');
     await check(page.getByTestId('hero').getByText(/^\d+%$/), `${progressPercent(f)}%`, s('ring'), 'ring');
   } else {
-    await expect(page.getByRole('img', { name: '100 Prozent abgebucht' })).toBeVisible();
+    // everything paid: the done state shows the paid sum (= planned) big, no ring
+    expect(norm(formatEUR(f.paid)), 'paid = planned').toBe(norm(formatEUR(f.total)));
+    const planned = s('hero-planned');
+    if (planned !== undefined) expect(norm(formatEUR(f.total)), 'calc = Soll hero-planned').toBe(norm(planned));
+    await expect(page.getByTestId('hero-done-title')).toBeVisible();
+    await check(page.getByTestId('hero-done-sub'), f.count === 1 ? 'Deine Rechnung ist bezahlt' : `Alle ${f.count} Rechnungen bezahlt`, undefined, 'hero-done-sub');
   }
   const e = deductionsExplanation(f);
   await check(page.getByTestId('hero-deductions-value'), formatEUR(f.deductions), s('hero-deductions-value'), 'Abzüge');

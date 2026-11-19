@@ -17,7 +17,7 @@ const VIEWPORTS = {
   'desktop-1440': { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false },
 } as const;
 
-const TILE_INFO = 'Dieser Betrag deckt alle Fixkosten der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu.';
+const TILE_INFO = 'Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu.';
 const CHART_INFO = 'So entwickelt sich dein Geld, wenn du den Betrag immer am 1. zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen.';
 
 /** every open ⓘ popover on the page (screen and sheet) */
@@ -104,7 +104,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const posInfo = sheet.getByTestId('konto-positions-info');
         await posInfo.scrollIntoViewIfNeeded();
         await tap(posInfo);
-        await expect(page.getByTestId('konto-positions-info-popover')).toContainText('Diese Rechnungen deckt dein Monatsbetrag.');
+        await expect(page.getByTestId('konto-positions-info-popover')).toContainText('Diese Rechnungen zahlst du aus deiner Rücklage.');
         await shot(page, `${tag}-eingeplante-rechnungen`);
         await chartInfo.scrollIntoViewIfNeeded();
         await tap(chartInfo);

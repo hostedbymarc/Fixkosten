@@ -32,7 +32,8 @@ import {
 import { formatAvg, formatEUR } from '../lib/format';
 import { periodLabel } from '../lib/period';
 import { useActiveMonth } from '../lib/useToday';
-import type { Dataset, PlanEntry, Position } from '../lib/types';
+import type { Account, Dataset, PlanEntry, Position } from '../lib/types';
+import { t } from '../lib/kontoTexts';
 
 type Sheet =
   | { kind: 'new' }
@@ -127,7 +128,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
                       <PositionListRow
                         position={p}
                         today={today}
-                        girokonto={konto && accountOf(ds, p) === 'girokonto'}
+                        source={konto ? accountOf(ds, p) : undefined}
                         handle={<DragHandle handle={handle} />}
                         onOpen={(e) => open({ kind: 'detail', id: p.id }, e)}
                         onEdit={() => setSheet({ kind: 'edit', id: p.id })}
@@ -218,7 +219,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
 function PositionListRow({
   position,
   today,
-  girokonto,
+  source,
   handle,
   onOpen,
   onEdit,
@@ -227,7 +228,8 @@ function PositionListRow({
   position: Position;
   today: string;
   /** Fixkostenkonto mode: a small chip only for positions paid from the Girokonto */
-  girokonto?: boolean;
+  /** what pays it (Fixkosten einplanen on): a chip „Gehalt“ / „Spielgeld“, none for the Rücklage */
+  source?: Account;
   handle: React.ReactNode;
   onOpen: (e: MouseEvent<HTMLElement>) => void;
   onEdit: () => void;
@@ -270,9 +272,9 @@ function PositionListRow({
               </Badge>
             </span>
           )}
-          {girokonto && (
-            <span className="mt-1 block" data-testid="account-chip">
-              <Badge>Alltagskonto</Badge>
+          {(source === 'girokonto' || source === 'spielgeld') && (
+            <span className="mt-1 block" data-testid="account-chip" data-source={source}>
+              <Badge>{t(source === 'girokonto' ? 'account.salary' : 'account.spielgeld')}</Badge>
             </span>
           )}
         </span>

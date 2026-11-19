@@ -19,49 +19,56 @@ interface Props {
 
 /**
  * A number that counts from the old to the new value when `trigger` changes (400 ms, ease-out,
- * tabular digits). Purely visual: the element itself always holds the final text (tests, screen
- * readers, copy); while counting it is transparent and an aria-hidden copy on top shows the
- * intermediate values, written straight into the DOM per frame (no re-render).
+ * tabular digits). There is exactly ONE element and ONE text node at any time: the count writes the
+ * intermediate values into that same text node (no copy on top, no transparent original: two
+ * stacked copies showed double and blurred in Safari). It always ends on the final text, also when a
+ * frame never comes (a timer finishes it), when the value changes again or the element goes away.
+ * Nothing but the text changes: no transform, filter or will-change on the number.
  */
 export function CountUp({ value, format, trigger, className = '', style, testId }: Props) {
   const real = useRef<HTMLDivElement>(null);
-  const ghost = useRef<HTMLDivElement>(null);
   const key = testId ?? 'count';
+  const text = format(value);
+  const fit = (style as Record<string, unknown> | undefined)?.['--fit-em'];
   useLayoutEffect(() => {
     const from = memory.get(key) ?? { value, trigger };
     memory.set(key, { value, trigger });
     const el = real.current;
-    const copy = ghost.current;
-    if (from.trigger === trigger || from.value === value || !el || !copy || reducedMotion()) return;
+    const node = el?.firstChild;
+    if (from.trigger === trigger || from.value === value || !el || !(node instanceof Text) || reducedMotion()) return;
     let frame = 0;
+    let done = false;
     const start = performance.now();
-    el.style.color = 'transparent';
-    copy.hidden = false;
-    // the copy fits the WIDER of the two values: in between it shows whole euros only, never wider
-    // than that (cents in between made „€ 2.511,83“ wider than „€ 2.589“ and it ran out of the tile)
-    copy.style.setProperty('--fit-em', Math.max(fitEm(format(from.value)), fitEm(format(value))).toFixed(3));
+    // while counting the number fits the WIDER of the two values (whole euros in between, never
+    // wider than that: cents in between made „€ 2.511,83“ wider than „€ 2.589“)
+    el.style.setProperty('--fit-em', Math.max(fitEm(format(from.value)), fitEm(format(value))).toFixed(3));
+    const end = () => {
+      if (done) return;
+      done = true;
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+      // the final text, as React rendered it (data-value), and the box size React set
+      node.data = el.dataset.value ?? node.data;
+      const fit = el.dataset.fit;
+      if (fit) el.style.setProperty('--fit-em', fit);
+      else el.style.removeProperty('--fit-em');
+    };
     const step = (now: number) => {
       const t = Math.min(1, (now - start) / COUNT_MS);
+      if (t >= 1) return end();
       const eased = 1 - (1 - t) ** 3;
-      copy.textContent = t < 1 ? format(Math.round(from.value + (value - from.value) * eased)) : format(value);
-      if (t < 1) frame = requestAnimationFrame(step);
-      else end();
+      node.data = format(Math.round(from.value + (value - from.value) * eased));
+      frame = requestAnimationFrame(step);
     };
-    const end = () => {
-      cancelAnimationFrame(frame);
-      el.style.color = '';
-      copy.hidden = true;
-    };
-    copy.textContent = format(from.value);
+    node.data = format(from.value);
     frame = requestAnimationFrame(step);
+    // no frame (hidden tab, a stalled renderer): the final value anyway
+    const timer = window.setTimeout(end, COUNT_MS + 150);
     return end;
   }, [value, trigger, format, key]);
   return (
-    <div className="relative">
-      <div ref={real} className={className} style={style} data-testid={testId}>
-        {format(value)}
-      </div>
-      <div ref={ghost} className={`pointer-events-none absolute left-0 top-0 ${className}`} style={style} aria-hidden="true" hidden />
+    <div ref={real} className={className} style={style} data-testid={testId} data-value={text} data-fit={fit === undefined ? undefined : String(fit)}>
+      {text}
     </div>
   );
 }

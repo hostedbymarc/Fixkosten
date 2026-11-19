@@ -1,7 +1,7 @@
 import type { MonthStart } from '../../lib/activeMonth';
 import { useEffect, useState } from 'react';
 import { db } from '../../db/db';
-import { setAnchor } from '../../db/kontoActions';
+import { setAnchor, setSpielgeld } from '../../db/kontoActions';
 import { BUFFERS, writeKonto, type Buffer, type KontoSettings } from '../../db/settings';
 import { localToday } from '../../lib/activeMonth';
 import { ROUNDING_CHOICES, type KontoMonth, type KontoSimulation, type Rounding } from '../../lib/fixkostenkonto';
@@ -208,6 +208,7 @@ export function RoundingField({ settings }: { settings: KontoSettings }) {
         <div data-testid="konto-rounding-step">
           <Segmented<string>
             label={t('settings.rounding')}
+            hideLabel
             value={String(settings.rounding)}
             onChange={(v) => void writeKonto(db, { rounding: Number(v) as Rounding })}
             options={ROUNDING_CHOICES.map((r) => ({ value: String(r), label: formatEUR(r) }))}
@@ -252,5 +253,35 @@ export function Fold({ summary, testId, children }: { summary: string; testId?: 
       </summary>
       <div className="pb-1 pt-2">{children}</div>
     </details>
+  );
+}
+
+/** „Spielgeld pro Monat“: optional, empty = off, cents allowed. Saved while typing (like the balance). */
+export function SpielgeldField({ spielgeld }: { spielgeld: number | null }) {
+  const [text, setText] = useState(spielgeld === null ? '' : amountToInput(spielgeld));
+  const [dirty, setDirty] = useState(false);
+  useEffect(() => {
+    if (!dirty) setText(spielgeld === null ? '' : amountToInput(spielgeld));
+  }, [spielgeld, dirty]);
+  const parsed = text.trim() === '' ? null : parseAmount(text);
+  return (
+    <AmountField
+      label={t('settings.spielgeld')}
+      value={text}
+      onChange={(v) => {
+        setText(v);
+        setDirty(true);
+        if (v.trim() === '') void setSpielgeld(db, null);
+        else {
+          const value = parseAmount(v);
+          if (value !== null) void setSpielgeld(db, value);
+        }
+      }}
+      placeholder="z. B. 1.209,00"
+      error={text.trim() !== '' && parsed === null ? 'Bitte einen Betrag eingeben, z. B. 1.209,00' : null}
+      hint={t('settings.spielgeld.hint')}
+      info={t('settings.spielgeld.info')}
+      testId="konto-spielgeld"
+    />
   );
 }

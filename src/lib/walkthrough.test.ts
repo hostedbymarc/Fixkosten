@@ -65,21 +65,21 @@ describe('Walkthrough: Karten 1 und 2 aus kontoState', () => {
   it('Karte 2: der Grundbetrag', () => {
     const w = cards();
     expect(w.base).toBe(2920);
-    expect(w.card2).toBe('Das sind € 2.920 pro Monat. Teure Monate gleicht dein Topf aus.');
+    expect(w.card2).toBe('Das sind € 2.920 pro Monat. Teure Monate gleicht deine Rücklage aus.');
   });
 });
 
 describe('Walkthrough: Karte 4 je nach Lücke', () => {
   it('mit Lücke, verteilt', () => {
     expect(cards({ gapMode: 'spread' }).card4).toEqual([
-      'Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Dein Topf ist bis dahin noch nicht voll.',
+      'Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Deine Rücklage ist bis dahin noch nicht voll.',
       'Darum bis dahin € 395,81 extra pro Monat. Das fällt nur einmal an.',
     ]);
   });
 
   it('mit Lücke, auf einmal', () => {
     expect(cards({ gapMode: 'lump' }).card4).toEqual([
-      'Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Dein Topf ist bis dahin noch nicht voll.',
+      'Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Deine Rücklage ist bis dahin noch nicht voll.',
       'Darum einmalig € 1.187,43 bis 31. Jänner. Das fällt nur einmal an.',
     ]);
   });
@@ -113,9 +113,9 @@ describe('Walkthrough ohne Einrichtung: Beispielzahlen', () => {
       expect(w.example).toBe(true);
       expect(w.bars.map((b) => b.amount)).toEqual([...EXAMPLE.bills]);
       expect(w.card1).toBe('Im Jänner zahlst du € 900, im November nur € 180.');
-      expect(w.card2).toBe('Das sind € 298,34 pro Monat. Teure Monate gleicht dein Topf aus.');
+      expect(w.card2).toBe('Das sind € 298,34 pro Monat. Teure Monate gleicht deine Rücklage aus.');
       expect(w.card4).toEqual([
-        'Im Jänner kommen Kfz-Versicherung und Haushaltsversicherung. Dein Topf ist bis dahin noch nicht voll.',
+        'Im Jänner kommen Kfz-Versicherung und Haushaltsversicherung. Deine Rücklage ist bis dahin noch nicht voll.',
         'Darum bis dahin € 121,66 extra pro Monat. Das fällt nur einmal an.',
       ]);
     });

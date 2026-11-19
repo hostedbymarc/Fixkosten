@@ -8,11 +8,13 @@ export type Frequency = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'onc
 export type Kind = 'expense' | 'savings';
 
 /**
- * Which account a position is paid from. 'fixkostenkonto' = the separate account that the
- * monthly standing order fills (src/lib/fixkostenkonto.ts), 'girokonto' = the salary account.
+ * What a position is paid from. 'fixkostenkonto' = the Rücklage that the monthly amount fills
+ * (src/lib/fixkostenkonto.ts), 'girokonto' = straight from the salary, 'spielgeld' = from the Spielgeld
+ * (ruecklage-spielgeld; additive, no schema change).
  * Missing (data before schema v5): Vermögensaufbau categories → 'girokonto', else 'fixkostenkonto'.
  */
-export type Account = 'fixkostenkonto' | 'girokonto';
+export type Account = 'fixkostenkonto' | 'girokonto' | 'spielgeld';
+export const ACCOUNTS: readonly Account[] = ['fixkostenkonto', 'girokonto', 'spielgeld'];
 
 export interface Category {
   id: string;

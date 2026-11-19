@@ -127,10 +127,13 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // „Lieber auf einmal?“ → one-time amount, the same reason; and back
         await tap(page.getByTestId('tile-switch'));
         await expect(card).toHaveAttribute('data-view', 'lump');
+        // ruecklage-spielgeld: two fields of the same size, the reason under them, „Einmalbetrag zur Seite gelegt“
+        await expect(page.getByTestId('tile-monthly')).toContainText('jeden Monat am 1.');
         await expect(page.getByTestId('tile-amount')).toHaveText(new RegExp(`^${E(BASE)}$`));
+        await expect(page.getByTestId('tile-once')).toContainText('einmalig bis 31. Jänner');
+        await expect(page.getByTestId('tile-lump')).toHaveText(new RegExp(`^${E(GAP)}$`));
         await expect(page.getByTestId('tile-reason')).toHaveText(REASON);
-        await expect(page.getByTestId('tile-how')).toHaveText(new RegExp(`^Leg bis 31\\. Jänner ${E(GAP)} extra zur Seite\\.$`));
-        await expect(page.getByTestId('tile-confirm')).toHaveText('Zur Seite gelegt');
+        await expect(page.getByTestId('tile-confirm')).toHaveText('Einmalbetrag zur Seite gelegt');
         await expect(page.getByTestId('tile-switch')).toHaveText('Lieber verteilen?');
         await card.scrollIntoViewIfNeeded();
         await shot(page, `${tag}-04-kachel-auf-einmal`);
