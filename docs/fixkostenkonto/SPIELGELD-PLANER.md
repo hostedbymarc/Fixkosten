@@ -163,24 +163,24 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 ## Testergebnisse
 
 **Unit und Build:**
-- Unit (vitest): 49 Dateien, 1232 Tests grün.
-- `tsc -b` ist ohne Fehler.
-- `pnpm build` ist grün, mit check-colors, check-glass-layers und check-bundle.
+- Unit (vitest): 49 Dateien, 1248 Tests grün.
+- `tsc -b` ist ohne Fehler. `pnpm build` ist grün.
 
-**Volle E2E-Suite (Chromium), einmal komplett:**
+**Volle E2E-Suite (Chromium), einmal komplett (Stand Abschluss):**
 
 | Projekt | Ergebnis |
 |---|---|
-| desktop | 513 grün, 32 übersprungen. 16 rot, nur alte Texte: `fixkostenkonto` (Radio „Gehalt“), `tooltips` (alte ⓘ-Texte), `walkthrough` (Karte 3). Angepasst und neu gelaufen: 76 grün, danach `tooltips` mit dem neuen ⓘ „Nicht einplanen“ 10 grün. |
-| iphone-15 | 269 grün |
-| iphone-pro-max | 240 grün, 320 übersprungen. 1 rot: Screenshot-Test Positionen, Zeitlimit 30 s. Allein braucht er 25 s. Er hat jetzt `test.slow()` und läuft allein grün. |
+| desktop | 534 grün, 35 übersprungen. 2 rot in `monthclose`: erwartete alte Eingabe. Buchstaben werden jetzt gefiltert, Platzhalter „5.000“. Angepasst, danach grün. |
+| iphone-15 | 267 grün. Dieselben 2 in `monthclose`, angepasst, grün. |
+| iphone-pro-max | 240 grün. 1 rot: `collapse` Zeitlimit 30 s unter Last. Allein 17 s grün. Jetzt mit `test.slow()`. |
 | ipad-portrait | 257 grün |
 | ipad-landscape | 245 grün |
-| perf | Scrollen Monat, Scrollen Analyse, Tabwechsel grün. Feier: offen, siehe unten. |
+| perf | Scrollen Monat, Scrollen Analyse, Tabwechsel grün |
+| perf-feier | iPhone 15 rot, siehe unten |
 
 Übersprungen heißt: Das Spec läuft absichtlich nur in bestimmten Projekten.
 
-**WebKit:** `feier`, `hero-abzuege`, `spielgeld-planer`: 41 grün, 8 absichtlich übersprungen. Die WebKit-Screenshots sind verworfen und in Chromium neu erzeugt.
+**WebKit:** `feier`, `hero-abzuege`, `spielgeld-planer`: 48 grün, 11 absichtlich übersprungen. Die WebKit-Screenshots sind verworfen und in Chromium neu erzeugt (39 grün).
 
 **Viewports:** iPhone SE, iPhone 15, iPad hoch und quer, Desktop 1440, je hell und dunkel. Das gilt in `feier`, `spielgeld-planer` und `ruecklage-spielgeld`.
 
