@@ -128,7 +128,7 @@ export function PositionsScreen({ ds }: { ds: Dataset }) {
                       <PositionListRow
                         position={p}
                         today={today}
-                        source={konto ? accountOf(ds, p) : undefined}
+                        source={konto ? accountOf(ds, p) : p.account === 'spielgeld' ? 'spielgeld' : undefined}
                         handle={<DragHandle handle={handle} />}
                         onOpen={(e) => open({ kind: 'detail', id: p.id }, e)}
                         onEdit={() => setSheet({ kind: 'edit', id: p.id })}
@@ -228,7 +228,7 @@ function PositionListRow({
   position: Position;
   today: string;
   /** Fixkostenkonto mode: a small chip only for positions paid from the Girokonto */
-  /** what pays it (Fixkosten einplanen on): a chip „Gehalt“ / „Spielgeld“, none for the Rücklage */
+  /** what pays it: a chip „Direkt“ (Fixkosten einplanen on) or „nicht eingeplant“ (always), none for the Rücklage */
   source?: Account;
   handle: React.ReactNode;
   onOpen: (e: MouseEvent<HTMLElement>) => void;
@@ -260,7 +260,9 @@ function PositionListRow({
         className="focus-ring flex min-h-[60px] min-w-0 flex-1 items-center gap-3 rounded-xl py-2 pl-1 pr-2 text-left hover:bg-zinc-50"
       >
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[16px] font-medium text-ink">{position.name}</span>
+          <span className={`block truncate text-[16px] font-medium ${source === 'spielgeld' ? 'text-ink-mute' : 'text-ink'}`} data-unplanned={source === 'spielgeld' || undefined}>
+            {position.name}
+          </span>
           <span className="block text-[13px] leading-snug text-ink-mute">
             {startsLater ? `ab ${periodLabel(plan.validFrom)} · ` : ''}
             {planDescription(plan)}
@@ -274,12 +276,12 @@ function PositionListRow({
           )}
           {(source === 'girokonto' || source === 'spielgeld') && (
             <span className="mt-1 block" data-testid="account-chip" data-source={source}>
-              <Badge>{t(source === 'girokonto' ? 'account.salary' : 'account.spielgeld')}</Badge>
+              <Badge>{t(source === 'girokonto' ? 'account.salary' : 'unplanned.chip')}</Badge>
             </span>
           )}
         </span>
         <span className="flex shrink-0 flex-col items-end">
-          <span className="num text-[16px] font-semibold text-ink">{formatEUR(plan.amount)}</span>
+          <span className={`num text-[16px] font-semibold ${source === 'spielgeld' ? 'text-ink-mute' : 'text-ink'}`}>{formatEUR(plan.amount)}</span>
           {plan.frequency !== 'monthly' && plan.frequency !== 'once' && (
             <span className="num whitespace-nowrap text-[12px] text-ink-mute">Ø {formatAvg(monthlyEquivalentOfPlan(plan))} / Monat</span>
           )}

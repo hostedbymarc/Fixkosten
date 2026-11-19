@@ -2,7 +2,7 @@
 import type { CostSources } from './calc';
 import { t } from './kontoTexts';
 
-export const SOURCE_KEYS = ['reserve', 'salary', 'spielgeld'] as const;
+export const SOURCE_KEYS = ['reserve', 'salary'] as const;
 export type SourceKey = (typeof SOURCE_KEYS)[number];
 
 export interface SourceRow {
@@ -11,7 +11,7 @@ export interface SourceRow {
   value: number;
 }
 
-/** Only sources > 0 (to the cent), in the order Rücklage, Gehalt, Spielgeld; they add up to the Fixkosten. */
+/** Only sources > 0 (to the cent), in the order Rücklage, Direkt bezahlt; they add up to the Fixkosten. */
 export function heroSourceRows(sources: CostSources): SourceRow[] {
   return SOURCE_KEYS.map((key) => ({ key, label: t(`hero.src.${key}`), value: sources[key] })).filter((r) => Math.round(r.value * 100) > 0);
 }

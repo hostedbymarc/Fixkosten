@@ -91,7 +91,7 @@ function figures(ds: Dataset, today: Period) {
     groups: groupByCategory(dueItems(ds, p)).map((g) => [g.category.id, g.planned, g.actual, g.openCount]),
     avg: [fixedCostsAvg(ds, p), reserveNeeded(ds, p), wealthBuildingAvg(ds, p), freeAfterFixedAvg(ds, p)],
     perCategory: ds.categories.map((c) => sumMonthlyEquivalent(ds, p, { categoryId: c.id })),
-    byCategory: equivalentByCategory(ds, p).map((e) => [e.category.id, e.amount]),
+    byCategory: equivalentByCategory(ds, p).map((e) => [e.category.id, e.monthly]),
     open: openFromPrevious(ds, p, today).map((g) => [g.period, g.count, g.planned, g.items.map((i) => i.position.id), g.savingsCount, g.savingsPlanned]),
     status: monthStatus(ds, p, today),
     upcoming: upcomingDue(ds, p).map((i) => [i.position.id, i.period, i.planned]),
@@ -99,7 +99,7 @@ function figures(ds: Dataset, today: Period) {
     distribution: categoryDistribution(ds, p),
   }));
   const state = kontoState(ds, today, SETTINGS);
-  const split = salarySplit(ds, today, state, { spielgeld: null, spielgeldOverflow: {} });
+  const split = salarySplit(ds, today, state, { spielgeld: null });
   const next = nextSalarySplit(ds, today, state, { spielgeld: null });
   const pick = (s: typeof split) => ({ period: s.period, salary: s.salary, reserve: s.reserve, direct: s.direct, wealth: s.wealth, rest: s.rest, directItems: s.directItems.map((i) => [i.name, i.amount]) });
   return round({

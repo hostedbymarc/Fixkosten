@@ -1,7 +1,8 @@
-// „{Monat} erledigt“: when every position of the month shown is paid, the hero celebrates. The confetti
-// (peas) plays when the LAST position is ticked (live) and once when a month is opened that is complete
-// since (celebratedMonths); afterwards only the calm state. A tap on the check plays it again.
-// Only the ACTIVE month celebrates: past months never, not even when they are first opened.
+// „{Monat} erledigt“: when every position of the month shown is paid, the hero shows the done state.
+// spielgeld-planer: the confetti (peas) falls exactly ONCE – live, when the LAST position of the ACTIVE
+// month is ticked. Never when a month is opened, never again on a tap. Every other time the done state
+// shows the peas lying still at the bottom of the tile (same place every time: seed = the month).
+// A position set back to open: no peas, the normal hero. Done again: they fall once more.
 import type { Period } from './types';
 
 /** All positions of the month paid (at least one is due). */
@@ -9,14 +10,20 @@ export function monthDone(figures: { count: number; openCount: number }): boolea
   return figures.count > 0 && figures.openCount === 0;
 }
 
-/** Opening the active month: confetti once, if it is complete and was not celebrated yet. */
-export function celebrateOnOpen(period: Period, active: Period, done: boolean, celebrated: readonly Period[]): boolean {
-  return period === active && done && !celebrated.includes(period);
-}
-
 /** Live: the last open position of the active month was ticked (done now, not done before, same month). */
 export function celebrateLive(before: { period: Period; done: boolean } | null, period: Period, active: Period, done: boolean): boolean {
   return period === active && !!before && before.period === period && !before.done && done;
+}
+
+/**
+ * What the hero shows: no peas (not done), falling peas (the live moment, without reduced motion) or lying
+ * peas (every other time, and with reduced motion instead of falling).
+ */
+export type ConfettiState = 'none' | 'falling' | 'resting';
+
+export function confettiState(done: boolean, live: boolean, reducedMotion: boolean): ConfettiState {
+  if (!done) return 'none';
+  return live && !reducedMotion ? 'falling' : 'resting';
 }
 
 /** One pea of the confetti: px inside the hero, s for the timing. */

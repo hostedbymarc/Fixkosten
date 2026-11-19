@@ -789,6 +789,13 @@ button:active > .pea[data-pressable] {
   padding-bottom: 52px;
 }
 /* a pea: falls from above the tile to --end, swinging by --sway, and stays there (fill both) */
+/* lying (every other time the month is „erledigt“, and with reduced motion): at --end, no animation */
+.confetti-pea.is-resting {
+  animation: none;
+  transform: translate3d(0, var(--end), 0);
+  opacity: 0.85;
+  will-change: auto;
+}
 .confetti-pea {
   position: absolute;
   top: 0;
@@ -844,8 +851,11 @@ button:active > .pea[data-pressable] {
   .hero-check[data-pop] {
     animation: none;
   }
-  .hero-confetti {
-    display: none;
+  /* no falling: the peas lie where they would land */
+  .confetti-pea {
+    animation: none;
+    transform: translate3d(0, var(--end), 0);
+    opacity: 0.85;
   }
 }
 .hero-lights {
@@ -1044,3 +1054,15 @@ button:active > .pea[data-pressable] {
   }
 }
 
+
+/* „Dein Spielgeld“: the slider in € 50 steps – the browser's own control in the accent colour, 44 px to touch */
+.range {
+  height: 44px;
+  accent-color: rgb(var(--accent));
+  cursor: pointer;
+}
+.range:focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 2px;
+  border-radius: 8px;
+}

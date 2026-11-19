@@ -67,18 +67,23 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
   // inline errors appear once a field was edited; the save button stays disabled until valid
   const [dirty, setDirty] = useState({ name: false, amount: false, dueDate: false });
   const [saving, setSaving] = useState(false);
-  // Fixkostenkonto / Girokonto: only while the Fixkostenkonto mode is on; until touched it follows the category
+  // Rücklage / Direkt: only while „Fixkosten einplanen“ is on; until touched it follows the category
   const konto = useKonto().settings.enabled;
-  const [accountChoice, setAccountChoice] = useState<Account | null>(position?.account ?? null);
+  // „Nicht einplanen“: stored as account 'spielgeld' (spielgeld-planer); counts in no sum
+  const [unplanned, setUnplanned] = useState(position?.account === 'spielgeld');
+  const [accountChoice, setAccountChoice] = useState<Account | null>(position?.account && position.account !== 'spielgeld' ? position.account : null);
   const categoryKind = categories.find((c) => c.id === categoryId)?.kind;
-  const account: Account = accountChoice ?? (position && !position.account ? accountOf(ds, position) : defaultAccount(categoryKind));
+  const account: Account =
+    accountChoice ?? (position && !position.account ? accountOf(ds, position) : position?.account === 'spielgeld' ? 'girokonto' : defaultAccount(categoryKind));
+  /** what is stored: „Nicht einplanen“ → 'spielgeld', else Rücklage / Direkt (without the mode: the default by kind) */
+  const storedAccount: Account = unplanned ? 'spielgeld' : konto ? account : position?.account === 'spielgeld' ? 'girokonto' : defaultAccount(categoryKind);
 
   const once = frequency === 'once';
   // „Von ‚Frei verfügbar‘ abziehen“: only one-time payments in a Vermögensaufbau category
   const savingsCategory = categories.find((c) => c.id === categoryId)?.kind === 'savings';
   const showFromNet = once && savingsCategory;
-  // money that does not come from the net salary never goes through the Fixkostenkonto
-  const showAccount = konto && !(showFromNet && !fromNet);
+  // money that does not come from the net salary never goes through the Rücklage; „nicht eingeplant“ neither
+  const showAccount = konto && !unplanned && !(showFromNet && !fromNet);
   // what calc does with it: a one-time payment counts in the month of its due date, into
   // Vermögensaufbau (savings category) or into that month's Fixkosten (expense category)
   const dueMonth = /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? dueDate.slice(0, 7) : onceOnly?.period;
@@ -133,14 +138,18 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
       if (!position) {
         const id = await createPosition(
           db,
-          { name, categoryId, note, plan: nextPlan, fromNet: showFromNet ? fromNet : undefined, account: konto ? account : defaultAccount(categoryKind) },
+          { name, categoryId, note, plan: nextPlan, fromNet: showFromNet ? fromNet : undefined, account: storedAccount },
           validFrom,
         );
         onSaved(id);
         return;
       }
       await updatePositionInfo(db, position.id, { name, categoryId, note, fromNet: showFromNet ? fromNet : undefined });
-      if (konto && accountChoice && accountChoice !== accountOf(ds, position)) await setPositionAccount(db, position.id, accountChoice);
+      // „Nicht einplanen“ on → 'spielgeld'; switched off → 'girokonto' (or Rücklage / Direkt as chosen)
+      const wasUnplanned = position.account === 'spielgeld';
+      if (unplanned !== wasUnplanned || (konto && !unplanned && accountChoice && accountChoice !== accountOf(ds, position))) {
+        await setPositionAccount(db, position.id, storedAccount);
+      }
       if (planChanged) {
         await changePlan(
           db,
@@ -221,12 +230,21 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
               options={[
                 { value: 'fixkostenkonto', label: t('account.reserve') },
                 { value: 'girokonto', label: t('account.salary') },
-                { value: 'spielgeld', label: t('account.spielgeld') },
               ]}
               info={t('account.info')}
             />
           </div>
         )}
+        <SwitchField
+          label={t('unplanned.label')}
+          checked={unplanned}
+          onChange={(v) => {
+            setUnplanned(v);
+            if (!v) setAccountChoice('girokonto');
+          }}
+          info={t('unplanned.info')}
+          testId="unplanned-field"
+        />
         {frequencies.length > 0 ? (
           <Segmented
             label="Häufigkeit"

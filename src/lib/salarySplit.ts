@@ -1,8 +1,9 @@
-// „So teilt sich dein Gehalt“ (ruecklage-spielgeld): the salary of a month, split into what goes to the
-// Rücklage (the monthly amount from kontoState), what is paid straight from the salary, the
-// Vermögensaufbau from the net salary, the Spielgeld (and, when the answer is „Aus dem Überschuss“, what
-// was spent above it) – the rest is the Überschuss. Only reads: kontoState, monthItems, monthFigures.
-import { overflowMode, type KontoSettings, type OverflowAnswer, type OverflowMode } from '../db/settings';
+// „So teilt sich dein Gehalt“: the salary of a month, split into what goes to the Rücklage (the monthly
+// amount from kontoState), what is paid directly („Direkt bezahlt“), the Vermögensaufbau from the net
+// salary and the planned Spielgeld (spielgeld-planer: only a planned value, never a source of payments) –
+// the rest is the Überschuss. Positions „nicht eingeplant“ count nowhere (calc.isPlanned).
+// Only reads: kontoState, monthItems, the net salary.
+import type { KontoSettings } from '../db/settings';
 import { monthItems, netSalaryForPeriod, type SourceItem } from './calc';
 import { addPeriods } from './period';
 import type { KontoState } from './kontoBalance';
@@ -16,59 +17,40 @@ export interface SalarySplit {
   /** „Aktuelles Gehalt“ (the month shown, actual values) or „Nächstes Gehalt“ (the following month, planned) */
   kind: 'current' | 'next';
   period: Period;
-  /** next: the salary is not entered for that month – the last one entered, from this month („wie im {Monat}“) */
+  /** next: the salary is not entered for that month – the last one entered, from this month („geschätzt wie zuletzt“) */
   salaryFrom: Period | null;
   /** net salary of the month; null = not entered */
   salary: number | null;
   /** „Zur Seite legen“: the amount of this month (base, plus the extra while spreading) */
   reserve: number;
-  /** „Direkt vom Gehalt“: Fixkosten paid straight from the salary */
+  /** „Direkt bezahlt“: Fixkosten paid directly, not from the Rücklage */
   direct: number;
   directItems: SourceItem[];
-  /** „Vermögensaufbau“ from the net salary that does not go through the Rücklage or the Spielgeld */
+  /** „Vermögensaufbau“ from the net salary that does not go through the Rücklage */
   wealth: number;
-  /** „Spielgeld pro Monat“; null = not set */
+  /** „Spielgeld“: the planned amount per month; null = not set (no line) */
   spielgeld: number | null;
-  /** spent from the Spielgeld this month (everything due on it) */
-  spent: number;
-  spentItems: SourceItem[];
-  /** spent above the Spielgeld (0 without one) */
-  overflow: number;
-  /** where the overflow comes from (stored answer, else from the surplus) */
-  overflowSource: OverflowAnswer;
-  overflowMode: OverflowMode;
-  /** the part of the overflow from another source (all, nothing, or the amount given, at most the overflow) */
-  overflowOther: number;
-  /** the overflow as a line of the split: what comes from the surplus (overflow − overflowOther) */
-  overflowCounted: number;
   /** „Überschuss“ (with Spielgeld) / „Bleibt dir“ (without); null without salary */
   rest: number | null;
 }
 
-export function salarySplit(ds: Dataset, period: Period, state: KontoState, settings: Pick<KontoSettings, 'spielgeld' | 'spielgeldOverflow'>): SalarySplit {
+/** The parts of one month that come out of the net salary, from the same items as monthFigures. */
+function parts(ds: Dataset, period: Period) {
   const items = monthItems(ds, period).filter((i) => i.fromNet);
   const directItems = items.filter((i) => i.kind === 'expense' && i.account === 'girokonto');
   const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
-  const spentItems = items.filter((i) => i.account === 'spielgeld');
+  return { directItems, direct: sum(directItems), wealth: sum(wealthItems) };
+}
+
+const restOf = (salary: number | null, reserve: number, direct: number, wealth: number, spielgeld: number | null) =>
+  salary === null ? null : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(spielgeld ?? 0));
+
+export function salarySplit(ds: Dataset, period: Period, state: KontoState, settings: Pick<KontoSettings, 'spielgeld'>): SalarySplit {
+  const { directItems, direct, wealth } = parts(ds, period);
   const reserve = state.months.find((m) => m.period === period)?.amount ?? state.order;
-  const direct = sum(directItems);
-  const wealth = sum(wealthItems);
-  const spent = sum(spentItems);
   const spielgeld = settings.spielgeld;
-  const overflow = spielgeld === null ? 0 : euros(Math.max(cents(spent) - cents(spielgeld), 0));
-  const overflowSource = settings.spielgeldOverflow[period] ?? 'surplus';
-  const mode = overflowMode(overflowSource);
-  const overflowOther =
-    mode === 'other' ? overflow : mode === 'part' && typeof overflowSource === 'object' ? euros(Math.min(cents(overflowSource.otherAmount), cents(overflow))) : 0;
-  const overflowCounted = euros(cents(overflow) - cents(overflowOther));
-  // without a Spielgeld, what is paid from it still leaves the salary
-  const play = spielgeld ?? spent;
   const salary = netSalaryForPeriod(ds, period);
-  const rest =
-    salary === null
-      ? null
-      : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(play) - cents(overflowCounted));
-  return { kind: 'current', period, salaryFrom: null, salary, reserve, direct, directItems, wealth, spielgeld, spent, spentItems, overflow, overflowSource, overflowMode: mode, overflowOther, overflowCounted, rest };
+  return { kind: 'current', period, salaryFrom: null, salary, reserve, direct, directItems, wealth, spielgeld, rest: restOf(salary, reserve, direct, wealth, spielgeld) };
 }
 
 /** The last net salary entered up to `period` (at most two years back): the amount and its month. */
@@ -82,10 +64,9 @@ export function lastSalary(ds: Dataset, period: Period): { salary: number; from:
 }
 
 /**
- * „Nächstes Gehalt“: the salary of the month after `period` (missing: the last one entered, „wie im {Monat}“),
- * minus exactly the amount of the Zur-Seite-Kachel (`reserve`, default state.next.amount), what that month
- * plans straight from the salary and as Vermögensaufbau, and the Spielgeld limit (no overflow: nothing is
- * spent yet). Without a Spielgeld: what that month plans on it.
+ * „Nächstes Gehalt“: the salary of the month after `period` (missing: the last one entered, „geschätzt wie
+ * zuletzt“), minus exactly the amount of the Zur-Seite-Kachel (`reserve`, default state.next.amount), what
+ * that month pays directly and as Vermögensaufbau, and the planned Spielgeld.
  */
 export function nextSalarySplit(
   ds: Dataset,
@@ -95,42 +76,16 @@ export function nextSalarySplit(
   reserve: number = state.next.amount,
 ): SalarySplit {
   const next = addPeriods(period, 1);
-  const items = monthItems(ds, next).filter((i) => i.fromNet);
-  const directItems = items.filter((i) => i.kind === 'expense' && i.account === 'girokonto');
-  const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
-  const spentItems = items.filter((i) => i.account === 'spielgeld');
-  const direct = sum(directItems);
-  const wealth = sum(wealthItems);
-  const spent = sum(spentItems);
+  const { directItems, direct, wealth } = parts(ds, next);
   const spielgeld = settings.spielgeld;
-  const play = spielgeld ?? spent;
   const own = netSalaryForPeriod(ds, next);
   const last = own === null ? lastSalary(ds, period) : null;
   const salary = own ?? last?.salary ?? null;
-  const rest = salary === null ? null : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(play));
-  return {
-    kind: 'next',
-    period: next,
-    salaryFrom: last?.from ?? null,
-    salary,
-    reserve,
-    direct,
-    directItems,
-    wealth,
-    spielgeld,
-    spent,
-    spentItems,
-    overflow: 0,
-    overflowSource: 'surplus',
-    overflowMode: 'surplus',
-    overflowOther: 0,
-    overflowCounted: 0,
-    rest,
-  };
+  return { kind: 'next', period: next, salaryFrom: last?.from ?? null, salary, reserve, direct, directItems, wealth, spielgeld, rest: restOf(salary, reserve, direct, wealth, spielgeld) };
 }
 
 /**
- * Advice on the tile (only a hint, the choice stays with the user), only with a Spielgeld, a salary and a gap:
+ * Advice on the tile (only a hint, the choice stays with the user), only with a planned Spielgeld, a salary and a gap:
  * the Überschuss covers the one-time amount (or the gap while spreading) → „auf einmal“, else → „verteilt“.
  */
 export interface LumpAdvice {

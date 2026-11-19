@@ -1,5 +1,6 @@
 import { nextPlannedChange, type DueItem } from '../lib/calc';
 import { formatDelta, formatEUR } from '../lib/format';
+import { t } from '../lib/kontoTexts';
 import type { OneOff } from '../lib/types';
 import { Badge, DeltaChip, planChangeLabel, scheduleLabel } from './Chips';
 import { Pea, PeaOpen } from './Pea';
@@ -39,7 +40,7 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
   const next = nextPlannedChange(position, item.period);
 
   return (
-    <li data-testid="position-row" data-position={position.id} data-paid={status === 'paid'} data-status={status}>
+    <li data-testid="position-row" data-position={position.id} data-paid={status === 'paid'} data-status={status} data-unplanned={item.unplanned || undefined}>
       <div className="flex items-stretch">
         {item.due ? (
           <button
@@ -72,13 +73,18 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
               {/* title: at most 2 lines, then an ellipsis; German hyphenation */}
               <span
                 lang="de"
-                className={`line-clamp-2 hyphens-auto break-words text-[16px] font-medium leading-6 transition-colors ${done ? 'text-ink-mute' : 'text-ink'}`}
+                className={`line-clamp-2 hyphens-auto break-words text-[16px] font-medium leading-6 transition-colors ${done || item.unplanned ? 'text-ink-mute' : 'text-ink'}`}
                 data-testid="position-title"
               >
                 {position.name}
               </span>
-              {(schedule || payment?.note || status === 'skipped' || next || !item.fromNet) && (
+              {(schedule || payment?.note || status === 'skipped' || next || !item.fromNet || item.unplanned) && (
                 <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                  {item.unplanned && (
+                    <span data-testid="unplanned-chip">
+                      <Badge>{t('unplanned.chip')}</Badge>
+                    </span>
+                  )}
                   {status === 'skipped' && <Badge>entfallen</Badge>}
                   {schedule && <Badge tone="accent">{schedule}</Badge>}
                   {!item.fromNet && (
@@ -98,7 +104,7 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
             {/* amount on the title line, the delta chip below it */}
             <span className="flex shrink-0 flex-col items-end gap-1">
               <span
-                className={`num whitespace-nowrap text-[16px] font-semibold leading-6 ${done ? 'text-ink-soft' : 'text-ink'} ${status === 'skipped' ? 'line-through' : ''}`}
+                className={`num whitespace-nowrap text-[16px] font-semibold leading-6 ${done || item.unplanned ? 'text-ink-soft' : 'text-ink'} ${status === 'skipped' ? 'line-through' : ''}`}
                 data-testid="position-amount"
               >
                 {formatEUR(amount)}

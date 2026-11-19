@@ -18,6 +18,7 @@ const NAME_OK = [
   /'fixkosten-theme'/, // stored appearance
   /\b(der|die|den|deiner|[Dd]eine|[Dd]iese|keine|zu den|alle)\s+Fixkosten\b/, // the German word as a term
   /Fixkosten oder Sparplan/,
+  /Zählt nicht zu Fixkosten, Rücklage und Aufteilung/, // „Nicht einplanen“ ⓘ (spielgeld-planer, dictated text)
   /Monatliche Fixkosten/,
   /Fixkosten einplanen/, // feature name (sprint fixkosten-einplanen), not the old app name
   /\b(für|Konto für)\s+Fixkosten\b/, // „für Fixkosten zur Seite legen“

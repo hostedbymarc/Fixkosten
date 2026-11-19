@@ -6,6 +6,7 @@ import {
   dueItems,
   fixedCosts,
   isActiveInPeriod,
+  isPlanned,
   kindOf,
   monthlyEquivalent,
   planChanges,
@@ -42,7 +43,7 @@ function expenseOneOffs(ds: Dataset, period: Period) {
   return ds.oneOffs.filter((o) => {
     if (o.period !== period) return false;
     const position = o.positionId ? ds.positions.find((p) => p.id === o.positionId) : undefined;
-    return !position || kindOf(ds, position) === 'expense';
+    return !position || (kindOf(ds, position) === 'expense' && isPlanned(position));
   });
 }
 
@@ -98,7 +99,7 @@ export function yearForecast(ds: Dataset, today: Period, count = 12): YearForeca
   const raw = periods.map((period) => {
     const oneOffs = expenseOneOffs(ds, period);
     const nonMonthly = dueItems(ds, period).filter(
-      (i) => i.due && i.status !== 'skipped' && i.kind === 'expense' && i.plan?.frequency !== 'monthly',
+      (i) => i.due && i.status !== 'skipped' && !i.unplanned && i.kind === 'expense' && i.plan?.frequency !== 'monthly',
     );
     const items: ForecastItem[] = [
       ...nonMonthly.map((i) =>
@@ -181,7 +182,7 @@ export function categoryDistribution(ds: Dataset, period: Period): Distribution 
     .map((category): CategoryShare => {
       const monthly = sumMonthlyEquivalent(ds, period, { categoryId: category.id });
       const positions = ds.positions
-        .filter((p) => p.categoryId === category.id && isActiveInPeriod(p, period))
+        .filter((p) => p.categoryId === category.id && isActiveInPeriod(p, period) && isPlanned(p))
         .map((position) => {
           const m = monthlyEquivalent(position, period);
           return { position, monthly: m, share: share(m) };
@@ -336,13 +337,13 @@ export function planVsActual(ds: Dataset, periods: Period[], today: Period, top 
   const closed = new Set(rows.filter((r) => !r.running).map((r) => r.period));
   const isExpense = (id: string | undefined) => {
     const position = id ? ds.positions.find((p) => p.id === id) : undefined;
-    return !position || kindOf(ds, position) === 'expense';
+    return !position || (kindOf(ds, position) === 'expense' && isPlanned(position));
   };
   const deviations: Deviation[] = [
     // per item, so a plan change entered after the tick shows as a deviation too
     ...[...closed].flatMap((period) =>
       dueItems(ds, period)
-        .filter((i) => i.kind === 'expense' && i.delta !== null)
+        .filter((i) => i.kind === 'expense' && i.delta !== null && !i.unplanned)
         .map((i) => ({ positionName: i.position.name, period, delta: i.delta! })),
     ),
     ...ds.oneOffs
@@ -472,7 +473,7 @@ export function savingsPeriod(ds: Dataset, today: Period): Period | null {
  * net salary and from other sources. Each group adds up to its total exactly.
  */
 function savingsParts(ds: Dataset, period: Period, total: number): Pick<SavingsCard, 'parts' | 'partsBy' | 'otherParts'> {
-  const items = dueItems(ds, period).filter((i) => i.kind === 'savings');
+  const items = dueItems(ds, period).filter((i) => i.kind === 'savings' && !i.unplanned);
   const amountOf = (list: typeof items) =>
     sumMoney(
       list.flatMap((i) => [
