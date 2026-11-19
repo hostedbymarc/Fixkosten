@@ -6,6 +6,7 @@ import { t } from '../../lib/kontoTexts';
 import { coveredText, planText, reasonText, whenText } from '../../lib/kontoWords';
 import type { Period } from '../../lib/types';
 import { InfoTip } from '../InfoTip';
+import { openWalkthrough } from '../../lib/walkthroughBus';
 import { Pea } from '../Pea';
 import { ConfirmButton, PlanAmount, SwitchModeLink } from './KontoStatusView';
 
@@ -61,6 +62,17 @@ export function KontoTileView({ state, start, active, onOpen, buttonRef }: Konto
         </span>
         <InfoTip label={`Erklärung: ${title}`} title={title} className="relative z-10 -my-3 -ml-1.5 shrink-0" testId="konto-tile-info">
           <p>{ORDER_INFO}</p>
+          <button
+            type="button"
+            className="focus-ring -mx-1 mt-1 inline-flex min-h-11 items-center rounded-lg px-1 font-semibold text-accent-ink hover:underline"
+            onClick={(e) => {
+              e.stopPropagation();
+              openWalkthrough();
+            }}
+            data-testid="konto-tile-walkthrough"
+          >
+            {t('walk.link')}
+          </button>
         </InfoTip>
         <span className="flex-1" />
         {streak && <StreakBadge streak={streak} />}

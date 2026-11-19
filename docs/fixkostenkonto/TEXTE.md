@@ -101,3 +101,33 @@
 | Einstellungen | `settings.buffer.off` | Aus | 1 |
 | Einstellungen | `settings.buffer.info` | Ein kleines Polster, falls eine Rechnung teurer wird. | 8 |
 | Einstellungen | `settings.edit` | Einrichtung ändern | 2 |
+| Einstellungen | `settings.walkthrough` | So funktioniert Erbse | 3 |
+| Monats-Screen | `hero.pot` | Bezahlt aus deinem Topf | 4 |
+| Monats-Screen | `hero.pot.info` | Diese Fixkosten zahlst du aus dem Geld, das du zur Seite legst. | 12 |
+| Walkthrough | `walk.title` | So funktioniert Erbse | 3 |
+| Walkthrough | `walk.link` | So funktioniert's | 2 |
+| Walkthrough | `walk.example` | Beispiel | 1 |
+| Walkthrough | `walk.example.note` | Beispielzahlen. Richte „Fixkosten einplanen“ ein, dann siehst du deine. | 1 · 8 |
+| Walkthrough | `walk.progress` | Karte {n} von {gesamt} | 4 |
+| Walkthrough | `walk.next` | Weiter | 1 |
+| Walkthrough | `walk.back` | Zurück | 1 |
+| Walkthrough | `walk.done` | Fertig | 1 |
+| Walkthrough | `walk.1.title` | Deine Fixkosten schwanken. | 3 |
+| Walkthrough | `walk.1.text` | Im {teuer} zahlst du {max}, im {guenstig} nur {min}. | 9 |
+| Walkthrough | `walk.2.title` | Darum legst du jeden Monat gleich viel zur Seite. | 9 |
+| Walkthrough | `walk.2.text` | Das sind {betrag} pro Monat. Teure Monate gleicht dein Topf aus. | 5 · 6 |
+| Walkthrough | `walk.3.title` | Aus diesem Topf zahlst du alle Rechnungen. | 7 |
+| Walkthrough | `walk.3.text` | Das ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt. | 4 · 7 |
+| Walkthrough | `walk.3.app` | Oben in der App siehst du, was diesen Monat abgebucht wird. Bezahlt wird es aus deinem Topf. | 11 · 6 |
+| Walkthrough | `walk.3.salary` | Gehalt | 1 |
+| Walkthrough | `walk.3.pot` | Topf | 1 |
+| Walkthrough | `walk.3.bills` | Rechnungen | 1 |
+| Walkthrough | `walk.4.title` | Am Anfang fehlt manchmal etwas. | 5 |
+| Walkthrough | `walk.4.notFull` | Dein Topf ist bis dahin noch nicht voll. | 8 |
+| Walkthrough | `walk.4.spread` | Darum bis dahin {betrag} extra pro Monat. | 7 |
+| Walkthrough | `walk.4.lump` | Darum einmalig {betrag} bis {datum}. | 5 |
+| Walkthrough | `walk.4.lump.now` | Darum jetzt einmalig {betrag}. | 4 |
+| Walkthrough | `walk.4.once` | Das fällt nur einmal an. | 5 |
+| Walkthrough | `walk.4.none` | Bei dir reicht es schon. Gut gemacht. | 5 · 2 |
+| Walkthrough | `walk.5.title` | Jeden Monat ein Tipp. | 4 |
+| Walkthrough | `walk.5.text` | Am {tag} fragt Erbse, ob du den Betrag zur Seite gelegt hast. Den Rest rechnet Erbse. | 12 · 4 |

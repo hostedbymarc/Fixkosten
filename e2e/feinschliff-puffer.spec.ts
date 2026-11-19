@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY, closeWalkthrough } from './fixtures';
 
 // feinschliff-puffer (seed data, today 5 October 2026 → October active; € 184,21 set aside, no own account):
 // - the month info only once: no popup over „Verlauf mit Plan“, the card under it shows the month
@@ -88,6 +88,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-02-einrichtung-luecke`);
         await tap(page.getByTestId('konto-setup-gap-spread'));
         await tap(page.getByTestId('konto-setup-finish'));
+        await closeWalkthrough(page);
         await expect(setup).toHaveCount(0);
 
         // the sheet: the card shows the month with the lowest balance; no popup over the chart

@@ -20,6 +20,29 @@ interface Props {
 }
 
 /**
+ * Touch devices send a mouse hover to the spot of a tap (also after the tapped thing is gone, e.g. a
+ * sheet that closed): a mouse hover at that spot within this time opens nothing. A real hover (a
+ * trackpad on an iPad) elsewhere still opens.
+ */
+const TOUCH_HOVER_MS = 800;
+const TOUCH_HOVER_PX = 12;
+/** mouse off the icon: closed after this, unless it went into the popover */
+const LEAVE_MS = 250;
+let lastTouch = { at: -Infinity, x: 0, y: 0 };
+if (typeof document !== 'undefined') {
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (e.pointerType !== 'mouse') lastTouch = { at: performance.now(), x: e.clientX, y: e.clientY };
+    },
+    { capture: true, passive: true },
+  );
+}
+/** a mouse hover that is only the echo of the last tap */
+const echoOfTap = (e: { clientX: number; clientY: number }) =>
+  performance.now() - lastTouch.at < TOUCH_HOVER_MS && Math.hypot(e.clientX - lastTouch.x, e.clientY - lastTouch.y) < TOUCH_HOVER_PX;
+
+/**
  * ⓘ button with an explanation. Touch: tap opens, tap again or elsewhere closes.
  * Mouse: hover opens. Keyboard: focus opens, Esc closes. The popover is opaque,
  * above everything (incl. the tab bar) and always fully inside the viewport.
@@ -34,6 +57,8 @@ export function InfoTip({ label, title, children, className = '', style, testId 
   const byHover = useRef(false);
   // a tap on the popover moves the focus away from the icon: that blur does not close it
   const downInPopover = useRef(false);
+  const leaveTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
   const id = useId();
   // only one popover at a time: opening this one closes any other ⓘ or chart popup
   useExclusivePopover(open, () => setOpen(false));
@@ -104,12 +129,19 @@ export function InfoTip({ label, title, children, className = '', style, testId 
         style={style}
         data-testid={testId}
         onPointerDown={(e) => (pointer.current = e.pointerType)}
-        onPointerEnter={(e) => {
-          if (e.pointerType !== 'mouse' || open) return;
+        onPointerEnter={(e) => e.pointerType === 'mouse' && window.clearTimeout(leaveTimer.current)}
+        // hover opens on a real mouse movement over the icon: content that moved under a resting
+        // cursor (a sheet closed, the page scrolled) or the echo of a tap opens nothing
+        onPointerMove={(e) => {
+          if (e.pointerType !== 'mouse' || open || echoOfTap(e)) return;
           byHover.current = true;
           setOpen(true);
         }}
-        onPointerLeave={(e) => e.pointerType === 'mouse' && setOpen(false)}
+        onPointerLeave={(e) => {
+          if (e.pointerType !== 'mouse') return;
+          // a short grace: the mouse may be on its way into the popover (a link there stays reachable)
+          leaveTimer.current = window.setTimeout(() => setOpen(false), LEAVE_MS);
+        }}
         onFocus={(e) => e.currentTarget.matches(':focus-visible') && setOpen(true)}
         onBlur={() => {
           if (downInPopover.current) return;
@@ -135,6 +167,8 @@ export function InfoTip({ label, title, children, className = '', style, testId 
             className="pointer-events-auto fixed z-[60] rounded-xl border border-edge bg-surface px-3.5 py-3 text-left text-[13px] leading-5 shadow-sheet"
             style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, width: pos?.width ?? WIDTH, visibility: pos ? 'visible' : 'hidden' }}
             data-testid={`${testId}-popover`}
+            onPointerEnter={(e) => e.pointerType === 'mouse' && window.clearTimeout(leaveTimer.current)}
+            onPointerLeave={(e) => e.pointerType === 'mouse' && byHover.current && setOpen(false)}
             onPointerDown={() => {
               downInPopover.current = true;
               window.setTimeout(() => (downInPopover.current = false), 400);

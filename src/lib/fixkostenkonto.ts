@@ -213,6 +213,8 @@ export interface KontoMonth {
   /** debits of the month; the active month only counts what is still open */
   debits: number;
   items: KontoDebit[];
+  /** every bill of the month on the Fixkostenkonto, paid ones included (the walkthrough's bars); read only, not part of the balance */
+  bills: number;
   /** balance at the end of the month = start + deposit − debits */
   end: number;
 }
@@ -305,6 +307,7 @@ export function simulateKonto(ds: Dataset, active: Period, input: KontoInput, co
       deposit: fromCents(deposit),
       debits: fromCents(debits),
       items: first ? d.openItems : d.allItems,
+      bills: fromCents(d.allCents),
       end: fromCents(balance),
     });
   }

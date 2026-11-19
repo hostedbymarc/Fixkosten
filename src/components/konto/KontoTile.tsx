@@ -9,6 +9,7 @@ import { MILESTONE_TEXT, t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { Pea } from '../Pea';
+import { openWalkthrough } from '../../lib/walkthroughBus';
 import { useToast } from '../Toast';
 import { KontoSetupSheet } from './KontoSetupSheet';
 import { KontoSheet, useKontoState } from './KontoSheet';
@@ -80,7 +81,11 @@ export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Datas
       onAnswers={(answers) => finishSetup(db, answers, { active, now: localToday() })}
       onGapMode={(mode) => setGapMode(db, mode)}
       onClose={onClose}
-      onFinish={onDone ?? onClose}
+      onFinish={() => {
+        (onDone ?? onClose)();
+        // once, right after the setup: „So funktioniert Erbse“
+        if (!settings.walkthroughSeen) openWalkthrough();
+      }}
     />
   );
 }

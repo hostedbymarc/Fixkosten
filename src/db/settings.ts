@@ -79,6 +79,8 @@ export interface KontoSettings {
   milestonesShown: Milestone[];
   /** how the gap is closed (null: not asked – spread when possible) */
   gapMode: GapMode | null;
+  /** „So funktioniert Erbse“ was shown: it opens by itself only once, right after the setup */
+  walkthroughSeen: boolean;
 }
 
 export const DEFAULT_KONTO: KontoSettings = {
@@ -102,6 +104,7 @@ export const DEFAULT_KONTO: KontoSettings = {
   plan: { accountDone: false, orderDone: false, gapDone: false },
   milestonesShown: [],
   gapMode: null,
+  walkthroughSeen: false,
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -158,6 +161,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
       (m, i, all): m is Milestone => MILESTONES.includes(m as Milestone) && all.indexOf(m) === i,
     ),
     gapMode: GAP_MODES.includes(v.gapMode as GapMode) ? (v.gapMode as GapMode) : null,
+    walkthroughSeen: v.walkthroughSeen === true,
   };
 }
 
@@ -195,6 +199,7 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.plan.accountDone || s.plan.orderDone || s.plan.gapDone) out.plan = s.plan;
   if (s.milestonesShown.length) out.milestonesShown = s.milestonesShown;
   if (s.gapMode) out.gapMode = s.gapMode;
+  if (s.walkthroughSeen) out.walkthroughSeen = true;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;

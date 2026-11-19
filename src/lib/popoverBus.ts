@@ -51,3 +51,10 @@ export function useExclusiveChartTooltip() {
     handlers: { onPointerDown: claim, onPointerEnter: (e: { pointerType: string }) => e.pointerType === 'mouse' && claim() },
   } as const;
 }
+
+/** Closes whatever popover is open (e.g. before a sheet opens from a link inside an ⓘ). */
+export function closePopover(): void {
+  const prev = current;
+  current = null;
+  prev?.close();
+}

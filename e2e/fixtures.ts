@@ -378,6 +378,22 @@ export async function checkRadio(radio: Locator) {
 }
 
 /**
+ * Right after the first setup „So funktioniert Erbse“ opens by itself (walkthrough): close it, so a test
+ * about something else goes on. A later setup does not open it: then nothing happens (waits up to 3 s).
+ */
+export async function closeWalkthrough(page: Page) {
+  const walk = page.getByTestId('walkthrough');
+  try {
+    await walk.waitFor({ state: 'visible', timeout: 3000 });
+  } catch {
+    return;
+  }
+  await expect(page.getByTestId('bottom-sheet').last()).not.toHaveAttribute('data-animating', '');
+  await page.keyboard.press('Escape');
+  await expect(walk).toHaveCount(0);
+}
+
+/**
  * „Fixkosten einplanen“: after „Aktivieren“ the tile asks for the setup first. This answers every
  * question (own account, 0 set aside, standing order not running yet) and does every point of „Dein
  * Plan“ (standing order, one-time amount); then the tile shows „Alles eingeplant bis …“ and opens the sheet.
@@ -396,5 +412,6 @@ export async function setUpKonto(page: Page) {
   await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'plan');
   await page.getByTestId('konto-setup-finish').click();
   await expect(page.getByTestId('konto-setup')).toHaveCount(0);
+  await closeWalkthrough(page);
   await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
 }
