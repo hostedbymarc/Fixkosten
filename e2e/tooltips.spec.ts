@@ -242,7 +242,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
 
-      // --- Bearbeiten-Dialog: account, Startmonat, Fälligkeitstag (annual position)
+      // --- Bearbeiten-Dialog: account, „Nicht einplanen“, Startmonat, Fälligkeitstag (annual position)
       await goTo(page, 'positionen');
       await expandAll(page);
       await page.getByRole('button', { name: 'Steuerberater – Details' }).click();
@@ -250,6 +250,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(page.getByTestId('position-form')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
       await exercise(page, info(form, 'Woraus zahlst du das?'), mode, seen, form);
+      await exercise(page, info(form, 'Nicht einplanen'), mode, seen, form);
       await exercise(page, info(form, 'Startmonat'), mode, seen, form);
       await exercise(page, info(form, 'Fälligkeitstag'), mode, seen, form);
       await page.keyboard.press('Escape');
