@@ -237,8 +237,9 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 - `CountUp` hatte zwei Ebenen: die echte Zahl und eine Kopie darüber, nur für die Zwischenwerte.
 - Die Kopie hatte eine eigene Schriftgröße, passend für den breiteren der beiden Werte. Deshalb lag sie leicht versetzt.
 - Beim Öffnen eines Monats mit Feier fallen Hochzählen und Feier zusammen. In Safari waren dann beide Ebenen kurz gleichzeitig sichtbar: zwei versetzte Kopien.
-- Dazu hatten die 90 Erbsen `will-change: transform`. Safari legt dann auch den Hero-Text auf eigene Ebenen und rastert ihn neu. Das macht ihn während der Feier weich.
-- **Behoben:** genau ein Textknoten, kein `will-change` mehr auf den Erbsen. Der Pop betrifft nur den Haken-Kreis. Am Text gibt es kein `transform`, `filter` oder `will-change`.
+- Dazu lagen die Ebenen der 90 Erbsen ohne Begrenzung über dem Text. Safari rasterte den Text dann neu. Das machte ihn während der Feier weich.
+- **Behoben:** genau ein Textknoten. Die Erbsen-Ebene ist jetzt mit `contain: paint` und `clip-path` abgeschlossen. Der Pop betrifft nur den Haken-Kreis. Am Text gibt es kein `transform`, `filter` oder `will-change`.
+- Die Erbsen selbst behalten `will-change`. Ohne lag die Feier bei 4× Drosselung knapp über 16 ms.
 
 ## Ergebnis zu 9 (Spielgeld-Zuordnung)
 

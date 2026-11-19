@@ -60,22 +60,22 @@
     ]
   },
   "Feier iPhone 15": {
-    "frames": 187,
-    "avgFrameMs": 15.5,
-    "maxFrameMs": 75.8,
-    "calibrationMs": 32,
-    "factor": 1.07,
-    "avgFrameMsNormalised": 14.5,
+    "frames": 173,
+    "avgFrameMs": 17.2,
+    "maxFrameMs": 91.1,
+    "calibrationMs": 45,
+    "factor": 1.5,
+    "avgFrameMsNormalised": 11.5,
     "cpuThrottling": 4,
     "peas": 90
   },
   "Feier iPhone SE": {
-    "frames": 166,
-    "avgFrameMs": 15.4,
-    "maxFrameMs": 58.6,
-    "calibrationMs": 25,
-    "factor": 1,
-    "avgFrameMsNormalised": 15.4,
+    "frames": 170,
+    "avgFrameMs": 15.8,
+    "maxFrameMs": 103.9,
+    "calibrationMs": 33,
+    "factor": 1.1,
+    "avgFrameMsNormalised": 14.4,
     "cpuThrottling": 4,
     "peas": 60
   }

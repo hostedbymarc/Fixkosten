@@ -799,6 +799,8 @@ button:active > .pea[data-pressable] {
   animation-name: confetti-fall;
   animation-timing-function: cubic-bezier(0.35, 0, 0.6, 1);
   animation-fill-mode: both;
+  /* the peas only, never the hero text */
+  will-change: transform, opacity;
 }
 @keyframes confetti-fall {
   0% {

@@ -16,9 +16,9 @@ test.describe('Luxe 2', () => {
         const end = performance.now() + 900;
         const tick = () => {
           const hero = document.querySelector('[data-testid="hero"]')!.getBoundingClientRect();
-          for (const el of document.querySelectorAll<HTMLElement>('[data-testid="hero"] [aria-hidden="true"].num-display, [data-testid="hero-paid"]')) {
-            if (el.hidden) continue;
-            if (el.getAttribute('aria-hidden')) w.counting++;
+          // ONE element: while it counts, its text differs from the final value (data-value)
+          for (const el of document.querySelectorAll<HTMLElement>('[data-testid="hero-paid"]')) {
+            if (el.textContent !== el.dataset.value) w.counting++;
             const r = el.getBoundingClientRect();
             const over = Math.max(0, r.right - (hero.right - 16), el.scrollWidth - el.clientWidth);
             if (over > 1) w.overflow.push(Math.round(over));
