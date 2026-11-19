@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, closeWalkthrough, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, closeWalkthrough, expect, FIXTURE, goTo, NOV_5, setUpKonto, test, TODAY } from './fixtures';
 
 // ruecklage-spielgeld (seed data, today 5 October 2026 → October active; Miete € 1.008 monthly):
 // - without „Fixkosten einplanen“: „Ø pro Monat“ and „Frei verfügbar“ as before, no source lines in the hero
@@ -8,7 +8,9 @@ import { animationsDone, appSettled, closeWalkthrough, expect, FIXTURE, goTo, te
 // - Miete → „Spielgeld“ in the edit dialog: chip „Spielgeld“, hero line „aus Spielgeld“
 // - Spielgeld € 500 in the settings: the card on the month screen, € 508 above it, „Woher kommt der Rest?“
 //   – „Aus dem Überschuss“ (default) is a line of the split, „Andere Quelle“ removes it, at once
-// - the tile with „auf einmal“: two fields and the advice
+// - „Teilweise“: „Davon aus anderer Quelle“ € 200 → € 308 from the surplus, at most the overflow, kept after a reload
+// - the tile with „auf einmal“: two fields and the advice (both cases), the same numbers as the split
+// - another month than the active one: no tile, no switch, the split with that month's own salary
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to
 // docs/screenshots/ruecklage-spielgeld/. Runs in the desktop project; every viewport is its own context.
 
@@ -77,6 +79,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await closeWalkthrough(page);
         await expect(page.getByTestId('konto-setup')).toHaveCount(0);
 
+        // Analyse: while the extra runs „€ X bis {Monat}, danach € Grundbetrag“
+        await goTo(page, 'analyse');
+        await expect(page.getByTestId('konto-analyse-order')).toHaveText(/^€\s[\d.]+,\d{2} bis [A-ZÄÖÜ][a-zäöü]+, danach €\s[\d.]+(,\d{2})?$/);
+        await goTo(page, 'monat');
+
         // „Frei verfügbar“ and „Ø pro Monat“ are gone, the split asks for the salary
         await expect(page.getByTestId('free-tile')).toHaveCount(0);
         await expect(page.getByTestId('kpi-hint')).toHaveCount(0);
@@ -91,7 +98,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // default „Nächstes Gehalt“: November's salary is missing → October's, „wie im Oktober“; the tile's amount
         await expect(split).toHaveAttribute('data-view', 'next');
         await expect(page.getByTestId('split-salary')).toHaveText(money('€ 8.302,00'));
-        await expect(page.getByTestId('split-salary-label')).toHaveText('Gehalt am 1. November (wie im Oktober)');
+        await expect(page.getByTestId('split-salary-label')).toHaveText('Gehalt am 1. November (geschätzt wie zuletzt)');
         await expect(page.getByTestId('split-reserve-value')).toHaveText((await page.getByTestId('tile-amount').textContent())!.trim());
         await expect(split).toContainText('= Bleibt dir');
         await shot(page, `${tag}-08-aufteilung-naechstes-gehalt`, split);
@@ -172,6 +179,28 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('split-overflow')).toHaveCount(0);
         await expect.poll(async () => amountOf((await page.getByTestId('split-rest').textContent())!)).toBeCloseTo(restSurplus + 508, 2);
 
+        // „Teilweise“: € 200 from another source, € 308 from the surplus; at most the overflow
+        await tap(overflow.getByRole('radio', { name: 'Teilweise' }));
+        const part = page.getByTestId('spielgeld-part-input');
+        await part.fill('200');
+        await expect(page.getByTestId('spielgeld-part-rest')).toHaveText(money('Aus dem Überschuss: € 308,00.'));
+        await expect(page.getByTestId('split-overflow-value')).toHaveText(money('€ 308,00'));
+        await expect.poll(async () => amountOf((await page.getByTestId('split-rest').textContent())!)).toBeCloseTo(restSurplus + 200, 2);
+        await part.fill('600');
+        await expect(page.getByTestId('spielgeld-part')).toContainText('Höchstens');
+        await part.fill('200,00');
+        await expect(page.getByTestId('spielgeld-part')).not.toContainText('Höchstens');
+        await shot(page, `${tag}-10-spielgeld-teilbetrag`, card);
+        // kept after a reload
+        await page.reload();
+        await expect(page.getByTestId('hero')).toBeVisible();
+        await appSettled(page);
+        await expect(page.getByTestId('spielgeld-overflow').getByRole('radio', { name: 'Teilweise' })).toHaveAttribute('aria-checked', 'true');
+        await expect(page.getByTestId('spielgeld-part-input')).toHaveValue(/^200(,00)?$/);
+        // after a reload the switch starts on „Nächstes Gehalt“ again
+        await tap(split.getByRole('radio', { name: 'Aktuelles Gehalt' }));
+        await expect(page.getByTestId('split-overflow-value')).toHaveText(money('€ 308,00'));
+
         // the tile: „auf einmal“ → two fields, the reason, the advice after the Spielgeld
         const tile = page.getByTestId('konto-tile-card');
         await tile.scrollIntoViewIfNeeded();
@@ -181,9 +210,80 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('tile-once')).toContainText(/einmalig/);
         await expect(page.getByTestId('tile-confirm')).toHaveText('Einmalbetrag zur Seite gelegt');
         const advice = page.getByTestId('tile-advice');
-        await expect(advice).toHaveText(/^Nach deinem Spielgeld bleiben €\s[\d.]+,\d{2}\. (Du kannst die €\s[\d.]+,\d{2} auf einmal zur Seite legen\.|Leg die €\s[\d.]+,\d{2} lieber verteilt zur Seite\.)$/);
+        // it reaches: „Leg die € Y auf einmal zur Seite. Danach bleiben dir € R.“ – R = the split's Überschuss (base amount) − Y
+        await expect(advice).toHaveAttribute('data-advice', 'lump');
+        await expect(advice).toHaveText(/^Leg die €\s[\d.]+,\d{2} auf einmal zur Seite\. Danach bleiben dir €\s[\d.]+,\d{2}\.$/);
+        await tap(split.getByRole('radio', { name: 'Nächstes Gehalt' }));
+        const [y, r] = [...(await advice.textContent())!.matchAll(/€\s([\d.]+,\d{2})/g)].map((m) => amountOf(m[1]!));
+        expect(r).toBeCloseTo(amountOf((await page.getByTestId('split-rest').textContent())!) - y!, 2);
         await shot(page, `${tag}-06-kachel-auf-einmal`, tile);
         await shot(page, `${tag}-07-hero-quellen`, page.getByTestId('hero'));
+
+        // it does not reach (a large Spielgeld): „Auf einmal blieben dir nur € R. Leg es lieber verteilt zur Seite.“
+        await goTo(page, 'einstellungen');
+        await page.getByLabel('Spielgeld pro Monat').fill('7.500,00');
+        await goTo(page, 'monat');
+        await expect(advice).toHaveAttribute('data-advice', 'spread');
+        await expect(advice).toHaveText(/^Auf einmal blieben dir nur −?\s?€\s?[\d.]+,\d{2}\. Leg es lieber verteilt zur Seite\.$/);
+        await advice.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+        await shot(page, `${tag}-11-empfehlung-verteilt`);
+      });
+
+      test('ein anderer Monat: keine Kachel, kein Umschalter, die Aufteilung mit dessen eigenem Netto', async ({ page }) => {
+        // today 5 November: November is active, October is over
+        await page.clock.setFixedTime(NOV_5);
+        await page.goto('/');
+        await page.getByTestId('import-file').setInputFiles(FIXTURE);
+        await expect(page.getByTestId('hero')).toBeVisible();
+        await appSettled(page);
+        await page.getByTestId('konto-invite-enable').click();
+        await setUpKonto(page);
+        // „Lebensmittel & Co“ paid straight from the salary: its name in the split
+        await goTo(page, 'positionen');
+        await tap(page.getByRole('button', { name: 'Lebensmittel & Co – Details' }));
+        await sheetIn(page);
+        await tap(page.getByRole('button', { name: 'Bearbeiten' }));
+        await sheetIn(page);
+        await tap(page.getByTestId('account-field').getByRole('radio', { name: 'Gehalt' }));
+        await tap(page.getByRole('button', { name: 'Speichern' }));
+        await expect(page.getByTestId('position-form')).toHaveCount(0);
+        await sheetIn(page);
+        await page.keyboard.press('Escape');
+        await expect(page.getByRole('dialog')).toHaveCount(0);
+        await goTo(page, 'monat');
+        await tap(page.getByRole('button', { name: 'Vorheriger Monat' }));
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText('Oktober 2026');
+        const split = page.getByTestId('salary-split');
+        await expect(page.getByTestId('konto-tile')).toHaveCount(0);
+        await expect(page.getByTestId('salary-split-view')).toHaveCount(0);
+        await expect(split).toHaveAttribute('data-view', 'current');
+        // October's own salary
+        await tap(page.getByTestId('salary-split-enter'));
+        const close = page.getByRole('dialog', { name: 'Monatsabschluss Oktober 2026' });
+        await sheetIn(page);
+        await close.getByLabel('Netto-Gehalt').fill('4.788');
+        await tap(close.getByRole('button', { name: 'Speichern' }));
+        await expect(close).toBeHidden();
+        await expect(page.getByTestId('split-salary-label')).toHaveText('Gehalt am 1. Oktober');
+        await expect(page.getByTestId('split-salary')).toHaveText(money('€ 4.788,00'));
+        await expect(page.getByTestId('split-salary-like')).toHaveCount(0);
+        // the names: a second line of their own in muted type, not broken into the label
+        const note = page.getByTestId('split-direct-note');
+        await expect(note).toHaveText('Lebensmittel & Co');
+        const label = page.getByTestId('split-direct').locator('dt');
+        const [labelBox, noteBox] = [await label.boundingBox(), await note.boundingBox()];
+        expect(noteBox!.y).toBeGreaterThanOrEqual(labelBox!.y + 10);
+        const lineHeight = await note.evaluate((e) => parseFloat(getComputedStyle(e).lineHeight));
+        expect(Math.round(noteBox!.height / lineHeight)).toBe(1);
+        // October's actual values only: the rest = salary minus its own lines
+        const lines = await split.locator('[data-testid$="-value"]').evaluateAll((els) => els.map((e) => e.textContent ?? ''));
+        const rest = amountOf((await page.getByTestId('split-rest').textContent())!);
+        expect(rest).toBeCloseTo(4788 - lines.filter((_, i) => i < lines.length).reduce((a, x) => a + amountOf(x), 0), 2);
+        await shot(page, `${tag}-12-oktober-aufteilung`, split);
+        // November (active): the tile and the switch are back
+        await tap(page.getByRole('button', { name: 'Nächster Monat' }));
+        await expect(page.getByTestId('konto-tile')).toHaveCount(1);
+        await expect(page.getByTestId('salary-split-view')).toHaveCount(1);
       });
     });
   }

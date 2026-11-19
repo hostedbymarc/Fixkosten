@@ -82,7 +82,7 @@ export function SpielgeldCard({ ds, period, active }: { ds: Dataset; period: Per
             <Segmented<OverflowMode>
               label={t('spiel.question')}
               value={split.overflowMode}
-              gridClass="grid-cols-1 sm:grid-cols-3"
+              gridClass="auto-rows-min grid-cols-1 sm:grid-cols-3"
               onChange={(v) => void setSpielgeldOverflow(db, period, v === 'part' ? { mode: 'part', otherAmount: split.overflowOther } : v)}
               options={[
                 { value: 'surplus', label: t('spiel.surplus') },
