@@ -52,6 +52,8 @@ test.describe('Screenshots Phase 2', () => {
   });
 
   test('positions screens and sheets', async ({ app }) => {
+    // eleven screenshots; alone ~25 s on the Pro Max, over 30 s when the machine is busy
+    test.slow();
     await app.evaluate(() => document.fonts.ready);
     await goTo(app, 'positionen');
     await expect(app.getByTestId('positions-group').first()).toBeVisible();
