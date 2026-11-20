@@ -1,0 +1,914 @@
+{
+ "iphone-se-light-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 343,
+   "height": 316
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 448,
+   "width": 166,
+   "height": 109
+  },
+  "wealth-tile": {
+   "x": 194,
+   "y": 448,
+   "width": 166,
+   "height": 109
+  },
+  "note-card": {
+   "x": 16,
+   "y": 570,
+   "width": 343,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 693,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 732,
+   "width": 343,
+   "height": 74
+  }
+ },
+ "iphone-se-light-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 343,
+   "height": 330
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 462,
+   "width": 166,
+   "height": 109
+  },
+  "wealth-tile": {
+   "x": 194,
+   "y": 462,
+   "width": 166,
+   "height": 109
+  },
+  "note-card": {
+   "x": 16,
+   "y": 583,
+   "width": 343,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 685,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 724,
+   "width": 343,
+   "height": 424
+  }
+ },
+ "iphone-se-dark-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 343,
+   "height": 316
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 448,
+   "width": 166,
+   "height": 109
+  },
+  "wealth-tile": {
+   "x": 194,
+   "y": 448,
+   "width": 166,
+   "height": 109
+  },
+  "note-card": {
+   "x": 16,
+   "y": 570,
+   "width": 343,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 693,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 732,
+   "width": 343,
+   "height": 74
+  }
+ },
+ "iphone-se-dark-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 343,
+   "height": 330
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 462,
+   "width": 166,
+   "height": 109
+  },
+  "wealth-tile": {
+   "x": 194,
+   "y": 462,
+   "width": 166,
+   "height": 109
+  },
+  "note-card": {
+   "x": 16,
+   "y": 583,
+   "width": 343,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 685,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 724,
+   "width": 343,
+   "height": 424
+  }
+ },
+ "iphone-15-light-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 361,
+   "height": 320
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 452,
+   "width": 175,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 203,
+   "y": 452,
+   "width": 175,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 575,
+   "width": 361,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 699,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 738,
+   "width": 361,
+   "height": 74
+  }
+ },
+ "iphone-15-light-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 361,
+   "height": 333
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 465,
+   "width": 175,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 203,
+   "y": 465,
+   "width": 175,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 588,
+   "width": 361,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 690,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 729,
+   "width": 361,
+   "height": 424
+  }
+ },
+ "iphone-15-dark-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 361,
+   "height": 320
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 452,
+   "width": 175,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 203,
+   "y": 452,
+   "width": 175,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 575,
+   "width": 361,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 699,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 738,
+   "width": 361,
+   "height": 74
+  }
+ },
+ "iphone-15-dark-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 361,
+   "height": 333
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 465,
+   "width": 175,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 203,
+   "y": 465,
+   "width": 175,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 588,
+   "width": 361,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 690,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 729,
+   "width": 361,
+   "height": 424
+  }
+ },
+ "iphone-pro-max-light-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 398,
+   "height": 328
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 460,
+   "width": 193,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 221,
+   "y": 460,
+   "width": 193,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 583,
+   "width": 398,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 707,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 746,
+   "width": 398,
+   "height": 74
+  }
+ },
+ "iphone-pro-max-light-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 398,
+   "height": 339
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 471,
+   "width": 193,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 221,
+   "y": 471,
+   "width": 193,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 595,
+   "width": 398,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 696,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 735,
+   "width": 398,
+   "height": 424
+  }
+ },
+ "iphone-pro-max-dark-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 398,
+   "height": 328
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 460,
+   "width": 193,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 221,
+   "y": 460,
+   "width": 193,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 583,
+   "width": 398,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 707,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 746,
+   "width": 398,
+   "height": 74
+  }
+ },
+ "iphone-pro-max-dark-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 398,
+   "height": 339
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 471,
+   "width": 193,
+   "height": 111
+  },
+  "wealth-tile": {
+   "x": 221,
+   "y": 471,
+   "width": 193,
+   "height": 111
+  },
+  "note-card": {
+   "x": 16,
+   "y": 595,
+   "width": 398,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 696,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 735,
+   "width": 398,
+   "height": 424
+  }
+ },
+ "ipad-portrait-light-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 788,
+   "height": 406
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 542,
+   "width": 386,
+   "height": 119
+  },
+  "wealth-tile": {
+   "x": 418,
+   "y": 542,
+   "width": 386,
+   "height": 119
+  },
+  "note-card": {
+   "x": 16,
+   "y": 677,
+   "width": 788,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 801,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 844,
+   "width": 788,
+   "height": 74
+  }
+ },
+ "ipad-portrait-light-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 788,
+   "height": 397
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 533,
+   "width": 386,
+   "height": 119
+  },
+  "wealth-tile": {
+   "x": 418,
+   "y": 533,
+   "width": 386,
+   "height": 119
+  },
+  "note-card": {
+   "x": 16,
+   "y": 668,
+   "width": 788,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 769,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 812,
+   "width": 788,
+   "height": 424
+  }
+ },
+ "ipad-portrait-dark-oktober": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 788,
+   "height": 406
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 542,
+   "width": 386,
+   "height": 119
+  },
+  "wealth-tile": {
+   "x": 418,
+   "y": 542,
+   "width": 386,
+   "height": 119
+  },
+  "note-card": {
+   "x": 16,
+   "y": 677,
+   "width": 788,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 801,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 844,
+   "width": 788,
+   "height": 74
+  }
+ },
+ "ipad-portrait-dark-dezember": {
+  "hero": {
+   "x": 16,
+   "y": 120,
+   "width": 788,
+   "height": 397
+  },
+  "salary-tile": {
+   "x": 16,
+   "y": 533,
+   "width": 386,
+   "height": 119
+  },
+  "wealth-tile": {
+   "x": 418,
+   "y": 533,
+   "width": 386,
+   "height": 119
+  },
+  "note-card": {
+   "x": 16,
+   "y": 668,
+   "width": 788,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 20,
+   "y": 769,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 16,
+   "y": 812,
+   "width": 788,
+   "height": 424
+  }
+ },
+ "ipad-landscape-light-oktober": {
+  "hero": {
+   "x": 272,
+   "y": 136,
+   "width": 876,
+   "height": 410
+  },
+  "salary-tile": {
+   "x": 272,
+   "y": 562,
+   "width": 430,
+   "height": 130
+  },
+  "wealth-tile": {
+   "x": 718,
+   "y": 562,
+   "width": 430,
+   "height": 130
+  },
+  "note-card": {
+   "x": 272,
+   "y": 708,
+   "width": 876,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 276,
+   "y": 831,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 272,
+   "y": 874,
+   "width": 524,
+   "height": 74
+  }
+ },
+ "ipad-landscape-light-dezember": {
+  "hero": {
+   "x": 272,
+   "y": 136,
+   "width": 876,
+   "height": 405
+  },
+  "salary-tile": {
+   "x": 272,
+   "y": 557,
+   "width": 430,
+   "height": 130
+  },
+  "wealth-tile": {
+   "x": 718,
+   "y": 557,
+   "width": 430,
+   "height": 130
+  },
+  "note-card": {
+   "x": 272,
+   "y": 702,
+   "width": 876,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 276,
+   "y": 804,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 272,
+   "y": 847,
+   "width": 524,
+   "height": 424
+  }
+ },
+ "ipad-landscape-dark-oktober": {
+  "hero": {
+   "x": 272,
+   "y": 136,
+   "width": 876,
+   "height": 410
+  },
+  "salary-tile": {
+   "x": 272,
+   "y": 562,
+   "width": 430,
+   "height": 130
+  },
+  "wealth-tile": {
+   "x": 718,
+   "y": 562,
+   "width": 430,
+   "height": 130
+  },
+  "note-card": {
+   "x": 272,
+   "y": 708,
+   "width": 876,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 276,
+   "y": 831,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 272,
+   "y": 874,
+   "width": 524,
+   "height": 74
+  }
+ },
+ "ipad-landscape-dark-dezember": {
+  "hero": {
+   "x": 272,
+   "y": 136,
+   "width": 876,
+   "height": 405
+  },
+  "salary-tile": {
+   "x": 272,
+   "y": 557,
+   "width": 430,
+   "height": 130
+  },
+  "wealth-tile": {
+   "x": 718,
+   "y": 557,
+   "width": 430,
+   "height": 130
+  },
+  "note-card": {
+   "x": 272,
+   "y": 702,
+   "width": 876,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 276,
+   "y": 804,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 272,
+   "y": 847,
+   "width": 524,
+   "height": 424
+  }
+ },
+ "desktop-1440-light-oktober": {
+  "hero": {
+   "x": 322,
+   "y": 136,
+   "width": 1036,
+   "height": 234
+  },
+  "salary-tile": {
+   "x": 322,
+   "y": 386,
+   "width": 510,
+   "height": 138
+  },
+  "wealth-tile": {
+   "x": 848,
+   "y": 386,
+   "width": 510,
+   "height": 138
+  },
+  "note-card": {
+   "x": 322,
+   "y": 540,
+   "width": 1036,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 326,
+   "y": 664,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 322,
+   "y": 707,
+   "width": 684,
+   "height": 74
+  }
+ },
+ "desktop-1440-light-dezember": {
+  "hero": {
+   "x": 322,
+   "y": 136,
+   "width": 1036,
+   "height": 254
+  },
+  "salary-tile": {
+   "x": 322,
+   "y": 406,
+   "width": 510,
+   "height": 138
+  },
+  "wealth-tile": {
+   "x": 848,
+   "y": 406,
+   "width": 510,
+   "height": 138
+  },
+  "note-card": {
+   "x": 322,
+   "y": 560,
+   "width": 1036,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 326,
+   "y": 661,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 322,
+   "y": 704,
+   "width": 684,
+   "height": 424
+  }
+ },
+ "desktop-1440-dark-oktober": {
+  "hero": {
+   "x": 322,
+   "y": 136,
+   "width": 1036,
+   "height": 234
+  },
+  "salary-tile": {
+   "x": 322,
+   "y": 386,
+   "width": 510,
+   "height": 138
+  },
+  "wealth-tile": {
+   "x": 848,
+   "y": 386,
+   "width": 510,
+   "height": 138
+  },
+  "note-card": {
+   "x": 322,
+   "y": 540,
+   "width": 1036,
+   "height": 79
+  },
+  "categories-label": {
+   "x": 326,
+   "y": 664,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 322,
+   "y": 707,
+   "width": 684,
+   "height": 74
+  }
+ },
+ "desktop-1440-dark-dezember": {
+  "hero": {
+   "x": 322,
+   "y": 136,
+   "width": 1036,
+   "height": 254
+  },
+  "salary-tile": {
+   "x": 322,
+   "y": 406,
+   "width": 510,
+   "height": 138
+  },
+  "wealth-tile": {
+   "x": 848,
+   "y": 406,
+   "width": 510,
+   "height": 138
+  },
+  "note-card": {
+   "x": 322,
+   "y": 560,
+   "width": 1036,
+   "height": 57
+  },
+  "categories-label": {
+   "x": 326,
+   "y": 661,
+   "width": 87,
+   "height": 18
+  },
+  "category-group": {
+   "x": 322,
+   "y": 704,
+   "width": 684,
+   "height": 424
+  }
+ }
+}
