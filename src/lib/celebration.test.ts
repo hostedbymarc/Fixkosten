@@ -9,21 +9,21 @@ describe('Feier-Zustand nur, wenn alles bezahlt ist', () => {
   it('nichts fällig: keine Feier', () => expect(monthDone({ count: 0, openCount: 0 })).toBe(false));
 });
 
-describe('Konfetti: nur einmal live', () => {
+describe('Konfetti: einmal live je Monat, in jedem Monat', () => {
   it('die letzte Position abgehakt (gleicher Monat, vorher offen)', () => {
-    expect(celebrateLive({ period: '2026-10', done: false }, '2026-10', '2026-10', true)).toBe(true);
+    expect(celebrateLive({ period: '2026-10', done: false }, '2026-10', true, false)).toBe(true);
   });
   it('kein Live-Konfetti beim Monatswechsel oder ohne Wechsel', () => {
-    expect(celebrateLive({ period: '2026-09', done: false }, '2026-10', '2026-10', true)).toBe(false);
-    expect(celebrateLive({ period: '2026-10', done: true }, '2026-10', '2026-10', true)).toBe(false);
-    expect(celebrateLive(null, '2026-10', '2026-10', true)).toBe(false);
+    expect(celebrateLive({ period: '2026-09', done: false }, '2026-10', true, false)).toBe(false);
+    expect(celebrateLive({ period: '2026-10', done: true }, '2026-10', true, false)).toBe(false);
+    expect(celebrateLive(null, '2026-10', true, false)).toBe(false);
   });
-  it('vergangene Monate fallen nie, auch nicht live', () => {
-    expect(celebrateLive({ period: '2026-09', done: false }, '2026-09', '2026-10', true)).toBe(false);
+  it('vergangene und künftige Monate feiern auch live', () => {
+    expect(celebrateLive({ period: '2026-09', done: false }, '2026-09', true, false)).toBe(true);
+    expect(celebrateLive({ period: '2026-12', done: false }, '2026-12', true, false)).toBe(true);
   });
-  it('beim Öffnen nie: ohne vorherigen Zustand oder schon erledigt', () => {
-    expect(celebrateLive(null, '2026-10', '2026-10', true)).toBe(false);
-    expect(celebrateLive({ period: '2026-10', done: true }, '2026-10', '2026-10', true)).toBe(false);
+  it('schon gefeiert (celebratedMonths): nie ein zweites Mal', () => {
+    expect(celebrateLive({ period: '2026-10', done: false }, '2026-10', true, true)).toBe(false);
   });
 });
 
@@ -31,12 +31,16 @@ describe('Konfetti: nur einmal live', () => {
  * The hero over a sequence of events, as HeroCard runs it: `run` counts the live moments of the month,
  * set back to 0 when a position is open again (or another month is shown).
  */
-function heroSequence(events: { period: string; done: boolean }[], active = '2026-11', reduced = false): ConfettiState[] {
+function heroSequence(events: { period: string; done: boolean }[], _active = '2026-11', reduced = false): ConfettiState[] {
   let last: { period: string; done: boolean } | null = null;
   let run = 0;
+  const celebrated = new Set<string>();
   return events.map((e) => {
     if (!last || last.period !== e.period) run = 0;
-    if (celebrateLive(last, e.period, active, e.done)) run++;
+    if (celebrateLive(last, e.period, e.done, celebrated.has(e.period))) {
+      run++;
+      celebrated.add(e.period);
+    }
     else if (!e.done) run = 0;
     last = e;
     return confettiState(e.done, run > 0, reduced);
@@ -53,7 +57,7 @@ describe('Konfetti-Zustände: einmal fallen, danach liegen', () => {
     // a reload starts without the state before: the peas lie
     expect(heroSequence([{ period: NOV, done: true }])).toEqual(['resting']);
   });
-  it('wieder offen → keine Erbsen; erneut 100 % → wieder einmal fallen', () => {
+  it('wieder offen → keine Erbsen; erneut 100 % → liegend, keine zweite Feier (celebratedMonths)', () => {
     expect(
       heroSequence([
         { period: NOV, done: false },
@@ -61,7 +65,7 @@ describe('Konfetti-Zustände: einmal fallen, danach liegen', () => {
         { period: NOV, done: false },
         { period: NOV, done: true },
       ]),
-    ).toEqual(['none', 'falling', 'none', 'falling']);
+    ).toEqual(['none', 'falling', 'none', 'resting']);
   });
   it('Monatswechsel zurück: liegen, nicht noch einmal fallen', () => {
     expect(

@@ -788,6 +788,19 @@ button:active > .pea[data-pressable] {
 .hero[data-done] {
   padding-bottom: 52px;
 }
+/* monat-feinschliff: „So teilt sich dein Gehalt“ folds with a soft height animation (none with reduced motion) */
+.fold {
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 240ms ease-out;
+}
+.fold[data-open] {
+  grid-template-rows: 1fr;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fold {
+    transition: none;
+  }
+}
 /* monat-verdichtet: the bills row carries the peas instead of the hero (a little taller only when done) */
 .bills-row > :not(.hero-confetti) {
   position: relative;

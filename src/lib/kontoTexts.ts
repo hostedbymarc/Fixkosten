@@ -144,13 +144,14 @@ export const KONTO_TEXTS = {
   // · monat-verdichtet: Karte „Dein Monat“ (aktiver Monat), für das nächste Gehalt
   'month.title': 'Dein Monat',
   'month.salary': 'Dein Gehalt am {datum}',
-  'month.estimated': 'geschätzt',
   'month.noSalary': 'Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Monat.',
   'month.noSalary.action': 'Gehalt eintragen',
   'month.toAccount': 'Aufs Fixkostenkonto',
   'month.aside': 'Zur Seite legen',
-  'month.incl': 'inkl. {betrag} für {zahlung} im {monat}',
-  'month.incl.more': 'inkl. {betrag} für {n} Zahlungen im {monat}',
+  'month.incl.due': 'inkl. {betrag} {zahlungen}',
+  'month.incl.save': 'inkl. {betrag} für {monat} · {zahlungen}',
+  'month.split': 'So teilt sich dein Gehalt',
+  'month.salary.edit': 'Gehalt ändern',
   'month.direct': 'Direkt bezahlt',
   'month.direct.more': '{n} Posten',
   'month.wealth': 'Vermögensaufbau',
@@ -190,7 +191,7 @@ export const KONTO_TEXTS = {
   'plan2.noSalary': 'Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Plan.',
   'plan2.spielgeld': 'Dein Spielgeld',
   'plan2.spielgeld.edit': 'Spielgeld ändern',
-  'plan2.mode': 'Große Zahlungen',
+  'plan2.mode': 'Wie zahlst du große Zahlungen?',
   'plan2.mode.due': 'Bei Fälligkeit',
   'plan2.mode.even': 'Gleichmäßig',
   'plan2.mode.due.info': 'Jede große Zahlung überweist du im Monat, in dem sie fällig ist.',
@@ -217,6 +218,15 @@ export const KONTO_TEXTS = {
   'plan2.pay.when': 'Wie zahlst du {zahlung}?',
   'plan2.pay.from': 'Ansparen ab',
   'plan2.pay.ready': 'Fertig',
+
+  // · monat-feinschliff: das Gehalt heißt nach dem Monat, in dem es kommt
+  'salary.name': '{monat}-Gehalt',
+  'salary.subtitle': '{gehalt}, ausgezahlt am {datum}',
+  'salary.marked': 'Überwiesen ✓',
+  'salary.marked.aside': 'Zur Seite gelegt ✓',
+  'salary.unmarked': 'Nicht markiert',
+  'salary.comes': 'Kommt am {datum}',
+  'salary.rule': 'Dein Gehalt heißt nach dem Monat, in dem es kommt.',
 
   // · Einstellungen
   'settings.account': 'Eigenes Konto für Fixkosten',

@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { storedKonto, toKontoSettings, type KontoSettings } from '../db/settings';
 import { kontoState } from './kontoBalance';
-import { floor50, monthPlan, planModeOf, setupAccount } from './monthPlan';
+import { floor50, inclLine, monthPlan, planModeOf, setupAccount } from './monthPlan';
 import type { Account, Category, Dataset, Position } from './types';
 
 const DEC = '2026-12';
@@ -245,7 +245,7 @@ describe('monthPlan: angespartes Geld in Datumsreihenfolge', () => {
 });
 
 describe('monthPlan: fehlendes Netto', () => {
-  it('ohne Netto im Monat: das zuletzt eingetragene, „geschätzt“', () => {
+  it('ohne Netto im Monat: das zuletzt eingetragene, ohne Hinweis (kein „geschätzt“ in der App)', () => {
     const ds = { ...data(), monthClose: [{ period: '2026-11', netSalary: 8000, updatedAt: '2026-11-01T00:00:00.000Z' }] };
     const plan = monthPlan(ds, DEC, settings());
     expect(plan.first).toMatchObject({ salary: 8000, estimated: true });
@@ -299,5 +299,34 @@ describe('Migration gapMode → planMode', () => {
     expect(storedKonto(toKontoSettings(old))).toEqual(old);
     expect(storedKonto(toKontoSettings({ ...old, planMode: 'due' }))).toEqual({ ...old, planMode: 'due' });
     expect(toKontoSettings({ planMode: 'weird' }).planMode).toBeNull();
+  });
+});
+
+describe('„inkl. …“ unter ① (monat-feinschliff)', () => {
+  it('Gleichmäßig: das Extra für den knappen Monat und seine großen Zahlungen', () => {
+    const plan = monthPlan(data(), DEC, settings({ planMode: 'even' }));
+    expect(plan.first.extra).toBeGreaterThan(0);
+    const line = inclLine(plan)!;
+    expect(line.amount).toBe(plan.first.extra);
+    expect(line.month).toBe('2027-02');
+    expect(line.names).toEqual(['Steuerberater', 'Öffis', 'Haushaltsversicherung']);
+  });
+  it('Gleichmäßig: nicht die nächste fällige Zahlung (Baurechtszins im Dezember)', () => {
+    const line = inclLine(monthPlan(data(), DEC, settings({ planMode: 'even' })))!;
+    expect(line.names).not.toContain('Baurechtszins');
+  });
+  it('Bei Fälligkeit: nur wenn diesen Monat eine große Zahlung fällig ist – Baurechtszins mit dem Rest', () => {
+    const line = inclLine(monthPlan(data(), DEC, settings({ planMode: 'due' })))!;
+    expect(line).toEqual({ amount: 120, month: null, names: ['Baurechtszins'] });
+  });
+  it('Bei Fälligkeit: ohne große Zahlung im Monat keine Zeile', () => {
+    // January: only the monthly bills (the card shows the next salary – here January, December is in)
+    const plan = monthPlan(data(), DEC, settings({ planMode: 'due', balance: 3000, anchor: { amount: 3000, at: '2026-12-01T08:00:00.000Z' }, receivedFor: DEC }));
+    expect(plan.first.period).toBe('2027-01');
+    expect(inclLine(plan)).toBeNull();
+  });
+  it('Eigener Plan: die Raten dieses Monats, für den Monat der angesparten Zahlung', () => {
+    const plan = monthPlan(data(), DEC, settings({ planMode: 'custom' }), 1, { savings: { Steuerberater: { mode: 'spread', startMonth: DEC } } });
+    expect(inclLine(plan)).toEqual({ amount: 420, month: '2027-02', names: ['Steuerberater'] });
   });
 });
