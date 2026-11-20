@@ -61,7 +61,7 @@ Eine Position mit `account: 'spielgeld'` gilt als nicht eingeplant (`isPlanned` 
 
 | Punkt | erledigt | Beleg |
 |---|---|---|
-| **1** Perf-Feier isoliert | ❌ iPhone 15 rot | Eigenes Playwright-Projekt `perf-feier`: ein Worker, eigener Browser, nach `perf`. `perf` lässt die Feier aus (`grepInvert`). 90 / 60 Erbsen, Grenze 16 ms unverändert. iPhone SE isoliert grün, iPhone 15 isoliert meist rot. Werte unten. |
+| **1** Perf-Feier isoliert | ✅ | Eigenes Playwright-Projekt `perf-feier`: ein Worker, eigener Browser, nach `perf`. `perf` lässt die Feier aus (`grepInvert`). 90 / 60 Erbsen. Grenze: iPhone 15 22 ms (deine Entscheidung, Variante b, mit Kommentar im Test), iPhone SE und alle übrigen Perf-Tests 16 ms. Fünf isolierte Läufe grün, Werte unten. |
 | **2** Liegende Erbsen in vergangenen Monaten | ✅ | Freigegeben, bleibt so. |
 | **3** „Nicht einplanen“ ohne Modus | ✅ | Freigegeben, bleibt so. |
 | **4** Kein Spielgeld gesetzt | ✅ | Freigegeben, bleibt so. |
@@ -176,7 +176,7 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 | ipad-portrait | 257 grün |
 | ipad-landscape | 245 grün |
 | perf | Scrollen Monat, Scrollen Analyse, Tabwechsel grün |
-| perf-feier | iPhone 15 rot, siehe unten |
+| perf-feier | 5 × isoliert grün, siehe unten |
 
 Übersprungen heißt: Das Spec läuft absichtlich nur in bestimmten Projekten.
 
@@ -201,3 +201,13 @@ Die vollständige Liste mit Wortzahl je Satz steht in `TEXTE.md`.
 - Das Fallen läuft schon nur über transform und opacity, auf dem Compositor.
 - Ohne weniger Erbsen sehe ich keine sichere schnelle Einsparung.
 - `docs/perf/liquid-glass.json` bleibt auf dem Stand von main.
+
+**Nach deiner Entscheidung (Variante b), Grenze iPhone 15 22 ms, iPhone SE 16 ms, 5 Läufe isoliert:**
+
+| Lauf | iPhone 15 (Grenze 22) | iPhone SE (Grenze 16) |
+|---|---|---|
+| 1 | 12,9 ✅ (roh 17,1) | 10,4 ✅ (roh 15,9) |
+| 2 | 15,1 ✅ (roh 17,1) | 9,3 ✅ (roh 15,8) |
+| 3 | 17,0 ✅ (roh 19,9) | 14,1 ✅ (roh 15,5) |
+| 4 | 12,7 ✅ (roh 15,6) | 14,5 ✅ (roh 15,9) |
+| 5 | 15,7 ✅ (roh 17,7) | 12,9 ✅ (roh 15,9) |

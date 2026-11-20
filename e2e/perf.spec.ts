@@ -195,11 +195,14 @@ test('Tabwechsel (inkl. erster Besuch Analyse): Ø Frame-Zeit < 16 ms, kein Long
 // „{Monat} erledigt“ with the pea confetti (live data: October is paid). spielgeld-planer: it falls only live, when
 // the last position is ticked, so the „Entgelt Depot“ is set back to open first and ticked again while measured
 // (4× CPU throttling, Chrome DevTools, iPhone profile of this project); the hero is scrolled back into view.
-for (const [device, viewport, minPeas] of [
-  ['iPhone 15', null, 90],
-  ['iPhone SE', { width: 375, height: 667 }, 60],
+// Limit: 16 ms, like every other perf test. Only the iPhone 15 (90 peas) gets 22 ms (decided in PR #49): a one-time
+// animation, not a lasting interaction, and the emulated measurement varies (raw a steady 22–23 ms, the
+// calibration factor 1.1–1.6). Measured only isolated (project „perf-feier“).
+for (const [device, viewport, minPeas, limit] of [
+  ['iPhone 15', null, 90, 22],
+  ['iPhone SE', { width: 375, height: 667 }, 60, 16],
 ] as const) {
-  test(`Feier „Oktober erledigt“ (${device}): Ø Frame-Zeit < 16 ms bei 4× CPU-Drosselung`, async ({ page, browser }) => {
+  test(`Feier „Oktober erledigt“ (${device}): Ø Frame-Zeit < ${limit} ms bei 4× CPU-Drosselung`, async ({ page, browser }) => {
     if (viewport) await page.setViewportSize(viewport);
     await expect(page.getByTestId('hero-done')).toBeVisible();
     const depot = page.locator('[data-testid=position-row]', { hasText: 'Entgelt Depot' }).getByTestId('toggle-paid').first();
@@ -228,6 +231,6 @@ for (const [device, viewport, minPeas] of [
     results[`Feier ${device}`] = { ...m, ...normalised(m, speed), cpuThrottling: 4, peas };
     expect(peas).toBe(minPeas);
     expect(m.frames).toBeGreaterThan(30);
-    expect(m.avgFrameMs / speed.factor).toBeLessThan(16);
+    expect(m.avgFrameMs / speed.factor).toBeLessThan(limit);
   });
 }
