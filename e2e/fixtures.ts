@@ -411,7 +411,10 @@ export async function setUpKonto(page: Page, balance = '10000') {
   await expect(page.getByTestId('konto-setup')).toHaveCount(0);
   await expect(page.getByTestId('plan-sheet')).toBeVisible();
   await expect(page.getByTestId('bottom-sheet').last()).not.toHaveAttribute('data-animating', '');
-  await page.keyboard.press('Escape');
-  await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+  // an Esc right while the sheet takes the focus can get lost (WebKit): pressed again until it is closed
+  await expect(async () => {
+    if ((await page.getByTestId('plan-sheet').count()) > 0) await page.keyboard.press('Escape');
+    await expect(page.getByTestId('plan-sheet')).toHaveCount(0, { timeout: 1000 });
+  }).toPass({ intervals: [200, 500], timeout: 10000 });
   await expect(page.getByTestId('dein-monat')).not.toHaveAttribute('data-state', 'setup');
 }
