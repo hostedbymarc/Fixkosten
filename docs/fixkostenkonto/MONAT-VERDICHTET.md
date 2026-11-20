@@ -110,4 +110,30 @@ Wörter je Satz in Klammern; die vollständige Liste steht in `TEXTE.md`.
 
 ## Testergebnisse
 
-(folgt)
+**Unit und Build:**
+- Unit (vitest): 51 Dateien, 1260 Tests grün. Darin `monthPlan.test.ts` (29: Bei Fälligkeit, Gleichmäßig, Eigener Plan, Ersparnis in Datumsreihenfolge, drei Antworten mit Vorschlag und Maximum, fehlendes Netto, eigenes Konto ja/nein, Migration `gapMode` → `planMode`) und `contrast-dein-monat.test.ts` (24).
+- `tsc -b` ohne Fehler, `pnpm build` grün (check-colors, check-glass-layers, check-bundle).
+
+**Regressionstest ohne „Fixkosten einplanen“:** `monat-ohne-einplanen.spec.ts` vergleicht den Monats-Screen (Oktober und November, iPhone 15 und Desktop, hell und dunkel) Pixel für Pixel mit Referenzbildern aus main vor dem Sprint (e112e57). 4 grün, 0 Pixel Unterschied.
+
+**Volle E2E-Suite (Chromium), einmal komplett:**
+
+| Projekt | Ergebnis |
+|---|---|
+| desktop | 490 grün |
+| iphone-15 | 269 grün |
+| iphone-pro-max | 241 grün |
+| ipad-portrait | 257 grün |
+| ipad-landscape | 245 grün |
+| perf | 3 grün: Scrollen Monat Ø 12,1 ms, Scrollen Analyse 15,0 ms, Tabwechsel 13,7 ms (normalisiert, Grenze 16) |
+| perf-feier (isoliert) | 2 grün: iPhone 15 Ø 18,1 ms (Grenze 22), iPhone SE 13,0 ms (Grenze 16); Grenzen unverändert |
+
+Vorher, beim Umstellen der Specs (nicht im Endlauf): 13 rot im ersten Lauf der angepassten Specs, alles Test-Erwartungen (ⓘ auf verborgenem Tab, Label „Ø pro Monat“, Import zeigt „Dein Monat“); angepasst und grün.
+
+**WebKit** (`monat-verdichtet`, `feier`, `fixkostenkonto`, `feinschliff-puffer`, `walkthrough`, `ein-popover`, `monatswechsel`, `hero-abzuege`):
+- Erster Lauf: 73 rot. Ursache war ein echter Fehler: Nach der Einrichtung wechselte „Dein Monat“ zur Karte und baute das Einrichtungs-Sheet ab, bevor es „Dein Plan“ öffnen konnte. Behoben (Sheet außerhalb des Wechsels).
+- Zweiter Lauf: 155 grün, 12 absichtlich übersprungen, 1 rot (Esc im Test-Helfer ging verloren). Helfer wiederholt Esc jetzt; `ein-popover` danach 3 × wiederholt: 59 von 60 und 60 von 60 grün.
+- Ein Ausreißer: „Einstellungen: geänderte ⓘ-Texte“ (iPhone SE dunkel, unveränderter Test) einmal rot in 124 Läufen, einzeln 4 × grün, nicht reproduzierbar.
+- WebKit-Screenshots sind verworfen; die Specs liefen danach in Chromium neu.
+
+**Viewports:** iPhone SE, iPhone 15, iPad hoch und quer, Desktop 1440, je hell und dunkel, in `monat-verdichtet`, `feier`, `fixkostenkonto`, `feinschliff-puffer`, `walkthrough`, `ein-popover`.
