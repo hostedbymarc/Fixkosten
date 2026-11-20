@@ -34,21 +34,25 @@ export function useMonthPlan(ds: Dataset, active: Period): MonthPlan {
 export function DeinMonatCard({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpenSalary: () => void }) {
   const { settings } = useKonto();
   const [setup, setSetup] = useState(false);
-  if (!settings.setupDone) {
-    return (
-      <section className="hero surface flex flex-col items-start gap-3 p-5 md:p-6" data-testid="dein-monat" data-state="setup" aria-labelledby="dein-monat-title">
-        <h2 id="dein-monat-title" className="text-[13px] font-medium text-ink-mute">
-          {t('month.title')}
-        </h2>
-        <p className="text-[17px] font-semibold leading-snug text-ink">{t('month.setup')}</p>
-        <button type="button" onClick={() => setSetup(true)} className={ACTION} data-testid="dein-monat-setup">
-          {t('month.setup.action')}
-        </button>
-        {setup && <KontoSetup ds={ds} active={active} restart onClose={() => setSetup(false)} />}
-      </section>
-    );
-  }
-  return <Card ds={ds} active={active} onOpenSalary={onOpenSalary} />;
+  return (
+    <>
+      {settings.setupDone ? (
+        <Card ds={ds} active={active} onOpenSalary={onOpenSalary} />
+      ) : (
+        <section className="hero surface flex flex-col items-start gap-3 p-5 md:p-6" data-testid="dein-monat" data-state="setup" aria-labelledby="dein-monat-title">
+          <h2 id="dein-monat-title" className="text-[13px] font-medium text-ink-mute">
+            {t('month.title')}
+          </h2>
+          <p className="text-[17px] font-semibold leading-snug text-ink">{t('month.setup')}</p>
+          <button type="button" onClick={() => setSetup(true)} className={ACTION} data-testid="dein-monat-setup">
+            {t('month.setup.action')}
+          </button>
+        </section>
+      )}
+      {/* outside the switch: once saved the card shows the month, the sheet stays until it closes itself and opens „Dein Plan“ */}
+      {setup && <KontoSetup ds={ds} active={active} restart onClose={() => setSetup(false)} />}
+    </>
+  );
 }
 
 const ACTION =
