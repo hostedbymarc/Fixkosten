@@ -6,8 +6,8 @@ import { Disclosure } from '../components/Disclosure';
 import { GlassGroup } from '../components/GlassGroup';
 import { Pea } from '../components/Pea';
 import { useKonto } from '../db/useKonto';
-import { SalarySplitCard } from '../components/konto/SalarySplitCard';
-import { SpielgeldPlanCard } from '../components/konto/SpielgeldPlanCard';
+import { DeinMonatCard, useMonthPlan } from '../components/konto/DeinMonatCard';
+import { BigMonthCard } from '../components/konto/BigMonthCard';
 import { t } from '../lib/kontoTexts';
 import { heroSourceRows } from '../lib/heroSources';
 import { celebrateLive, confettiState, monthDone } from '../lib/celebration';
@@ -79,7 +79,7 @@ import { calendarMonth, localToday } from '../lib/activeMonth';
 import { driftHeroLights } from '../lib/aurora';
 import { MonthPicker } from '../components/MonthPicker';
 import { KontoCheckCard } from '../components/konto/KontoCheckCard';
-import { KontoInvite, KontoTile } from '../components/konto/KontoTile';
+import { KontoInvite } from '../components/konto/KontoTile';
 import { useActiveMonth } from '../lib/useToday';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
@@ -130,6 +130,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
   const today = useActiveMonth();
+  // monat-verdichtet: the active month with „Fixkosten einplanen“ shows „Dein Monat“ instead of hero and tiles
+  const verdichtet = konto.enabled && period === today;
   const openGroups = useMemo(() => openFromPrevious(ds, period, today), [ds, period, today]);
   const openItem =
     openKey === null
@@ -221,166 +223,277 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         />
       )}
 
-      <div className="grid gap-3 md:gap-4">
-        <KontoCheckCard ds={ds} active={today} />
-        <HeroCard
-          period={period}
-          figures={figures}
-          sources={konto.enabled ? costSources(ds, period) : null}
-          openOnly={filtering}
-          onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)}
-          active={today}
-          streak={konto.enabled && konto.setupDone && period === today ? streakBadge(streakOf(konto.checks, today)) : null}
-        />
-        {/* „Zur Seite legen“ and its advice: only in the active month */}
-        {period === today && <KontoTile ds={ds} active={today} />}
-        {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
-        {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
-            size – the one that fits the longest of them – so a row keeps one baseline */}
-        <TileFit.Provider
-          value={fitStyle(
-            longest([
-              netSalaryForPeriod(ds, period) === null ? '–' : formatEUR(netSalaryForPeriod(ds, period)!),
-              formatAvg(fixedCostsAvg(ds, period)),
-              figures.free === null ? '–' : formatEUR(figures.free),
-              formatEUR(figures.wealth),
-            ]),
-          )}
+      {verdichtet ? (
+        // monat-verdichtet: „Dein Monat“ and the bills row first (on the iPhone without scrolling); iPad and desktop:
+        // the card top left, „Nächster großer Monat“ and „Kommt bald“ on the right, the categories below the card
+        <div
+          className="grid gap-3 md:grid-cols-[minmax(0,1fr)_280px] md:grid-rows-[auto_auto_1fr] md:gap-x-6 md:gap-y-4 lg:grid-cols-[minmax(0,1fr)_330px]"
+          data-testid="month-verdichtet"
         >
-        {/* „Fixkosten einplanen“ on: Netto-Gehalt and Vermögensaufbau, then „So teilt sich dein Gehalt“ across
-            (no „Ø pro Monat“, no „Frei verfügbar“); off: the four tiles as before */}
-        <GlassGroup className={`grid grid-cols-2 gap-3 md:gap-4 ${konto.enabled ? '' : 'md:grid-cols-4'}`}>
-          <SalaryTile
-            ref={salaryTile}
-            period={period}
-            salary={netSalaryForPeriod(ds, period)}
-            onOpen={() => openClose(salaryTile.current)}
-          />
-          {!konto.enabled && (
-            <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
-              <span data-testid="kpi-hint">
-                davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
-              </span>
-            </KpiTile>
-          )}
-          {!konto.enabled && (
-            <FreeTile
-              ref={closeTile}
+          <div className="order-1 flex min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:gap-4">
+            <KontoCheckCard ds={ds} active={today} />
+            <DeinMonatCard ds={ds} active={today} onOpenSalary={() => openClose(null)} />
+          </div>
+          <BillsRow className="order-2 md:col-start-1 md:row-start-2" period={period} active={today} figures={figures} />
+          <aside className="contents md:col-start-2 md:row-span-3 md:row-start-1 md:flex md:flex-col md:gap-6 md:self-start">
+            <BigMonthSlot ds={ds} active={today} className="order-3" />
+            <div className="order-5 mt-5 flex min-w-0 flex-col gap-6 md:mt-0">
+              {FEATURE_REMINDERS && (
+              <section aria-labelledby="reminders-title">
+                <h2 id="reminders-title" className="section-title mb-2 flex items-center gap-1.5 px-1">
+                  <BellIcon size={15} /> Erinnerungen diesen Monat
+                </h2>
+                {reminders.length === 0 ? (
+                  <EmptyCard>Keine Erinnerungen für {monthName(period)}.</EmptyCard>
+                ) : (
+                  <ul className="glass divide-y divide-line">
+                    {reminders.map((r) => (
+                      <li key={r.id} className="flex items-center gap-3 px-4 py-3.5 text-[15px] text-ink">
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-warn" aria-hidden="true" />
+                        {r.text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              )}
+
+              <section aria-labelledby="upcoming-title">
+                <h2 id="upcoming-title" className="section-title mb-3 flex min-h-11 items-center gap-2 px-1">
+                  <ClockIcon size={15} /> Kommt bald
+                </h2>
+                {upcoming.length === 0 ? (
+                  <EmptyCard>In den nächsten 2 Monaten keine Sonderzahlungen.</EmptyCard>
+                ) : (
+                  <UpcomingList items={upcoming} />
+                )}
+              </section>
+            </div>
+          </aside>
+          <div className="order-4 mt-5 flex min-w-0 flex-col gap-4 md:col-start-1 md:row-start-3 md:mt-4">
+            <section aria-label="Fällige Positionen" className="flex flex-col gap-3 md:gap-4">
+              {filtering && (
+                <div className="-mb-1 flex items-center justify-between px-1">
+                  <p className="section-title" data-testid="categories-label">
+                    Nur offene
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setOpenOnlyFor(null)}
+                    className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+                    data-testid="show-all"
+                  >
+                    Alle anzeigen
+                  </button>
+                </div>
+              )}
+              {groups.length > 0 && !filtering && (
+                <div className="-mb-1 flex items-center justify-between px-1">
+                  <p className="section-title" data-testid="categories-label">
+                    Kategorien
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => collapse.setAll(groups.map((g) => g.category.id), !allCollapsed)}
+                    className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+                    data-testid="collapse-all"
+                  >
+                    {allCollapsed ? 'Alle ausklappen' : 'Alle einklappen'}
+                  </button>
+                </div>
+              )}
+              {groups.length === 0 ? (
+                <EmptyCard>
+                  Für {periodLabel(period)} ist nichts fällig. Neue Positionen legst du unter „Positionen“ an.
+                </EmptyCard>
+              ) : (
+                shownGroups.map((group) => (
+                  <GroupCard
+                    key={group.category.id}
+                    group={group}
+                    tally={categoryFigures(figures, group.category.id)}
+                    collapsed={!filtering && collapse.isCollapsed(group.category.id)}
+                    onToggleCollapsed={() => collapse.toggle(group.category.id)}
+                    spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
+                    onToggle={toggle}
+                    onOpen={(item) => setOpenKey({ positionId: item.position.id, period: item.period })}
+                    onToggleOneOff={(o) => void toggleOneOffPaid(db, o.id)}
+                    onOpenOneOff={(o) => setOneOffSheet({ positionId: o.positionId!, oneOff: o })}
+                  />
+                ))
+              )}
+              <button
+                ref={onceButton}
+                type="button"
+                onClick={() => setOnceOpen(true)}
+                className="focus-ring press flex min-h-[56px] items-center justify-center gap-2 rounded-[22px] border border-dashed border-edge bg-field px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
+                data-testid="add-once"
+              >
+                <span aria-hidden="true" className="text-[20px] leading-none">+</span>
+                Einmalige Zahlung hinzufügen
+              </button>
+            </section>
+            <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-3 md:gap-4">
+            <KontoCheckCard ds={ds} active={today} />
+            <HeroCard
               period={period}
-              calculated={figures.free}
-              average={freeAfterFixedAvg(ds, period)}
-              explanation={averageMonthExplanation(ds, period)}
-              onOpen={() => openClose(closeTile.current)}
+              figures={figures}
+              sources={konto.enabled ? costSources(ds, period) : null}
+              openOnly={filtering}
+              onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)}
+              active={today}
+              streak={konto.enabled && konto.setupDone && period === today ? streakBadge(streakOf(konto.checks, today)) : null}
             />
-          )}
-          <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
-          {konto.enabled && <SalarySplitCard ref={closeTile} ds={ds} period={period} active={today} onOpenSalary={() => openClose(closeTile.current)} />}
-        </GlassGroup>
-        </TileFit.Provider>
-        {/* „Dein Spielgeld“: only in the active month */}
-        {konto.enabled && period === today && <SpielgeldPlanCard ds={ds} active={today} onOpenSalary={() => openClose(closeTile.current)} />}
-        <KontoInvite />
-        <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
-      </div>
-
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section aria-label="Fällige Positionen" className="flex flex-col gap-3 md:gap-4">
-          {filtering && (
-            <div className="-mb-1 flex items-center justify-between px-1">
-              <p className="section-title" data-testid="categories-label">
-                Nur offene
-              </p>
-              <button
-                type="button"
-                onClick={() => setOpenOnlyFor(null)}
-                className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
-                data-testid="show-all"
-              >
-                Alle anzeigen
-              </button>
-            </div>
-          )}
-          {groups.length > 0 && !filtering && (
-            <div className="-mb-1 flex items-center justify-between px-1">
-              <p className="section-title" data-testid="categories-label">
-                Kategorien
-              </p>
-              <button
-                type="button"
-                onClick={() => collapse.setAll(groups.map((g) => g.category.id), !allCollapsed)}
-                className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
-                data-testid="collapse-all"
-              >
-                {allCollapsed ? 'Alle ausklappen' : 'Alle einklappen'}
-              </button>
-            </div>
-          )}
-          {groups.length === 0 ? (
-            <EmptyCard>
-              Für {periodLabel(period)} ist nichts fällig. Neue Positionen legst du unter „Positionen“ an.
-            </EmptyCard>
-          ) : (
-            shownGroups.map((group) => (
-              <GroupCard
-                key={group.category.id}
-                group={group}
-                tally={categoryFigures(figures, group.category.id)}
-                collapsed={!filtering && collapse.isCollapsed(group.category.id)}
-                onToggleCollapsed={() => collapse.toggle(group.category.id)}
-                spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
-                onToggle={toggle}
-                onOpen={(item) => setOpenKey({ positionId: item.position.id, period: item.period })}
-                onToggleOneOff={(o) => void toggleOneOffPaid(db, o.id)}
-                onOpenOneOff={(o) => setOneOffSheet({ positionId: o.positionId!, oneOff: o })}
+            {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
+            {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
+                size – the one that fits the longest of them – so a row keeps one baseline */}
+            <TileFit.Provider
+              value={fitStyle(
+                longest([
+                  netSalaryForPeriod(ds, period) === null ? '–' : formatEUR(netSalaryForPeriod(ds, period)!),
+                  formatAvg(fixedCostsAvg(ds, period)),
+                  figures.free === null ? '–' : formatEUR(figures.free),
+                  formatEUR(figures.wealth),
+                ]),
+              )}
+            >
+            {/* „Fixkosten einplanen“ on (a month that is not the active one): Netto-Gehalt and Vermögensaufbau
+                (no „Ø pro Monat“, no „Frei verfügbar“); off: the four tiles as before */}
+            <GlassGroup className={`grid grid-cols-2 gap-3 md:gap-4 ${konto.enabled ? '' : 'md:grid-cols-4'}`}>
+              <SalaryTile
+                ref={salaryTile}
+                period={period}
+                salary={netSalaryForPeriod(ds, period)}
+                onOpen={() => openClose(salaryTile.current)}
               />
-            ))
-          )}
-          <button
-            ref={onceButton}
-            type="button"
-            onClick={() => setOnceOpen(true)}
-            className="focus-ring press flex min-h-[56px] items-center justify-center gap-2 rounded-[22px] border border-dashed border-edge bg-field px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
-            data-testid="add-once"
-          >
-            <span aria-hidden="true" className="text-[20px] leading-none">+</span>
-            Einmalige Zahlung hinzufügen
-          </button>
-        </section>
+              {!konto.enabled && (
+                <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
+                  <span data-testid="kpi-hint">
+                    davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
+                  </span>
+                </KpiTile>
+              )}
+              {!konto.enabled && (
+                <FreeTile
+                  ref={closeTile}
+                  period={period}
+                  calculated={figures.free}
+                  average={freeAfterFixedAvg(ds, period)}
+                  explanation={averageMonthExplanation(ds, period)}
+                  onOpen={() => openClose(closeTile.current)}
+                />
+              )}
+              <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
+            </GlassGroup>
+            </TileFit.Provider>
+            <KontoInvite />
+            <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
+          </div>
 
-        <aside className="flex flex-col gap-6">
-          {FEATURE_REMINDERS && (
-          <section aria-labelledby="reminders-title">
-            <h2 id="reminders-title" className="section-title mb-2 flex items-center gap-1.5 px-1">
-              <BellIcon size={15} /> Erinnerungen diesen Monat
-            </h2>
-            {reminders.length === 0 ? (
-              <EmptyCard>Keine Erinnerungen für {monthName(period)}.</EmptyCard>
-            ) : (
-              <ul className="glass divide-y divide-line">
-                {reminders.map((r) => (
-                  <li key={r.id} className="flex items-center gap-3 px-4 py-3.5 text-[15px] text-ink">
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-warn" aria-hidden="true" />
-                    {r.text}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-          )}
+          <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <section aria-label="Fällige Positionen" className="flex flex-col gap-3 md:gap-4">
+              {filtering && (
+                <div className="-mb-1 flex items-center justify-between px-1">
+                  <p className="section-title" data-testid="categories-label">
+                    Nur offene
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setOpenOnlyFor(null)}
+                    className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+                    data-testid="show-all"
+                  >
+                    Alle anzeigen
+                  </button>
+                </div>
+              )}
+              {groups.length > 0 && !filtering && (
+                <div className="-mb-1 flex items-center justify-between px-1">
+                  <p className="section-title" data-testid="categories-label">
+                    Kategorien
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => collapse.setAll(groups.map((g) => g.category.id), !allCollapsed)}
+                    className="focus-ring h-11 rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft"
+                    data-testid="collapse-all"
+                  >
+                    {allCollapsed ? 'Alle ausklappen' : 'Alle einklappen'}
+                  </button>
+                </div>
+              )}
+              {groups.length === 0 ? (
+                <EmptyCard>
+                  Für {periodLabel(period)} ist nichts fällig. Neue Positionen legst du unter „Positionen“ an.
+                </EmptyCard>
+              ) : (
+                shownGroups.map((group) => (
+                  <GroupCard
+                    key={group.category.id}
+                    group={group}
+                    tally={categoryFigures(figures, group.category.id)}
+                    collapsed={!filtering && collapse.isCollapsed(group.category.id)}
+                    onToggleCollapsed={() => collapse.toggle(group.category.id)}
+                    spread={sumMonthlyEquivalent(ds, period, { categoryId: group.category.id })}
+                    onToggle={toggle}
+                    onOpen={(item) => setOpenKey({ positionId: item.position.id, period: item.period })}
+                    onToggleOneOff={(o) => void toggleOneOffPaid(db, o.id)}
+                    onOpenOneOff={(o) => setOneOffSheet({ positionId: o.positionId!, oneOff: o })}
+                  />
+                ))
+              )}
+              <button
+                ref={onceButton}
+                type="button"
+                onClick={() => setOnceOpen(true)}
+                className="focus-ring press flex min-h-[56px] items-center justify-center gap-2 rounded-[22px] border border-dashed border-edge bg-field px-4 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
+                data-testid="add-once"
+              >
+                <span aria-hidden="true" className="text-[20px] leading-none">+</span>
+                Einmalige Zahlung hinzufügen
+              </button>
+            </section>
 
-          <section aria-labelledby="upcoming-title">
-            <h2 id="upcoming-title" className="section-title mb-3 flex min-h-11 items-center gap-2 px-1">
-              <ClockIcon size={15} /> Kommt bald
-            </h2>
-            {upcoming.length === 0 ? (
-              <EmptyCard>In den nächsten 2 Monaten keine Sonderzahlungen.</EmptyCard>
-            ) : (
-              <UpcomingList items={upcoming} />
-            )}
-          </section>
-        </aside>
-      </div>
+            <aside className="flex flex-col gap-6">
+              {FEATURE_REMINDERS && (
+              <section aria-labelledby="reminders-title">
+                <h2 id="reminders-title" className="section-title mb-2 flex items-center gap-1.5 px-1">
+                  <BellIcon size={15} /> Erinnerungen diesen Monat
+                </h2>
+                {reminders.length === 0 ? (
+                  <EmptyCard>Keine Erinnerungen für {monthName(period)}.</EmptyCard>
+                ) : (
+                  <ul className="glass divide-y divide-line">
+                    {reminders.map((r) => (
+                      <li key={r.id} className="flex items-center gap-3 px-4 py-3.5 text-[15px] text-ink">
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-warn" aria-hidden="true" />
+                        {r.text}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              )}
 
+              <section aria-labelledby="upcoming-title">
+                <h2 id="upcoming-title" className="section-title mb-3 flex min-h-11 items-center gap-2 px-1">
+                  <ClockIcon size={15} /> Kommt bald
+                </h2>
+                {upcoming.length === 0 ? (
+                  <EmptyCard>In den nächsten 2 Monaten keine Sonderzahlungen.</EmptyCard>
+                ) : (
+                  <UpcomingList items={upcoming} />
+                )}
+              </section>
+            </aside>
+          </div>
+        </>
+      )}
       </div>
 
       {editOnce && ds.positions.some((p) => p.id === editOnce) && (
@@ -563,6 +676,87 @@ const heroShown: { period: Period | null } = { period: null };
 /** what the hero showed last (survives the remount of a swipe): ticking the last position celebrates live */
 const heroLast: { period: Period; done: boolean } | { period: null; done: false } = { period: null, done: false };
 
+/**
+ * The confetti of „{Monat} erledigt“ (hero, or the bills row of „Dein Monat“): falls once, live, when the
+ * last position of the active month is ticked; else the peas lie still.
+ */
+function useCelebration(period: Period, active: Period, allPaid: boolean) {
+  const [run, setRun] = useState(0);
+  useEffect(() => {
+    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, active, allPaid);
+    Object.assign(heroLast, { period, done: allPaid });
+    if (live) setRun((n) => n + 1);
+    // set back to open: the next 100 % falls again
+    else if (!allPaid) setRun(0);
+  }, [period, allPaid, active]);
+  // another month: no falling peas from before (they lie)
+  const [runFor, setRunFor] = useState(period);
+  if (runFor !== period) {
+    setRunFor(period);
+    setRun(0);
+  }
+  return { peas: confettiState(allPaid, run > 0, reducedMotion()), run };
+}
+
+/**
+ * „Rechnungen {Monat}“ (monat-verdichtet): a slim row – „x von n bezahlt“ and a thin progress bar. At 100 %:
+ * „{Monat} erledigt“ with a check; the confetti falls once live at the last tick, afterwards the peas lie
+ * still at the bottom of this row (the row is a little taller only then).
+ */
+function BillsRow({ period, active, figures, className = '' }: { period: Period; active: Period; figures: MonthFigures; className?: string }) {
+  const allPaid = monthDone(figures);
+  const { peas, run } = useCelebration(period, active, allPaid);
+  const paid = figures.count - figures.openCount;
+  return (
+    <section
+      className={`bills-row glass surface relative min-w-0 overflow-hidden px-4 py-3.5 md:px-5 ${className}`}
+      data-done={allPaid || undefined}
+      data-testid="bills-row"
+      aria-labelledby="bills-row-title"
+    >
+      {peas !== 'none' && <Confetti key={`${period}-${run}`} seed={period} falling={peas === 'falling'} />}
+      {allPaid ? (
+        <p id="bills-row-title" className="flex items-center gap-2.5 text-[17px] font-semibold text-ink" data-testid="bills-done">
+          <span className="hero-check flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700" data-pop={peas === 'falling' ? '' : undefined} aria-hidden="true">
+            <CheckIcon size={18} strokeWidth={2.8} />
+          </span>
+          {t('bills.done', { monat: monthName(period) })}
+        </p>
+      ) : (
+        <>
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="bills-row-title" className="text-[15px] font-semibold text-ink">
+              {t('bills.title', { monat: monthName(period) })}
+            </h2>
+            <span className="num whitespace-nowrap text-[14px] text-ink-mute" data-testid="bills-count">
+              {figures.count === 0 ? t('bills.none') : t('bills.count', { x: paid, n: figures.count })}
+            </span>
+          </div>
+          <div
+            className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-control-track"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={figures.count}
+            aria-valuenow={paid}
+            aria-label={t('bills.count', { x: paid, n: figures.count })}
+            data-testid="bills-bar"
+          >
+            <span className="block h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.round(figures.ratio * 1000) / 10}%` }} />
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+/** „Nächster großer Monat“ from the plan (only once set up). */
+function BigMonthSlot({ ds, active, className }: { ds: Dataset; active: Period; className?: string }) {
+  const { settings } = useKonto();
+  const plan = useMonthPlan(ds, active);
+  if (!settings.setupDone) return null;
+  return <BigMonthCard plan={plan} className={className} />;
+}
+
 function HeroCard({
   period,
   figures,
@@ -584,22 +778,7 @@ function HeroCard({
   onToggleOpenOnly: () => void;
 }) {
   const allPaid = monthDone(figures);
-  // confetti: falls once, live, when the last position of the active month is ticked; else the peas lie still
-  const [run, setRun] = useState(0);
-  useEffect(() => {
-    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, active, allPaid);
-    Object.assign(heroLast, { period, done: allPaid });
-    if (live) setRun((n) => n + 1);
-    // set back to open: the next 100 % falls again
-    else if (!allPaid) setRun(0);
-  }, [period, allPaid, active]);
-  const peas = confettiState(allPaid, run > 0, reducedMotion());
-  // another month: no falling peas from before (they lie)
-  const [runFor, setRunFor] = useState(period);
-  if (runFor !== period) {
-    setRunFor(period);
-    setRun(0);
-  }
+  const { peas, run } = useCelebration(period, active, allPaid);
   // a diagonal shimmer once per month change (not when the screen first shows; survives the remount of a swipe)
   // the shimmer element exists only while it runs: removed when its animation ends
   const [shimmer, setShimmer] = useState<Period | null>(() => (heroShown.period !== null && heroShown.period !== period ? period : null));

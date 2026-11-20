@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { db } from '../../db/db';
-import { adoptLegacyBalance, finishSetup, markMilestones, setGapMode } from '../../db/kontoActions';
+import { adoptLegacyBalance, finishSetup, markMilestones } from '../../db/kontoActions';
 import { kontoUntouched, writeKonto } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
 import { localToday } from '../../lib/activeMonth';
@@ -9,53 +9,21 @@ import { MILESTONE_TEXT, t } from '../../lib/kontoTexts';
 import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { Pea } from '../Pea';
-import { openWalkthrough } from '../../lib/walkthroughBus';
-import { tileAdvice } from '../../lib/salarySplit';
+import { openPlan } from '../../lib/planBus';
 import { useToast } from '../Toast';
 import { KontoSetupSheet } from './KontoSetupSheet';
-import { KontoSheet, useKontoState } from './KontoSheet';
-import { KontoTileView, ORDER_INFO } from './KontoTileView';
-
-/** Explanation of the standing order, in the tile's tooltip. */
-export const STANDING_ORDER_INFO = ORDER_INFO;
+import { useKontoState } from './KontoSheet';
 
 /**
- * The tile of „Fixkosten einplanen“ (internally: Fixkostenkonto) on the month screen (mode on only), directly below the hero. Not set
- * up: it opens the setup, otherwise the sheet.
- * Every change of balance, account or positions shows at once (live query + kontoState).
+ * What used to run in the tile (monat-verdichtet: in „Dein Monat“): the milestone toasts, and data from
+ * PR #39 – the stored balance becomes the anchor once.
  */
-export function KontoTile({ ds, active }: { ds: Dataset; active: Period }) {
+export function useKontoEffects(state: KontoState, paused = false) {
   const { settings } = useKonto();
-  if (!settings.enabled) return null;
-  return <KontoTileOn ds={ds} active={active} />;
-}
-
-function KontoTileOn({ ds, active }: { ds: Dataset; active: Period }) {
-  const { settings } = useKonto();
-  const state = useKontoState(ds, active);
-  const start = useMonthStart();
-  const [open, setOpen] = useState<'sheet' | 'setup' | null>(null);
-  const button = useRef<HTMLButtonElement>(null);
-  // the plan has its own success moment: the toast waits until it is closed
-  useMilestoneToasts(state, open === 'setup');
-  // data from PR #39: the stored balance becomes the anchor once
+  useMilestoneToasts(state, paused);
   useEffect(() => {
     if (settings.setupDone && !settings.anchor) void adoptLegacyBalance(db, localToday());
   }, [settings.setupDone, settings.anchor]);
-  return (
-    <>
-      <KontoTileView
-        state={state}
-        start={start}
-        active={active}
-        onOpen={() => setOpen(state.status === 'setup' ? 'setup' : 'sheet')}
-        buttonRef={button}
-        advice={tileAdvice(ds, active, state, settings)}
-      />
-      {open === 'sheet' && <KontoSheet ds={ds} active={active} onClose={() => setOpen(null)} returnFocusTo={button.current} />}
-      {open === 'setup' && <KontoSetup ds={ds} active={active} restart={!settings.setupDone} onClose={() => setOpen(null)} />}
-    </>
-  );
 }
 
 /** A milestone reached for the first time: a short toast with a pea, once; afterwards only the badge in the sheet. */
@@ -73,10 +41,9 @@ function useMilestoneToasts(state: KontoState, paused: boolean) {
 }
 
 /**
- * The setup sheet. `restart` (not set up, „Einrichtung ändern“): the questions; otherwise „Dein Plan“
- * straight away. Numbers and status: kontoState, like everywhere else.
+ * The setup sheet: the questions (also for „Einrichtung ändern“); saved, it closes and „Dein Plan“ opens.
  */
-export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Dataset; active: Period; restart: boolean; onClose: () => void; onDone?: () => void }) {
+export function KontoSetup({ ds, active, onClose, onDone }: { ds: Dataset; active: Period; restart?: boolean; onClose: () => void; onDone?: () => void }) {
   const { settings } = useKonto();
   const start = useMonthStart();
   const state = useKontoState(ds, active);
@@ -84,15 +51,14 @@ export function KontoSetup({ ds, active, restart, onClose, onDone }: { ds: Datas
     <KontoSetupSheet
       state={state}
       start={start}
-      initialStep={restart ? 'account' : 'plan'}
+      initialStep="account"
       initial={settings.setupDone ? { balance: state.balance, hasAccount: settings.hasAccount !== false, orderRuns: settings.orderRuns } : undefined}
       onAnswers={(answers) => finishSetup(db, answers, { active, now: localToday() })}
-      onGapMode={(mode) => setGapMode(db, mode)}
       onClose={onClose}
       onFinish={() => {
         (onDone ?? onClose)();
-        // once, right after the setup: „So funktioniert Erbse“
-        if (!settings.walkthroughSeen) openWalkthrough();
+        // right after the setup: „Dein Plan“ with the recommended plan
+        openPlan({ fromSetup: true });
       }}
     />
   );

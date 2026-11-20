@@ -2,9 +2,10 @@
 // the one meta entry (src/db/settings.ts); the schema does not change.
 
 import { dayKey } from '../lib/kontoBalance';
-import type { Period } from '../lib/types';
+import { setupAccount } from '../lib/monthPlan';
+import type { Period, SavingSetting } from '../lib/types';
 import type { FixkostenDB } from './db';
-import { readKonto, writeKonto, type GapMode, type KontoCheck, type Milestone } from './settings';
+import { readKonto, writeKonto, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
 
 /** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
@@ -43,7 +44,52 @@ export async function finishSetup(db: FixkostenDB, a: SetupAnswers, ctx: { activ
     setupSteps: a.hasAccount ? 3 : 2,
     setupDone: true,
   });
+  await assignAccounts(db, a.hasAccount);
   session.setUp = true;
+}
+
+/**
+ * „Hast du ein eigenes Konto für Fixkosten?“ (monat-verdichtet): positions without a stored account get the
+ * default – yes: everything „Rücklage“; no: monthly ones „Direkt“, all others „Rücklage“. Stored ones stay.
+ */
+export async function assignAccounts(db: FixkostenDB, hasAccount: boolean): Promise<void> {
+  await db.transaction('rw', db.positions, db.categories, async () => {
+    const kinds = new Map((await db.categories.toArray()).map((c) => [c.id, c.kind]));
+    for (const p of await db.positions.toArray()) {
+      const account = setupAccount(p, kinds.get(p.categoryId), hasAccount);
+      if (account) await db.positions.update(p.id, { account });
+    }
+  });
+}
+
+/** „Eigenes Konto für Fixkosten“ in the settings: only the texts change („Aufs Fixkostenkonto“ / „Zur Seite legen“). */
+export async function setHasAccount(db: FixkostenDB, hasAccount: boolean): Promise<void> {
+  await writeKonto(db, { hasAccount });
+}
+
+/** „Bei Fälligkeit“ / „Gleichmäßig“ (and „Eigener Plan“ once a payment is changed on its own). */
+export async function setPlanMode(db: FixkostenDB, mode: PlanMode): Promise<void> {
+  await writeKonto(db, { planMode: mode });
+}
+
+/**
+ * One big payment changed on its own: „im {Monat} zahlen“ or „vorher ansparen ab …“. The plan becomes
+ * „Eigener Plan“. Coming from „Gleichmäßig“, every other big payment keeps saving up from the next salary
+ * (`others`), so nothing else jumps.
+ */
+export async function setSaving(db: FixkostenDB, changes: Record<string, SavingSetting>, others: Record<string, SavingSetting> = {}): Promise<void> {
+  await db.transaction('rw', db.positions, db.meta, async () => {
+    for (const [id, saving] of Object.entries({ ...others, ...changes })) await db.positions.update(id, { saving });
+    await writeKonto(db, { planMode: 'custom' });
+  });
+}
+
+/** „Spielgeld auf € M setzen“: the Spielgeld and the plan that keeps it. */
+export async function applyMax(db: FixkostenDB, amount: number, mode: PlanMode, savings: Record<string, SavingSetting>): Promise<void> {
+  await db.transaction('rw', db.positions, db.meta, async () => {
+    if (mode === 'custom') for (const [id, saving] of Object.entries(savings)) await db.positions.update(id, { saving });
+    await writeKonto(db, { planMode: mode, spielgeld: amount > 0 ? Math.round(amount * 100) / 100 : null });
+  });
 }
 
 /** „Auf {n} Monate verteilen“ / „Auf einmal zur Seite legen“ (setup, tile, sheet, settings). */

@@ -1,28 +1,23 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { SetupAnswers } from '../../db/kontoActions';
-import type { GapMode } from '../../db/settings';
 import type { MonthStart } from '../../lib/activeMonth';
-import { amountToInput, formatEUR, parseAmount } from '../../lib/format';
-import { orderDay, type KontoState } from '../../lib/kontoBalance';
+import { amountToInput, parseAmount } from '../../lib/format';
+import type { KontoState } from '../../lib/kontoBalance';
 import { t } from '../../lib/kontoTexts';
-import { reasonText } from '../../lib/kontoWords';
 import { BottomSheet } from '../BottomSheet';
 import { AmountField } from '../form';
 import { Pea, PeaOpen } from '../Pea';
-import { CopyButton, PlanAmount } from './KontoStatusView';
 
-export type Step = 'account' | 'balance' | 'order' | 'gap' | 'plan';
+export type Step = 'account' | 'balance' | 'order';
 
 interface Props {
-  /** the stored state (kontoState): the gap question and „Dein Plan“ show exactly these numbers */
+  /** the stored state (kontoState): the setup closes once it has the answers */
   state: KontoState;
   start: MonthStart;
-  /** the questions answered: save them (the gap question and the plan then read the saved state) */
+  /** the questions answered: save them */
   onAnswers: (answers: SetupAnswers) => Promise<void>;
-  /** „Auf {n} Monate verteilen“ / „Auf einmal zur Seite legen“ */
-  onGapMode: (mode: GapMode) => Promise<void>;
   onClose: () => void;
-  /** „Fertig“ */
+  /** saved: the setup closes, „Dein Plan“ opens */
   onFinish: () => void;
   initialStep?: Step;
   /** answers so far („Einrichtung ändern“) */
@@ -38,45 +33,42 @@ const SECONDARY = `${BIG} border border-control-edge bg-control text-ink hover:b
  * 1 „Hast du ein eigenes Konto für Fixkosten?“ – Ja / Nein, ich plane nur
  * 2 „Wie viel hast du heute schon für Fixkosten zur Seite gelegt?“ – amount (with cents), or „Noch nichts“
  * 3 only with an account: „Läuft dein Dauerauftrag schon?“ – Ja / Nein
- * then saved; only with a gap one more, last question: „Im Februar kommen … Dafür fehlen dir € Y. Wie
- * willst du das lösen?“ – „Auf {n} Monate verteilen (€ Z extra pro Monat)“ / „Auf einmal zur Seite legen“.
- * At the end „Dein Plan“: the one amount with its reason, from the stored state.
+ * then saved and closed; „Dein Plan“ opens with the recommended plan (monat-verdichtet: the questions
+ * about the gap, „verteilt / auf einmal“, are gone).
  */
-export function KontoSetupSheet({ state, start, onAnswers, onGapMode, onClose, onFinish, initialStep = 'account', initial }: Props) {
+export function KontoSetupSheet({ state, onAnswers, onClose, onFinish, initialStep = 'account', initial }: Props) {
   const [step, setStep] = useState<Step>(initialStep);
   const [hasAccount, setHasAccount] = useState(initial?.hasAccount ?? true);
-  const [orderRuns, setOrderRuns] = useState<boolean | null>(initial?.orderRuns ?? null);
   const [balanceText, setBalanceText] = useState(initial?.balance ? amountToInput(initial.balance) : '');
   const balance = parseAmount(balanceText);
   const balanceError = balanceText.trim() !== '' && balance === null ? 'Bitte einen Betrag eingeben, z. B. 1.087,43' : null;
-  // the gap question is one more step, only when there is a gap that can be spread
-  const total = (hasAccount ? 3 : 2) + (step === 'gap' ? 1 : 0);
+  const total = hasAccount ? 3 : 2;
   // the answers just saved: the next screen shows once the stored state has them, never the state from before
   const [saved, setSaved] = useState<SetupAnswers | null>(null);
   const arrived =
     !!saved && state.setupDone && state.hasAccount === saved.hasAccount && Math.round(state.balance * 100) === Math.round(saved.balance * 100);
   const [waiting, setWaiting] = useState(false);
+  // monat-verdichtet: no gap question any more – saved, the setup closes and „Dein Plan“ opens with the recommendation
   useEffect(() => {
     if (!waiting || !arrived) return;
     setWaiting(false);
-    setStep(state.canSpread ? 'gap' : 'plan');
-  }, [waiting, arrived, state.canSpread]);
+    onFinish();
+  }, [waiting, arrived, onFinish]);
 
   async function save(amount: number, runs: boolean | null) {
     const answers = { hasAccount, balance: amount, orderRuns: runs };
-    setOrderRuns(runs);
     setSaved(answers);
     setWaiting(true);
     await onAnswers(answers);
   }
   // after the amount: with an account the standing order question, without it saved
   const afterBalance = (amount: number) => (hasAccount ? setStep('order') : void save(amount, null));
-  const n = step === 'account' ? 1 : step === 'balance' ? 2 : step === 'order' ? 3 : total;
+  const n = step === 'account' ? 1 : step === 'balance' ? 2 : 3;
 
   return (
-    <BottomSheet title={step === 'plan' ? t('setup.plan') : t('setup.title')} onClose={onClose}>
+    <BottomSheet title={t('setup.title')} onClose={onClose}>
       <div data-testid="konto-setup" data-step={waiting ? 'saving' : step}>
-        {step !== 'plan' && !waiting && <Progress n={n} total={total} />}
+        {!waiting && <Progress n={n} total={total} />}
 
         {waiting && <div className="min-h-[240px]" aria-busy="true" data-testid="konto-setup-saving" />}
 
@@ -129,49 +121,9 @@ export function KontoSetupSheet({ state, start, onAnswers, onGapMode, onClose, o
           </Question>
         )}
 
-        {!waiting && step === 'gap' && (
-          <Question title={reasonText(state, start)}>
-            <p className="-mt-2 mb-2 text-[17px] leading-snug text-ink-soft" data-testid="konto-setup-gap-text">
-              {t('setup.gap.text', { betrag: formatEUR(state.gap) })}
-            </p>
-            <button
-              type="button"
-              className={SECONDARY}
-              onClick={() => void onGapMode('spread').then(() => setStep('plan'))}
-              data-testid="konto-setup-gap-spread"
-            >
-              {state.deposits === 1
-                ? t('setup.gap.spread.one', { betrag: formatEUR(spreadExtra(state)) })
-                : t('setup.gap.spread', { n: state.deposits, betrag: formatEUR(spreadExtra(state)) })}
-            </button>
-            <button type="button" className={SECONDARY} onClick={() => void onGapMode('lump').then(() => setStep('plan'))} data-testid="konto-setup-gap-lump">
-              {t('setup.gap.lump')}
-            </button>
-          </Question>
-        )}
-
-        {!waiting && step === 'plan' && (
-          <div className="flex flex-col gap-5" data-testid="konto-setup-plan" data-mode={state.mode ?? 'covered'}>
-            <PlanAmount state={state} start={start} size="large" testId="setup" />
-            {state.hasAccount && orderRuns === false && (
-              <div data-testid="konto-setup-order-hint">
-                <p className="text-[15px] leading-snug text-ink">{t('setup.order.new', { betrag: formatEUR(state.next.amount), tag: orderDay(start) })}</p>
-                <CopyButton amount={state.next.amount} testId="konto-setup-copy" />
-              </div>
-            )}
-            <button type="button" className={PRIMARY} onClick={onFinish} data-testid="konto-setup-finish">
-              {t('setup.finish')}
-            </button>
-          </div>
-        )}
       </div>
     </BottomSheet>
   );
-}
-
-/** The extra per deposit when spread (also while lump is chosen: the option shows what spreading would mean). */
-function spreadExtra(state: KontoState): number {
-  return state.deposits > 0 ? Math.ceil(Math.round(state.gap * 100) / state.deposits - 1e-9) / 100 : 0;
 }
 
 function Progress({ n, total }: { n: number; total: number }) {

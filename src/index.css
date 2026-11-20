@@ -788,6 +788,14 @@ button:active > .pea[data-pressable] {
 .hero[data-done] {
   padding-bottom: 52px;
 }
+/* monat-verdichtet: the bills row carries the peas instead of the hero (a little taller only when done) */
+.bills-row > :not(.hero-confetti) {
+  position: relative;
+  z-index: 1;
+}
+.bills-row[data-done] {
+  padding-bottom: 46px;
+}
 /* a pea: falls from above the tile to --end, swinging by --sway, and stays there (fill both) */
 /* lying (every other time the month is „erledigt“, and with reduced motion): at --end, no animation */
 .confetti-pea.is-resting {
