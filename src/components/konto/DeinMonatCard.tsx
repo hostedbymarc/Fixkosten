@@ -68,10 +68,12 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
   const pill = useRef<HTMLButtonElement>(null);
   const check = settings.checks.find((c) => c.period === active && c.deposited);
   const canConfirm = first.period === active && !plan.state.monthDone;
+  // the pill: the Spielgeld against F of this salary (the 12 months are in „Dein Plan“)
+  const fits = plan.spielgeld === null || first.free === null ? null : Math.round(first.free * 100) >= Math.round(plan.spielgeld * 100);
   const open = (el: HTMLElement | null, editSpielgeld = false) => openPlan({ returnFocusTo: el, editSpielgeld });
 
   return (
-    <section className="hero surface flex flex-col p-5 md:p-6" data-testid="dein-monat" data-state={plan.noSalary ? 'no-salary' : plan.fits === false ? 'short' : plan.fits ? 'ok' : 'none'} aria-labelledby="dein-monat-title">
+    <section className="hero surface flex flex-col p-5 md:p-6" data-testid="dein-monat" data-state={plan.noSalary ? 'no-salary' : fits === false ? 'short' : fits ? 'ok' : 'none'} aria-labelledby="dein-monat-title">
       <h2 id="dein-monat-title" className="sr-only">
         {t('month.title')}
       </h2>
@@ -127,12 +129,12 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
               onClick={() => open(pill.current, true)}
               className="focus-ring -my-1 mt-2 inline-flex min-h-11 max-w-full items-center rounded-full"
               data-testid="dein-monat-pill"
-              data-status={plan.spielgeld === null ? 'none' : plan.fits ? 'ok' : 'short'}
+              data-status={plan.spielgeld === null ? 'none' : fits ? 'ok' : 'short'}
             >
               <span className="hero-chip num inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full px-3.5 py-1 text-left text-[14px] font-semibold leading-snug">
                 {plan.spielgeld === null ? (
                   t('month.pill.none')
-                ) : plan.fits ? (
+                ) : fits ? (
                   <>
                     <CheckIcon size={16} strokeWidth={2.6} className="shrink-0" aria-hidden="true" />
                     {t('month.pill.ok', { betrag: money(plan.spielgeld) })}
@@ -140,7 +142,7 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
                 ) : (
                   <>
                     <AlertIcon size={16} className="shrink-0" aria-hidden="true" />
-                    {t('month.pill.short', { betrag: money(plan.spielgeld - plan.lowestFree!) })}
+                    {t('month.pill.short', { betrag: money(Math.round((plan.spielgeld - first.free!) * 100) / 100) })}
                   </>
                 )}
               </span>

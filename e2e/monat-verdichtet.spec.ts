@@ -181,6 +181,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // the card: what is missing, with a warning symbol (never colour only)
         await expect(pill).toHaveAttribute('data-status', 'short');
         await expect(pill).toHaveText(/^Dir fehlen €\s[\d.]+,\d{2} für dein Spielgeld$/);
+        // S − F of this salary (the 12 months are in „Dein Plan“)
+        expect(await valueOf(pill)).toBeCloseTo(6000 - (await valueOf(page.getByTestId('dein-monat-free-value'))), 2);
         await expect(pill.locator('svg')).toHaveCount(1);
         await shot(page, `${tag}-03-monat-fehlt`);
         await tap(pill);
