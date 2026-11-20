@@ -99,7 +99,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
         // the next salary: November, estimated from October's; the statement adds up
         await expect(page.getByTestId('dein-monat-salary')).toContainText('Dein Gehalt am 1. November');
-        await expect(page.getByTestId('dein-monat-estimated')).toHaveText('geschätzt');
+        // monat-feinschliff: no „geschätzt“ – the last salary is used without a hint
+        await expect(page.getByTestId('dein-monat')).not.toContainText('geschätzt');
         await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,00/);
         await expect(page.getByTestId('dein-monat-transfer')).toContainText('Aufs Fixkostenkonto');
         const transfer = await valueOf(page.getByTestId('dein-monat-transfer-value'));

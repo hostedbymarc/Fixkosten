@@ -796,8 +796,18 @@ button:active > .pea[data-pressable] {
 .fold[data-open] {
   grid-template-rows: 1fr;
 }
+/* folded: hidden once the height is gone (invisible to screen readers and taps too) */
+.fold > * {
+  visibility: hidden;
+  transition: visibility 0s linear 240ms;
+}
+.fold[data-open] > * {
+  visibility: visible;
+  transition: visibility 0s;
+}
 @media (prefers-reduced-motion: reduce) {
-  .fold {
+  .fold,
+  .fold > * {
     transition: none;
   }
 }
