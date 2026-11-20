@@ -66,8 +66,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
         await animationsDone(page, 'bottom-sheet');
         const value = amountOf((await page.getByTestId('plan-salary-row').first().locator('td').nth(1).textContent())!);
-        await page.keyboard.press('Escape');
-        await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+        // an Esc right while the sheet takes the focus can get lost: pressed again until it is closed
+        await expect(async () => {
+          if ((await page.getByTestId('plan-sheet').count()) > 0) await page.keyboard.press('Escape');
+          await expect(page.getByTestId('plan-sheet')).toHaveCount(0, { timeout: 1000 });
+        }).toPass({ intervals: [200, 500], timeout: 10000 });
         return value;
       };
 
