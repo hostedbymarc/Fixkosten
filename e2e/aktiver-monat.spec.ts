@@ -111,7 +111,7 @@ test.describe('Golden aktiver Monat (Live-Export 29.10.2026, heute 26.10.2026, M
       ? page.getByTestId('forecast-table').locator('tr[data-period="2027-10"] td').first()
       : page.getByTestId('forecast-list').locator('[data-period="2027-10"]').getByTestId('forecast-due');
     await expect(oct27).toHaveText(eur('€ 3.905,80'));
-    await expect(page.getByText('Ø pro Monat (aktiver Monat)').first()).toBeVisible();
+    await expect(page.getByText('Ø pro Monat').first()).toBeVisible();
     await expectClean(page, 'main');
   });
 

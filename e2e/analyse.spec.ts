@@ -63,7 +63,7 @@ test.describe('Analyse mit 1 Monat Daten (Seed)', () => {
     await expect(app.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
     // Verteilung: no second head line, only the sum on top (spread amounts always with cents)
     await expect(app.getByTestId('distribution-headline')).toHaveCount(0);
-    await expect(app.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat (aktiver Monat)'));
+    await expect(app.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat'));
     await expect(app.getByTestId('monthclose')).toHaveCount(0); // „Frei verfügbar & Sparquote“ removed
     // the data hint lives in the empty states (no „Verlauf / Bisher 1 Monat Daten“ heading)
     await expect(app.getByTestId('trend-empty')).toHaveText(

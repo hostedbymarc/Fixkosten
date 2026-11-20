@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { appSettled, closeWalkthrough, expect, FIXTURE, NOV_5, test, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, NOV_5, test, TODAY } from './fixtures';
 import { differentPixels } from './pixels';
 
 // „{Monat} erledigt“ and the hero layout. Seed data, today 5 October 2026: one position open (Depotentgelt
@@ -115,19 +115,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.getByTestId('import-file').setInputFiles(FIXTURE);
         await expect(page.getByTestId('hero')).toBeVisible();
         await appSettled(page);
-        // „Fixkosten einplanen“ on (no account, € 184,21, spread): „Woraus du bezahlst“ shows
-        await page.getByTestId('konto-invite-enable').click();
-        await tap(page.getByTestId('konto-tile-start'));
-        await expect(page.getByTestId('bottom-sheet').last()).not.toHaveAttribute('data-animating', '');
-        await tap(page.getByTestId('konto-setup-account-no'));
-        await page.getByTestId('konto-setup-balance').fill('184,21');
-        await tap(page.getByTestId('konto-setup-next'));
-        await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'gap');
-        await tap(page.getByTestId('konto-setup-gap-spread'));
-        await tap(page.getByTestId('konto-setup-finish'));
-        await closeWalkthrough(page);
-        await expect(page.getByTestId('konto-setup')).toHaveCount(0);
-
+        // without „Fixkosten einplanen“: the hero celebrates (with the mode on the bills row of „Dein Monat“
+        // does, see monat-verdichtet.spec.ts)
         // the big amount: as on the iPhone (≥ 48 px, at least twice „Abzüge vom Netto“); pills on one line
         const paid = page.getByTestId('hero-paid');
         expect(await fontSize(paid)).toBeGreaterThanOrEqual(48);
@@ -135,7 +124,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // from the iPad on as big as on the iPhone at least
         if (use.viewport.width >= 800) expect(await fontSize(paid)).toBeGreaterThanOrEqual(56);
         expect((await page.getByTestId('hero-open').boundingBox())!.height).toBeLessThanOrEqual(33);
-        await expect(page.getByTestId('hero-sources-title')).toHaveText('Woraus du bezahlst');
         await expect(page.getByTestId('hero-done')).toHaveCount(0);
         await page.waitForTimeout(300);
         await shot(page, `${tag}-01-hero-normal`);
@@ -147,7 +135,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
         await expect(page.getByTestId('hero-done-sub')).toHaveText('Alle 16 Rechnungen bezahlt');
         await expect(page.getByText('Alles abgebucht')).toHaveCount(0);
-        await expect(page.getByTestId('hero-sources-title')).toHaveText('Woraus du bezahlt hast');
         await expect(page.getByTestId('hero-confetti')).toHaveCount(1);
         await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
         await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-count', vp === 'iphone-se' ? '60' : '90');

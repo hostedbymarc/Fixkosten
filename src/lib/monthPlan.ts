@@ -299,8 +299,12 @@ function core(
       const m = state.months.find((x) => x.period === period);
       transfer = cents(m?.amount ?? state.order);
       extra = cents(m?.extra ?? 0);
-      // „auf einmal“ (no deposit before the gap): kontoState plans the one-time amount in the month before it
-      if (state.mode === 'lump' && state.gapFrom && addPeriods(state.gapFrom, -1) === period) transfer += cents(state.lump);
+      // „auf einmal“ (no deposit before the gap): the one-time amount in the month before it, at the latest
+      // in the first salary of the plan („Leg jetzt … extra zur Seite“)
+      if (state.mode === 'lump' && state.gapFrom) {
+        const by = addPeriods(state.gapFrom, -1);
+        if ((by < first ? first : by) === period) transfer += cents(state.lump);
+      }
     } else {
       // the monthly bills, the big ones paid when due (what is not saved yet), the rates of this month
       const monthly = own.filter((b) => b.monthly).reduce((a, b) => a + b.amount, 0);

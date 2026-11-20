@@ -30,14 +30,15 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByTestId('hero')).toBeVisible();
       await appSettled(page);
       await page.getByTestId('konto-invite-enable').click();
-      await expect(page.getByTestId('konto-tile')).toBeVisible();
+      await expect(page.getByTestId('dein-monat')).toBeVisible();
       await setUpKonto(page);
       await shot(page, '1-monat');
 
-      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
-      await expect(page.getByTestId('konto-sheet')).toBeVisible();
-      await page.getByTestId('konto-positions').locator('summary').click();
-      await shot(page, '2-fixkostenkonto-sheet', false);
+      // „Dein Plan“ (monat-verdichtet: replaces the Fixkostenkonto sheet)
+      await goTo(page, 'einstellungen');
+      await page.getByTestId('settings-open-plan').click();
+      await expect(page.getByTestId('plan-sheet')).toBeVisible();
+      await shot(page, '2-dein-plan', false);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
 

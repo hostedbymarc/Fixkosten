@@ -185,6 +185,20 @@ describe('monthPlan: „Gleichmäßig“ ist kontoState', () => {
   });
 });
 
+describe('monthPlan: „Gleichmäßig“, das Geld fehlt schon jetzt', () => {
+  it('der Einmalbetrag kommt ins erste Gehalt des Plans („Leg jetzt … extra zur Seite“)', () => {
+    // December is in already, nothing set aside: December's bills cannot be paid – at once
+    const s = settings({ planMode: 'even', balance: 0, anchor: { amount: 0, at: '2026-12-01T08:00:00.000Z' }, receivedFor: DEC });
+    const state = kontoState(data(), DEC, { ...s, gapMode: 'spread' });
+    expect(state.mode).toBe('lump');
+    const plan = monthPlan(data(), DEC, s);
+    expect(plan.first.period).toBe('2027-01');
+    const jan = state.months.find((m) => m.period === '2027-01')!.amount;
+    expect(plan.first.transfer).toBe(Math.round((jan + state.lump) * 100) / 100);
+    expect(month(plan, '2027-02').transfer).toBe(state.months.find((m) => m.period === '2027-02')!.amount);
+  });
+});
+
 describe('monthPlan: „Eigener Plan“', () => {
   it('Startmonat wählbar: Öffis ab Jänner in 2 Raten', () => {
     const plan = monthPlan(data(), DEC, settings({ planMode: 'custom' }), 1, { savings: { Öffis: { mode: 'spread', startMonth: '2027-01' } } });
