@@ -35,7 +35,7 @@ export interface SalarySplit {
 }
 
 /** The parts of one month that come out of the net salary, from the same items as monthFigures. */
-function parts(ds: Dataset, period: Period) {
+export function salaryParts(ds: Dataset, period: Period) {
   const items = monthItems(ds, period).filter((i) => i.fromNet);
   const directItems = items.filter((i) => i.kind === 'expense' && i.account === 'girokonto');
   const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
@@ -46,7 +46,7 @@ const restOf = (salary: number | null, reserve: number, direct: number, wealth: 
   salary === null ? null : euros(cents(salary) - cents(reserve) - cents(direct) - cents(wealth) - cents(spielgeld ?? 0));
 
 export function salarySplit(ds: Dataset, period: Period, state: KontoState, settings: Pick<KontoSettings, 'spielgeld'>): SalarySplit {
-  const { directItems, direct, wealth } = parts(ds, period);
+  const { directItems, direct, wealth } = salaryParts(ds, period);
   const reserve = state.months.find((m) => m.period === period)?.amount ?? state.order;
   const spielgeld = settings.spielgeld;
   const salary = netSalaryForPeriod(ds, period);
@@ -76,41 +76,10 @@ export function nextSalarySplit(
   reserve: number = state.next.amount,
 ): SalarySplit {
   const next = addPeriods(period, 1);
-  const { directItems, direct, wealth } = parts(ds, next);
+  const { directItems, direct, wealth } = salaryParts(ds, next);
   const spielgeld = settings.spielgeld;
   const own = netSalaryForPeriod(ds, next);
   const last = own === null ? lastSalary(ds, period) : null;
   const salary = own ?? last?.salary ?? null;
   return { kind: 'next', period: next, salaryFrom: last?.from ?? null, salary, reserve, direct, directItems, wealth, spielgeld, rest: restOf(salary, reserve, direct, wealth, spielgeld) };
-}
-
-/**
- * Advice on the tile (only a hint, the choice stays with the user), only with a planned Spielgeld, a salary and a gap:
- * the Überschuss covers the one-time amount (or the gap while spreading) → „auf einmal“, else → „verteilt“.
- */
-export interface LumpAdvice {
-  advice: 'lump' | 'spread';
-  /** Überschuss of the split with the base amount set aside (the same calculation as „So teilt sich dein Gehalt“) */
-  rest: number;
-  /** the one-time amount (lump) or the gap (spread): what would be set aside at once */
-  amount: number;
-  /** what stays after setting `amount` aside at once: rest − amount („Danach bleiben dir …“) */
-  left: number;
-  /** what would be missing at once, as a positive amount (−left when left < 0, else 0): „würden dir … fehlen“ */
-  missing: number;
-}
-
-export function lumpAdvice(state: KontoState, split: SalarySplit): LumpAdvice | null {
-  if (split.spielgeld === null || split.rest === null || state.gap <= 0 || !state.mode) return null;
-  const amount = state.mode === 'lump' ? state.lump : state.gap;
-  const left = euros(cents(split.rest) - cents(amount));
-  return { advice: left >= 0 ? 'lump' : 'spread', rest: split.rest, amount, left, missing: left < 0 ? -left : 0 };
-}
-
-/**
- * The advice of the tile: always from the NEXT salary, with the base amount (without the extra) set aside –
- * the Überschuss that is left in a normal month decides whether the gap can be closed at once.
- */
-export function tileAdvice(ds: Dataset, active: Period, state: KontoState, settings: Pick<KontoSettings, 'spielgeld'>): LumpAdvice | null {
-  return lumpAdvice(state, nextSalarySplit(ds, active, state, settings, state.order));
 }

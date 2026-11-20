@@ -27,7 +27,9 @@ const SECONDARY = `${BUTTON} border border-control-edge bg-control text-ink-soft
 export function KontoCheckCard({ ds, active }: { ds: Dataset; active: Period }) {
   const { settings } = useKonto();
   const [hidden, setHidden] = useState(false);
-  const card = hidden ? null : dueCard(settings, active, localToday(), { setUpThisSession: session.setUp });
+  const due = hidden ? null : dueCard(settings, active, localToday(), { setUpThisSession: session.setUp });
+  // monat-verdichtet: the transfer of the month is confirmed on „Dein Monat“ („€ T … überwiesen“), not here
+  const card = due === 'month' ? null : due;
   if (!card) return null;
   return <Card card={card} ds={ds} active={active} onLater={() => setHidden(true)} again={settings.checks.some((c) => c.period === active)} />;
 }

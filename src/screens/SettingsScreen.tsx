@@ -9,10 +9,9 @@ import { KontoSetup } from '../components/konto/KontoTile';
 import { t } from '../lib/kontoTexts';
 import { openWalkthrough } from '../lib/walkthroughBus';
 import { ChevronRight } from '../components/Icons';
-import { PlanAmount } from '../components/konto/KontoStatusView';
 import { BalanceField, BufferField, RoundingField, SpielgeldField } from '../components/konto/KontoParts';
-import { setGapMode } from '../db/kontoActions';
-import type { GapMode } from '../db/settings';
+import { setHasAccount } from '../db/kontoActions';
+import { openPlan } from '../lib/planBus';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
 import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, currencyOf, DEFAULT_COUNTRY, type Currency } from '../lib/country';
@@ -348,7 +347,6 @@ function AppearanceSection() {
 function KontoSection({ ds }: { ds: Dataset }) {
   const { settings } = useKonto();
   const active = useActiveMonth();
-  const start = useMonthStart();
   const state = useKontoState(ds, active);
   const [setup, setSetup] = useState(false);
   const asOf = settings.anchor ? formatDate(settings.anchor.at.slice(0, 10)) : null;
@@ -370,11 +368,16 @@ function KontoSection({ ds }: { ds: Dataset }) {
           <>
             {settings.setupDone && (
               <div className="flex flex-col gap-4 border-t border-line pt-3" data-testid="konto-summary">
-                {/* the same amount and reason as tile and sheet (kontoState) */}
-                <div data-testid="settings-plan">
-                  <p className="text-[13px] font-medium text-ink-mute">{t(state.monthDone ? 'tile.title.next' : 'tile.title')}</p>
-                  <PlanAmount state={state} start={start} testId="settings" />
-                </div>
+                {/* „Eigenes Konto für Fixkosten“: only the texts change (Aufs Fixkostenkonto / Zur Seite legen) */}
+                <Segmented<'yes' | 'no'>
+                  label={t('settings.account')}
+                  value={settings.hasAccount === false ? 'no' : 'yes'}
+                  onChange={(v) => void setHasAccount(db, v === 'yes')}
+                  options={[
+                    { value: 'yes', label: t('settings.account.yes') },
+                    { value: 'no', label: t('settings.account.no') },
+                  ]}
+                />
                 <div>
                   <BalanceField balance={state.balance} testId="konto-balance" />
                   {asOf && (
@@ -383,25 +386,18 @@ function KontoSection({ ds }: { ds: Dataset }) {
                     </p>
                   )}
                 </div>
-                <div data-testid="konto-gap-mode">
-                  <Segmented<GapMode>
-                    label={t('settings.gapMode')}
-                    value={state.mode ?? settings.gapMode ?? 'spread'}
-                    onChange={(m) => void setGapMode(db, m)}
-                    options={[
-                      { value: 'spread', label: t('settings.gapMode.spread') },
-                      { value: 'lump', label: t('settings.gapMode.lump') },
-                    ]}
-                  />
-                  {(state.gap <= 0 || !state.canSpread) && (
-                    <p className="mt-1 px-1 text-[13px] text-ink-mute" data-testid="konto-gap-mode-note">
-                      {t(state.gap <= 0 ? 'settings.gapMode.none' : 'settings.gapMode.forced')}
-                    </p>
-                  )}
-                </div>
+                <SpielgeldField spielgeld={settings.spielgeld} />
                 <BufferField settings={settings} />
                 <RoundingField settings={settings} />
-                <SpielgeldField spielgeld={settings.spielgeld} />
+                <button
+                  type="button"
+                  onClick={(e) => openPlan({ returnFocusTo: e.currentTarget })}
+                  className="focus-ring -mx-1 flex min-h-12 items-center justify-between gap-3 rounded-xl border-t border-line px-1 pt-3 text-left text-[15px] font-semibold text-ink"
+                  data-testid="settings-open-plan"
+                >
+                  {t('month.plan')}
+                  <ChevronRight className="h-5 w-5 shrink-0 text-ink-mute" aria-hidden="true" />
+                </button>
               </div>
             )}
             <button

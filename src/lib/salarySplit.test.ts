@@ -6,10 +6,8 @@ import { DEFAULT_KONTO, storedKonto, toKontoSettings, type KontoSettings } from 
 import { upgradePositionV5 } from '../db/migrations';
 import { costSources, monthFigures } from './calc';
 import { kontoState } from './kontoBalance';
-import { lastSalary, lumpAdvice, nextSalarySplit, salarySplit, tileAdvice } from './salarySplit';
+import { lastSalary, nextSalarySplit, salarySplit } from './salarySplit';
 import { heroSourceRows } from './heroSources';
-import { formatEUR } from './format';
-import { t } from './kontoTexts';
 import type { Account, Category, Dataset, Position } from './types';
 
 const ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -130,52 +128,6 @@ describe('Hero: Fixkosten nach Quelle', () => {
   });
 });
 
-describe('Empfehlung auf der Zur-Seite-Kachel', () => {
-  it('Überschuss ≥ Einmalbetrag: auf einmal (€ 990,43)', () => {
-    const s = settings(BALANCE);
-    const st = kontoState(DATA, NOV, s);
-    expect(lumpAdvice(st, salarySplit(DATA, NOV, st, s))).toEqual({ advice: 'lump', rest: 2451, amount: 990.43, left: 1460.57, missing: 0 });
-  });
-  it('Überschuss < Einmalbetrag: verteilt', () => {
-    const s = settings(BALANCE - 2000);
-    const st = kontoState(DATA, NOV, s);
-    const advice = lumpAdvice(st, salarySplit(DATA, NOV, st, s));
-    expect(advice?.advice).toBe('spread');
-    expect(advice!.rest).toBeLessThan(advice!.amount);
-  });
-  it('ohne Spielgeld keine Empfehlung', () => {
-    const s = settings(BALANCE, { spielgeld: null });
-    const st = kontoState(DATA, NOV, s);
-    expect(lumpAdvice(st, salarySplit(DATA, NOV, st, s))).toBeNull();
-  });
-});
-
-describe('Empfehlung: dieselbe Rechnung wie die Aufteilung', () => {
-  it('reicht es: „Danach bleiben dir“ = Überschuss mit Grundbetrag − Einmalbetrag', () => {
-    const s = settings(BALANCE);
-    const st = kontoState(DATA, NOV, s);
-    const split = nextSalarySplit(DATA, NOV, st, s, st.order);
-    const advice = tileAdvice(DATA, NOV, st, s)!;
-    expect(advice.rest).toBe(split.rest);
-    expect(advice.left).toBe(Math.round((split.rest! - advice.amount) * 100) / 100);
-    expect(advice.advice).toBe('lump');
-  });
-  it('reicht es nicht: „würden dir € X fehlen“ mit X positiv, lieber verteilt', () => {
-    const s = settings(BALANCE - 2000);
-    const st = kontoState(DATA, NOV, s);
-    const advice = tileAdvice(DATA, NOV, st, s)!;
-    expect(advice.advice).toBe('spread');
-    expect(advice.left).toBeLessThan(0);
-    expect(advice.left).toBe(Math.round((advice.rest - advice.amount) * 100) / 100);
-    expect(advice.missing).toBeGreaterThan(0);
-    expect(advice.missing).toBe(-advice.left);
-    expect(t('advice.spread', { fehlt: formatEUR(advice.missing, { fixed: true }) })).toBe(
-      `Auf einmal würden dir ${formatEUR(-advice.left, { fixed: true })} fehlen. Leg es lieber verteilt zur Seite.`,
-    );
-    expect(t('advice.spread', { fehlt: formatEUR(advice.missing, { fixed: true }) })).not.toMatch(/−|-/);
-  });
-});
-
 describe('Alte Überzug-Antworten bleiben gespeichert (nur additiv)', () => {
   it('alte Werte „surplus“/„other“ werden weiter gelesen; der Teilbetrag ist additiv gespeichert', () => {
     const s = toKontoSettings({ spielgeldOverflow: { '2026-10': 'other', '2026-11': 'surplus', '2026-12': { mode: 'part', otherAmount: 800.555 }, '2027-01': { mode: 'part' }, '2027-02': { mode: 'quatsch' } } });
@@ -264,33 +216,6 @@ describe('Nächstes Gehalt (Standard der Aufteilung)', () => {
     const ds = { ...DATA, monthClose: [] };
     const s = settings(BALANCE);
     expect(nextSalarySplit(ds, NOV, kontoState(ds, NOV, s), s).rest).toBeNull();
-  });
-});
-
-describe('Empfehlung aus dem nächsten Gehalt, mit dem Grundbetrag', () => {
-  it('Daten wie deine: Überschuss € 2.451 ≥ € 990,43 → auf einmal', () => {
-    const s = settings(BALANCE);
-    const st = kontoState(DATA, NOV, s);
-    expect(tileAdvice(DATA, NOV, st, s)).toEqual({ advice: 'lump', rest: 2451, amount: 990.43, left: 1460.57, missing: 0 });
-  });
-  it('rechnet mit dem Grundbetrag, nicht mit dem Extra', () => {
-    const s = settings(BALANCE - 3500, { gapMode: 'spread', receivedFor: null });
-    const st = kontoState(DATA, NOV, s);
-    const advice = tileAdvice(DATA, NOV, st, s)!;
-    // salary − base (not base + extra) − direct − wealth − Spielgeld
-    expect(advice.rest).toBe(Math.round((8302 - st.order - 450 - 1283 - 1209) * 100) / 100);
-    expect(advice.amount).toBe(st.gap);
-  });
-  it('Überschuss kleiner als die Lücke: lieber verteilt', () => {
-    const s = settings(BALANCE - 2000);
-    const st = kontoState(DATA, NOV, s);
-    expect(st.lump).toBeGreaterThan(2451);
-    expect(tileAdvice(DATA, NOV, st, s)?.advice).toBe('spread');
-  });
-  it('gespeicherte Überzug-Antworten ändern die Empfehlung nicht', () => {
-    const a = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'surplus' } });
-    const b = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'other' } });
-    expect(tileAdvice(DATA, NOV, kontoState(DATA, NOV, a), a)).toEqual(tileAdvice(DATA, NOV, kontoState(DATA, NOV, b), b));
   });
 });
 

@@ -69,6 +69,15 @@ export interface Position {
   fromNet?: boolean;
   /** schema v5, optional: paying account (see Account); missing = default by category kind */
   account?: Account;
+  /** monat-verdichtet, optional (no index, no schema step): how a big payment is paid in „Eigener Plan“; missing = when due */
+  saving?: SavingSetting;
+}
+
+/** „im {Monat} zahlen“ (due) or „vorher ansparen“ (spread, in equal rates from startMonth up to the month it is due) */
+export interface SavingSetting {
+  mode: 'due' | 'spread';
+  /** spread: first month of the rates; missing = the next salary */
+  startMonth?: Period;
 }
 
 export type PaymentStatus = 'paid' | 'skipped';

@@ -2,10 +2,8 @@
 |---|---|---|
 | „Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.“ | Monat · Hero „Abzüge vom Netto“ | wird Tooltip – war schon ein Tooltip, jetzt mit Esc/Scroll im Sheet |
 | „So viel bleibt dir im Schnitt pro Monat. Jahreszahlungen sind anteilig drin, dein Vermögensaufbau ist abgezogen.“ | Monat · Kachel „Frei verfügbar“ (im Ø-Monat) | wird Tooltip – war schon ein Tooltip |
-| „Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu.“ | Monat · Kachel „Diesen Monat zur Seite legen“ | wird Tooltip – Erklärung des Monatsbetrags (fixkosten-ein-betrag: mit dem Extra) |
-| „So entwickelt sich dein Geld, wenn du den Betrag immer am 1. zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen.“ | Sheet „Fixkosten einplanen“, Analyse · „Verlauf mit Plan“ | wird Tooltip |
+| „So entwickelt sich dein Geld, wenn du den Betrag immer am 1. zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen.“ | Analyse · „Verlauf mit Plan“ | wird Tooltip |
 | „So viel hast du schon für deine Fixkosten zur Seite gelegt.“ | Einstellungen · „Schon zur Seite gelegt“ | wird Tooltip – fixkosten-ein-betrag: aus dem Sheet in die Einstellungen |
-| „Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt? Stell sie unter Positionen um.“ | Sheet „Fixkosten einplanen“ · „Eingeplante Rechnungen“ | wird Tooltip – spielgeld-planer: „direkt“ statt „direkt vom Gehalt“ |
 | „Rücklage: Geld, das du jeden Monat zur Seite legst. Direkt: zahlst du sofort vom Gehalt.“ | Bearbeiten-Dialog · „Woraus zahlst du das?“ | wird Tooltip – spielgeld-planer: Rücklage \| Direkt |
 | „Zählt nicht zu Fixkosten, Rücklage und Aufteilung. Zum Beispiel Käufe aus deinem Spielgeld.“ | Bearbeiten-Dialog · „Nicht einplanen“ | wird Tooltip – spielgeld-planer: neu (Text aus dem Auftrag) |
 | „Aus, wenn das Geld nicht aus deinem Gehalt kommt. Zum Beispiel eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.“ | Bearbeiten-Dialog (einmalig, Vermögensaufbau) · „Von ‚Frei verfügbar‘ abziehen“ | wird Tooltip |
@@ -21,7 +19,9 @@
 | „Deine Fixkosten liegen nur auf diesem Gerät. Hast du eine Sicherung? Dann übernimm damit deinen Stand. Sonst richte Erbse neu ein oder starte leer.“ | Einrichtung · Start | wird Tooltip |
 | „Erbse zeigt alle Beträge in dieser Währung. Du kannst sie später in den Einstellungen ändern.“ | Einrichtung · Währung | wird Tooltip |
 | „Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus, wie viel du monatlich zur Seite legst.“ | Einrichtung · Vorlagen | wird Tooltip |
+| „Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu.“ | Monat · Kachel „Diesen Monat zur Seite legen“ | entfällt – monat-verdichtet: Kachel entfernt, die Karte „Dein Monat“ zeigt den Betrag als Zeile ① |
 | „Mit einem eigenen Konto und Dauerauftrag passiert das automatisch.“ | Dein Plan (ohne Konto) · „Leg jeden Monat … zur Seite“ | entfällt – fixkosten-ein-betrag: keine Checkliste mehr, die Kachel nennt den Weg („wenn dein Gehalt kommt“ / „per Dauerauftrag“) |
+| „Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt? Stell sie unter Positionen um.“ | Sheet „Fixkosten einplanen“ · „Eingeplante Rechnungen“ | entfällt – monat-verdichtet: Sheet ersetzt durch „Dein Plan“ mit der Liste „Große Zahlungen“ |
 | „Zählt zum Dauerauftrag aufs Fixkostenkonto.“ / „Zählt nicht zum Dauerauftrag.“ | Bearbeiten-Dialog · unter dem Konto-Umschalter | entfällt – steht jetzt im Tooltip des Umschalters |
 | „Dauerauftrag, Startlücke und die nächsten 12 Monate“ | Fixkostenkonto-Sheet · Untertitel | entfällt – wiederholt die Abschnitte darunter |
 | „Damit dein Konto nie ins Minus rutscht, zahl einmalig“ | Fixkostenkonto-Sheet, Analyse | bleibt sichtbar (Warnung) |
@@ -45,7 +45,7 @@
 | „Rechnerisch frei diesen Monat … · im Ø-Monat …, jeweils nach den Fixkosten und dem Vermögensaufbau“ | Monatsabschluss | bleibt sichtbar (Wert) |
 | „Aktiver Monat: …“ / „Letzte Sicherung: …“ / „Noch keine Sicherung exportiert.“ | Einstellungen | bleibt sichtbar (Wert) |
 | „zählt in diesem Monat, nicht im Ø pro Monat“ / „zählt nur in diesem Monat, nicht im Ø“ | Einmalbetrag-Sheet (Untertitel), Positionsdetail | bleibt sichtbar (Label) |
-| „Fällige Ausgaben der nächsten 12 Monate“ / „Umgelegte Ausgaben pro Monat nach Kategorie“ / „Ø pro Monat (aktiver Monat)“ / „Sparquote je Monat“ | Analyse | bleibt sichtbar (Label) |
+| „Fällige Ausgaben der nächsten 12 Monate“ / „Umgelegte Ausgaben pro Monat nach Kategorie“ / „Ø pro Monat“ / „Sparquote je Monat“ | Analyse | bleibt sichtbar (Label) |
 | „Verlauf ab 3 Monaten“ / „In den nächsten 2 Monaten keine Sonderzahlungen.“ / „Noch nichts abgehakt.“ | Analyse, Monat, Positionsdetail | bleibt sichtbar (Status) |
 | „Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.“ | Analyse · Sparquote | bleibt sichtbar (Aktion) – Leerzustand mit „Netto eintragen“ |
 | „Keine archivierten Positionen. Archivieren geht in „Positionen“ per Wischen nach links oder über das ⋯-Menü.“ | Einstellungen · Archiv | bleibt sichtbar (Status) – Leerzustand |

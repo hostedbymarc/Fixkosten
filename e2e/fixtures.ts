@@ -394,24 +394,27 @@ export async function closeWalkthrough(page: Page) {
 }
 
 /**
- * „Fixkosten einplanen“: after „Aktivieren“ the tile asks for the setup first. This answers every
- * question (own account, 0 set aside, standing order not running yet) and does every point of „Dein
- * Plan“ (standing order, one-time amount); then the tile shows „Alles eingeplant bis …“ and opens the sheet.
+ * „Fixkosten einplanen“ (monat-verdichtet): after „Aktivieren“ the card „Dein Monat“ asks for the setup
+ * first. This answers every question (own account, € 10.000 set aside, standing order running); the setup
+ * closes and „Dein Plan“ opens with the recommendation – closed here, so the card shows the month.
  */
-export async function setUpKonto(page: Page) {
-  await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'setup');
-  await page.getByTestId('konto-tile-start').click();
+export async function setUpKonto(page: Page, balance = '10000') {
+  await expect(page.getByTestId('dein-monat')).toHaveAttribute('data-state', 'setup');
+  await page.getByTestId('dein-monat-setup').click();
   // a tap while the sheet slides in can land on the scrim and close it: wait until it rests
   await expect(page.getByTestId('bottom-sheet')).toBeVisible();
   await expect(page.getByTestId('bottom-sheet')).not.toHaveAttribute('data-animating', '');
   await page.getByTestId('konto-setup-account-yes').click();
-  // enough set aside: no gap, everything planned (the gap question does not come)
-  await page.getByTestId('konto-setup-balance').fill('10000');
+  await page.getByTestId('konto-setup-balance').fill(balance);
   await page.getByTestId('konto-setup-next').click();
   await page.getByTestId('konto-setup-order-yes').click();
-  await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', 'plan');
-  await page.getByTestId('konto-setup-finish').click();
   await expect(page.getByTestId('konto-setup')).toHaveCount(0);
-  await closeWalkthrough(page);
-  await expect(page.getByTestId('konto-tile-card')).toHaveAttribute('data-state', 'covered');
+  await expect(page.getByTestId('plan-sheet')).toBeVisible();
+  await expect(page.getByTestId('bottom-sheet').last()).not.toHaveAttribute('data-animating', '');
+  // an Esc right while the sheet takes the focus can get lost (WebKit): pressed again until it is closed
+  await expect(async () => {
+    if ((await page.getByTestId('plan-sheet').count()) > 0) await page.keyboard.press('Escape');
+    await expect(page.getByTestId('plan-sheet')).toHaveCount(0, { timeout: 1000 });
+  }).toPass({ intervals: [200, 500], timeout: 10000 });
+  await expect(page.getByTestId('dein-monat')).not.toHaveAttribute('data-state', 'setup');
 }

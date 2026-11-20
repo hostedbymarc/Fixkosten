@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { liveBackup } from '../tests/fixtures/live';
-import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test, closeWalkthrough } from './fixtures';
+import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test } from './fixtures';
 import { NEVER_IN_TOOLTIP, TOOLTIP_TEXTS } from './help-texts';
 import { OKT_TODAY } from './live';
 
@@ -193,33 +193,28 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       // „Frei verfügbar“ (im Ø-Monat) only without „Fixkosten einplanen“: the split replaces it
       await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
       await page.getByTestId('konto-invite-enable').click();
-      await expect(page.getByTestId('konto-tile')).toBeVisible();
-      // setup without an own account, nothing set aside; a gap that can be spread asks one more question
-      await page.getByTestId('konto-tile-start').click();
+      // setup without an own account, nothing set aside (monat-verdichtet: „Dein Monat“, then „Dein Plan“)
+      await page.getByTestId('dein-monat-setup').click();
       await expect(page.getByTestId('bottom-sheet')).not.toHaveAttribute('data-animating', '');
       await page.getByTestId('konto-setup-account-no').click();
       await page.getByTestId('konto-setup-nothing').click();
-      await expect(page.getByTestId('konto-setup')).toHaveAttribute('data-step', /^(gap|plan)$/);
-      if ((await page.getByTestId('konto-setup').getAttribute('data-step')) === 'gap') await page.getByTestId('konto-setup-gap-spread').click();
-      await expect(page.getByTestId('konto-setup-plan')).toBeVisible();
-      await page.getByTestId('konto-setup-finish').click();
-      await closeWalkthrough(page);
       await expect(page.getByTestId('konto-setup')).toHaveCount(0);
-
-      // --- Monat
-      await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
-      await expect(info(page, 'im Ø-Monat')).toHaveCount(0);
-      await exercise(page, page.getByTestId('konto-tile-info'), mode, seen);
-
-      // --- Fixkostenkonto-Sheet
-      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
-      const kontoSheet = page.getByTestId('bottom-sheet');
+      await expect(page.getByTestId('plan-sheet')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
-      await exercise(page, info(kontoSheet, 'Verlauf mit Plan'), mode, seen, kontoSheet);
-      await kontoSheet.getByTestId('konto-positions').locator('summary').first().click();
-      await exercise(page, info(kontoSheet, 'Eingeplante Rechnungen'), mode, seen, kontoSheet);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toHaveCount(0);
+
+      // --- Monat: the active month has no hero (and no tile ⓘ); the next month shows the hero as before
+      await expect(info(page, 'im Ø-Monat')).toHaveCount(0);
+      await page.getByRole('button', { name: 'Nächster Monat' }).click();
+      await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
+      await page.getByRole('button', { name: 'Vorheriger Monat' }).click();
+
+      // --- Analyse: „Verlauf mit Plan“
+      await goTo(page, 'analyse');
+      const section = page.getByTestId('konto-analyse');
+      await exercise(page, info(section, 'Verlauf mit Plan'), mode, seen);
+      await goTo(page, 'monat');
 
       // one-time Vermögensaufbau on the month screen: „Von ‚Frei verfügbar‘ abziehen“
       const form = page.getByTestId('bottom-sheet');
@@ -290,12 +285,13 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await setUpKonto(page);
       const pop = page.getByRole('tooltip');
       const open = async (button: Locator) => (tap ? button.tap() : button.hover());
-      // the tile ⓘ moved to the very right edge, then to the bottom right corner (over the tab bar)
+      // the ⓘ of „Verlauf mit Plan“ moved to the very right edge, then to the bottom right corner (over the tab bar)
+      await goTo(page, 'analyse');
       for (const where of ['right: 0; top: 40%', 'right: 0; bottom: 0']) {
         const style = await page.addStyleTag({
-          content: `[data-testid="konto-tile-info"] { position: fixed !important; ${where.replace(/;/g, ' !important;')} !important; left: auto !important; margin: 0 !important; z-index: 70 !important; }`,
+          content: `[data-testid="konto-assumption"] { position: fixed !important; ${where.replace(/;/g, ' !important;')} !important; left: auto !important; margin: 0 !important; z-index: 70 !important; }`,
         });
-        const button = page.getByTestId('konto-tile-info');
+        const button = page.getByTestId('konto-analyse').getByTestId('konto-assumption');
         await open(button);
         await expect(pop).toBeVisible();
         await expectInViewport(pop);
@@ -303,14 +299,19 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
         await expect(pop).toHaveCount(0);
         await style.evaluate((el) => (el as Element).remove());
       }
-      // in a sheet: the ⓘ at the right edge of the sheet
-      await page.getByTestId('konto-tile').click({ position: { x: 12, y: 12 } });
+      // in a sheet: the ⓘ „Woraus zahlst du das?“ at the bottom right of the edit dialog
+      await goTo(page, 'positionen');
+      await page.getByRole('button', { name: /– Details$/ }).first().click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Bearbeiten' }).click();
+      await expect(page.getByTestId('position-form')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
-      const sheet = page.getByTestId('bottom-sheet');
+      const sheet = page.getByTestId('bottom-sheet').last();
+      const button = info(sheet, 'Woraus zahlst du das?');
+      await button.evaluate((el) => el.setAttribute('data-pin', ''));
       await page.addStyleTag({
-        content: '[data-testid="konto-assumption"] { position: fixed !important; right: 0 !important; bottom: 0 !important; margin: 0 !important; z-index: 70 !important; }',
+        content: '[data-pin] { position: fixed !important; right: 0 !important; bottom: 0 !important; margin: 0 !important; z-index: 70 !important; }',
       });
-      await open(sheet.getByTestId('konto-assumption'));
+      await open(button);
       await expect(pop).toBeVisible();
       await expectInViewport(pop);
       await page.keyboard.press('Escape');

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { appSettled, expect, FIXTURE, setUpKonto, test, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, test, TODAY } from './fixtures';
 import { inkShare } from './pixels';
 
 // Monatswechsel auf Desktop und iPad (ruecklage-spielgeld, Ergänzung 2): nach mehrfachem Vor und Zurück
@@ -57,8 +57,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.getByTestId('import-file').setInputFiles(FIXTURE);
         await expect(page.getByTestId('hero')).toBeVisible();
         await appSettled(page);
-        await page.getByTestId('konto-invite-enable').click();
-        await setUpKonto(page);
         const next = page.getByRole('button', { name: 'Nächster Monat' });
         const prev = page.getByRole('button', { name: 'Vorheriger Monat' });
         const title = page.getByRole('heading', { level: 1 });
@@ -73,9 +71,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         }
         await expect(title).toHaveText('Dezember 2026');
         await visibleMonth(page);
-        // other months not active: no Zur-Seite-Kachel, no switch in the split
-        await expect(page.getByTestId('konto-tile')).toHaveCount(0);
-        await expect(page.getByTestId('salary-split-view')).toHaveCount(0);
+        // without „Fixkosten einplanen“ every month shows the hero (with it see monat-verdichtet.spec.ts)
+        await expect(page.getByTestId('dein-monat')).toHaveCount(0);
+        await expect(page.getByTestId('hero')).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
         await page.screenshot({ path: `${DIR}/${tag}-dezember-nach-monatswechsel.jpg`, type: 'jpeg', quality: 80 });
         // back to October and once more to December

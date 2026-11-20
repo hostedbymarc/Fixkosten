@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useKonto } from '../../db/useKonto';
 import { formatEUR } from '../../lib/format';
 import { kontoState } from '../../lib/kontoBalance';
+import { monthPlan } from '../../lib/monthPlan';
 import { t } from '../../lib/kontoTexts';
 import { monthOf, shortMonthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
@@ -27,7 +28,15 @@ export default function WalkthroughSheet({ ds, active, onClose }: { ds: Dataset;
   const { settings } = useKonto();
   const start = useMonthStart();
   const w = useMemo(
-    () => walkthrough(settings.enabled ? kontoState(ds, active, settings, start) : null, active, start, undefined, directCount(ds, active)),
+    () =>
+      walkthrough(
+        settings.enabled ? kontoState(ds, active, settings, start) : null,
+        active,
+        start,
+        undefined,
+        directCount(ds, active),
+        settings.enabled && settings.setupDone ? monthPlan(ds, active, settings, start).recommended : null,
+      ),
     [ds, active, settings, start],
   );
   const [index, setIndex] = useState(0);

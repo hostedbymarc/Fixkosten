@@ -22,12 +22,9 @@ import {
   upcomingDue,
   wealthBuildingAvg,
 } from './calc';
-import { formatEUR } from './format';
 import { standingOrder } from './fixkostenkonto';
 import { kontoState } from './kontoBalance';
-import { t } from './kontoTexts';
 import { nextSalarySplit, salarySplit } from './salarySplit';
-import { floor50, planFromMonths, spielgeldPlan, type SpielgeldMonth } from './spielgeldPlan';
 import type { Account, Category, Dataset, Position } from './types';
 import { directCount } from './walkthrough';
 
@@ -89,151 +86,6 @@ describe('Daten wie deine: Zur Seite € 3.235,81 bis Februar, danach € 2.909'
     expect(STATE.gapFrom).toBe('2027-02');
     expect(STATE.months.slice(0, 4).map((m) => m.amount)).toEqual([3235.81, 3235.81, 3235.81, 3235.81]);
     expect(STATE.months[4]).toMatchObject({ period: '2027-03', amount: 2909, extra: 0 });
-  });
-});
-
-describe('„Dein Spielgeld“: möglich je Monat, Status, Tipp', () => {
-  const plan = spielgeldPlan(DATA, STATE, 1200)!;
-  it('bis Februar möglich € 3.786,19, ab März € 4.113,00', () => {
-    expect(plan.extra).toMatchObject({ from: NOV, to: '2027-02', possible: 3786.19, reserve: 3235.81 });
-    expect(plan.after).toMatchObject({ from: '2027-03', possible: 4113 });
-  });
-  it('Spielgeld € 1.200 → „Passt“, übrig € 2.586,19', () => {
-    expect(plan.status).toBe('ok');
-    expect(plan.difference).toBe(2586.19);
-  });
-  it('Tipp: € 3.750 / € 4.100 (abgerundet auf € 50)', () => {
-    expect(plan.tipExtra).toBe(3750);
-    expect(plan.tipAfter).toBe(4100);
-  });
-  it('„Gerechnet mit“: der erste Monat', () => {
-    expect(plan.months[0]).toMatchObject({ period: NOV, salary: 8302, estimated: false, reserve: 3235.81, direct: 480, wealth: 800, possible: 3786.19 });
-  });
-  it('fehlendes Netto: das zuletzt eingetragene, als „geschätzt“ markiert', () => {
-    expect(plan.months.slice(1).every((m) => m.estimated && m.salary === 8302)).toBe(true);
-  });
-  it('die nicht eingeplanten Käufe ändern nichts an der Rechnung', () => {
-    const without = data(PLANNED);
-    expect(spielgeldPlan(without, kontoState(without, NOV, S), 1200)).toEqual(plan);
-  });
-  it('zu viel: Spielgeld € 4.000 > € 3.786,19 → fehlen € 213,81 jeden Monat bis Februar', () => {
-    const over = spielgeldPlan(DATA, STATE, 4000)!;
-    expect(over.status).toBe('over');
-    expect(over.difference).toBe(213.81);
-  });
-  it('genau gleich: passt noch, übrig € 0', () => {
-    const same = spielgeldPlan(DATA, STATE, 3786.19)!;
-    expect(same.status).toBe('ok');
-    expect(same.difference).toBe(0);
-  });
-  it('ohne Spielgeld: kein Status, der Tipp bleibt', () => {
-    const none = spielgeldPlan(DATA, STATE, null)!;
-    expect(none.status).toBeNull();
-    expect(none.tipExtra).toBe(3750);
-  });
-  it('ohne Netto: keine Rechnung („Trag dein Netto-Gehalt ein …“)', () => {
-    const ds = { ...DATA, monthClose: [] };
-    expect(spielgeldPlan(ds, kontoState(ds, NOV, S), 1200)).toBeNull();
-  });
-  it('ohne Extra: eine Zeile „Möglich“, Status mit B', () => {
-    const ds = data(PLANNED);
-    const s = settings(10000);
-    const st = kontoState(ds, NOV, s);
-    expect(st.mode).toBeNull();
-    const p = spielgeldPlan(ds, st, 4200)!;
-    expect(p.extra).toBeNull();
-    expect(p.after?.possible).toBe(4113);
-    expect(p.status).toBe('over');
-    expect(p.difference).toBe(87);
-    expect(p.tipAfter).toBe(4100);
-  });
-  it('Texte: höchstens 12 Wörter je Satz, Du-Form', () => {
-    const sentences = [
-      t('plan.ok.until', { betrag: formatEUR(3235.81, { fixed: true }), monat: 'Februar' }),
-      t('plan.ok.left', { betrag: formatEUR(2586.19, { fixed: true }) }),
-      t('plan.over.until', { monat: 'Februar', betrag: formatEUR(213.81, { fixed: true }) }),
-      t('plan.tip.until', { monat: 'Februar', betrag: formatEUR(3750) }),
-      t('plan.tip.from', { monat: 'März', betrag: formatEUR(4100) }),
-    ];
-    expect(sentences[0]).toBe(`Du schaffst jeden Monat die ${formatEUR(3235.81, { fixed: true })} bis Februar.`);
-    expect(sentences[3]).toBe(`Bis Februar kannst du dir bis zu ${formatEUR(3750)} Spielgeld erlauben.`);
-    for (const s of sentences) expect(s.split(/\s+/).length).toBeLessThanOrEqual(12);
-  });
-});
-
-// „Auf einmal“ with data like yours: the open one-time amount € 980,43, to set aside by 24. Jänner
-// („Neuer Monat beginnt am 25.“: February begins on 25 January, so it is due in the January period)
-describe('„Auf einmal“: der Einmalbetrag im Monat, bis zu dem er fällig ist', () => {
-  const LUMP = 980.43;
-  const balance = Math.round((kontoState(DATA, NOV, settings(0), 25).gap - LUMP) * 100) / 100;
-  const SL = settings(balance, { gapMode: 'lump' });
-  const lumpState = kontoState(DATA, NOV, SL, 25);
-  const plan = spielgeldPlan(DATA, lumpState, 1200)!;
-  it('kontoState: auf einmal € 980,43 bis 24. Jänner, jeden Monat € 2.909', () => {
-    expect(lumpState.mode).toBe('lump');
-    expect(lumpState.lump).toBe(LUMP);
-    expect(lumpState.gapFrom).toBe('2027-02');
-    expect(lumpState.gapBy).toEqual(new Date(2027, 0, 24));
-    expect(lumpState.months.slice(0, 4).every((m) => m.amount === 2909 && m.extra === 0)).toBe(true);
-  });
-  it('im Fälligkeitsmonat (Jänner) € 980,43 weniger möglich, die Monate davor nicht', () => {
-    expect(plan.months.map((m) => [m.period, m.lump, m.possible]).slice(0, 4)).toEqual([
-      [NOV, 0, 4113],
-      ['2026-12', 0, 4113],
-      ['2027-01', LUMP, 3132.57],
-      ['2027-02', 0, 4113],
-    ]);
-  });
-  it('„Bis Jänner möglich: € 3.132,57“ (mit Einmalbetrag), „Ab Februar möglich: € 4.113,00“', () => {
-    expect(plan.extra).toMatchObject({ from: NOV, to: '2027-01', possible: 3132.57, reserve: 2909, lump: LUMP });
-    expect(plan.after).toMatchObject({ from: '2027-02', possible: 4113, lump: 0 });
-  });
-  it('Status und Tipp gegen den Monat mit dem Einmalbetrag', () => {
-    expect(plan.status).toBe('ok');
-    expect(plan.difference).toBe(1932.57);
-    expect(plan.tipExtra).toBe(3100);
-    expect(plan.tipAfter).toBe(4100);
-    const over = spielgeldPlan(DATA, lumpState, 3500)!;
-    expect(over.status).toBe('over');
-    expect(over.difference).toBe(367.43);
-  });
-  it('als zur Seite gelegt bestätigt: fällt weg, wieder wie ohne', () => {
-    // confirmLump: the amount set aside grows by the one-time amount (a new anchor)
-    const confirmed = kontoState(DATA, NOV, settings(balance + LUMP, { gapMode: 'lump' }), 25);
-    expect(confirmed.mode).toBeNull();
-    const after = spielgeldPlan(DATA, confirmed, 1200)!;
-    expect(after.extra).toBeNull();
-    expect(after.months.every((m) => m.lump === 0 && m.possible === 4113)).toBe(true);
-    expect(after.after).toMatchObject({ from: NOV, possible: 4113 });
-    // the same as without any gap
-    const none = kontoState(DATA, NOV, settings(balance + LUMP), 25);
-    expect(spielgeldPlan(DATA, none, 1200)).toEqual(after);
-  });
-  it('verteilt bleibt wie bisher (kein Einmalbetrag)', () => {
-    expect(spielgeldPlan(DATA, STATE, 1200)!.months.every((m) => m.lump === 0)).toBe(true);
-  });
-  it('fällig vor dem ersten Monat des Plans: im ersten Monat', () => {
-    // gapFrom = the active month: no month before it, the one-time amount is due now
-    const now = { ...lumpState, gapFrom: NOV, months: lumpState.months };
-    const p = spielgeldPlan(DATA, now, 1200)!;
-    expect(p.months[0]).toMatchObject({ period: NOV, lump: LUMP, possible: 3132.57 });
-    expect(p.extra).toMatchObject({ from: NOV, to: NOV });
-  });
-});
-
-describe('Rechnung rein aus Monaten (planFromMonths)', () => {
-  const m = (period: string, possible: number, extra = 0, reserve = 2909): SpielgeldMonth => ({ period, salary: 8302, estimated: false, reserve, extra, lump: 0, direct: 0, wealth: 0, possible });
-  it('Minimum je Gruppe; Extra-Monate vorne', () => {
-    const p = planFromMonths([m('2026-11', 3800, 1, 3200), m('2026-12', 3700, 1, 3300), m('2027-01', 4200), m('2027-02', 4000)], 1200);
-    expect(p.extra).toMatchObject({ from: '2026-11', to: '2026-12', possible: 3700, reserve: 3300 });
-    expect(p.after).toMatchObject({ from: '2027-01', to: '2027-02', possible: 4000 });
-  });
-  it('Tipp-Rundung: abgerundet auf € 50, nie unter 0', () => {
-    expect(floor50(3786.19)).toBe(3750);
-    expect(floor50(4113)).toBe(4100);
-    expect(floor50(4100)).toBe(4100);
-    expect(floor50(49.99)).toBe(0);
-    expect(floor50(-120)).toBe(0);
   });
 });
 

@@ -47,8 +47,9 @@ describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote, „zur Se
   for (const [id, text] of Object.entries(KONTO_TEXTS)) {
     it(id, () => {
       if (!DICTATED.has(id)) for (const s of sentences(text)) expect(wordCount(s), s).toBeLessThanOrEqual(12);
-      // „{Monat} erledigt“ is the hero's celebration (dictated in ruecklage-spielgeld), not the old checklist
-      expect(text).not.toMatch(id === 'hero.done.title' ? /Annahme|Checkliste|Kontostand heute|schon eingegangen/i : /Annahme|Checkliste|erledigt|Kontostand heute|schon eingegangen/i);
+      // „{Monat} erledigt“ is the hero's celebration (dictated in ruecklage-spielgeld), not the old checklist;
+      // „Erledigt am {Datum}“ and the bills row „{Monat} erledigt“ are dictated in monat-verdichtet
+      expect(text).not.toMatch(['hero.done.title', 'bills.done', 'month.done.account', 'month.done.aside'].includes(id) ? /Annahme|Checkliste|Kontostand heute|schon eingegangen/i : /Annahme|Checkliste|erledigt|Kontostand heute|schon eingegangen/i);
       expect(text).not.toMatch(/Schote|Erbsen?\s*=|\b1 Erbse\b/i);
       expect(text).not.toMatch(/\b(Sie|Ihr|Ihnen)\b/);
       expect(text).not.toMatch(/einzahlen|eingezahlt|gedeckt|Fixkostenkonto eröffnen/i);

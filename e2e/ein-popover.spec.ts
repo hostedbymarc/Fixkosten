@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, setUpKonto, test, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, goTo, setUpKonto, test, TODAY } from './fixtures';
 
 // Only one popover at a time (every ⓘ; the chart „Verlauf mit Plan“ has no popup, its month is in the card), and the reworded ⓘ texts.
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots of the
@@ -17,7 +17,6 @@ const VIEWPORTS = {
   'desktop-1440': { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false },
 } as const;
 
-const TILE_INFO = 'Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu.';
 const CHART_INFO = 'So entwickelt sich dein Geld, wenn du den Betrag immer am 1. zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen.';
 
 /** every open ⓘ popover on the page (screen and sheet) */
@@ -49,68 +48,43 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.setTimeout(120_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('zwei ⓘ nacheinander: nur das zweite ist offen; Diagrammpunkt füllt die Karte, kein Popup', async ({ page }) => {
+      test('ⓘ im Hero und am Verlauf; Diagrammpunkt füllt die Karte, kein Popup', async ({ page }) => {
         await start(page);
 
-        // screen: tile ⓘ, then the ⓘ of „Abzüge vom Netto“
-        const tileInfo = page.getByTestId('konto-tile-info');
-        await tileInfo.scrollIntoViewIfNeeded();
-        await tap(tileInfo);
-        await expect(popovers(page)).toHaveCount(1);
-        await expect(page.getByTestId('konto-tile-info-popover')).toContainText('Nächsten Monat zur Seite legen');
-        await expect(page.getByTestId('konto-tile-info-popover')).toContainText(TILE_INFO);
-        await shot(page, `${tag}-kachel`);
+        // screen (a month that is not the active one: the hero): ⓘ „Abzüge vom Netto“, then the ⓘ of a tile
+        await tap(page.getByRole('button', { name: 'Nächster Monat' }));
         const heroInfo = page.getByTestId('hero-deductions-info');
         await heroInfo.scrollIntoViewIfNeeded();
         await tap(heroInfo);
         await expect(page.getByTestId('hero-deductions-info-popover')).toBeVisible();
-        await expect(page.getByTestId('konto-tile-info-popover')).toHaveCount(0);
         await expect(popovers(page)).toHaveCount(1);
-
-        // sheet: ⓘ „Verlauf mit Plan“, then a point of the chart → only the chart popup
+        await shot(page, `${tag}-hero`);
         await page.keyboard.press('Escape');
         await expect(popovers(page)).toHaveCount(0);
-        const card = page.getByTestId('konto-tile');
-        await card.scrollIntoViewIfNeeded();
-        await (use.hasTouch ? card.tap({ position: { x: 12, y: 12 } }) : card.click({ position: { x: 12, y: 12 } }));
-        const sheet = page.getByTestId('konto-sheet');
-        await expect(sheet).toBeVisible();
-        await animationsDone(page, 'bottom-sheet');
-        const chartInfo = sheet.getByTestId('konto-assumption');
+
+        // analysis: ⓘ „Verlauf mit Plan“, then a point of the chart → no popup, the card shows the month
+        await goTo(page, 'analyse');
+        const section = page.getByTestId('konto-analyse');
+        const chartInfo = section.getByTestId('konto-assumption');
         await chartInfo.scrollIntoViewIfNeeded();
         await tap(chartInfo);
         await expect(page.getByTestId('konto-assumption-popover')).toHaveText(`Verlauf mit Plan${CHART_INFO}`);
         await shot(page, `${tag}-verlauf-mit-plan`);
-        // the chart has no popup any more: a tapped point fills the card under the chart (one month info)
         await page.keyboard.press('Escape');
         await expect(popovers(page)).toHaveCount(0);
-        const dot = sheet.getByTestId('konto-dot').nth(3);
+        const dot = section.getByTestId('konto-dot').nth(3);
         const period = await dot.getAttribute('data-period');
         await tap(dot);
-        await expect(sheet.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
+        await expect(section.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
         await expect(page.getByTestId('chart-tooltip')).toHaveCount(0);
         await expect(popovers(page)).toHaveCount(0);
         // the ⓘ opens over it; the card stays
         await tap(chartInfo);
         await expect(page.getByTestId('konto-assumption-popover')).toBeVisible();
         await expect(popovers(page)).toHaveCount(1);
-        await expect(sheet.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
+        await expect(section.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
 
-        // ⓘ „Eingeplante Rechnungen“ (in the fold), then the chart ⓘ: only the second
-        await page.keyboard.press('Escape');
-        const fold = sheet.getByTestId('konto-positions');
-        await fold.locator('summary').scrollIntoViewIfNeeded();
-        await tap(fold.locator('summary'));
-        const posInfo = sheet.getByTestId('konto-positions-info');
-        await posInfo.scrollIntoViewIfNeeded();
-        await tap(posInfo);
-        await expect(page.getByTestId('konto-positions-info-popover')).toContainText('Diese Rechnungen zahlst du aus deiner Rücklage.');
-        await shot(page, `${tag}-eingeplante-rechnungen`);
-        await chartInfo.scrollIntoViewIfNeeded();
-        await tap(chartInfo);
-        await expect(page.getByTestId('konto-assumption-popover')).toBeVisible();
-        await expect(page.getByTestId('konto-positions-info-popover')).toHaveCount(0);
-        await expect(popovers(page)).toHaveCount(1);
+        // two ⓘ one after the other (only the second open): see „Einstellungen: geänderte ⓘ-Texte“ below
       });
 
       test('Einstellungen: geänderte ⓘ-Texte', async ({ page }) => {
