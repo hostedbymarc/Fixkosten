@@ -230,6 +230,20 @@ function kindOfPositionId(ds: Dataset, id: string | undefined): Kind {
   return position ? kindOf(ds, position) : 'expense';
 }
 
+/**
+ * „Nicht einplanen“ (spielgeld-planer): a position stored with `account: 'spielgeld'` is not planned.
+ * It stays visible and can be ticked, but counts in no sum: Fixkosten, hero, Abzüge, sources,
+ * progress, Ø pro Monat, Rücklage, Gehalts-Aufteilung, Jahresvorschau, Analyse. Its one-offs neither.
+ */
+export function isPlanned(position: Position | undefined): boolean {
+  return position?.account !== 'spielgeld';
+}
+
+/** A one-off whose position is not planned does not count either (a one-off without position does). */
+function oneOffPlanned(ds: Dataset, positionId: string | undefined): boolean {
+  return !positionId || isPlanned(ds.positions.find((p) => p.id === positionId));
+}
+
 // ---------------------------------------------------------------------------
 // Month view: what is due in a period
 // ---------------------------------------------------------------------------
@@ -255,6 +269,8 @@ export interface DueItem {
   oneOffs: OneOff[];
   /** paid from the net salary (see countsFromNet); false only for a switched-off one-time VA payment */
   fromNet: boolean;
+  /** „nicht eingeplant“ (isPlanned false): shown and tickable, never counted */
+  unplanned: boolean;
 }
 
 /**
@@ -288,6 +304,7 @@ export function dueItems(ds: Dataset, period: Period): DueItem[] {
       delta: payment && status === 'paid' ? fromCents(toCents(payment.actualAmount) - toCents(planned)) : null,
       oneOffs,
       fromNet: countsFromNet(category.kind, position, plan),
+      unplanned: !isPlanned(position),
     });
   }
   const order = new Map(sortedCategories(ds).map((c, i) => [c.id, i]));
@@ -306,9 +323,9 @@ function plannedAmount(plan: PlanEntry | null, payment: Payment | undefined): nu
   return payment.plannedAmount;
 }
 
-/** Items that count towards the plan: due and not skipped. */
+/** Items that count towards the plan: due, not skipped and planned (not „nicht eingeplant“). */
 function counted(items: DueItem[]): DueItem[] {
-  return items.filter((i) => i.due && i.status !== 'skipped');
+  return items.filter((i) => i.due && i.status !== 'skipped' && !i.unplanned);
 }
 
 export interface CategoryGroup {
@@ -346,10 +363,10 @@ export function plannedForPeriod(ds: Dataset, period: Period, kind: Kind = 'expe
 /** Actually debited: ticked payments plus ticked one-offs (credits negative). */
 export function actualForPeriod(ds: Dataset, period: Period, kind: Kind = 'expense'): number {
   const payments = ds.payments
-    .filter((p) => p.period === period && p.status === 'paid' && kindOfPositionId(ds, p.positionId) === kind)
+    .filter((p) => p.period === period && p.status === 'paid' && kindOfPositionId(ds, p.positionId) === kind && oneOffPlanned(ds, p.positionId))
     .map((p) => p.actualAmount);
   const oneOffs = ds.oneOffs
-    .filter((o) => o.period === period && o.paidAt && kindOfPositionId(ds, o.positionId) === kind)
+    .filter((o) => o.period === period && o.paidAt && kindOfPositionId(ds, o.positionId) === kind && oneOffPlanned(ds, o.positionId))
     .map((o) => o.amount);
   return sumMoney([...payments, ...oneOffs]);
 }
@@ -392,6 +409,7 @@ function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
   for (const o of ds.oneOffs) {
     if (o.period !== period) continue;
     const position = o.positionId ? ds.positions.find((p) => p.id === o.positionId) : undefined;
+    if (position && !isPlanned(position)) continue;
     const category = position ? cats.get(position.categoryId) : undefined;
     const kind = category?.kind ?? 'expense';
     entries.push({
@@ -487,20 +505,22 @@ export function monthFigures(ds: Dataset, period: Period): MonthFigures {
   };
 }
 
-/** What pays the month's Fixkosten (Gesamt): the Rücklage, the salary directly, the Spielgeld. reserve + salary + spielgeld = Gesamt. */
+/**
+ * What pays the month's Fixkosten (Gesamt): the Rücklage or directly („Direkt bezahlt“).
+ * reserve + salary = Gesamt (positions „nicht eingeplant“ are in neither, see isPlanned).
+ */
 export interface CostSources {
   reserve: number;
   salary: number;
-  spielgeld: number;
 }
 
 export function costSources(ds: Dataset, period: Period): CostSources {
   const sum = (a: Account) =>
     fromCents(monthEntries(ds, period).filter((e) => e.kind === 'expense' && e.account === a).reduce((acc, e) => acc + e.cents, 0));
-  return { reserve: sum('fixkostenkonto'), salary: sum('girokonto'), spielgeld: sum('spielgeld') };
+  return { reserve: sum('fixkostenkonto'), salary: sum('girokonto') };
 }
 
-/** One thing due in a month with what pays it (Gehalts-Aufteilung, Spielgeld-Karte). */
+/** One thing due in a month with what pays it (Gehalts-Aufteilung). */
 export interface SourceItem {
   name: string;
   amount: number;
@@ -590,7 +610,7 @@ export function openFromPrevious(ds: Dataset, period: Period, today: Period): Op
     const f = monthFigures(ds, p);
     const savings = tally(monthEntries(ds, p).filter((e) => e.kind === 'savings'));
     if (f.openCount === 0 && savings.openCount === 0) continue;
-    const open = dueItems(ds, p).filter((i) => i.due && i.status === 'open');
+    const open = dueItems(ds, p).filter((i) => i.due && i.status === 'open' && !i.unplanned);
     groups.push({
       period: p,
       items: open.filter((i) => i.kind === 'expense'),
@@ -687,7 +707,7 @@ function matchingPositions(ds: Dataset, period: Period, filter: EquivalentFilter
   return ds.positions.filter((p) => {
     const category = cats.get(p.categoryId);
     const plan = planForPeriod(p, period);
-    if (!category || !plan || !isActiveInPeriod(p, period)) return false;
+    if (!category || !plan || !isActiveInPeriod(p, period) || !isPlanned(p)) return false;
     if (filter.kind && category.kind !== filter.kind) return false;
     if (filter.nonMonthlyOnly && plan.frequency === 'monthly') return false;
     if (filter.frequency && plan.frequency !== filter.frequency) return false;
@@ -836,7 +856,7 @@ export function upcomingDue(ds: Dataset, period: Period, months = 2): DueItem[] 
   const out: DueItem[] = [];
   for (let i = 1; i <= months; i++) {
     const p = addPeriods(period, i);
-    out.push(...dueItems(ds, p).filter((i) => i.due && i.plan !== null && i.plan.frequency !== 'monthly'));
+    out.push(...dueItems(ds, p).filter((i) => i.due && !i.unplanned && i.plan !== null && i.plan.frequency !== 'monthly'));
   }
   return out;
 }
@@ -869,7 +889,7 @@ export interface PlanChange {
 export function planChanges(ds: Dataset): PlanChange[] {
   const changes: PlanChange[] = [];
   for (const position of ds.positions) {
-    if (kindOf(ds, position) !== 'expense') continue;
+    if (kindOf(ds, position) !== 'expense' || !isPlanned(position)) continue;
     const history = planHistory(position);
     for (let i = 1; i < history.length; i++) {
       const from = history[i - 1]!;

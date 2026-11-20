@@ -28,17 +28,20 @@ test.describe('Monatsabschluss', () => {
     await check();
 
     await app.getByTestId('free-tile').click();
-    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5.000');
   });
 
-  test('comma decimals, decimal keyboard, invalid input blocks saving', async ({ app }) => {
+  test('comma decimals, decimal keyboard, letters are filtered out', async ({ app }) => {
     await app.getByTestId('free-tile').click();
     const salary = shown(app.getByLabel('Netto-Gehalt'));
     await expect(salary).toHaveAttribute('inputmode', 'decimal');
     await salary.fill('4.850,50');
     await expect(app.getByTestId('close-average')).toContainText(eur('Rechnerisch frei diesen Monat € 647,50'));
+    // the amount field (spielgeld-planer) takes only digits, a comma and the thousands dot
     await salary.fill('viel');
-    await expect(app.getByRole('button', { name: 'Speichern' })).toBeDisabled();
+    await expect(salary).toHaveValue('');
+    await salary.fill('4850x');
+    await expect(salary).toHaveValue('4.850');
   });
 
   test('"Wie Vormonat" copies previous values; nothing is saved automatically', async ({ app }) => {
@@ -52,9 +55,9 @@ test.describe('Monatsabschluss', () => {
     await app.getByTestId('free-tile').click();
     await animationsDone(app, 'bottom-sheet');
     await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('');
-    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveAttribute('placeholder', '5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveAttribute('placeholder', '5.000');
     await app.getByRole('button', { name: 'Wie Vormonat' }).click();
-    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5000');
+    await expect(shown(app.getByLabel('Netto-Gehalt'))).toHaveValue('5.000');
     await app.keyboard.press('Escape');
 
     await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');

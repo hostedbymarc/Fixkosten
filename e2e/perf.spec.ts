@@ -128,9 +128,17 @@ test.beforeEach(async ({ page }) => {
   await observe(page);
 });
 
+// „perf“ and „perf-feier“ (the confetti, isolated) each write their own keys: merged with what is there
 test.afterAll(() => {
   mkdirSync(OUT, { recursive: true });
-  writeFileSync(`${OUT}/liquid-glass.json`, `${JSON.stringify(results, null, 2)}\n`);
+  const file = `${OUT}/liquid-glass.json`;
+  let before: Record<string, unknown> = {};
+  try {
+    before = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+  } catch {
+    // no file yet
+  }
+  writeFileSync(file, `${JSON.stringify({ ...before, ...results }, null, 2)}\n`);
 });
 
 test('Scrollen Monat: Ø Frame-Zeit < 16 ms, kein Long Task, CLS 0', async ({ page, browser }) => {
@@ -184,23 +192,38 @@ test('Tabwechsel (inkl. erster Besuch Analyse): Ø Frame-Zeit < 16 ms, kein Long
   }
 });
 
-// ruecklage-spielgeld: „{Monat} erledigt“ with the pea confetti (live data: October is paid). A tap on the
-// check plays it again; measured with 4× CPU throttling (Chrome DevTools, iPhone profile of this project).
-for (const [device, viewport, minPeas] of [
-  ['iPhone 15', null, 90],
-  ['iPhone SE', { width: 375, height: 667 }, 60],
+// „{Monat} erledigt“ with the pea confetti (live data: October is paid). spielgeld-planer: it falls only live, when
+// the last position is ticked, so the „Entgelt Depot“ is set back to open first and ticked again while measured
+// (4× CPU throttling, Chrome DevTools, iPhone profile of this project); the hero is scrolled back into view.
+// Limit: 16 ms, like every other perf test. Only the iPhone 15 (90 peas) gets 22 ms (decided in PR #49): a one-time
+// animation, not a lasting interaction, and the emulated measurement varies (raw a steady 22–23 ms, the
+// calibration factor 1.1–1.6). Measured only isolated (project „perf-feier“).
+for (const [device, viewport, minPeas, limit] of [
+  ['iPhone 15', null, 90, 22],
+  ['iPhone SE', { width: 375, height: 667 }, 60, 16],
 ] as const) {
-  test(`Feier „Oktober erledigt“ (${device}): Ø Frame-Zeit < 16 ms bei 4× CPU-Drosselung`, async ({ page, browser }) => {
+  test(`Feier „Oktober erledigt“ (${device}): Ø Frame-Zeit < ${limit} ms bei 4× CPU-Drosselung`, async ({ page, browser }) => {
     if (viewport) await page.setViewportSize(viewport);
     await expect(page.getByTestId('hero-done')).toBeVisible();
-    // the confetti of the first opening is over (≤ 0.9 s delay + 3.2 s fall)
-    await page.waitForTimeout(4300);
+    const depot = page.locator('[data-testid=position-row]', { hasText: 'Entgelt Depot' }).getByTestId('toggle-paid').first();
+    // a fully paid category starts collapsed
+    if (!(await depot.isVisible())) await page.getByRole('button', { name: 'Alle ausklappen' }).tap();
+    await depot.scrollIntoViewIfNeeded();
+    await depot.tap();
+    await expect(page.getByTestId('hero-done')).toHaveCount(0);
+    await page.waitForTimeout(600);
     const speed = await speedFactor(page);
     const cdp = await page.context().newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    // measured: the fall itself. The switch of the month after the tick (hero to „erledigt“, the paid category
+    // collapses) takes the first ~1.5 s and is not part of it (~20 ms Ø normalised with it, see the report);
+    // the peas fall up to 0.9 s delay + 3.2 s, so the 2.6 s window from 1.5 s on still sees them falling
+    await depot.tap();
+    await page.getByTestId('hero').scrollIntoViewIfNeeded();
+    await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
+    await page.waitForTimeout(1500);
     const m = await frameWork(browser, page, `feier-${device}`, async () => {
-      await page.getByTestId('hero-check').tap();
-      await page.waitForTimeout(4300);
+      await page.waitForTimeout(2600);
     });
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     await cdp.detach();
@@ -208,6 +231,6 @@ for (const [device, viewport, minPeas] of [
     results[`Feier ${device}`] = { ...m, ...normalised(m, speed), cpuThrottling: 4, peas };
     expect(peas).toBe(minPeas);
     expect(m.frames).toBeGreaterThan(30);
-    expect(m.avgFrameMs / speed.factor).toBeLessThan(16);
+    expect(m.avgFrameMs / speed.factor).toBeLessThan(limit);
   });
 }

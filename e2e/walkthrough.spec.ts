@@ -121,9 +121,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // card 3: salary → Rücklage / direct / Spielgeld / Vermögensaufbau
         await forward(page);
         await expect(walk(page)).toHaveAttribute('data-card', '3');
-        await expect(page.getByTestId('walkthrough-flow')).toHaveText(/Gehalt.*Rücklage.*Gehalt direkt.*Spielgeld.*Vermögensaufbau/);
+        await expect(page.getByTestId('walkthrough-flow')).toHaveText(/Gehalt.*Rücklage.*Direkt bezahlt.*Spielgeld.*Vermögensaufbau/);
         await expect(page.getByTestId('walkthrough-text-3')).toHaveText('Die Rücklage ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt.');
-        await expect(visibleCard(page, 3)).toContainText('Manches zahlst du direkt vom Gehalt oder aus deinem Spielgeld.');
+        await expect(visibleCard(page, 3)).toContainText('Manches zahlst du direkt. Spielgeld planst du nur ein.');
         await shot(page, `${tag}-03-ruecklage`);
 
         // card 4: the gap, spread

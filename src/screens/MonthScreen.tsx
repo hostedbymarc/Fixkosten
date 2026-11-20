@@ -7,12 +7,11 @@ import { GlassGroup } from '../components/GlassGroup';
 import { Pea } from '../components/Pea';
 import { useKonto } from '../db/useKonto';
 import { SalarySplitCard } from '../components/konto/SalarySplitCard';
-import { SpielgeldCard } from '../components/konto/SpielgeldCard';
+import { SpielgeldPlanCard } from '../components/konto/SpielgeldPlanCard';
 import { t } from '../lib/kontoTexts';
 import { heroSourceRows } from '../lib/heroSources';
-import { celebrateLive, celebrateOnOpen, monthDone } from '../lib/celebration';
+import { celebrateLive, confettiState, monthDone } from '../lib/celebration';
 import { Confetti } from '../components/Confetti';
-import { markCelebrated } from '../db/kontoActions';
 import { reducedMotion } from '../lib/entrance';
 import { streakBadge, streakOf } from '../lib/kontoBalance';
 import { Screen } from '../components/Screen';
@@ -112,8 +111,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const groups = useMemo(() => groupByCategory(items), [items]);
   // every amount of the month comes from here (hero, tiles, category headers)
   const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
-  // „Fixkosten einplanen“: Hero by source, „So teilt sich dein Gehalt“ and the Spielgeld card instead of „Frei verfügbar“ / „Ø pro Monat“
-  const { settings: konto, stored: kontoStored } = useKonto();
+  // „Fixkosten einplanen“: Hero by source, „So teilt sich dein Gehalt“ and „Dein Spielgeld“ instead of „Frei verfügbar“ / „Ø pro Monat“
+  const { settings: konto } = useKonto();
   // fully paid categories start collapsed, categories with something open expanded
   const collapse = useMonthCollapse(period, (id) => {
     const t = categoryFigures(figures, id);
@@ -231,7 +230,6 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           openOnly={filtering}
           onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)}
           active={today}
-          celebrated={kontoStored === undefined ? null : konto.celebratedMonths}
           streak={konto.enabled && konto.setupDone && period === today ? streakBadge(streakOf(konto.checks, today)) : null}
         />
         {/* „Zur Seite legen“ and its advice: only in the active month */}
@@ -279,7 +277,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           {konto.enabled && <SalarySplitCard ref={closeTile} ds={ds} period={period} active={today} onOpenSalary={() => openClose(closeTile.current)} />}
         </GlassGroup>
         </TileFit.Provider>
-        {konto.enabled && <SpielgeldCard ds={ds} period={period} active={today} />}
+        {/* „Dein Spielgeld“: only in the active month */}
+        {konto.enabled && period === today && <SpielgeldPlanCard ds={ds} active={today} onOpenSalary={() => openClose(closeTile.current)} />}
         <KontoInvite />
         <MonthNoteCard ref={noteCard} period={period} note={monthCloseFor(ds, period)?.note} onOpen={() => setNoteOpen(true)} />
       </div>
@@ -571,38 +570,31 @@ function HeroCard({
   openOnly,
   onToggleOpenOnly,
   active,
-  celebrated,
   streak,
 }: {
   period: Period;
   /** the active month: only it celebrates (past months never, not even when first opened) */
   active: Period;
   figures: MonthFigures;
-  /** months celebrated already (null while the settings load: no confetti yet) */
-  celebrated: readonly Period[] | null;
   /** „{n} Monate in Folge“ (Fixkosten einplanen, from 2 on) */
   streak: number | 'new' | null;
-  /** „Fixkosten einplanen“ on: what pays the Fixkosten (Rücklage, Gehalt, Spielgeld); off: null */
+  /** „Fixkosten einplanen“ on: what pays the Fixkosten (Rücklage, Direkt bezahlt); off: null */
   sources: CostSources | null;
   openOnly: boolean;
   onToggleOpenOnly: () => void;
 }) {
   const allPaid = monthDone(figures);
-  // confetti: live when the last position is ticked, once when a month complete since is opened, on a tap of the check
+  // confetti: falls once, live, when the last position of the active month is ticked; else the peas lie still
   const [run, setRun] = useState(0);
-  const handled = useRef<Period | null>(null);
   useEffect(() => {
     const live = celebrateLive(heroLast.period === null ? null : heroLast, period, active, allPaid);
     Object.assign(heroLast, { period, done: allPaid });
-    if (celebrated === null) return;
-    const open = handled.current !== period && celebrateOnOpen(period, active, allPaid, celebrated);
-    if (celebrated !== null) handled.current = period;
-    if (live || open) {
-      setRun((n) => n + 1);
-      if (!celebrated.includes(period)) void markCelebrated(db, period);
-    }
-  }, [period, allPaid, celebrated, active]);
-  // another month: no confetti layer from before (a new run only for this month)
+    if (live) setRun((n) => n + 1);
+    // set back to open: the next 100 % falls again
+    else if (!allPaid) setRun(0);
+  }, [period, allPaid, active]);
+  const peas = confettiState(allPaid, run > 0, reducedMotion());
+  // another month: no falling peas from before (they lie)
   const [runFor, setRunFor] = useState(period);
   if (runFor !== period) {
     setRunFor(period);
@@ -633,9 +625,9 @@ function HeroCard({
           </span>
         )}
       </span>
-      {allPaid && run > 0 && !reducedMotion() && <Confetti run={run} seed={period} />}
+      {peas !== 'none' && <Confetti key={`${period}-${run}`} seed={period} falling={peas === 'falling'} />}
       {allPaid ? (
-        <HeroDone period={period} figures={figures} streak={streak} run={run} onReplay={() => setRun((n) => n + 1)} />
+        <HeroDone period={period} figures={figures} streak={streak} pop={peas === 'falling'} />
       ) : (
       <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7">
         <ProgressRing
@@ -691,24 +683,21 @@ function HeroCard({
 }
 
 /**
- * „{Monat} erledigt“: every position of the month is paid. A big check in a light brand circle (a tap
- * plays the celebration again), title and subtitle, the amount big, „{n} Monate in Folge“ from 2 on.
+ * „{Monat} erledigt“: every position of the month is paid. A big check in a light brand circle (it pops
+ * only together with the falling peas, it is not a button), title and subtitle, the amount big,
+ * „{n} Monate in Folge“ from 2 on.
  */
-function HeroDone({ period, figures, streak, run, onReplay }: { period: Period; figures: MonthFigures; streak: number | 'new' | null; run: number; onReplay: () => void }) {
+function HeroDone({ period, figures, streak, pop }: { period: Period; figures: MonthFigures; streak: number | 'new' | null; pop: boolean }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7" data-testid="hero-done">
-      <button
-        // a new key on every run: the pop plays again
-        key={run}
-        type="button"
-        onClick={onReplay}
-        className="hero-check focus-ring flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 shadow-card md:h-[124px] md:w-[124px]"
-        data-pop={run > 0 && !reducedMotion() ? '' : undefined}
-        aria-label={t('hero.done.replay')}
+      <span
+        className="hero-check flex h-[84px] w-[84px] shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 shadow-card md:h-[124px] md:w-[124px]"
+        data-pop={pop ? '' : undefined}
+        aria-hidden="true"
         data-testid="hero-check"
       >
         <CheckIcon size={56} strokeWidth={2.6} className="h-[44px] w-[44px] md:h-[64px] md:w-[64px]" />
-      </button>
+      </span>
       <div className="fit-box flex-1">
         <p className="text-[20px] font-semibold leading-7 tracking-[-0.01em] text-ink md:text-[24px] md:leading-8" data-testid="hero-done-title">
           {t('hero.done.title', { monat: monthName(period) })}

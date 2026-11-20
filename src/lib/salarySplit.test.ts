@@ -76,28 +76,26 @@ describe('Daten wie deine: Grundbetrag und Lücke', () => {
 });
 
 describe('Gehalts-Aufteilung', () => {
-  it('Überzug aus anderer Quelle: Überschuss € 2.451', () => {
-    const s = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'other' } });
-    const split = salarySplit(DATA, NOV, kontoState(DATA, NOV, s), s);
-    expect(split).toMatchObject({ salary: 8302, reserve: 2909, direct: 450, wealth: 1283, spielgeld: 1209, spent: 3028.45, overflow: 1819.45, overflowSource: 'other', overflowCounted: 0, rest: 2451 });
-    expect(split.directItems.map((i) => i.name)).toEqual(['Lebensmittel']);
-    expect(split.spentItems.map((i) => i.name).sort()).toEqual(['Konzert', 'Urlaub']);
-  });
-
-  it('Überzug aus dem Überschuss (Standard bis zur Antwort): € 2.451 − € 1.819,45', () => {
+  it('Spielgeld = geplanter Betrag; nicht eingeplante Käufe zählen nicht: Überschuss € 2.451', () => {
     const s = settings(BALANCE);
     const split = salarySplit(DATA, NOV, kontoState(DATA, NOV, s), s);
-    expect(split.overflowSource).toBe('surplus');
-    expect(split.overflowCounted).toBe(1819.45);
-    expect(split.rest).toBe(631.55);
+    expect(split).toMatchObject({ salary: 8302, reserve: 2909, direct: 450, wealth: 1283, spielgeld: 1209, rest: 2451 });
+    expect(split.directItems.map((i) => i.name)).toEqual(['Lebensmittel']);
+    expect(Object.keys(split)).not.toContain('overflow');
   });
 
-  it('ohne Spielgeld: was vom Spielgeld bezahlt wird, geht trotzdem vom Gehalt („Bleibt dir“)', () => {
+  it('gespeicherte Überzug-Antworten werden nicht mehr gelesen', () => {
+    const a = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'other' } });
+    const b = settings(BALANCE, { spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 800 } } });
+    expect(salarySplit(DATA, NOV, kontoState(DATA, NOV, a), a).rest).toBe(2451);
+    expect(salarySplit(DATA, NOV, kontoState(DATA, NOV, b), b).rest).toBe(2451);
+  });
+
+  it('ohne Spielgeld: keine Zeile, „Bleibt dir“', () => {
     const s = settings(BALANCE, { spielgeld: null });
     const split = salarySplit(DATA, NOV, kontoState(DATA, NOV, s), s);
     expect(split.spielgeld).toBeNull();
-    expect(split.overflow).toBe(0);
-    expect(split.rest).toBe(631.55);
+    expect(split.rest).toBe(8302 - 2909 - 450 - 1283);
   });
 
   it('verteilt: Zur Seite legen inkl. Extra', () => {
@@ -119,27 +117,27 @@ describe('Gehalts-Aufteilung', () => {
 });
 
 describe('Hero: Fixkosten nach Quelle', () => {
-  it('Rücklage + Gehalt + Spielgeld = Fixkosten-Summe', () => {
+  it('Rücklage + Direkt bezahlt = Fixkosten-Summe; nicht eingeplant ist in keiner Quelle', () => {
     const src = costSources(DATA, NOV);
-    expect(src).toEqual({ reserve: 2500, salary: 450, spielgeld: 3028.45 });
-    expect(Math.round((src.reserve + src.salary + src.spielgeld) * 100)).toBe(Math.round(monthFigures(DATA, NOV).total * 100));
+    expect(src).toEqual({ reserve: 2500, salary: 450 });
+    expect(Math.round((src.reserve + src.salary) * 100)).toBe(Math.round(monthFigures(DATA, NOV).total * 100));
   });
   it('auch mit Einmalbetrag ohne Position und Vermögensaufbau daneben', () => {
     const ds = { ...DATA, oneOffs: [{ id: 'o', period: NOV, amount: 37.5, label: 'Nachzahlung' }] };
     const src = costSources(ds, NOV);
     expect(src.salary).toBe(487.5);
-    expect(Math.round((src.reserve + src.salary + src.spielgeld) * 100)).toBe(Math.round(monthFigures(ds, NOV).total * 100));
+    expect(Math.round((src.reserve + src.salary) * 100)).toBe(Math.round(monthFigures(ds, NOV).total * 100));
   });
 });
 
 describe('Empfehlung auf der Zur-Seite-Kachel', () => {
   it('Überschuss ≥ Einmalbetrag: auf einmal (€ 990,43)', () => {
-    const s = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'other' } });
+    const s = settings(BALANCE);
     const st = kontoState(DATA, NOV, s);
     expect(lumpAdvice(st, salarySplit(DATA, NOV, st, s))).toEqual({ advice: 'lump', rest: 2451, amount: 990.43, left: 1460.57, missing: 0 });
   });
   it('Überschuss < Einmalbetrag: verteilt', () => {
-    const s = settings(BALANCE - 1000, { spielgeldOverflow: { [NOV]: 'surplus' } });
+    const s = settings(BALANCE - 2000);
     const st = kontoState(DATA, NOV, s);
     const advice = lumpAdvice(st, salarySplit(DATA, NOV, st, s));
     expect(advice?.advice).toBe('spread');
@@ -178,22 +176,7 @@ describe('Empfehlung: dieselbe Rechnung wie die Aufteilung', () => {
   });
 });
 
-describe('Spielgeld-Überzug teilweise aus anderer Quelle', () => {
-  it('Überzug € 1.828,45, andere Quelle € 800 → aus dem Überschuss € 1.028,45', () => {
-    const s = settings(BALANCE, { spielgeld: 1200, spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 800 } } });
-    const split = salarySplit(DATA, NOV, kontoState(DATA, NOV, s), s);
-    expect(split.overflow).toBe(1828.45);
-    expect(split.overflowMode).toBe('part');
-    expect(split.overflowOther).toBe(800);
-    expect(split.overflowCounted).toBe(1028.45);
-    expect(split.rest).toBe(Math.round((8302 - split.reserve - 450 - 1283 - 1200 - 1028.45) * 100) / 100);
-  });
-  it('höchstens der Überzug; 0 zählt alles aus dem Überschuss', () => {
-    const big = settings(BALANCE, { spielgeld: 1200, spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 5000 } } });
-    expect(salarySplit(DATA, NOV, kontoState(DATA, NOV, big), big).overflowCounted).toBe(0);
-    const zero = settings(BALANCE, { spielgeld: 1200, spielgeldOverflow: { [NOV]: { mode: 'part', otherAmount: 0 } } });
-    expect(salarySplit(DATA, NOV, kontoState(DATA, NOV, zero), zero).overflowCounted).toBe(1828.45);
-  });
+describe('Alte Überzug-Antworten bleiben gespeichert (nur additiv)', () => {
   it('alte Werte „surplus“/„other“ werden weiter gelesen; der Teilbetrag ist additiv gespeichert', () => {
     const s = toKontoSettings({ spielgeldOverflow: { '2026-10': 'other', '2026-11': 'surplus', '2026-12': { mode: 'part', otherAmount: 800.555 }, '2027-01': { mode: 'part' }, '2027-02': { mode: 'quatsch' } } });
     expect(s.spielgeldOverflow).toEqual({ '2026-10': 'other', '2026-11': 'surplus', '2026-12': { mode: 'part', otherAmount: 800.56 } });
@@ -203,7 +186,7 @@ describe('Spielgeld-Überzug teilweise aus anderer Quelle', () => {
 });
 
 describe('Rücklage-Rechnung zählt nur fixkostenkonto', () => {
-  it('Positionen auf Gehalt und Spielgeld ändern den Monatsbetrag nicht', () => {
+  it('direkt bezahlte und nicht eingeplante Positionen ändern den Monatsbetrag nicht', () => {
     const only = { ...DATA, positions: POSITIONS.filter((p) => ['Miete', 'Versicherung'].includes(p.id)) };
     expect(kontoState(only, NOV, settings(BALANCE)).order).toBe(state().order);
   });
@@ -236,14 +219,15 @@ describe('Speichern und Import: nur additiv', () => {
 });
 
 describe('„Frei verfügbar“ ohne Fixkosten einplanen: unverändert', () => {
-  it('Netto − Fixkosten − Vermögensaufbau vom Netto, egal woraus bezahlt', () => {
+  it('Netto − Fixkosten − Vermögensaufbau vom Netto, egal ob Rücklage oder direkt', () => {
     const f = monthFigures(DATA, NOV);
-    expect(f.total).toBe(5978.45);
+    // Urlaub and Konzert are „nicht eingeplant“: not in the Fixkosten
+    expect(f.total).toBe(2950);
     expect(f.wealthFromNet).toBe(1283);
-    expect(f.free).toBe(1040.55);
-    // the source of a position does not move „Frei verfügbar“
-    const allReserve = { ...DATA, positions: POSITIONS.map((p) => ({ ...p, account: 'fixkostenkonto' as const })) };
-    expect(monthFigures(allReserve, NOV).free).toBe(1040.55);
+    expect(f.free).toBe(4069);
+    // Rücklage or Direkt does not move „Frei verfügbar“
+    const allReserve = { ...DATA, positions: POSITIONS.map((p) => (p.account === 'spielgeld' ? p : { ...p, account: 'fixkostenkonto' as const })) };
+    expect(monthFigures(allReserve, NOV).free).toBe(4069);
   });
 });
 
@@ -262,12 +246,10 @@ describe('Nächstes Gehalt (Standard der Aufteilung)', () => {
     expect(st.next.extra).toBeGreaterThan(0);
     expect(nextSalarySplit(DATA, NOV, st, s).reserve).toBe(st.next.amount);
   });
-  it('Planung des Folgemonats, Spielgeld = Limit, kein Überzug', () => {
+  it('Planung des Folgemonats, Spielgeld = geplanter Betrag', () => {
     const s = settings(BALANCE);
     const split = nextSalarySplit(DATA, NOV, kontoState(DATA, NOV, s), s, 2909);
-    expect(split).toMatchObject({ salary: 8302, salaryFrom: NOV, direct: 450, wealth: 1283, spielgeld: 1209, overflow: 0, overflowCounted: 0, rest: 2451 });
-    // the one-time Spielgeld payments of November are not planned in December
-    expect(split.spent).toBe(0);
+    expect(split).toMatchObject({ salary: 8302, salaryFrom: NOV, direct: 450, wealth: 1283, spielgeld: 1209, rest: 2451 });
   });
   it('Netto des Folgemonats eingetragen: kein Hinweis „wie im …“', () => {
     const ds = { ...DATA, monthClose: [...DATA.monthClose, { period: '2026-12', netSalary: 9000, updatedAt: '2026-12-01T00:00:00.000Z' }] };
@@ -305,7 +287,7 @@ describe('Empfehlung aus dem nächsten Gehalt, mit dem Grundbetrag', () => {
     expect(st.lump).toBeGreaterThan(2451);
     expect(tileAdvice(DATA, NOV, st, s)?.advice).toBe('spread');
   });
-  it('der Spielgeld-Überzug des laufenden Monats ändert die Empfehlung nicht', () => {
+  it('gespeicherte Überzug-Antworten ändern die Empfehlung nicht', () => {
     const a = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'surplus' } });
     const b = settings(BALANCE, { spielgeldOverflow: { [NOV]: 'other' } });
     expect(tileAdvice(DATA, NOV, kontoState(DATA, NOV, a), a)).toEqual(tileAdvice(DATA, NOV, kontoState(DATA, NOV, b), b));
@@ -313,19 +295,19 @@ describe('Empfehlung aus dem nächsten Gehalt, mit dem Grundbetrag', () => {
 });
 
 describe('„Woraus du bezahlst“: nur Quellen > 0, Summe = Fixkosten', () => {
-  it('drei Quellen in fester Reihenfolge', () => {
+  it('zwei Quellen in fester Reihenfolge: Rücklage, Direkt bezahlt', () => {
     const rows = heroSourceRows(costSources(DATA, NOV));
     expect(rows.map((r) => [r.key, r.label, r.value])).toEqual([
       ['reserve', 'Rücklage', 2500],
-      ['salary', 'Gehalt', 450],
-      ['spielgeld', 'Spielgeld', 3028.45],
+      ['salary', 'Direkt bezahlt', 450],
     ]);
     expect(Math.round(rows.reduce((a, r) => a + r.value, 0) * 100)).toBe(Math.round(monthFigures(DATA, NOV).total * 100));
   });
   it('Quellen mit 0 fallen weg; alles aus der Rücklage: eine Zeile', () => {
-    const allReserve = { ...DATA, positions: POSITIONS.map((p) => ({ ...p, account: 'fixkostenkonto' as const })) };
+    const allReserve = { ...DATA, positions: POSITIONS.map((p) => (p.account === 'spielgeld' ? p : { ...p, account: 'fixkostenkonto' as const })) };
     const rows = heroSourceRows(costSources(allReserve, NOV));
     expect(rows.map((r) => r.key)).toEqual(['reserve']);
-    expect(heroSourceRows({ reserve: 0, salary: 0.004, spielgeld: 12 }).map((r) => r.key)).toEqual(['spielgeld']);
+    expect(heroSourceRows({ reserve: 0, salary: 12 }).map((r) => r.key)).toEqual(['salary']);
+    expect(heroSourceRows({ reserve: 5, salary: 0.004 }).map((r) => r.key)).toEqual(['reserve']);
   });
 });

@@ -4,7 +4,7 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { fixtureBackup } from '../../tests/fixtures/dataset';
-import { monthItems } from '../lib/calc';
+import { monthItems, dueItems } from '../lib/calc';
 import { exportBackup, importBackup, importIntoEmpty, parseBackup } from './backup';
 import { FixkostenDB } from './db';
 import { upgradePositionV5 } from './migrations';
@@ -50,12 +50,17 @@ describe('account „spielgeld“ bleibt erhalten', () => {
     await markPaid(db, 'pos-miete', OCT, 1008);
     await saveOneOff(db, { period: NOV, positionId: 'pos-miete', amount: 40, credit: false, label: 'Nachzahlung' });
     const ds = await loadDataset(db);
+    // spielgeld-planer: 'spielgeld' = „nicht eingeplant“ – the month instance shows it as such and sums skip it
     for (const period of [OCT, NOV, '2026-12', '2027-03']) {
-      const miete = monthItems(ds, period).filter((i) => i.name.startsWith('Miete'));
+      const miete = dueItems(ds, period).filter((i) => i.position.id === 'pos-miete');
       expect(miete.length).toBeGreaterThan(0);
-      for (const i of miete) expect(i.account).toBe('spielgeld');
+      for (const i of miete) {
+        expect(i.position.account).toBe('spielgeld');
+        expect(i.unplanned).toBe(true);
+      }
+      expect(monthItems(ds, period).some((i) => i.name.startsWith('Miete'))).toBe(false);
     }
-    expect(monthItems(ds, NOV).find((i) => i.name === 'Konzert')?.account).toBe('spielgeld');
+    expect(dueItems(ds, NOV).find((i) => i.position.name === 'Konzert')?.unplanned).toBe(true);
     expect(await accountOf(db, once)).toBe('spielgeld');
   });
   it('Neuladen (neue Verbindung zur selben Datenbank)', async () => {

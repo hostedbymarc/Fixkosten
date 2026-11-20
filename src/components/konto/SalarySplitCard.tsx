@@ -22,11 +22,11 @@ interface Props {
 
 /**
  * „So teilt sich dein Gehalt“ (instead of „Frei verfügbar“ while „Fixkosten einplanen“ is on):
- * Gehalt am {Tag} − Zur Seite legen − Direkt vom Gehalt − Vermögensaufbau − Spielgeld (− Spielgeld-Überzug)
- * = Überschuss („Bleibt dir“ without a Spielgeld). Numbers: salarySplit over kontoState.
+ * Gehalt am {Tag} − Zur Seite legen − Direkt bezahlt − Vermögensaufbau − Spielgeld (the planned amount, in both
+ * views) = Überschuss („Bleibt dir“ without a Spielgeld). Numbers: salarySplit over kontoState.
  * Only in the active month a switch „Nächstes Gehalt | Aktuelles Gehalt“, default the next one (planned,
- * with the amount of the Zur-Seite-Kachel); the current one shows the actual values and the
- * Spielgeld-Überzug. Every other month: no switch, only its own actual values with its own net salary.
+ * with the amount of the Zur-Seite-Kachel); the current one shows the actual values. Every other month:
+ * no switch, only its own actual values with its own net salary.
  */
 export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function SalarySplitCard({ ds, period, active, onOpenSalary }, ref) {
   const { settings } = useKonto();
@@ -44,8 +44,7 @@ export const SalarySplitCard = forwardRef<HTMLButtonElement, Props>(function Sal
     { key: 'reserve', label: t('split.reserve'), value: split.reserve },
     { key: 'direct', label: t('split.direct'), note: names, value: split.direct },
     { key: 'wealth', label: t('split.wealth'), value: split.wealth },
-    ...(split.spielgeld !== null || split.spent > 0 ? [{ key: 'spielgeld', label: t('split.spielgeld'), value: split.spielgeld ?? split.spent }] : []),
-    ...(split.overflowCounted > 0 ? [{ key: 'overflow', label: t('split.overflow'), value: split.overflowCounted }] : []),
+    ...(split.spielgeld !== null ? [{ key: 'spielgeld', label: t('split.spielgeld'), value: split.spielgeld }] : []),
   ].filter((r) => r.key === 'reserve' || Math.round(r.value * 100) > 0);
   return (
     <section

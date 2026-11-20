@@ -2,13 +2,12 @@ import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
 import { animationsDone, appSettled, closeWalkthrough, expect, FIXTURE, goTo, NOV_5, setUpKonto, test, TODAY } from './fixtures';
 
-// ruecklage-spielgeld (seed data, today 5 October 2026 → October active; Miete € 1.008 monthly):
+// Rücklage und Spielgeld (seed data, today 5 October 2026 → October active; Miete € 1.008 monthly):
 // - without „Fixkosten einplanen“: „Ø pro Monat“ and „Frei verfügbar“ as before, no source lines in the hero
 // - with it: „So teilt sich dein Gehalt“ instead of both, the hero says what pays the Fixkosten
-// - Miete → „Spielgeld“ in the edit dialog: chip „Spielgeld“, hero line „aus Spielgeld“
-// - Spielgeld € 500 in the settings: the card on the month screen, € 508 above it, „Woher kommt der Rest?“
-//   – „Aus dem Überschuss“ (default) is a line of the split, „Andere Quelle“ removes it, at once
-// - „Teilweise“: „Davon aus anderer Quelle“ € 200 → € 308 from the surplus, at most the overflow, kept after a reload
+// - Miete → „Direkt“ in the edit dialog („Rücklage | Direkt“, the switch „Nicht einplanen“): chip „Direkt“,
+//   hero line „Direkt bezahlt“ (spielgeld-planer)
+// - Spielgeld € 500 in the settings: only planned – a line of the split in both views, no card, no overflow
 // - the tile with „auf einmal“: two fields and the advice (both cases), the same numbers as the split
 // - another month than the active one: no tile, no switch, the split with that month's own salary
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to
@@ -52,7 +51,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.setTimeout(180_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('Gehalts-Aufteilung, Spielgeld, Überzug, Hero nach Quelle, Kachel mit Empfehlung', async ({ page }) => {
+      test('Gehalts-Aufteilung, Direkt bezahlt, geplantes Spielgeld, Hero nach Quelle, Kachel mit Empfehlung', async ({ page }) => {
         await page.clock.setFixedTime(TODAY);
         await page.goto('/');
         await expect(page.getByTestId('setup-dialog')).toBeVisible();
@@ -114,7 +113,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('hero-sources-bar')).toHaveCount(0);
         await expect(page.getByTestId('hero-source-spielgeld')).toHaveCount(0);
 
-        // Miete → Spielgeld (edit dialog): chip „Spielgeld“
+        // Miete → „Direkt“ (edit dialog): „Rücklage | Direkt“, the switch „Nicht einplanen“ below; chip „Direkt“
         await goTo(page, 'positionen');
         await tap(page.getByRole('button', { name: 'Miete – Details' }));
         await sheetIn(page);
@@ -122,9 +121,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await sheetIn(page);
         const field = page.getByTestId('account-field');
         await expect(field).toContainText('Woraus zahlst du das?');
+        await expect(field.getByRole('radio')).toHaveText(['Rücklage', 'Direkt']);
+        await expect(page.getByTestId('unplanned-field')).toContainText('Nicht einplanen');
         await field.scrollIntoViewIfNeeded();
-        await tap(field.getByRole('radio', { name: 'Spielgeld' }));
-        await expect(field.getByRole('radio', { name: 'Spielgeld' })).toHaveAttribute('aria-checked', 'true');
+        await tap(field.getByRole('radio', { name: 'Direkt' }));
+        await expect(field.getByRole('radio', { name: 'Direkt' })).toHaveAttribute('aria-checked', 'true');
         await shot(page, `${tag}-01-woraus-zahlst-du`);
         await tap(page.getByRole('button', { name: 'Speichern' }));
         await expect(page.getByTestId('position-form')).toHaveCount(0);
@@ -133,73 +134,39 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('Escape');
         await expect(page.getByRole('dialog')).toHaveCount(0);
         const chip = page.locator('[data-testid=position-list-row]', { hasText: 'Miete' }).first().getByTestId('account-chip');
-        await expect(chip).toHaveText('Spielgeld');
-        await shot(page, `${tag}-02-chip-spielgeld`, chip);
+        await expect(chip).toHaveText('Direkt');
+        await shot(page, `${tag}-02-chip-direkt`, chip);
 
-        // Spielgeld € 500 in the settings
+        // Spielgeld € 500 in the settings: only a planned value
         await goTo(page, 'einstellungen');
-        const spiel = page.getByLabel('Spielgeld pro Monat');
+        const spiel = page.getByTestId('konto-spielgeld');
         await spiel.scrollIntoViewIfNeeded();
         await spiel.fill('500,00');
         await shot(page, `${tag}-03-einstellungen-spielgeld`, spiel);
 
-        // month: the card, € 508 above it, default „Aus dem Überschuss“
+        // month: no Spielgeld card with spending any more; the hero: Rücklage and „Direkt bezahlt“
         await goTo(page, 'monat');
-        const card = page.getByTestId('spielgeld-card');
-        await expect(card).toContainText('Spielgeld Oktober');
-        await expect(page.getByTestId('spielgeld-spent')).toHaveText(money('€ 1.008,00'));
-        await expect(page.getByTestId('spielgeld-limit')).toHaveText(money('€ 500,00'));
-        await expect(page.getByTestId('spielgeld-items')).toContainText('Miete');
-        await expect(page.getByTestId('spielgeld-over-text')).toHaveText(money('€ 508,00 über dem Spielgeld'));
-        const overflow = page.getByTestId('spielgeld-overflow');
-        await expect(overflow).toContainText('Woher kommt der Rest?');
-        await expect(overflow.getByRole('radio', { name: 'Aus dem Überschuss' })).toHaveAttribute('aria-checked', 'true');
-        await expect(page.getByTestId('hero-source-spielgeld-value')).toHaveText(money('€ 1.008,00'));
+        await expect(page.getByTestId('spielgeld-card')).toHaveCount(0);
+        await expect(page.getByTestId('hero-source-spielgeld')).toHaveCount(0);
+        await expect(page.getByTestId('hero-source-salary')).toContainText('Direkt bezahlt');
+        await expect(page.getByTestId('hero-source-salary-value')).toHaveText(money('€ 1.008,00'));
         // two sources: the bar with both segments, the rows add up to the Fixkosten
         await expect(page.getByTestId('hero-sources-bar')).toBeVisible();
         await expect(page.getByTestId('hero-sources-bar').locator('span')).toHaveCount(2);
-        const sum = amountOf((await page.getByTestId('hero-source-reserve-value').textContent())!) + amountOf((await page.getByTestId('hero-source-spielgeld-value').textContent())!);
+        const sum = amountOf((await page.getByTestId('hero-source-reserve-value').textContent())!) + amountOf((await page.getByTestId('hero-source-salary-value').textContent())!);
         expect(sum).toBeCloseTo(amountOf((await page.getByTestId('hero-planned').textContent())!), 2);
         const barHeight = (await page.getByTestId('hero-sources-bar').boundingBox())!.height;
         expect(barHeight).toBeCloseTo(10, 0);
-        // the overflow is part of the current month only („Nächstes Gehalt“: the limit, no overflow)
-        await tap(split.getByRole('radio', { name: 'Nächstes Gehalt' }));
-        await expect(split).toHaveAttribute('data-view', 'next');
-        await expect(page.getByTestId('split-overflow')).toHaveCount(0);
-        await tap(split.getByRole('radio', { name: 'Aktuelles Gehalt' }));
-        await expect(page.getByTestId('split-overflow-value')).toHaveText(money('€ 508,00'));
-        await expect(split).toContainText('= Überschuss');
-        const restSurplus = amountOf((await page.getByTestId('split-rest').textContent())!);
+        // the split: „Direkt bezahlt“ with the name, „Spielgeld“ = the planned € 500 in both views, no overflow line
+        for (const view of ['Nächstes Gehalt', 'Aktuelles Gehalt']) {
+          await tap(split.getByRole('radio', { name: view }));
+          await expect(page.getByTestId('split-spielgeld-value')).toHaveText(money('€ 500,00'));
+          await expect(page.getByTestId('split-overflow')).toHaveCount(0);
+          await expect(split).toContainText('= Überschuss');
+        }
+        await expect(page.getByTestId('split-direct')).toContainText('Direkt bezahlt');
+        await expect(page.getByTestId('split-direct-note')).toHaveText('Miete');
         await shot(page, `${tag}-04-gehalt-aufteilung`, split);
-        await shot(page, `${tag}-05-spielgeld-ueberzug`, card);
-
-        // „Andere Quelle“: the overflow line goes, the Überschuss rises by € 508 – at once
-        await tap(overflow.getByRole('radio', { name: 'Andere Quelle (z. B. Mieteinnahmen)' }));
-        await expect(overflow.getByRole('radio', { name: 'Andere Quelle (z. B. Mieteinnahmen)' })).toHaveAttribute('aria-checked', 'true');
-        await expect(page.getByTestId('split-overflow')).toHaveCount(0);
-        await expect.poll(async () => amountOf((await page.getByTestId('split-rest').textContent())!)).toBeCloseTo(restSurplus + 508, 2);
-
-        // „Teilweise“: € 200 from another source, € 308 from the surplus; at most the overflow
-        await tap(overflow.getByRole('radio', { name: 'Teilweise' }));
-        const part = page.getByTestId('spielgeld-part-input');
-        await part.fill('200');
-        await expect(page.getByTestId('spielgeld-part-rest')).toHaveText(money('Aus dem Überschuss: € 308,00.'));
-        await expect(page.getByTestId('split-overflow-value')).toHaveText(money('€ 308,00'));
-        await expect.poll(async () => amountOf((await page.getByTestId('split-rest').textContent())!)).toBeCloseTo(restSurplus + 200, 2);
-        await part.fill('600');
-        await expect(page.getByTestId('spielgeld-part')).toContainText('Höchstens');
-        await part.fill('200,00');
-        await expect(page.getByTestId('spielgeld-part')).not.toContainText('Höchstens');
-        await shot(page, `${tag}-10-spielgeld-teilbetrag`, card);
-        // kept after a reload
-        await page.reload();
-        await expect(page.getByTestId('hero')).toBeVisible();
-        await appSettled(page);
-        await expect(page.getByTestId('spielgeld-overflow').getByRole('radio', { name: 'Teilweise' })).toHaveAttribute('aria-checked', 'true');
-        await expect(page.getByTestId('spielgeld-part-input')).toHaveValue(/^200(,00)?$/);
-        // after a reload the switch starts on „Nächstes Gehalt“ again
-        await tap(split.getByRole('radio', { name: 'Aktuelles Gehalt' }));
-        await expect(page.getByTestId('split-overflow-value')).toHaveText(money('€ 308,00'));
 
         // the tile: „auf einmal“ → two fields, the reason, the advice after the Spielgeld
         const tile = page.getByTestId('konto-tile-card');
@@ -221,7 +188,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
         // it does not reach (a large Spielgeld): „Auf einmal würden dir € X fehlen. Leg es lieber verteilt zur Seite.“ (X positive)
         await goTo(page, 'einstellungen');
-        await page.getByLabel('Spielgeld pro Monat').fill('7.500,00');
+        await page.getByTestId('konto-spielgeld').fill('7.500,00');
         await goTo(page, 'monat');
         await expect(advice).toHaveAttribute('data-advice', 'spread');
         await expect(advice).toHaveText(/^Auf einmal würden dir €\s[\d.]+,\d{2} fehlen\. Leg es lieber verteilt zur Seite\.$/);
@@ -244,7 +211,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await sheetIn(page);
         await tap(page.getByRole('button', { name: 'Bearbeiten' }));
         await sheetIn(page);
-        await tap(page.getByTestId('account-field').getByRole('radio', { name: 'Gehalt' }));
+        await tap(page.getByTestId('account-field').getByRole('radio', { name: 'Direkt' }));
         await tap(page.getByRole('button', { name: 'Speichern' }));
         await expect(page.getByTestId('position-form')).toHaveCount(0);
         await sheetIn(page);

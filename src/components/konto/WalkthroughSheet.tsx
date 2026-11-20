@@ -231,7 +231,7 @@ function Bars({ bars, maxIndex, minIndex, base, label }: { bars: WalkBar[]; maxI
   );
 }
 
-/** Gehalt → Rücklage / Gehalt direkt / Spielgeld / Vermögensaufbau */
+/** Gehalt → Rücklage / Direkt bezahlt / Spielgeld / Vermögensaufbau */
 function Flow() {
   const target = 'flex min-h-10 items-center gap-2 rounded-xl border border-edge bg-field px-3 py-1.5 text-[14px] font-semibold text-ink';
   return (

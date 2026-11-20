@@ -1,30 +1,32 @@
 | Text | Screen | Kategorie |
 |---|---|---|
 | „Alles, was diesen Monat von deinem Netto abgeht: Fixkosten und Vermögensaufbau. Ring, „abgebucht“ und „offen“ zählen nur die Fixkosten.“ | Monat · Hero „Abzüge vom Netto“ | wird Tooltip – war schon ein Tooltip, jetzt mit Esc/Scroll im Sheet |
-| „So viel bleibt dir im Schnitt pro Monat, wenn du Jahres- und Quartalszahlungen anteilig zurücklegst und deinen Vermögensaufbau abziehst.“ | Monat · Kachel „Frei verfügbar“ (im Ø-Monat) | wird Tooltip – war schon ein Tooltip |
-| „So viel überweist du jeden Monat per Dauerauftrag aufs Fixkostenkonto: alle Abbuchungen der nächsten 12 Monate geteilt durch 12, aufgerundet. So sind Preiserhöhungen und Jahreszahlungen schon drin.“ | Monat · Kachel „Fixkostenkonto“ | wird Tooltip – neu (Auftrag: Erklärung des Dauerauftrags) |
-| „Annahme: Der Dauerauftrag kommt jeden Monat vor allen Abbuchungen. Im aktiven Monat zählen nur noch offene Positionen.“ | Fixkostenkonto-Sheet, Analyse · „Kontostand am Monatsende“ | wird Tooltip |
-| „Was heute auf deinem Fixkostenkonto liegt.“ | Fixkostenkonto-Sheet · „Kontostand heute“ | wird Tooltip |
-| „Eine Position aufs Alltagskonto stellen: Positionen → Bearbeiten.“ | Fixkostenkonto-Sheet · „Im Dauerauftrag“ | wird Tooltip – „Girokonto“ heißt in der Oberfläche jetzt „Alltagskonto“ |
-| „Fixkostenkonto: Ein zweites Konto nur für deine Rechnungen. Erbse sagt dir, wie viel du jeden Monat draufüberweist.“ / „Alltagskonto: Dein normales Konto mit Karte. Zählt nicht zum Dauerauftrag.“ | Bearbeiten-Dialog · „Von welchem Konto geht das weg?“ | wird Tooltip – neu (Text aus dem Auftrag) |
-| „Aus, wenn das Geld nicht aus deinem Gehalt kommt, z. B. eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.“ | Bearbeiten-Dialog (einmalig, Vermögensaufbau) · „Von ‚Frei verfügbar‘ abziehen“ | wird Tooltip |
+| „So viel bleibt dir im Schnitt pro Monat. Jahreszahlungen sind anteilig drin, dein Vermögensaufbau ist abgezogen.“ | Monat · Kachel „Frei verfügbar“ (im Ø-Monat) | wird Tooltip – war schon ein Tooltip |
+| „Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu.“ | Monat · Kachel „Diesen Monat zur Seite legen“ | wird Tooltip – Erklärung des Monatsbetrags (fixkosten-ein-betrag: mit dem Extra) |
+| „So entwickelt sich dein Geld, wenn du den Betrag immer am 1. zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen.“ | Sheet „Fixkosten einplanen“, Analyse · „Verlauf mit Plan“ | wird Tooltip |
+| „So viel hast du schon für deine Fixkosten zur Seite gelegt.“ | Einstellungen · „Schon zur Seite gelegt“ | wird Tooltip – fixkosten-ein-betrag: aus dem Sheet in die Einstellungen |
+| „Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt? Stell sie unter Positionen um.“ | Sheet „Fixkosten einplanen“ · „Eingeplante Rechnungen“ | wird Tooltip – spielgeld-planer: „direkt“ statt „direkt vom Gehalt“ |
+| „Rücklage: Geld, das du jeden Monat zur Seite legst. Direkt: zahlst du sofort vom Gehalt.“ | Bearbeiten-Dialog · „Woraus zahlst du das?“ | wird Tooltip – spielgeld-planer: Rücklage \| Direkt |
+| „Zählt nicht zu Fixkosten, Rücklage und Aufteilung. Zum Beispiel Käufe aus deinem Spielgeld.“ | Bearbeiten-Dialog · „Nicht einplanen“ | wird Tooltip – spielgeld-planer: neu (Text aus dem Auftrag) |
+| „Aus, wenn das Geld nicht aus deinem Gehalt kommt. Zum Beispiel eine Mieteinnahme. Es zählt dann zum Vermögensaufbau, aber nicht gegen ‚Frei verfügbar‘.“ | Bearbeiten-Dialog (einmalig, Vermögensaufbau) · „Von ‚Frei verfügbar‘ abziehen“ | wird Tooltip |
 | „Setzt die Fälligkeitsmonate automatisch – darunter einzeln anpassbar.“ | Bearbeiten-Dialog · „Startmonat“ | wird Tooltip |
 | „31 = letzter Tag des Monats“ | Bearbeiten-Dialog · „Fälligkeitstag“ | wird Tooltip |
 | „Wird abgezogen.“ / „Kommt in diesem Monat dazu.“ | Einmalbetrag-Sheet · „Betrag“ | wird Tooltip |
-| „Ab diesem Tag öffnet Erbse schon den Folgemonat, z. B. wenn dein Gehalt am Monatsende kommt.“ | Einstellungen · „Neuer Monat beginnt am“ | wird Tooltip |
-| „Erbse rechnet aus, welchen Dauerauftrag dein Fixkostenkonto braucht und ob es jeden Monat reicht. Ohne Banklogin.“ | Einstellungen · „Fixkostenkonto verwenden“ | wird Tooltip |
-| „Bestimmt Währung und Zahlenformat. Die Beträge selbst bleiben unverändert.“ | Einstellungen · „Land und Währung“ | wird Tooltip |
+| „Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt.“ | Einstellungen · „Spielgeld pro Monat“ | wird Tooltip – spielgeld-planer: Text aus dem Auftrag |
+| „Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt.“ | Einstellungen · „Neuer Monat beginnt am“ | wird Tooltip |
+| „Erbse nennt dir jeden Monat einen Betrag zum Zurücklegen. Damit kommst du nie ins Minus. Ohne Banklogin.“ | Einstellungen · „Fixkosten einplanen“ | wird Tooltip |
 | „Folgt deinem Gerät: hell oder dunkel, je nach Systemeinstellung.“ / „Immer hell, auch wenn dein Gerät dunkel ist.“ / „Immer dunkel, angenehm am Abend.“ | Einstellungen · „Design“ | wird Tooltip |
-| „In Safari auf Teilen tippen, dann „Zum Home-Bildschirm“.“ | Einstellungen · „Erbse wie eine App öffnen“ | wird Tooltip |
-| „Deine Daten liegen nur auf diesem Gerät. Eine Sicherung (JSON) kannst du auf einem anderen Gerät oder nach dem Löschen der Website-Daten wieder importieren.“ | Einstellungen · „Sicherung“ | wird Tooltip |
-| „Deine Fixkosten liegen nur auf diesem Gerät. Wähle eine Sicherung (JSON), um deinen Stand zu übernehmen, richte Erbse neu ein oder starte mit einer leeren App.“ | Einrichtung · Start | wird Tooltip |
-| „Davon hängen Währung und Vorlagen ab. Du kannst das Land später in den Einstellungen ändern.“ | Einrichtung · Land | wird Tooltip |
-| „Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus deinen Dauerauftrag fürs Fixkostenkonto.“ | Einrichtung · Vorlagen | wird Tooltip |
+| „Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“.“ | Einstellungen · „Erbse wie eine App öffnen“ | wird Tooltip |
+| „Deine Daten liegen nur auf diesem Gerät. Mit einer Sicherung holst du sie zurück. Das geht auch auf einem anderen Gerät.“ | Einstellungen · „Sicherung“ | wird Tooltip |
+| „Deine Fixkosten liegen nur auf diesem Gerät. Hast du eine Sicherung? Dann übernimm damit deinen Stand. Sonst richte Erbse neu ein oder starte leer.“ | Einrichtung · Start | wird Tooltip |
+| „Erbse zeigt alle Beträge in dieser Währung. Du kannst sie später in den Einstellungen ändern.“ | Einrichtung · Währung | wird Tooltip |
+| „Tippe an, was du zahlst, und trag den Betrag ein. Erbse rechnet daraus, wie viel du monatlich zur Seite legst.“ | Einrichtung · Vorlagen | wird Tooltip |
+| „Mit einem eigenen Konto und Dauerauftrag passiert das automatisch.“ | Dein Plan (ohne Konto) · „Leg jeden Monat … zur Seite“ | entfällt – fixkosten-ein-betrag: keine Checkliste mehr, die Kachel nennt den Weg („wenn dein Gehalt kommt“ / „per Dauerauftrag“) |
 | „Zählt zum Dauerauftrag aufs Fixkostenkonto.“ / „Zählt nicht zum Dauerauftrag.“ | Bearbeiten-Dialog · unter dem Konto-Umschalter | entfällt – steht jetzt im Tooltip des Umschalters |
 | „Dauerauftrag, Startlücke und die nächsten 12 Monate“ | Fixkostenkonto-Sheet · Untertitel | entfällt – wiederholt die Abschnitte darunter |
 | „Damit dein Konto nie ins Minus rutscht, zahl einmalig“ | Fixkostenkonto-Sheet, Analyse | bleibt sichtbar (Warnung) |
 | „Tiefster Stand ohne Einzahlung:“ | Fixkostenkonto-Sheet, Analyse | bleibt sichtbar (Warnung) |
-| „Dein Kontostand steigt in 12 Monaten um“ | Fixkostenkonto-Sheet, Analyse | bleibt sichtbar (Warnung) – Dauerauftrag höher als nötig |
+| „Dein Stand steigt in 12 Monaten um“ | Sheet „Fixkosten einplanen“, Analyse | bleibt sichtbar (Warnung) – Monatsbetrag höher als nötig |
 | „einzahlen, dann reicht es 12 Monate“ | Monat · Kachel „Fixkostenkonto“ (Startlücke) | bleibt sichtbar (Warnung) |
 | „Vor dem Import wird der aktuelle Stand als Sicherheitskopie gemerkt – der Import lässt sich danach rückgängig machen.“ | Import-Sheet | bleibt sichtbar (Warnung) – Datenverlust |
 | „Einträge aus der Datei gewinnen bei Konflikten; alles, was nur auf diesem Gerät ist, bleibt erhalten.“ / „Danach sind auf diesem Gerät genau die Daten aus der Datei.“ | Import-Sheet · Zusammenführen / Ersetzen | bleibt sichtbar (Warnung) – Datenverlust |
@@ -47,4 +49,4 @@
 | „Verlauf ab 3 Monaten“ / „In den nächsten 2 Monaten keine Sonderzahlungen.“ / „Noch nichts abgehakt.“ | Analyse, Monat, Positionsdetail | bleibt sichtbar (Status) |
 | „Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.“ | Analyse · Sparquote | bleibt sichtbar (Aktion) – Leerzustand mit „Netto eintragen“ |
 | „Keine archivierten Positionen. Archivieren geht in „Positionen“ per Wischen nach links oder über das ⋯-Menü.“ | Einstellungen · Archiv | bleibt sichtbar (Status) – Leerzustand |
-| „Neu: Fixkostenkonto. Erbse rechnet deinen Dauerauftrag aus.“ | Monat · Einladungskarte | bleibt sichtbar (Aktion) |
+| „Neu: Fixkosten einplanen. Erbse sagt dir, wie viel du monatlich zur Seite legst.“ | Monat · Einladungskarte | bleibt sichtbar (Aktion) |

@@ -185,7 +185,7 @@ export function CopyButton({ amount, testId }: { amount: number; testId: string 
       type="button"
       onClick={async () => {
         try {
-          await navigator.clipboard?.writeText(amountToInput(amount));
+          await navigator.clipboard?.writeText(amountToInput(amount).replace(/\./g, ''));
           setCopied(true);
           window.setTimeout(() => setCopied(false), 2000);
         } catch {

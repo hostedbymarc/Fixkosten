@@ -1,3 +1,4 @@
+import { AmountInput } from './form';
 import { useId, useState } from 'react';
 import { gap, type DueItem } from '../lib/calc';
 import { amountToInput, currencySymbol, formatDate, formatDelta, formatEUR, parseAmount } from '../lib/format';
@@ -57,13 +58,11 @@ export function PaymentSheet({ item, onClose, onSave, onUnpay, onAddOneOff, onEd
             }`}
           >
             <span className="mr-2 text-[20px] text-ink-mute">{currencySymbol()}</span>
-            <input
+            <AmountInput
               id={amountId}
-              inputMode="decimal"
-              autoComplete="off"
               enterKeyHint="done"
               value={amountText}
-              onChange={(e) => setAmountText(e.target.value)}
+              onChange={setAmountText}
               onFocus={(e) => e.currentTarget.select()}
               aria-invalid={invalid}
               aria-describedby={`${amountId}-hint`}

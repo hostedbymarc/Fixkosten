@@ -108,10 +108,10 @@ function gapCard(state: KontoState, start: MonthStart, today?: Date): string[] {
   return [now ? reason : `${reason} ${t('walk.4.notFull')}`, `${plan} ${t('walk.4.once')}`];
 }
 
-/** Positions paid straight from the salary or from the Spielgeld (active in `active`, Fixkosten only): „{n} Posten zahlst du direkt.“ */
+/** Positions paid directly, not from the Rücklage (active in `active`, Fixkosten only, „nicht eingeplant“ not): „{n} Posten zahlst du direkt.“ */
 export function directCount(ds: Dataset, active: Period): number {
   return ds.positions.filter((p) => {
     const kind = ds.categories.find((c) => c.id === p.categoryId)?.kind;
-    return kind === 'expense' && isActiveInPeriod(p, active) && accountOf(ds, p) !== 'fixkostenkonto';
+    return kind === 'expense' && isActiveInPeriod(p, active) && accountOf(ds, p) === 'girokonto';
   }).length;
 }

@@ -59,6 +59,8 @@ async function figures(page: Page) {
 
 test.describe('Kategorien einklappen (Monat)', () => {
   test('einklappen: Positionen weg, Kopf mit Summe + Fortschritt; Zustand bleibt pro Monat, nach Reload wieder nach Status', async ({ page }, info) => {
+    // two reloads and many steps: alone 17 s, in the full suite on the Pro Max over 30 s
+    test.slow();
     await importSprint(page);
     const immos = group(page, 'Meine Immos');
     await expect(immos.getByTestId('position-row')).toHaveCount(3);
@@ -189,7 +191,7 @@ test.describe('„Frei verfügbar (tatsächlich)“ entfernt', () => {
     await tap(page.getByTestId('salary-tile'));
     const sheet = page.getByTestId('bottom-sheet');
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByLabel('Netto-Gehalt')).toHaveValue('4788');
+    await expect(sheet.getByLabel('Netto-Gehalt')).toHaveValue('4.788');
     await expect(sheet.getByLabel('Frei verfügbar (tatsächlich)')).toHaveCount(0);
     await expect(sheet).not.toContainText('tatsächlich');
     await page.waitForTimeout(400);

@@ -3,15 +3,16 @@ import type { Locator, Page } from '@playwright/test';
 import { appSettled, closeWalkthrough, expect, FIXTURE, NOV_5, test, TODAY } from './fixtures';
 import { differentPixels } from './pixels';
 
-// „{Monat} erledigt“ and the hero layout (ruecklage-spielgeld, Ergänzung). Seed data, today 5 October 2026:
-// one position open (Depotentgelt € 35). Ticking it is the last one → the celebration, live, with confetti.
+// „{Monat} erledigt“ and the hero layout. Seed data, today 5 October 2026: one position open (Depotentgelt
+// € 35). Ticking it is the last one → the peas fall ONCE, live (spielgeld-planer).
 // - the big amount keeps the iPhone hierarchy on every device; no text wraps inside a pill
 // - „Woraus du bezahlst“ under „Abzüge vom Netto“
-// - live: check, „Oktober erledigt“, „Alle 16 Rechnungen bezahlt“, the amount, a confetti layer; the check pops
-// - opened again (reload): the calm state, no confetti (celebratedMonths); a tap on the check plays it again
-// - only the active month celebrates; the peas rest in a strip at the bottom, clear of every text
+// - live: check, „Oktober erledigt“, „Alle 16 Rechnungen bezahlt“, the amount, falling peas; the check pops
+// - opened again (reload): the peas lie still at the bottom, the same place, no animation; the check is no button
+// - set back to open: no peas, the normal hero; 100 % again: they fall once more
+// - only the active month falls; the peas rest in a strip at the bottom, clear of every text
 // - exactly one amount element at any time; after the celebration pixel for pixel the calm state
-// - prefers-reduced-motion: no confetti, no pop
+// - prefers-reduced-motion: nothing falls, the lying peas stay
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to docs/screenshots/feier/.
 
 const DIR = 'docs/screenshots/feier';
@@ -74,6 +75,25 @@ async function peasClearOfText(page: Page) {
   expect(overlaps.n, 'peas at rest over text').toBe(0);
 }
 
+/** the peas lie still: no falling layer, not one running animation */
+async function peasStill(page: Page) {
+  const confetti = page.getByTestId('hero-confetti');
+  await expect(confetti).toHaveCount(1);
+  await expect(confetti).not.toHaveAttribute('data-falling', '');
+  const running = await confetti.evaluate((layer) => [...layer.querySelectorAll('.confetti-pea')].reduce((n, p) => n + p.getAnimations().length, 0));
+  expect(running, 'no animation on the lying peas').toBe(0);
+}
+
+/** where each pea lies (relative to the hero): the same picture every time */
+const peaPlaces = (page: Page) =>
+  page.getByTestId('hero').evaluate((hero) => {
+    const h = hero.getBoundingClientRect();
+    return [...hero.querySelectorAll('.confetti-pea')].map((p) => {
+      const r = p.getBoundingClientRect();
+      return [Math.round(r.left - h.left), Math.round(r.top - h.top), Math.round(r.width)];
+    });
+  });
+
 async function shot(page: Page, name: string) {
   await page.getByTestId('hero').scrollIntoViewIfNeeded();
   await page.evaluate(() => document.fonts.ready);
@@ -89,7 +109,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.setTimeout(150_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('Hero-Hierarchie, Woraus du bezahlst, letzte Position → Feier, erneut öffnen ruhig, Haken spielt sie ab, reduced motion', async ({ page }) => {
+      test('Hero-Hierarchie, letzte Position → einmal fallen, neu laden → Erbsen liegen, offen → weg, erneut → einmal, reduced motion', async ({ page }) => {
         await page.clock.setFixedTime(TODAY);
         await page.goto('/');
         await page.getByTestId('import-file').setInputFiles(FIXTURE);
@@ -129,8 +149,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByText('Alles abgebucht')).toHaveCount(0);
         await expect(page.getByTestId('hero-sources-title')).toHaveText('Woraus du bezahlt hast');
         await expect(page.getByTestId('hero-confetti')).toHaveCount(1);
+        await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
         await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-count', vp === 'iphone-se' ? '60' : '90');
         await expect(page.getByTestId('hero-check')).toHaveAttribute('data-pop', '');
+        // the check is no button: nothing replays the celebration
+        await expect(page.getByTestId('hero-check')).not.toHaveAttribute('type', 'button');
+        await expect(page.getByTestId('hero').getByRole('button', { name: /Feier/ })).toHaveCount(0);
         expect(await fontSize(paid)).toBeGreaterThanOrEqual(48);
         // during the celebration, at three moments: exactly one amount element
         await oneAmount(page);
@@ -143,43 +167,66 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('hero-confetti').locator('.confetti-pea').first()).toBeVisible();
         await peasClearOfText(page);
         await amountPlain(page);
+        const landed = await peaPlaces(page);
         await page.evaluate(() => document.fonts.ready);
         const afterParty = await paid.screenshot({ animations: 'disabled' });
         await shot(page, `${tag}-02-hero-erledigt`);
 
-        // opened again: the calm state, no confetti
+        // opened again (reload): the peas lie still at the bottom – the same places, no animation, no pop
         await page.waitForTimeout(300);
         await page.reload();
         await expect(page.getByTestId('hero-done')).toBeVisible();
         await appSettled(page);
         await page.waitForTimeout(500);
-        await expect(page.getByTestId('hero-confetti')).toHaveCount(0);
+        await peasStill(page);
+        expect(await peaPlaces(page), 'they lie where they landed').toEqual(landed);
+        await peasClearOfText(page);
         await expect(page.getByTestId('hero-check')).not.toHaveAttribute('data-pop', '');
         await oneAmount(page);
         await amountPlain(page);
         // the amount after the celebration: pixel for pixel the calm state
         await page.evaluate(() => document.fonts.ready);
         expect(await differentPixels(page, afterParty, await paid.screenshot({ animations: 'disabled' })), 'amount after the celebration = calm state').toBe(0);
-        await shot(page, `${tag}-03-hero-erledigt-ruhig`);
-
-        // a tap on the check plays it again
+        await shot(page, `${tag}-03-hero-erledigt-liegend`);
+        // a tap on the check does nothing
         await tap(page.getByTestId('hero-check'));
-        await expect(page.getByTestId('hero-confetti')).toHaveCount(1);
+        await page.waitForTimeout(300);
+        await peasStill(page);
+
+        // set back to open: no peas, the normal hero; 100 % again: they fall once more
+        const depot = page.locator('[data-position="pos-depotentgelt"]').getByTestId('toggle-paid').first();
+        // a fully paid category starts collapsed
+        const showDepot = async () => {
+          if (!(await depot.isVisible())) await tap(page.getByRole('button', { name: 'Alle ausklappen' }));
+          await depot.scrollIntoViewIfNeeded();
+        };
+        await showDepot();
+        await tap(depot);
+        await expect(page.getByTestId('hero-done')).toHaveCount(0);
+        await expect(page.getByTestId('hero-confetti')).toHaveCount(0);
+        await tap(depot);
+        await expect(page.getByTestId('hero-done')).toBeVisible();
+        await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
         await expect(page.getByTestId('hero-check')).toHaveAttribute('data-pop', '');
 
-        // prefers-reduced-motion: no confetti, no pop
+        // prefers-reduced-motion: nothing falls, the lying peas stay
         await page.emulateMedia({ reducedMotion: 'reduce' });
         await page.reload();
         await expect(page.getByTestId('hero-done')).toBeVisible();
         await appSettled(page);
-        await tap(page.getByTestId('hero-check'));
-        await page.waitForTimeout(300);
+        await peasStill(page);
+        await showDepot();
+        await tap(depot);
         await expect(page.getByTestId('hero-confetti')).toHaveCount(0);
+        await tap(depot);
+        await expect(page.getByTestId('hero-done')).toBeVisible();
+        await page.waitForTimeout(300);
+        await peasStill(page);
         await expect(page.getByTestId('hero-check')).not.toHaveAttribute('data-pop', '');
         await expect(page.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
       });
 
-      test('vergangene Monate feiern nie: nicht beim Abhaken, nicht beim ersten Öffnen', async ({ page }) => {
+      test('vergangene Monate fallen nie: nicht beim Abhaken, nicht beim ersten Öffnen – die Erbsen liegen nur', async ({ page }) => {
         test.skip(scheme === 'dark', 'Logik, einmal je Gerät');
         await page.clock.setFixedTime(NOV_5);
         await page.goto('/');
@@ -200,7 +247,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByRole('button', { name: 'Vorheriger Monat' }));
         await expect(page.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
         await page.waitForTimeout(800);
-        await expect(page.getByTestId('hero-confetti')).toHaveCount(0);
+        await peasStill(page);
         await expect(page.getByTestId('hero-check')).not.toHaveAttribute('data-pop', '');
         // and again after a reload
         await page.reload();
@@ -209,7 +256,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByRole('button', { name: 'Vorheriger Monat' }));
         await expect(page.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
         await page.waitForTimeout(800);
-        await expect(page.getByTestId('hero-confetti')).toHaveCount(0);
+        await peasStill(page);
       });
     });
   }

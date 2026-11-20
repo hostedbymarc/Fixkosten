@@ -74,7 +74,7 @@
 | Sheet | `sheet.month.picked` | Gezeigt: {monat}. | 2 |
 | Sheet | `sheet.chart` | Verlauf mit Plan | 3 |
 | Sheet | `sheet.chart.info` | So entwickelt sich dein Geld, wenn du den Betrag immer am {tag} zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen. | 15 · 7 |
-| Sheet | `sheet.positions.info` | Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt vom Gehalt? Stell sie unter Positionen um. | 7 · 6 · 5 |
+| Sheet | `sheet.positions.info` | Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt? Stell sie unter Positionen um. | 7 · 4 · 5 |
 | Sheet | `sheet.allMonths` | Alle Monate | 2 |
 | Sheet | `sheet.positions` | Eingeplante Rechnungen ({n}) | 3 |
 | Sheet | `sheet.col.deposit` | Einzahlung | 1 |
@@ -105,33 +105,43 @@
 | Monats-Screen | `hero.done.title` | {monat} erledigt | 2 |
 | Monats-Screen | `hero.done.sub` | Alle {n} Rechnungen bezahlt | 4 |
 | Monats-Screen | `hero.done.sub.one` | Deine Rechnung ist bezahlt | 4 |
-| Monats-Screen | `hero.done.replay` | Feier noch einmal abspielen | 4 |
 | Monats-Screen | `hero.src.title` | Woraus du bezahlst | 3 |
 | Monats-Screen | `hero.src.title.done` | Woraus du bezahlt hast | 4 |
 | Monats-Screen | `hero.src.reserve` | Rücklage | 1 |
-| Monats-Screen | `hero.src.salary` | Gehalt | 1 |
-| Monats-Screen | `hero.src.spielgeld` | Spielgeld | 1 |
+| Monats-Screen | `hero.src.salary` | Direkt bezahlt | 2 |
 | Bearbeiten-Dialog | `account.question` | Woraus zahlst du das? | 4 |
 | Bearbeiten-Dialog | `account.reserve` | Rücklage | 1 |
-| Bearbeiten-Dialog | `account.salary` | Gehalt | 1 |
-| Bearbeiten-Dialog | `account.spielgeld` | Spielgeld | 1 |
-| Bearbeiten-Dialog | `account.info` | Rücklage: Geld, das du jeden Monat zur Seite legst. Gehalt: zahlst du direkt. Spielgeld: aus deinem Spielgeld. | 9 · 4 · 4 |
+| Bearbeiten-Dialog | `account.salary` | Direkt | 1 |
+| Bearbeiten-Dialog | `account.info` | Rücklage: Geld, das du jeden Monat zur Seite legst. Direkt: zahlst du sofort vom Gehalt. | 9 · 6 |
+| undefined | `unplanned.label` | Nicht einplanen | 2 |
+| undefined | `unplanned.info` | Zählt nicht zu Fixkosten, Rücklage und Aufteilung. Zum Beispiel Käufe aus deinem Spielgeld. | 7 · 6 |
+| undefined | `unplanned.chip` | nicht eingeplant | 2 |
 | Einstellungen | `settings.spielgeld` | Spielgeld pro Monat | 3 |
-| Einstellungen | `settings.spielgeld.info` | So viel willst du jeden Monat frei ausgeben. | 8 |
+| Einstellungen | `settings.spielgeld.info` | Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt. | 3 · 8 |
 | Einstellungen | `settings.spielgeld.hint` | Leer lassen, wenn du kein Spielgeld planst. | 7 |
-| Spielgeld-Karte | `spiel.title` | Spielgeld {monat} | 2 |
-| Spielgeld-Karte | `spiel.limit` | Limit | 1 |
-| Spielgeld-Karte | `spiel.spent` | Ausgegeben | 1 |
-| Spielgeld-Karte | `spiel.left` | Noch {betrag} übrig. | 3 |
-| Spielgeld-Karte | `spiel.over` | {betrag} über dem Spielgeld | 4 |
-| Spielgeld-Karte | `spiel.question` | Woher kommt der Rest? | 4 |
-| Spielgeld-Karte | `spiel.surplus` | Aus dem Überschuss | 3 |
-| Spielgeld-Karte | `spiel.other` | Andere Quelle (z. B. Mieteinnahmen) | 3 · 1 · 1 |
-| Spielgeld-Karte | `spiel.part` | Teilweise | 1 |
-| Spielgeld-Karte | `spiel.part.amount` | Davon aus anderer Quelle | 4 |
-| Spielgeld-Karte | `spiel.part.rest` | Aus dem Überschuss: {betrag}. | 4 |
-| Spielgeld-Karte | `spiel.part.max` | Höchstens {betrag}. | 2 |
-| Spielgeld-Karte | `spiel.empty` | Diesen Monat noch nichts aus dem Spielgeld. | 7 |
+| Dein Plan | `plan.title` | Dein Spielgeld | 2 |
+| Dein Plan | `plan.slider` | Spielgeld pro Monat | 3 |
+| Dein Plan | `plan.edit` | Spielgeld ändern | 2 |
+| Dein Plan | `plan.lump.note` | Darin: einmalig {betrag} bis {datum}. | 5 |
+| Dein Plan | `plan.until` | Bis {monat} möglich: {betrag} | 4 |
+| Dein Plan | `plan.from` | Ab {monat} möglich: {betrag} | 4 |
+| Dein Plan | `plan.only` | Möglich: {betrag} | 2 |
+| Dein Plan | `plan.ok` | Passt. | 1 |
+| Dein Plan | `plan.ok.until` | Du schaffst jeden Monat die {betrag} bis {monat}. | 8 |
+| Dein Plan | `plan.ok.plain` | Du schaffst jeden Monat die {betrag}. | 6 |
+| Dein Plan | `plan.ok.left` | Es bleiben dir {betrag} übrig. | 5 |
+| Dein Plan | `plan.ok.lump` | Du schaffst die {betrag} auf einmal bis {monat}. | 8 |
+| Dein Plan | `plan.over` | Zu viel. | 2 |
+| Dein Plan | `plan.over.until` | Bis {monat} fehlen dir jeden Monat {betrag} für deine Rücklage. | 10 |
+| Dein Plan | `plan.over.plain` | Dir fehlen jeden Monat {betrag} für deine Rücklage. | 8 |
+| Dein Plan | `plan.over.lump` | Bis {monat} fehlen dir {betrag} für deine Rücklage. | 8 |
+| Dein Plan | `plan.tip.until` | Bis {monat} kannst du dir bis zu {betrag} Spielgeld erlauben. | 10 |
+| Dein Plan | `plan.tip.from` | Ab {monat} bis zu {betrag}. | 5 |
+| Dein Plan | `plan.tip.plain` | Du kannst dir bis zu {betrag} Spielgeld erlauben. | 8 |
+| Dein Plan | `plan.calc` | Gerechnet mit: Netto {netto} − Zur Seite {seite} − Direkt {direkt} − Vermögensaufbau {va} | 11 |
+| Dein Plan | `plan.estimated` | Netto geschätzt wie zuletzt. | 4 |
+| Dein Plan | `plan.noSalary` | Trag dein Netto-Gehalt ein, dann rechnet Erbse dein Spielgeld. | 9 |
+| Dein Plan | `plan.noSalary.action` | Gehalt eintragen | 2 |
 | Analyse | `analyse.order.until` | {betrag} bis {monat}, danach {basis} | 5 |
 | Gehalts-Aufteilung | `split.title` | So teilt sich dein Gehalt | 5 |
 | Gehalts-Aufteilung | `split.salary` | Gehalt am {datum} | 3 |
@@ -140,10 +150,9 @@
 | Gehalts-Aufteilung | `split.view.next` | Nächstes Gehalt | 2 |
 | Gehalts-Aufteilung | `split.view.current` | Aktuelles Gehalt | 2 |
 | Gehalts-Aufteilung | `split.reserve` | Zur Seite legen | 3 |
-| Gehalts-Aufteilung | `split.direct` | Direkt vom Gehalt | 3 |
+| Gehalts-Aufteilung | `split.direct` | Direkt bezahlt | 2 |
 | Gehalts-Aufteilung | `split.wealth` | Vermögensaufbau | 1 |
 | Gehalts-Aufteilung | `split.spielgeld` | Spielgeld | 1 |
-| Gehalts-Aufteilung | `split.overflow` | Spielgeld-Überzug | 1 |
 | Gehalts-Aufteilung | `split.rest` | Überschuss | 1 |
 | Gehalts-Aufteilung | `split.rest.plain` | Bleibt dir | 2 |
 | Gehalts-Aufteilung | `split.noSalary` | Trag dein Netto-Gehalt ein, dann siehst du die Aufteilung. | 9 |
@@ -170,10 +179,10 @@
 | Walkthrough | `walk.2.text` | Das sind {betrag} pro Monat. Teure Monate gleicht deine Rücklage aus. | 5 · 6 |
 | Walkthrough | `walk.3.title` | Aus deiner Rücklage zahlst du die Rechnungen. | 7 |
 | Walkthrough | `walk.3.text` | Die Rücklage ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt. | 5 · 7 |
-| Walkthrough | `walk.3.app` | Manches zahlst du direkt vom Gehalt oder aus deinem Spielgeld. | 10 |
+| Walkthrough | `walk.3.app` | Manches zahlst du direkt. Spielgeld planst du nur ein. | 4 · 5 |
 | Walkthrough | `walk.3.salary` | Gehalt | 1 |
 | Walkthrough | `walk.3.pot` | Rücklage | 1 |
-| Walkthrough | `walk.3.direct` | Gehalt direkt | 2 |
+| Walkthrough | `walk.3.direct` | Direkt bezahlt | 2 |
 | Walkthrough | `walk.3.spielgeld` | Spielgeld | 1 |
 | Walkthrough | `walk.3.wealth` | Vermögensaufbau | 1 |
 | Walkthrough | `walk.3.bills` | Rechnungen | 1 |
