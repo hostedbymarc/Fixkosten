@@ -30,6 +30,14 @@ export interface KontoCheck {
 export type GapMode = 'spread' | 'lump';
 export const GAP_MODES: GapMode[] = ['spread', 'lump'];
 
+/**
+ * „Dein Plan“ (monat-verdichtet): Bei Fälligkeit (due), Gleichmäßig (even), Eigener Plan (custom, the
+ * saving setting of each position). Not stored: derived from the old gapMode („auf einmal“ → due,
+ * „verteilt“ or not asked → even), so existing installations keep their numbers.
+ */
+export type PlanMode = 'due' | 'even' | 'custom';
+export const PLAN_MODES: PlanMode[] = ['due', 'even', 'custom'];
+
 /** Sicherheitspuffer: the balance with the plan never goes below it at a month's end. */
 export type Buffer = 0 | 100 | 250 | 500;
 export const BUFFERS: Buffer[] = [0, 100, 250, 500];
@@ -87,6 +95,8 @@ export interface KontoSettings {
   spielgeldOverflow: Partial<Record<Period, OverflowAnswer>>;
   /** months whose „{Monat} erledigt“ was celebrated (the confetti plays once per month) */
   celebratedMonths: Period[];
+  /** „Dein Plan“; null: not chosen – derived from gapMode (planModeOf) */
+  planMode: PlanMode | null;
 }
 
 /** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
@@ -136,6 +146,7 @@ export const DEFAULT_KONTO: KontoSettings = {
   spielgeld: null,
   spielgeldOverflow: {},
   celebratedMonths: [],
+  planMode: null,
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -202,6 +213,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
     celebratedMonths: (Array.isArray(v.celebratedMonths) ? v.celebratedMonths : []).filter(
       (p, i, all): p is Period => typeof p === 'string' && isPeriod(p) && all.indexOf(p) === i,
     ),
+    planMode: PLAN_MODES.includes(v.planMode as PlanMode) ? (v.planMode as PlanMode) : null,
   };
 }
 
@@ -252,6 +264,7 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.spielgeld !== null) out.spielgeld = s.spielgeld;
   if (Object.keys(s.spielgeldOverflow).length) out.spielgeldOverflow = s.spielgeldOverflow;
   if (s.celebratedMonths.length) out.celebratedMonths = s.celebratedMonths;
+  if (s.planMode) out.planMode = s.planMode;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;
