@@ -48,7 +48,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.setTimeout(120_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('zwei ⓘ nacheinander: nur das zweite ist offen; Diagrammpunkt füllt die Karte, kein Popup', async ({ page }) => {
+      test('ⓘ im Hero und am Verlauf; Diagrammpunkt füllt die Karte, kein Popup', async ({ page }) => {
         await start(page);
 
         // screen (a month that is not the active one: the hero): ⓘ „Abzüge vom Netto“, then the ⓘ of a tile
@@ -84,13 +84,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(popovers(page)).toHaveCount(1);
         await expect(section.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
 
-        // another ⓘ on the same screen („Fällige Ausgaben …“ or any other): only the second is open
-        // only the shown tab (tabs visited before stay in main, hidden)
-        const second = page.locator('main > :not([data-tab-hidden])').getByRole('button', { name: /^Erklärung: (?!Verlauf mit Plan)/ }).first();
-        await second.scrollIntoViewIfNeeded();
-        await tap(second);
-        await expect(page.getByTestId('konto-assumption-popover')).toHaveCount(0);
-        await expect(popovers(page)).toHaveCount(1);
+        // two ⓘ one after the other (only the second open): see „Einstellungen: geänderte ⓘ-Texte“ below
       });
 
       test('Einstellungen: geänderte ⓘ-Texte', async ({ page }) => {
