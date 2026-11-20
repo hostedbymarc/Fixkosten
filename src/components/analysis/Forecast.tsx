@@ -348,7 +348,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         className="h-[230px] max-md:-mx-2"
         {...tip.handlers}
         role="img"
-        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat (aktiver Monat) ${formatEUR(f.average)}`}
+        aria-label={`Balkendiagramm: fällige Ausgaben pro Monat, ${shortPeriodLabel(f.months[0]!.period)} bis ${shortPeriodLabel(f.months[f.months.length - 1]!.period)}, Ø pro Monat ${formatEUR(f.average)}`}
       >
         <DeferredChart>
         <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 320, height: 230 }}>
@@ -441,7 +441,7 @@ export function ForecastSection({ ds, today }: { ds: Dataset; today: Period }) {
         )}
         <span className="flex items-center gap-1.5">
           <span className="h-0 w-4 border-t-2 border-dashed" style={{ borderColor: COLORS.avg }} aria-hidden="true" />
-          Ø pro Monat (aktiver Monat)
+          Ø pro Monat
         </span>
       </p>
     </ChartCard>

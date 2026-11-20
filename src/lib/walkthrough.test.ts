@@ -65,40 +65,27 @@ describe('Walkthrough: Karten 1 und 2 aus kontoState', () => {
   it('Karte 2: der Grundbetrag', () => {
     const w = cards();
     expect(w.base).toBe(2920);
-    expect(w.card2).toBe('Das sind € 2.920 pro Monat. Teure Monate gleicht deine Rücklage aus.');
+    expect(w.card2).toBe('Gleichmäßig sind das € 2.920 pro Monat. Bei Fälligkeit zahlst du, wenn es kommt.');
   });
 });
 
-describe('Walkthrough: Karte 4 je nach Lücke', () => {
-  it('mit Lücke, verteilt', () => {
-    expect(cards({ gapMode: 'spread' }).card4).toEqual([
-      'Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Deine Rücklage ist bis dahin noch nicht voll.',
-      'Darum bis dahin € 395,81 extra pro Monat. Das fällt nur einmal an.',
-    ]);
+describe('Walkthrough: Karte 4, die Empfehlung aus monthPlan', () => {
+  const rule = 'Zuerst bei Fälligkeit. Reicht das nicht jeden Monat, dann gleichmäßig.';
+  it('empfohlen: Bei Fälligkeit', () => {
+    expect(plain(walkthrough(kontoState(DATA, NOV, setUp()), NOV, 1, TODAY, 0, 'due')).card4).toEqual([rule, 'Für dich passt: Bei Fälligkeit.']);
   });
-
-  it('mit Lücke, auf einmal', () => {
-    expect(cards({ gapMode: 'lump' }).card4).toEqual([
-      'Im Februar kommen Kfz-Versicherung und Haushaltsversicherung. Deine Rücklage ist bis dahin noch nicht voll.',
-      'Darum einmalig € 1.187,43 bis 31. Jänner. Das fällt nur einmal an.',
-    ]);
+  it('empfohlen: Gleichmäßig', () => {
+    expect(plain(walkthrough(kontoState(DATA, NOV, setUp()), NOV, 1, TODAY, 0, 'even')).card4).toEqual([rule, 'Für dich passt: Gleichmäßig.']);
   });
-
-  it('ohne Lücke', () => {
-    expect(cards({ balance: 20000, anchor: { amount: 20000, at: '2026-11-01T09:00:00.000Z' } }).card4).toEqual(['Bei dir reicht es schon. Gut gemacht.']);
-  });
-
-  it('auf einmal, Frist vorbei: „jetzt“', () => {
-    const st = kontoState(DATA, NOV, setUp({ gapMode: 'lump' }));
-    const late = plain(walkthrough(st, NOV, 1, new Date(2027, 1, 5)));
-    expect(late.card4[1]).toBe('Darum jetzt einmalig € 1.187,43. Das fällt nur einmal an.');
+  it('keine passt: der Hinweis auf „Dein Plan“', () => {
+    expect(cards().card4).toEqual([rule, 'Fehlt etwas, zeigt dir „Dein Plan“ einen Vorschlag.']);
   });
 });
 
 describe('Walkthrough: Karte 5, Tag der Frage', () => {
   it('aus „Neuer Monat beginnt am“', () => {
-    expect(cards({}, 1).card5).toBe('Am 1. fragt Erbse, ob du den Betrag zur Seite gelegt hast. Den Rest rechnet Erbse.');
-    expect(cards({}, 25).card5.startsWith('Am 25. fragt Erbse')).toBe(true);
+    expect(cards({}, 1).card5).toBe('Am 1. kommt dein Gehalt. Erbse zeigt dir, was frei bleibt.');
+    expect(cards({}, 25).card5.startsWith('Am 25. kommt dein Gehalt')).toBe(true);
     expect(askDay('last')).toBe('Monatsletzten');
   });
 });
@@ -113,11 +100,8 @@ describe('Walkthrough ohne Einrichtung: Beispielzahlen', () => {
       expect(w.example).toBe(true);
       expect(w.bars.map((b) => b.amount)).toEqual([...EXAMPLE.bills]);
       expect(w.card1).toBe('Im Jänner zahlst du € 900, im November nur € 180.');
-      expect(w.card2).toBe('Das sind € 298,34 pro Monat. Teure Monate gleicht deine Rücklage aus.');
-      expect(w.card4).toEqual([
-        'Im Jänner kommen Kfz-Versicherung und Haushaltsversicherung. Deine Rücklage ist bis dahin noch nicht voll.',
-        'Darum bis dahin € 121,66 extra pro Monat. Das fällt nur einmal an.',
-      ]);
+      expect(w.card2).toBe('Gleichmäßig sind das € 298,34 pro Monat. Bei Fälligkeit zahlst du, wenn es kommt.');
+      expect(w.card4).toEqual(['Zuerst bei Fälligkeit. Reicht das nicht jeden Monat, dann gleichmäßig.', 'Fehlt etwas, zeigt dir „Dein Plan“ einen Vorschlag.']);
     });
   }
 
