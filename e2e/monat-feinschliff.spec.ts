@@ -130,7 +130,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await toMonth(page, 'November');
         await tap(page.getByTestId('dein-monat-pill'));
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
+        // the pill opens the Spielgeld editable: Esc leaves the field, the sheet stays
+        await expect(page.getByTestId('plan-spielgeld-input')).toBeFocused();
         await page.keyboard.press('Escape');
+        await expect(page.getByTestId('plan-spielgeld-input')).toHaveCount(0);
         await expect(page.getByTestId('plan-mode-title')).toHaveText('Wie zahlst du große Zahlungen?');
         await expect(page.getByTestId('plan-sheet').getByText('Große Zahlungen', { exact: true })).toHaveCount(1);
         await expect(page.getByTestId('plan-salaries').locator('th').nth(1)).toHaveText('aufs Konto');
