@@ -85,7 +85,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(section.getByTestId('konto-selected')).toHaveAttribute('data-period', period!);
 
         // another ⓘ on the same screen („Fällige Ausgaben …“ or any other): only the second is open
-        const second = page.getByRole('button', { name: /^Erklärung: (?!Verlauf mit Plan)/ }).first();
+        // only the shown tab (tabs visited before stay in main, hidden)
+        const second = page.locator('main > :not([data-tab-hidden])').getByRole('button', { name: /^Erklärung: (?!Verlauf mit Plan)/ }).first();
         await second.scrollIntoViewIfNeeded();
         await tap(second);
         await expect(page.getByTestId('konto-assumption-popover')).toHaveCount(0);

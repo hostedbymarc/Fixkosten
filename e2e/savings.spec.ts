@@ -230,7 +230,7 @@ test.describe('Ø der Jahresvorschau = Ø pro Monat von heute', () => {
     await expect(forecast.getByTestId('avg-chip')).toHaveText('Ø 2.952');
     await expect(page.getByTestId('forecast-legend')).toContainText('Ø pro Monat');
     await expect(page.getByTestId('forecast-headline-sub')).toHaveText(eur('€ 1.658 über Ø'));
-    await expect(forecast.getByRole('img')).toHaveAttribute('aria-label', /Ø pro Monat \(aktiver Monat\) €[\s\u00a0]2\.952,17/);
+    await expect(forecast.getByRole('img')).toHaveAttribute('aria-label', /Ø pro Monat €[\s\u00a0]2\.952,17/);
     await expect(page.getByTestId('distribution-total')).toHaveText(eur('Summe € 2.952,17 Ø pro Monat'));
     await expect(forecast.getByTestId('forecast-gap')).toHaveCount(0);
     for (const route of ['analyse', 'monat', 'positionen', 'einstellungen'] as const) {

@@ -137,7 +137,8 @@ test.describe('Spielgeld-Zuordnung bleibt erhalten', () => {
     await other.clock.setFixedTime(TODAY);
     await other.goto('/');
     await other.getByTestId('import-file').setInputFiles(file!);
-    await expect(other.getByTestId('hero')).toBeVisible();
+    // the export carries „Fixkosten einplanen“: the active month shows „Dein Monat“ (monat-verdichtet)
+    await expect(other.getByTestId('dein-monat')).toBeVisible();
     await appSettled(other);
     await stillSpielgeld(other);
     await fresh.close();
