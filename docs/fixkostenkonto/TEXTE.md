@@ -11,19 +11,7 @@
 | Dein Plan | `plan.lump.now` | Leg jetzt {betrag} extra zur Seite. | 6 |
 | Dein Plan | `plan.when` | am {datum}, wenn dein Gehalt kommt | 6 |
 | Dein Plan | `plan.when.order` | per Dauerauftrag am {datum} | 4 |
-| Dein Plan | `plan.confirm` | Zur Seite gelegt | 3 |
-| Dein Plan | `plan.toLump` | Lieber auf einmal? | 3 |
-| Dein Plan | `plan.toSpread` | Lieber verteilen? | 2 |
-| Dein Plan | `plan.copy` | Betrag kopieren | 2 |
-| Dein Plan | `plan.copied` | Kopiert | 1 |
-| Kachel | `tile.title` | Diesen Monat zur Seite legen | 5 |
-| Kachel | `tile.title.next` | Nächsten Monat zur Seite legen | 5 |
-| Kachel | `tile.setup` | Fixkosten einplanen | 2 |
-| Kachel | `tile.info.title` | Monatsbetrag | 1 |
-| Kachel | `tile.info` | Dieser Betrag füllt deine Rücklage für die Rechnungen der nächsten 12 Monate. Vor großen Rechnungen kommt bis dahin ein Extra dazu. | 12 · 9 |
-| Kachel | `tile.start` | Jetzt starten | 2 |
 | Kachel | `tile.streak` | {n} Monate in Folge | 4 |
-| Kachel | `tile.streak.new` | Neue Serie startet. | 3 |
 | Einladung | `invite.title` | Neu: Fixkosten einplanen. | 3 |
 | Einladung | `invite.text` | Erbse sagt dir, wie viel du monatlich zur Seite legst. | 10 |
 | Einrichtung | `setup.title` | Fixkosten einplanen | 2 |
@@ -39,13 +27,6 @@
 | Einrichtung | `setup.order` | Läuft dein Dauerauftrag schon? | 4 |
 | Einrichtung | `setup.order.yes` | Ja | 1 |
 | Einrichtung | `setup.order.no` | Nein | 1 |
-| Einrichtung | `setup.gap.text` | Dafür fehlen dir {betrag}. Wie willst du das lösen? | 4 · 5 |
-| Einrichtung | `setup.gap.spread` | Auf {n} Monate verteilen ({betrag} extra pro Monat) | 8 |
-| Einrichtung | `setup.gap.spread.one` | Mit der nächsten Einzahlung ({betrag} extra) | 6 |
-| Einrichtung | `setup.gap.lump` | Auf einmal zur Seite legen | 5 |
-| Einrichtung | `setup.plan` | Dein Plan | 2 |
-| Einrichtung | `setup.order.new` | Richte den Dauerauftrag ein: {betrag} {tag}. | 6 |
-| Einrichtung | `setup.finish` | Fertig | 1 |
 | Monats-Check | `check.month` | Neuer Monat. Hast du {betrag} zur Seite gelegt? | 2 · 6 |
 | Monats-Check | `check.month.again` | Hast du für {monat} {betrag} zur Seite gelegt? | 8 |
 | Monats-Check | `check.month.yes` | Ja | 1 |
@@ -61,26 +42,15 @@
 | Meilensteine | `milestone.streak6` | 6 Monate in Folge | 4 |
 | Meilensteine | `milestone.year` | Ein Jahr eingeplant | 3 |
 | Meilensteine | `milestone.toast` | Geschafft: {meilenstein} | 2 |
-| Sheet | `sheet.title` | Fixkosten einplanen | 2 |
-| Sheet | `sheet.why` | Warum {betrag}? | 2 |
-| Sheet | `sheet.normal` | Normaler Monat | 2 |
-| Sheet | `sheet.extra` | Extra für {monat} | 3 |
-| Sheet | `sheet.lump` | Einmalig bis {datum} | 3 |
-| Sheet | `sheet.sum` | Summe | 1 |
-| Sheet | `sheet.ok` | Mit diesem Plan nie im Minus. | 6 |
-| Sheet | `sheet.ok.buffer` | Mit diesem Plan nie unter {betrag}. | 6 |
 | Sheet | `sheet.buffer` | Puffer {betrag} | 2 |
 | Sheet | `sheet.month.lowest` | Gezeigt: {monat}, der Monat mit dem tiefsten Stand. Tipp auf einen Punkt für einen anderen Monat. | 8 · 8 |
 | Sheet | `sheet.month.picked` | Gezeigt: {monat}. | 2 |
 | Sheet | `sheet.chart` | Verlauf mit Plan | 3 |
 | Sheet | `sheet.chart.info` | So entwickelt sich dein Geld, wenn du den Betrag immer am {tag} zur Seite legst. Diesen Monat zählen nur noch offene Rechnungen. | 15 · 7 |
-| Sheet | `sheet.positions.info` | Diese Rechnungen zahlst du aus deiner Rücklage. Zahlst du eine direkt? Stell sie unter Positionen um. | 7 · 4 · 5 |
 | Sheet | `sheet.allMonths` | Alle Monate | 2 |
-| Sheet | `sheet.positions` | Eingeplante Rechnungen ({n}) | 3 |
 | Sheet | `sheet.col.deposit` | Einzahlung | 1 |
 | Sheet | `sheet.col.debits` | Abbuchungen | 1 |
 | Sheet | `sheet.col.end` | Stand | 1 |
-| Sheet | `sheet.settings` | Einstellungen ändern | 2 |
 | Sheet | `sheet.rising` | Dein Stand steigt in 12 Monaten um {betrag}. Der Monatsbetrag ist höher als nötig, z. B. durch die Rundung. | 8 · 7 · 1 · 3 |
 | Einstellungen | `settings.title` | Fixkosten einplanen | 2 |
 | Einstellungen | `settings.switch` | Fixkosten einplanen | 2 |
@@ -90,11 +60,6 @@
 | Einstellungen | `settings.balance` | Schon zur Seite gelegt | 4 |
 | Einstellungen | `settings.balance.info` | So viel hast du schon für deine Fixkosten zur Seite gelegt. | 11 |
 | Einstellungen | `settings.asOf` | Stand vom {datum} | 3 |
-| Einstellungen | `settings.gapMode` | Lücke schließen | 2 |
-| Einstellungen | `settings.gapMode.spread` | Verteilt | 1 |
-| Einstellungen | `settings.gapMode.lump` | Auf einmal | 2 |
-| Einstellungen | `settings.gapMode.none` | Gerade fehlt nichts. | 3 |
-| Einstellungen | `settings.gapMode.forced` | Bis dahin kommt keine Einzahlung mehr. Darum auf einmal. | 6 · 3 |
 | Einstellungen | `settings.roundingOn` | Monatsbetrag runden | 2 |
 | Einstellungen | `settings.rounding` | Monatsbetrag aufrunden auf | 3 |
 | Einstellungen | `settings.buffer` | Sicherheitspuffer | 1 |
@@ -113,58 +78,14 @@
 | Bearbeiten-Dialog | `account.reserve` | Rücklage | 1 |
 | Bearbeiten-Dialog | `account.salary` | Direkt | 1 |
 | Bearbeiten-Dialog | `account.info` | Rücklage: Geld, das du jeden Monat zur Seite legst. Direkt: zahlst du sofort vom Gehalt. | 9 · 6 |
-| undefined | `unplanned.label` | Nicht einplanen | 2 |
-| undefined | `unplanned.info` | Zählt nicht zu Fixkosten, Rücklage und Aufteilung. Zum Beispiel Käufe aus deinem Spielgeld. | 7 · 6 |
-| undefined | `unplanned.chip` | nicht eingeplant | 2 |
+| Bearbeiten-Dialog | `unplanned.label` | Nicht einplanen | 2 |
+| Bearbeiten-Dialog | `unplanned.info` | Zählt nicht zu Fixkosten, Rücklage und Aufteilung. Zum Beispiel Käufe aus deinem Spielgeld. | 7 · 6 |
+| Bearbeiten-Dialog | `unplanned.chip` | nicht eingeplant | 2 |
 | Einstellungen | `settings.spielgeld` | Spielgeld pro Monat | 3 |
 | Einstellungen | `settings.spielgeld.info` | Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt. | 3 · 8 |
 | Einstellungen | `settings.spielgeld.hint` | Leer lassen, wenn du kein Spielgeld planst. | 7 |
-| Dein Plan | `plan.title` | Dein Spielgeld | 2 |
-| Dein Plan | `plan.slider` | Spielgeld pro Monat | 3 |
-| Dein Plan | `plan.edit` | Spielgeld ändern | 2 |
-| Dein Plan | `plan.lump.note` | Darin: einmalig {betrag} bis {datum}. | 5 |
-| Dein Plan | `plan.until` | Bis {monat} möglich: {betrag} | 4 |
-| Dein Plan | `plan.from` | Ab {monat} möglich: {betrag} | 4 |
-| Dein Plan | `plan.only` | Möglich: {betrag} | 2 |
-| Dein Plan | `plan.ok` | Passt. | 1 |
-| Dein Plan | `plan.ok.until` | Du schaffst jeden Monat die {betrag} bis {monat}. | 8 |
-| Dein Plan | `plan.ok.plain` | Du schaffst jeden Monat die {betrag}. | 6 |
-| Dein Plan | `plan.ok.left` | Es bleiben dir {betrag} übrig. | 5 |
-| Dein Plan | `plan.ok.lump` | Du schaffst die {betrag} auf einmal bis {monat}. | 8 |
-| Dein Plan | `plan.over` | Zu viel. | 2 |
-| Dein Plan | `plan.over.until` | Bis {monat} fehlen dir jeden Monat {betrag} für deine Rücklage. | 10 |
-| Dein Plan | `plan.over.plain` | Dir fehlen jeden Monat {betrag} für deine Rücklage. | 8 |
-| Dein Plan | `plan.over.lump` | Bis {monat} fehlen dir {betrag} für deine Rücklage. | 8 |
-| Dein Plan | `plan.tip.until` | Bis {monat} kannst du dir bis zu {betrag} Spielgeld erlauben. | 10 |
-| Dein Plan | `plan.tip.from` | Ab {monat} bis zu {betrag}. | 5 |
-| Dein Plan | `plan.tip.plain` | Du kannst dir bis zu {betrag} Spielgeld erlauben. | 8 |
-| Dein Plan | `plan.calc` | Gerechnet mit: Netto {netto} − Zur Seite {seite} − Direkt {direkt} − Vermögensaufbau {va} | 11 |
-| Dein Plan | `plan.estimated` | Netto geschätzt wie zuletzt. | 4 |
-| Dein Plan | `plan.noSalary` | Trag dein Netto-Gehalt ein, dann rechnet Erbse dein Spielgeld. | 9 |
-| Dein Plan | `plan.noSalary.action` | Gehalt eintragen | 2 |
 | Analyse | `analyse.order.until` | {betrag} bis {monat}, danach {basis} | 5 |
-| Gehalts-Aufteilung | `split.title` | So teilt sich dein Gehalt | 5 |
-| Gehalts-Aufteilung | `split.salary` | Gehalt am {datum} | 3 |
-| Gehalts-Aufteilung | `split.salary.like` | geschätzt wie zuletzt | 3 |
-| Gehalts-Aufteilung | `split.view` | Welches Gehalt? | 2 |
-| Gehalts-Aufteilung | `split.view.next` | Nächstes Gehalt | 2 |
-| Gehalts-Aufteilung | `split.view.current` | Aktuelles Gehalt | 2 |
-| Gehalts-Aufteilung | `split.reserve` | Zur Seite legen | 3 |
-| Gehalts-Aufteilung | `split.direct` | Direkt bezahlt | 2 |
-| Gehalts-Aufteilung | `split.wealth` | Vermögensaufbau | 1 |
-| Gehalts-Aufteilung | `split.spielgeld` | Spielgeld | 1 |
-| Gehalts-Aufteilung | `split.rest` | Überschuss | 1 |
-| Gehalts-Aufteilung | `split.rest.plain` | Bleibt dir | 2 |
-| Gehalts-Aufteilung | `split.noSalary` | Trag dein Netto-Gehalt ein, dann siehst du die Aufteilung. | 9 |
-| Gehalts-Aufteilung | `split.noSalary.action` | Gehalt eintragen | 2 |
-| Kachel | `tile.monthly` | jeden Monat am {tag} | 4 |
-| Kachel | `tile.once` | einmalig bis {datum} | 3 |
-| Kachel | `tile.once.now` | einmalig, jetzt | 2 |
-| Kachel | `tile.lump.done` | Einmalbetrag zur Seite gelegt | 4 |
-| Empfehlung | `advice.lump` | Leg die {betrag} auf einmal zur Seite. Danach bleiben dir {rest}. | 7 · 4 |
-| Empfehlung | `advice.spread` | Auf einmal würden dir {fehlt} fehlen. Leg es lieber verteilt zur Seite. | 6 · 6 |
 | Walkthrough | `walk.title` | So funktioniert Erbse | 3 |
-| Walkthrough | `walk.link` | So funktioniert's | 2 |
 | Walkthrough | `walk.example` | Beispiel | 1 |
 | Walkthrough | `walk.example.note` | Beispielzahlen. Richte „Fixkosten einplanen“ ein, dann siehst du deine. | 1 · 8 |
 | Walkthrough | `walk.progress` | Karte {n} von {gesamt} | 4 |
@@ -175,23 +96,92 @@
 | Walkthrough | `walk.1.sub` | Nur Rechnungen aus deiner Rücklage | 5 |
 | Walkthrough | `walk.1.direct` | {n} Posten zahlst du direkt. | 5 |
 | Walkthrough | `walk.1.text` | Im {teuer} zahlst du {max}, im {guenstig} nur {min}. | 9 |
-| Walkthrough | `walk.2.title` | Darum legst du jeden Monat gleich viel zur Seite. | 9 |
-| Walkthrough | `walk.2.text` | Das sind {betrag} pro Monat. Teure Monate gleicht deine Rücklage aus. | 5 · 6 |
-| Walkthrough | `walk.3.title` | Aus deiner Rücklage zahlst du die Rechnungen. | 7 |
-| Walkthrough | `walk.3.text` | Die Rücklage ist kein Extra-Geld. Es ist dasselbe Geld, nur gleichmäßig verteilt. | 5 · 7 |
-| Walkthrough | `walk.3.app` | Manches zahlst du direkt. Spielgeld planst du nur ein. | 4 · 5 |
+| Walkthrough | `walk.2.title` | Bei Fälligkeit oder gleichmäßig. | 4 |
+| Walkthrough | `walk.2.text` | Gleichmäßig sind das {betrag} pro Monat. Bei Fälligkeit zahlst du, wenn es kommt. | 6 · 7 |
+| Walkthrough | `walk.3.title` | Vom Gehalt geht zuerst dein Plan weg. | 7 |
+| Walkthrough | `walk.3.text` | Aufs Fixkostenkonto, direkt bezahlt, Vermögensaufbau. Der Rest ist frei für dich. | 5 · 6 |
+| Walkthrough | `walk.3.app` | Spielgeld planst du nur ein. Erbse prüft, ob es passt. | 5 · 5 |
 | Walkthrough | `walk.3.salary` | Gehalt | 1 |
-| Walkthrough | `walk.3.pot` | Rücklage | 1 |
+| Walkthrough | `walk.3.pot` | Fixkostenkonto | 1 |
 | Walkthrough | `walk.3.direct` | Direkt bezahlt | 2 |
-| Walkthrough | `walk.3.spielgeld` | Spielgeld | 1 |
+| Walkthrough | `walk.3.spielgeld` | Frei für dich | 3 |
 | Walkthrough | `walk.3.wealth` | Vermögensaufbau | 1 |
-| Walkthrough | `walk.3.bills` | Rechnungen | 1 |
-| Walkthrough | `walk.4.title` | Am Anfang fehlt manchmal etwas. | 5 |
-| Walkthrough | `walk.4.notFull` | Deine Rücklage ist bis dahin noch nicht voll. | 8 |
-| Walkthrough | `walk.4.spread` | Darum bis dahin {betrag} extra pro Monat. | 7 |
-| Walkthrough | `walk.4.lump` | Darum einmalig {betrag} bis {datum}. | 5 |
-| Walkthrough | `walk.4.lump.now` | Darum jetzt einmalig {betrag}. | 4 |
-| Walkthrough | `walk.4.once` | Das fällt nur einmal an. | 5 |
-| Walkthrough | `walk.4.none` | Bei dir reicht es schon. Gut gemacht. | 5 · 2 |
-| Walkthrough | `walk.5.title` | Jeden Monat ein Tipp. | 4 |
-| Walkthrough | `walk.5.text` | Am {tag} fragt Erbse, ob du den Betrag zur Seite gelegt hast. Den Rest rechnet Erbse. | 12 · 4 |
+| Walkthrough | `walk.4.title` | Erbse empfiehlt den einfacheren Weg. | 5 |
+| Walkthrough | `walk.4.rule` | Zuerst bei Fälligkeit. Reicht das nicht jeden Monat, dann gleichmäßig. | 3 · 7 |
+| Walkthrough | `walk.4.due` | Für dich passt: Bei Fälligkeit. | 5 |
+| Walkthrough | `walk.4.even` | Für dich passt: Gleichmäßig. | 4 |
+| Walkthrough | `walk.4.none` | Fehlt etwas, zeigt dir „Dein Plan“ einen Vorschlag. | 8 |
+| Walkthrough | `walk.5.title` | Dein Spielgeld ist die Prüfgröße. | 5 |
+| Walkthrough | `walk.5.text` | Am {tag} kommt dein Gehalt. Erbse zeigt dir, was frei bleibt. | 5 · 6 |
+| Dein Monat | `month.title` | Dein Monat | 2 |
+| Dein Monat | `month.salary` | Dein Gehalt am {datum} | 4 |
+| Dein Monat | `month.estimated` | geschätzt | 1 |
+| Dein Monat | `month.noSalary` | Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Monat. | 4 · 5 |
+| Dein Monat | `month.noSalary.action` | Gehalt eintragen | 2 |
+| Dein Monat | `month.toAccount` | Aufs Fixkostenkonto | 2 |
+| Dein Monat | `month.aside` | Zur Seite legen | 3 |
+| Dein Monat | `month.incl` | inkl. {betrag} für {zahlung} im {monat} | 1 · 5 |
+| Dein Monat | `month.incl.more` | inkl. {betrag} für {n} Zahlungen im {monat} | 1 · 6 |
+| Dein Monat | `month.direct` | Direkt bezahlt | 2 |
+| Dein Monat | `month.direct.more` | {n} Posten | 2 |
+| Dein Monat | `month.wealth` | Vermögensaufbau | 1 |
+| Dein Monat | `month.free` | Frei für dich | 3 |
+| Dein Monat | `month.pill.ok` | Dein Spielgeld {betrag} passt | 4 |
+| Dein Monat | `month.pill.short` | Dir fehlen {betrag} für dein Spielgeld | 6 |
+| Dein Monat | `month.pill.none` | Spielgeld festlegen | 2 |
+| Dein Monat | `month.confirm.account` | {betrag} aufs Fixkostenkonto überwiesen | 4 |
+| Dein Monat | `month.confirm.aside` | {betrag} zur Seite gelegt | 4 |
+| Dein Monat | `month.done.account` | Überwiesen. Erledigt am {datum}. | 1 · 3 |
+| Dein Monat | `month.done.aside` | Zur Seite gelegt. Erledigt am {datum}. | 3 · 3 |
+| Dein Monat | `month.setup` | Richte „Fixkosten einplanen“ ein. Dann siehst du, was frei ist. | 4 · 6 |
+| Dein Monat | `month.setup.action` | Einrichten | 1 |
+| Dein Monat | `month.plan` | Dein Plan öffnen | 3 |
+| Rechnungen-Zeile | `bills.title` | Rechnungen {monat} | 2 |
+| Rechnungen-Zeile | `bills.count` | {x} von {n} bezahlt | 4 |
+| Rechnungen-Zeile | `bills.done` | {monat} erledigt | 2 |
+| Rechnungen-Zeile | `bills.none` | Nichts fällig | 2 |
+| Nächster großer Monat | `big.title` | Nächster großer Monat | 3 |
+| Nächster großer Monat | `big.ready` | Mit deinem Plan bist du vorbereitet. | 6 |
+| Nächster großer Monat | `big.prepare` | Plane vor: {vorschlag} | 3 |
+| Sheet „Dein Plan“ | `plan2.title` | Dein Plan | 2 |
+| Sheet „Dein Plan“ | `plan2.ok` | Passt so. Dein Spielgeld bleibt jeden Monat übrig. | 2 · 6 |
+| Sheet „Dein Plan“ | `plan2.save` | Passt, wenn du ansparst. | 4 |
+| Sheet „Dein Plan“ | `plan2.proposal` | Spar ab {monat} {betrag} im Monat für {zahlung} an. | 9 |
+| Sheet „Dein Plan“ | `plan2.proposal.even` | Spar alle großen Zahlungen gleichmäßig an. | 6 |
+| Sheet „Dein Plan“ | `plan2.apply` | Übernehmen | 1 |
+| Sheet „Dein Plan“ | `plan2.max` | Geht nicht ganz. Höchstens {betrag} Spielgeld sind möglich. | 3 · 5 |
+| Sheet „Dein Plan“ | `plan2.max.apply` | Spielgeld auf {betrag} setzen | 4 |
+| Sheet „Dein Plan“ | `plan2.none` | Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan. | 4 · 5 |
+| Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
+| Sheet „Dein Plan“ | `plan2.spielgeld` | Dein Spielgeld | 2 |
+| Sheet „Dein Plan“ | `plan2.spielgeld.edit` | Spielgeld ändern | 2 |
+| Sheet „Dein Plan“ | `plan2.mode` | Große Zahlungen | 2 |
+| Sheet „Dein Plan“ | `plan2.mode.due` | Bei Fälligkeit | 2 |
+| Sheet „Dein Plan“ | `plan2.mode.even` | Gleichmäßig | 1 |
+| Sheet „Dein Plan“ | `plan2.mode.due.info` | Jede große Zahlung überweist du im Monat, in dem sie fällig ist. | 12 |
+| Sheet „Dein Plan“ | `plan2.mode.even.info` | Du sparst alle großen Zahlungen vorher in gleichen Raten an. | 10 |
+| Sheet „Dein Plan“ | `plan2.mode.custom.info` | Du hast Zahlungen einzeln geändert. | 5 |
+| Sheet „Dein Plan“ | `plan2.custom` | Eigener Plan | 2 |
+| Sheet „Dein Plan“ | `plan2.recommended` | Empfohlen | 1 |
+| Sheet „Dein Plan“ | `plan2.table` | Deine nächsten Gehälter | 3 |
+| Sheet „Dein Plan“ | `plan2.table.month` | Monat | 1 |
+| Sheet „Dein Plan“ | `plan2.table.transfer` | aufs Konto | 2 |
+| Sheet „Dein Plan“ | `plan2.table.aside` | zur Seite | 2 |
+| Sheet „Dein Plan“ | `plan2.table.free` | frei für dich | 3 |
+| Sheet „Dein Plan“ | `plan2.table.short` | weniger als dein Spielgeld | 4 |
+| Sheet „Dein Plan“ | `plan2.table.more` | Alle 12 Monate | 3 |
+| Sheet „Dein Plan“ | `plan2.table.less` | Nur 4 Monate | 3 |
+| Sheet „Dein Plan“ | `plan2.payments` | Große Zahlungen | 2 |
+| Sheet „Dein Plan“ | `plan2.payments.empty` | In den nächsten 12 Monaten kommt keine große Zahlung. | 9 |
+| Sheet „Dein Plan“ | `plan2.pay.due` | im {monat} zahlen | 3 |
+| Sheet „Dein Plan“ | `plan2.pay.spread` | vorher ansparen: {n} × {betrag} ab {monat} | 6 |
+| Sheet „Dein Plan“ | `plan2.pay.even` | gleichmäßig angespart | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.saved` | {betrag} schon angespart · {monat} noch {rest} | 6 |
+| Sheet „Dein Plan“ | `plan2.pay.savedAll` | {betrag} schon angespart | 3 |
+| Sheet „Dein Plan“ | `plan2.pay.edit` | ändern | 1 |
+| Sheet „Dein Plan“ | `plan2.pay.when` | Wie zahlst du {zahlung}? | 4 |
+| Sheet „Dein Plan“ | `plan2.pay.from` | Ansparen ab | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.ready` | Fertig | 1 |
+| Einstellungen | `settings.account` | Eigenes Konto für Fixkosten | 4 |
+| Einstellungen | `settings.account.yes` | Ja | 1 |
+| Einstellungen | `settings.account.no` | Nein | 1 |
