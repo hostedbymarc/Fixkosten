@@ -39,7 +39,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('free-tile')).toBeVisible();
         // monat-feinschliff-2: the salary tile („Oktober-Gehalt“, „ausgezahlt am …“) and the „Frei verfügbar“
         // subline („rechnet mit dem Gehalt“) changed on purpose – masked; everything else pixel for pixel as main
-        const options = { animations: 'disabled', caret: 'hide', fullPage: true, maxDiffPixels: 0, mask: [page.getByTestId('salary-tile'), page.getByTestId('free-tile')] } as const;
+        const options = { animations: 'disabled' as const, caret: 'hide' as const, fullPage: true, maxDiffPixels: 0, mask: [page.getByTestId('salary-tile'), page.getByTestId('free-tile')] };
         await expect(page).toHaveScreenshot(`monat-${vp}-${scheme}.png`, options);
         // the next month too
         await page.getByRole('button', { name: 'Nächster Monat' }).click();
