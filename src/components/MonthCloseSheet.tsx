@@ -58,6 +58,7 @@ function AmountField({
           onChange={onChange}
           aria-invalid={invalid}
           aria-describedby={`${id}-hint`}
+          data-testid="close-salary"
           className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
         />
       </div>

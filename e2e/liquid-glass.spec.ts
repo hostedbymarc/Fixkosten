@@ -135,7 +135,7 @@ test.describe('Liquid-Glass-Material', () => {
     const sheet = page.getByTestId('bottom-sheet');
     await expect(sheet).toBeVisible();
     await expect(sheet).toHaveCSS('background-color', 'rgba(255, 255, 255, 0.72)');
-    await expect(sheet.getByLabel('Netto-Gehalt')).toBeVisible();
+    await expect(sheet.getByTestId('close-salary')).toBeVisible();
   });
 
   test.describe('dunkel', () => {

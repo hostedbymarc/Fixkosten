@@ -61,7 +61,7 @@ test.describe('Monatsnotiz', () => {
     await page.getByTestId('note-field').fill('Nur eine Notiz');
     await page.keyboard.press('Escape'); // Esc closes and saves
     await expect(page.getByTestId('note-text')).toHaveText('Nur eine Notiz');
-    await expect(page.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
+    await expect(page.getByTestId('salary-tile')).toHaveAttribute('data-salary', /^(none|fallback)$/);
     await expect(page.getByTestId('free-tile')).toHaveText(before!);
 
     await page.getByRole('button', { name: 'Vorheriger Monat' }).click();

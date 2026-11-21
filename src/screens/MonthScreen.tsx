@@ -936,7 +936,7 @@ function Amount({ children, strong, negative }: { children: React.ReactNode; str
 const SalaryTile = forwardRef<HTMLButtonElement, { view: SalaryView; onOpen: () => void }>(function SalaryTile({ view, onOpen }, ref) {
   // monat-feinschliff-2: titled after the month it is paid in; not entered yet: the last one, muted; below only the date
   return (
-    <button ref={ref} type="button" onClick={onOpen} className={`${tileClass} tone-sky focus-ring`} data-testid="salary-tile" data-fallback={view.fallback || undefined}>
+    <button ref={ref} type="button" onClick={onOpen} className={`${tileClass} tone-sky focus-ring`} data-testid="salary-tile" data-salary={view.value === null ? 'none' : view.fallback ? 'fallback' : 'own'}>
       <span className={tileLabel} data-testid="salary-title">
         {view.title}
       </span>

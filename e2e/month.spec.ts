@@ -12,7 +12,7 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
   });
 
   test('KPI tiles', async ({ app }) => {
-    await expect(app.getByTestId('salary-tile')).toContainText('Gehalt eintragen');
+    await expect(app.getByTestId('salary-tile')).toHaveAttribute('data-salary', /^(none|fallback)$/);
     await expect(app.getByText('Fällig diesen Monat')).toHaveCount(0); // replaced by Netto-Gehalt; the hero shows „von € 3.403“
     await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(eur('€ 2.952,17'));
     await expect(shown(app.getByText('Ø pro Monat')).locator('..')).toContainText(

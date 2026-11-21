@@ -59,7 +59,7 @@ test('live upgrade aad3d27 (v3) → current (v4) in the same browser profile', a
   await page.getByLabel('Notiz').fill('Abschlag erhöht');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await page.getByTestId('free-tile').click();
-  await shown(page.getByLabel('Netto-Gehalt')).fill('5000');
+  await shown(page.getByTestId('close-salary')).fill('5000');
   await page.getByLabel('Frei verfügbar (tatsächlich)').fill('650');
   await page.getByRole('button', { name: 'Speichern' }).click();
   await goTo(page, 'positionen');

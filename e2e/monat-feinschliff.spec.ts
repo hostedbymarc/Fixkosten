@@ -80,7 +80,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await start(page);
         const card = page.getByTestId('dein-monat');
         // November is active: the next salary is the one of 25 November („November-Gehalt“, in the December screen)
-        await expect(page.getByTestId('dein-monat-salary')).toContainText('Dein Gehalt am 25. November');
+        // monat-feinschliff-2: „November-Gehalt“, muted when it comes
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText('kommt am 25. November');
         await expect(card).not.toContainText('geschätzt');
 
         // folded by default: salary, „Frei für dich“, pill; ① ② ③ hidden
@@ -120,12 +122,23 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
         // October (past) and December (future): the Netto tile with the neutral status
         await toMonth(page, 'Oktober');
-        await expect(page.getByTestId('salary-sub')).toHaveText(/^(Überwiesen ✓|Nicht markiert)$/);
+        await expect(page.getByTestId('salary-title')).toHaveText('September-Gehalt');
+        await expect(page.getByTestId('salary-sub')).toHaveText('ausgezahlt am 25. September');
         await shot(page, `${tag}-oktober`);
         await toMonth(page, 'Dezember');
-        await expect(page.getByTestId('salary-sub')).toHaveText('Kommt am 25. November');
+        await expect(page.getByTestId('salary-title')).toHaveText('November-Gehalt');
+        await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25. November');
+        // the same entry as the card (8.302,50 from above)
+        await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.302,5/);
+        // and the other way round: changed in December's month close → the card in November shows it
+        await tap(page.getByTestId('salary-tile'));
+        await expect(page.getByTestId('close-salary')).toBeVisible();
+        await page.getByTestId('close-salary').fill('8.100');
+        await tap(page.getByRole('button', { name: 'Speichern' }));
+        await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.100/);
         await shot(page, `${tag}-dezember`);
 
+        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.100/);
         // „Dein Plan“: the question above the switch, „Große Zahlungen“ only once, the table head
         await toMonth(page, 'November');
         await tap(page.getByTestId('dein-monat-pill'));
@@ -143,7 +156,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // nowhere in the app: „geschätzt“, „nicht ausbezahlt“
         for (const route of ['monat', 'positionen', 'analyse', 'einstellungen'] as const) {
           await goTo(page, route);
-          await expect(shown(page)).not.toContainText(/geschätzt|nicht ausbezahlt/);
+          await expect(shown(page)).not.toContainText(/geschätzt|nicht ausbezahlt|Nicht markiert|Netto-Gehalt/);
         }
       });
 
@@ -180,10 +193,20 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await toMonth(page, 'November');
         await expect(confetti()).toHaveCount(0);
         await tickAll(page);
-        await expect(page.getByTestId('bills-row').getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
+        // monat-feinschliff-2: in the green card, no white extra card
+        await expect(page.getByTestId('bills-row')).toHaveCount(0);
+        await expect(page.getByTestId('dein-monat').getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
+        await expect(page.getByTestId('dein-monat-bills-title')).toHaveText('November erledigt');
+        await page.waitForTimeout(3500);
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await shot(page, `${tag}-november-erledigt-zu`);
+        await tap(page.getByTestId('dein-monat-split-toggle'));
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await shot(page, `${tag}-november-erledigt-auf`);
+        await tap(page.getByTestId('dein-monat-split-toggle'));
         await page.reload();
         await appSettled(page);
-        await expect(page.getByTestId('bills-row').getByTestId('hero-confetti')).not.toHaveAttribute('data-falling', '');
+        await expect(page.getByTestId('dein-monat').getByTestId('hero-confetti')).not.toHaveAttribute('data-falling', '');
 
         // December (future): the same, in its card
         await toMonth(page, 'Dezember');

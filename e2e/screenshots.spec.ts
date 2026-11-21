@@ -136,7 +136,7 @@ test.describe('Screenshots Phase 3 – Analyse', () => {
 
   test('1 Monat Daten (Seed + Monatsabschluss Oktober)', async ({ app }) => {
     await app.getByTestId('free-tile').click();
-    await shown(app.getByLabel('Netto-Gehalt')).fill('5000');
+    await shown(app.getByTestId('close-salary')).fill('5000');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await openAnalyse(app);
     await shoot(app, '1m');
