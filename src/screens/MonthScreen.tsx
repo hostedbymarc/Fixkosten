@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, forwardRef, useContext, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { categoryColor } from '../lib/categoryColors';
 import { useMonthSwipe } from '../lib/useMonthSwipe';
 import { useMonthCollapse } from '../lib/useCollapsed';
@@ -10,7 +10,8 @@ import { DeinMonatCard, useMonthPlan } from '../components/konto/DeinMonatCard';
 import { BigMonthCard } from '../components/konto/BigMonthCard';
 import { t } from '../lib/kontoTexts';
 import { heroSourceRows } from '../lib/heroSources';
-import { celebrateLive, confettiState, monthDone } from '../lib/celebration';
+import { monthDone } from '../lib/celebration';
+import { useCelebration } from '../components/useCelebration';
 import { Confetti } from '../components/Confetti';
 import { reducedMotion } from '../lib/entrance';
 import { streakBadge, streakOf } from '../lib/kontoBalance';
@@ -30,7 +31,6 @@ import { fitEm, fitStyle } from '../components/fitText';
 import { CountUp } from '../components/CountUp';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
-import { markCelebrated } from '../db/kontoActions';
 import { FEATURE_REMINDERS } from '../lib/features';
 import {
   deleteOneOff,
@@ -82,7 +82,7 @@ import { MonthPicker } from '../components/MonthPicker';
 import { KontoCheckCard } from '../components/konto/KontoCheckCard';
 import { KontoInvite } from '../components/konto/KontoTile';
 import { useActiveMonth, useMonthStart } from '../lib/useToday';
-import { salaryMonth, salaryStatus, type SalaryStatus } from '../lib/salaryMonth';
+import { salaryView, type SalaryView } from '../lib/salaryMonth';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
 interface Props {
@@ -230,15 +230,14 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
         // monat-verdichtet: „Dein Monat“ and the bills row first (on the iPhone without scrolling); iPad and desktop:
         // the card top left, „Nächster großer Monat“ and „Kommt bald“ on the right, the categories below the card
         <div
-          className="grid gap-3 md:grid-cols-[minmax(0,1fr)_280px] md:grid-rows-[auto_auto_1fr] md:gap-x-6 md:gap-y-4 lg:grid-cols-[minmax(0,1fr)_330px]"
+          className="grid gap-3 md:grid-cols-[minmax(0,1fr)_280px] md:grid-rows-[auto_1fr] md:gap-x-6 md:gap-y-4 lg:grid-cols-[minmax(0,1fr)_330px]"
           data-testid="month-verdichtet"
         >
           <div className="order-1 flex min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:gap-4">
             <KontoCheckCard ds={ds} active={today} />
             <DeinMonatCard ds={ds} active={today} onOpenSalary={() => openClose(null)} />
           </div>
-          <BillsRow className="order-2 md:col-start-1 md:row-start-2" period={period} active={today} figures={figures} />
-          <aside className="contents md:col-start-2 md:row-span-3 md:row-start-1 md:flex md:flex-col md:gap-6 md:self-start">
+          <aside className="contents md:col-start-2 md:row-span-2 md:row-start-1 md:flex md:flex-col md:gap-6 md:self-start">
             <BigMonthSlot ds={ds} active={today} className="order-3" />
             <div className="order-5 mt-5 flex min-w-0 flex-col gap-6 md:mt-0">
               {FEATURE_REMINDERS && (
@@ -273,7 +272,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
               </section>
             </div>
           </aside>
-          <div className="order-4 mt-5 flex min-w-0 flex-col gap-4 md:col-start-1 md:row-start-3 md:mt-4">
+          <div className="order-4 mt-5 flex min-w-0 flex-col gap-4 md:col-start-1 md:row-start-2 md:mt-4">
             <section aria-label="Fällige Positionen" className="flex flex-col gap-3 md:gap-4">
               {filtering && (
                 <div className="-mb-1 flex items-center justify-between px-1">
@@ -370,11 +369,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             <GlassGroup className={`grid grid-cols-2 gap-3 md:gap-4 ${konto.enabled ? '' : 'md:grid-cols-4'}`}>
               <SalaryTile
                 ref={salaryTile}
-                period={period}
-                salary={netSalaryForPeriod(ds, period)}
+                view={salaryView(ds, period, monthStart)}
                 onOpen={() => openClose(salaryTile.current)}
-                monthLabel={periodLabel(salaryMonth(period, monthStart))}
-                status={konto.enabled && konto.setupDone ? salaryStatus(period, today, monthStart, konto.checks, konto.hasAccount !== false) : null}
               />
               {!konto.enabled && (
                 <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
@@ -678,87 +674,6 @@ function MonthHeader({
 
 /** The month the hero showed last (module level: a swipe re-creates the hero). */
 const heroShown: { period: Period | null } = { period: null };
-/** what the hero showed last (survives the remount of a swipe): ticking the last position celebrates live */
-const heroLast: { period: Period; done: boolean } | { period: null; done: false } = { period: null, done: false };
-
-/**
- * The confetti of „{Monat} erledigt“ (hero, or the bills row of „Dein Monat“): falls once, live, when the
- * last position of the active month is ticked; else the peas lie still.
- */
-function useCelebration(period: Period, allPaid: boolean) {
-  const { settings } = useKonto();
-  const celebrated = settings.celebratedMonths.includes(period);
-  const [run, setRun] = useState(0);
-  useEffect(() => {
-    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid, celebrated);
-    Object.assign(heroLast, { period, done: allPaid });
-    if (live) {
-      setRun((n) => n + 1);
-      // once per month: remembered, a later 100 % only shows the peas lying
-      void markCelebrated(db, period);
-    } else if (!allPaid) setRun(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, allPaid]);
-  // another month: no falling peas from before (they lie)
-  const [runFor, setRunFor] = useState(period);
-  if (runFor !== period) {
-    setRunFor(period);
-    setRun(0);
-  }
-  return { peas: confettiState(allPaid, run > 0, reducedMotion()), run };
-}
-
-/**
- * „Rechnungen {Monat}“ (monat-verdichtet): a slim row – „x von n bezahlt“ and a thin progress bar. At 100 %:
- * „{Monat} erledigt“ with a check; the confetti falls once live at the last tick, afterwards the peas lie
- * still at the bottom of this row (the row is a little taller only then).
- */
-function BillsRow({ period, figures, className = '' }: { period: Period; active: Period; figures: MonthFigures; className?: string }) {
-  const allPaid = monthDone(figures);
-  const { peas, run } = useCelebration(period, allPaid);
-  const paid = figures.count - figures.openCount;
-  return (
-    <section
-      className={`bills-row glass surface relative min-w-0 overflow-hidden px-4 py-3.5 md:px-5 ${className}`}
-      data-done={allPaid || undefined}
-      data-testid="bills-row"
-      aria-labelledby="bills-row-title"
-    >
-      {peas !== 'none' && <Confetti key={`${period}-${run}`} seed={period} falling={peas === 'falling'} />}
-      {allPaid ? (
-        <p id="bills-row-title" className="flex items-center gap-2.5 text-[17px] font-semibold text-ink" data-testid="bills-done">
-          <span className="hero-check flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700" data-pop={peas === 'falling' ? '' : undefined} aria-hidden="true">
-            <CheckIcon size={18} strokeWidth={2.8} />
-          </span>
-          {t('bills.done', { monat: monthName(period) })}
-        </p>
-      ) : (
-        <>
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 id="bills-row-title" className="text-[15px] font-semibold text-ink">
-              {t('bills.title', { monat: monthName(period) })}
-            </h2>
-            <span className="num whitespace-nowrap text-[14px] text-ink-mute" data-testid="bills-count">
-              {figures.count === 0 ? t('bills.none') : t('bills.count', { x: paid, n: figures.count })}
-            </span>
-          </div>
-          <div
-            className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-control-track"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={figures.count}
-            aria-valuenow={paid}
-            aria-label={t('bills.count', { x: paid, n: figures.count })}
-            data-testid="bills-bar"
-          >
-            <span className="block h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.round(figures.ratio * 1000) / 10}%` }} />
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-
 /** „Nächster großer Monat“ from the plan (only once set up). */
 function BigMonthSlot({ ds, active, className }: { ds: Dataset; active: Period; className?: string }) {
   const { settings } = useKonto();
@@ -1018,29 +933,22 @@ function Amount({ children, strong, negative }: { children: React.ReactNode; str
 }
 
 /** Netto-Gehalt of the month; opens the month close. */
-const SalaryTile = forwardRef<
-  HTMLButtonElement,
-  { period: Period; salary: number | null; onOpen: () => void; monthLabel: string; status: SalaryStatus | null }
->(function SalaryTile({ salary, onOpen, monthLabel, status }, ref) {
+const SalaryTile = forwardRef<HTMLButtonElement, { view: SalaryView; onOpen: () => void }>(function SalaryTile({ view, onOpen }, ref) {
+  // monat-feinschliff-2: titled after the month it is paid in; not entered yet: the last one, muted; below only the date
   return (
-    <button ref={ref} type="button" onClick={onOpen} className={`${tileClass} tone-sky focus-ring`} data-testid="salary-tile">
-      <span className={tileLabel}>Netto-Gehalt</span>
+    <button ref={ref} type="button" onClick={onOpen} className={`${tileClass} tone-sky focus-ring`} data-testid="salary-tile" data-fallback={view.fallback || undefined}>
+      <span className={tileLabel} data-testid="salary-title">
+        {view.title}
+      </span>
       <span
-        className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
+        className={`${tileValue} ${view.value === null || view.fallback ? 'text-ink-faint' : 'text-ink'}`}
         style={useContext(TileFit)}
         data-testid="salary-value"
       >
-        {salary === null ? '–' : formatEUR(salary)}
+        {view.value === null ? '–' : formatEUR(view.value)}
       </span>
-      {/* monat-feinschliff: the month the salary is paid in; with „Fixkosten einplanen“ a neutral status at the same place */}
-      <span className={tileSub} data-testid="salary-sub" data-status={status?.kind}>
-        {status ? (
-          <span className={status.kind === 'marked' ? 'font-semibold text-paid-ink' : ''}>{status.text}</span>
-        ) : salary === null ? (
-          <span className="font-semibold text-accent-ink">Gehalt eintragen</span>
-        ) : (
-          monthLabel
-        )}
+      <span className={tileSub} data-testid="salary-sub">
+        {view.when}
       </span>
     </button>
   );
@@ -1132,8 +1040,7 @@ const FreeTile = forwardRef<HTMLButtonElement, FreeTileProps>(function FreeTile(
         </span>
         {calculated === null && (
           <span className={tileSub} data-testid="free-sub">
-            {/* „Netto-Gehalt“ never splits at its hyphen: the line breaks before it */}
-            rechnet mit dem <span className="whitespace-nowrap font-semibold text-accent-ink">Netto-Gehalt</span>
+            rechnet mit dem <span className="whitespace-nowrap font-semibold text-accent-ink">Gehalt</span>
           </span>
         )}
         {average !== null && (
