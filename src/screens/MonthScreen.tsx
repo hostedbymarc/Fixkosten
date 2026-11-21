@@ -30,6 +30,7 @@ import { fitEm, fitStyle } from '../components/fitText';
 import { CountUp } from '../components/CountUp';
 import { useToast } from '../components/Toast';
 import { db } from '../db/db';
+import { markCelebrated } from '../db/kontoActions';
 import { FEATURE_REMINDERS } from '../lib/features';
 import {
   deleteOneOff,
@@ -80,7 +81,8 @@ import { driftHeroLights } from '../lib/aurora';
 import { MonthPicker } from '../components/MonthPicker';
 import { KontoCheckCard } from '../components/konto/KontoCheckCard';
 import { KontoInvite } from '../components/konto/KontoTile';
-import { useActiveMonth } from '../lib/useToday';
+import { useActiveMonth, useMonthStart } from '../lib/useToday';
+import { salaryMonth, salaryStatus, type SalaryStatus } from '../lib/salaryMonth';
 import type { Dataset, OneOff, Period } from '../lib/types';
 
 interface Props {
@@ -130,6 +132,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
   const today = useActiveMonth();
+  const monthStart = useMonthStart();
   // monat-verdichtet: the active month with „Fixkosten einplanen“ shows „Dein Monat“ instead of hero and tiles
   const verdichtet = konto.enabled && period === today;
   const openGroups = useMemo(() => openFromPrevious(ds, period, today), [ds, period, today]);
@@ -370,6 +373,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
                 period={period}
                 salary={netSalaryForPeriod(ds, period)}
                 onOpen={() => openClose(salaryTile.current)}
+                monthLabel={periodLabel(salaryMonth(period, monthStart))}
+                status={konto.enabled && konto.setupDone ? salaryStatus(period, today, monthStart, konto.checks, konto.hasAccount !== false) : null}
               />
               {!konto.enabled && (
                 <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
@@ -680,15 +685,20 @@ const heroLast: { period: Period; done: boolean } | { period: null; done: false 
  * The confetti of „{Monat} erledigt“ (hero, or the bills row of „Dein Monat“): falls once, live, when the
  * last position of the active month is ticked; else the peas lie still.
  */
-function useCelebration(period: Period, active: Period, allPaid: boolean) {
+function useCelebration(period: Period, allPaid: boolean) {
+  const { settings } = useKonto();
+  const celebrated = settings.celebratedMonths.includes(period);
   const [run, setRun] = useState(0);
   useEffect(() => {
-    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, active, allPaid);
+    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid, celebrated);
     Object.assign(heroLast, { period, done: allPaid });
-    if (live) setRun((n) => n + 1);
-    // set back to open: the next 100 % falls again
-    else if (!allPaid) setRun(0);
-  }, [period, allPaid, active]);
+    if (live) {
+      setRun((n) => n + 1);
+      // once per month: remembered, a later 100 % only shows the peas lying
+      void markCelebrated(db, period);
+    } else if (!allPaid) setRun(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, allPaid]);
   // another month: no falling peas from before (they lie)
   const [runFor, setRunFor] = useState(period);
   if (runFor !== period) {
@@ -703,9 +713,9 @@ function useCelebration(period: Period, active: Period, allPaid: boolean) {
  * „{Monat} erledigt“ with a check; the confetti falls once live at the last tick, afterwards the peas lie
  * still at the bottom of this row (the row is a little taller only then).
  */
-function BillsRow({ period, active, figures, className = '' }: { period: Period; active: Period; figures: MonthFigures; className?: string }) {
+function BillsRow({ period, figures, className = '' }: { period: Period; active: Period; figures: MonthFigures; className?: string }) {
   const allPaid = monthDone(figures);
-  const { peas, run } = useCelebration(period, active, allPaid);
+  const { peas, run } = useCelebration(period, allPaid);
   const paid = figures.count - figures.openCount;
   return (
     <section
@@ -763,11 +773,10 @@ function HeroCard({
   sources,
   openOnly,
   onToggleOpenOnly,
-  active,
   streak,
 }: {
   period: Period;
-  /** the active month: only it celebrates (past months never, not even when first opened) */
+  /** the active month (monat-feinschliff: every month celebrates once, see useCelebration) */
   active: Period;
   figures: MonthFigures;
   /** „{n} Monate in Folge“ (Fixkosten einplanen, from 2 on) */
@@ -778,7 +787,7 @@ function HeroCard({
   onToggleOpenOnly: () => void;
 }) {
   const allPaid = monthDone(figures);
-  const { peas, run } = useCelebration(period, active, allPaid);
+  const { peas, run } = useCelebration(period, allPaid);
   // a diagonal shimmer once per month change (not when the screen first shows; survives the remount of a swipe)
   // the shimmer element exists only while it runs: removed when its animation ends
   const [shimmer, setShimmer] = useState<Period | null>(() => (heroShown.period !== null && heroShown.period !== period ? period : null));
@@ -1009,31 +1018,33 @@ function Amount({ children, strong, negative }: { children: React.ReactNode; str
 }
 
 /** Netto-Gehalt of the month; opens the month close. */
-const SalaryTile = forwardRef<HTMLButtonElement, { period: Period; salary: number | null; onOpen: () => void }>(
-  function SalaryTile({ period, salary, onOpen }, ref) {
-    return (
-      <button
-        ref={ref}
-        type="button"
-        onClick={onOpen}
-        className={`${tileClass} tone-sky focus-ring`}
-        data-testid="salary-tile"
+const SalaryTile = forwardRef<
+  HTMLButtonElement,
+  { period: Period; salary: number | null; onOpen: () => void; monthLabel: string; status: SalaryStatus | null }
+>(function SalaryTile({ salary, onOpen, monthLabel, status }, ref) {
+  return (
+    <button ref={ref} type="button" onClick={onOpen} className={`${tileClass} tone-sky focus-ring`} data-testid="salary-tile">
+      <span className={tileLabel}>Netto-Gehalt</span>
+      <span
+        className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
+        style={useContext(TileFit)}
+        data-testid="salary-value"
       >
-        <span className={tileLabel}>Netto-Gehalt</span>
-        <span
-          className={`${tileValue} ${salary === null ? 'text-ink-faint' : 'text-ink'}`}
-          style={useContext(TileFit)}
-          data-testid="salary-value"
-        >
-          {salary === null ? '–' : formatEUR(salary)}
-        </span>
-        <span className={tileSub}>
-          {salary === null ? <span className="font-semibold text-accent-ink">Gehalt eintragen</span> : periodLabel(period)}
-        </span>
-      </button>
-    );
-  },
-);
+        {salary === null ? '–' : formatEUR(salary)}
+      </span>
+      {/* monat-feinschliff: the month the salary is paid in; with „Fixkosten einplanen“ a neutral status at the same place */}
+      <span className={tileSub} data-testid="salary-sub" data-status={status?.kind}>
+        {status ? (
+          <span className={status.kind === 'marked' ? 'font-semibold text-paid-ink' : ''}>{status.text}</span>
+        ) : salary === null ? (
+          <span className="font-semibold text-accent-ink">Gehalt eintragen</span>
+        ) : (
+          monthLabel
+        )}
+      </span>
+    </button>
+  );
+});
 
 function KpiTile({ label, value, children }: { label: string; value: string; children?: React.ReactNode }) {
   return (
@@ -1210,14 +1221,24 @@ function GroupCard({
   const savings = group.category.kind === 'savings';
   const showSpread = !sameMoney(spread, tally.total);
   const allPaid = tally.count > 0 && tally.openCount === 0;
-  const status = `${savings ? 'Vermögensaufbau · ' : ''}${allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}`;
+  // monat-feinschliff: only positions „nicht eingeplant“ – no „0/0 bezahlt“ and no „€ 0“, the category muted
+  const unplannedOnly = tally.count === 0 && group.items.length > 0 && group.items.every((i) => i.unplanned);
+  const status = unplannedOnly
+    ? t('unplanned.chip')
+    : `${savings ? 'Vermögensaufbau · ' : ''}${allPaid ? '✓ bezahlt' : `${tally.paidCount}/${tally.count} bezahlt`}`;
   return (
-    <section className="glass surface overflow-hidden" aria-label={group.category.name} data-testid="category-group" data-collapsed={collapsed}>
+    <section
+      className="glass surface overflow-hidden"
+      aria-label={group.category.name}
+      data-testid="category-group"
+      data-collapsed={collapsed}
+      data-unplanned={unplannedOnly || undefined}
+    >
       <Disclosure
         expanded={!collapsed}
         onToggle={onToggleCollapsed}
         headingLevel={2}
-        buttonLabel={`${group.category.name}, fällig ${formatEUR(tally.total)}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${status}`}
+        buttonLabel={`${group.category.name}${unplannedOnly ? '' : `, fällig ${formatEUR(tally.total)}`}${showSpread ? `, umgelegt ${formatAvg(spread)} pro Monat` : ''}, ${status}`}
         buttonClassName={`px-5 py-4 hover:bg-zinc-50/40 md:px-6 ${collapsed ? '' : 'border-b border-line'}`}
         buttonTestId="group-toggle"
         header={
@@ -1226,12 +1247,16 @@ function GroupCard({
             <Pea size={16} color={categoryColor(group.category.color)} />
             {/* fixed grid: left name / status, right sum / Ø; every cell one line, long names end in an ellipsis */}
             <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
-              <span className="truncate text-[15px] font-semibold leading-6 text-ink" data-testid="group-name">
+              <span className={`truncate text-[15px] font-semibold leading-6 ${unplannedOnly ? 'text-ink-mute' : 'text-ink'}`} data-testid="group-name">
                 {group.category.name}
               </span>
-              <span className="num whitespace-nowrap text-right text-[15px] font-semibold leading-6 text-ink" data-testid="group-sum">
-                {formatEUR(tally.total)}
-              </span>
+              {unplannedOnly ? (
+                <span aria-hidden="true" />
+              ) : (
+                <span className="num whitespace-nowrap text-right text-[15px] font-semibold leading-6 text-ink" data-testid="group-sum">
+                  {formatEUR(tally.total)}
+                </span>
+              )}
               <span
                 className={`truncate text-[12px] leading-4 ${allPaid ? 'font-semibold text-paid-ink' : 'text-ink-mute'}`}
                 data-testid="group-progress"

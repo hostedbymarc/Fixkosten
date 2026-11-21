@@ -11,7 +11,7 @@
 | „31 = letzter Tag des Monats“ | Bearbeiten-Dialog · „Fälligkeitstag“ | wird Tooltip |
 | „Wird abgezogen.“ / „Kommt in diesem Monat dazu.“ | Einmalbetrag-Sheet · „Betrag“ | wird Tooltip |
 | „Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt.“ | Einstellungen · „Spielgeld pro Monat“ | wird Tooltip – spielgeld-planer: Text aus dem Auftrag |
-| „Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt.“ | Einstellungen · „Neuer Monat beginnt am“ | wird Tooltip |
+| „Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt. Dein Gehalt heißt nach dem Monat, in dem es kommt.“ | Einstellungen · „Neuer Monat beginnt am“ | wird Tooltip |
 | „Erbse nennt dir jeden Monat einen Betrag zum Zurücklegen. Damit kommst du nie ins Minus. Ohne Banklogin.“ | Einstellungen · „Fixkosten einplanen“ | wird Tooltip |
 | „Folgt deinem Gerät: hell oder dunkel, je nach Systemeinstellung.“ / „Immer hell, auch wenn dein Gerät dunkel ist.“ / „Immer dunkel, angenehm am Abend.“ | Einstellungen · „Design“ | wird Tooltip |
 | „Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“.“ | Einstellungen · „Erbse wie eine App öffnen“ | wird Tooltip |

@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useMonthStart } from '../../lib/useToday';
+import { salaryName } from '../../lib/salaryMonth';
 import { db } from '../../db/db';
 import { saveMonthClose } from '../../db/repo';
 import { savingsAverage, savingsCard, savingsHistory, shortPeriodLabel, type SavingsCard, type SavingsPoint } from '../../lib/analytics';
@@ -45,6 +47,7 @@ function useColumns(shown: boolean): [React.RefObject<HTMLDivElement>, number] {
 
 /** One bar: full width = net salary, filled part = Vermögensaufbau vom Netto (= the Sparquote, capped at 100 %). */
 function SavingsBar({ card }: { card: SavingsCard }) {
+  const start = useMonthStart();
   const fill = Math.min(Math.max(card.rate, 0), 1);
   const [wealth, net] = formatEURSet(card.wealthFromNet, card.netSalary);
   const other = Math.round(card.wealthNotFromNet * 100) > 0;
@@ -66,7 +69,8 @@ function SavingsBar({ card }: { card: SavingsCard }) {
           <span className="num font-semibold text-ink">{wealth}</span> aus dem Netto gespart
         </span>
         <span className="whitespace-nowrap" data-testid="savings-net">
-          Netto <span className="num font-semibold text-ink">{net}</span>
+          {/* monat-feinschliff: with another month start the salary is named after the month it is paid in */}
+          {start === 1 ? 'Netto' : salaryName(card.period, start)} <span className="num font-semibold text-ink">{net}</span>
         </span>
       </p>
       {other && (

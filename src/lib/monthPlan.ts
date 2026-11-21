@@ -470,6 +470,44 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
 }
 
 /**
+ * „inkl. …“ under ① (monat-feinschliff): what of T this salary carries beyond its monthly bills, and for whom.
+ * - Gleichmäßig: the extra (or the one-time amount) – for the month the money is short and its big payments
+ *   („inkl. € 326,81 für Februar · Steuerberater, Öffis“)
+ * - Bei Fälligkeit: only when a big payment is due this month („inkl. € 262,00 Baurechtszins“)
+ * - Eigener Plan: the rates of this month – for the month of the first payment saved up, and the payments;
+ *   without rates like Bei Fälligkeit
+ * null: nothing extra in this salary.
+ */
+export interface InclLine {
+  amount: number;
+  /** saving up for this month (Gleichmäßig, Eigener Plan); null: paid this month (Bei Fälligkeit) */
+  month: Period | null;
+  names: string[];
+}
+
+export function inclLine(plan: MonthPlan): InclLine | null {
+  const first = plan.first;
+  if (plan.mode === 'even') {
+    const state = plan.state;
+    const lumpHere = state.mode === 'lump' && state.gapFrom && first.transfer > (state.months.find((m) => m.period === first.period)?.amount ?? state.order);
+    const amount = first.extra > 0 ? first.extra : lumpHere ? state.lump : 0;
+    // the extra fills the month with the lowest balance (gapMonth): that month and its big payments
+    const month = state.gapMonth ?? state.gapFrom;
+    if (amount <= 0 || !month) return null;
+    const names = plan.payments.filter((p) => p.period === month).map((p) => p.name);
+    return { amount, month, names: names.length ? names : state.gapBills.map((b) => b.name) };
+  }
+  if (first.rates > 0) {
+    const saving = plan.payments.filter((p) => p.mode === 'spread' && p.rates > 0 && p.start !== null && p.start <= first.period && p.period >= first.period);
+    const month = saving.reduce<Period | null>((m, p) => (m === null || p.period < m ? p.period : m), null);
+    return { amount: first.rates, month, names: saving.filter((p) => p.period === month).map((p) => p.name) };
+  }
+  const due = first.due.filter((p) => p.mode === 'due' && p.rest > 0);
+  if (due.length === 0) return null;
+  return { amount: Math.round(due.reduce((a, p) => a + p.rest, 0) * 100) / 100, month: null, names: due.map((p) => p.name) };
+}
+
+/**
  * The default account of a position after „Hast du ein eigenes Konto für Fixkosten?“ (only positions
  * without a stored account; stored ones stay): yes → everything „Rücklage“; no → monthly ones „Direkt“,
  * all others „Rücklage“. Vermögensaufbau stays „Direkt“ as before.

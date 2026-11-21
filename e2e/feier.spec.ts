@@ -109,7 +109,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.setTimeout(150_000);
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
-      test('Hero-Hierarchie, letzte Position → einmal fallen, neu laden → Erbsen liegen, offen → weg, erneut → einmal, reduced motion', async ({ page }) => {
+      test('Hero-Hierarchie, letzte Position → einmal fallen, neu laden → Erbsen liegen, offen → weg, erneut → liegen, reduced motion', async ({ page }) => {
         await page.clock.setFixedTime(TODAY);
         await page.goto('/');
         await page.getByTestId('import-file').setInputFiles(FIXTURE);
@@ -180,7 +180,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.waitForTimeout(300);
         await peasStill(page);
 
-        // set back to open: no peas, the normal hero; 100 % again: they fall once more
+        // set back to open: no peas, the normal hero; 100 % again: they lie, no second celebration (celebratedMonths)
         const depot = page.locator('[data-position="pos-depotentgelt"]').getByTestId('toggle-paid').first();
         // a fully paid category starts collapsed
         const showDepot = async () => {
@@ -193,8 +193,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('hero-confetti')).toHaveCount(0);
         await tap(depot);
         await expect(page.getByTestId('hero-done')).toBeVisible();
-        await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
-        await expect(page.getByTestId('hero-check')).toHaveAttribute('data-pop', '');
+        await expect(page.getByTestId('hero-confetti')).toHaveCount(1);
+        await expect(page.getByTestId('hero-confetti')).not.toHaveAttribute('data-falling', '');
+        await expect(page.getByTestId('hero-check')).not.toHaveAttribute('data-pop', '');
 
         // prefers-reduced-motion: nothing falls, the lying peas stay
         await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -213,7 +214,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('hero-done-title')).toHaveText('Oktober erledigt');
       });
 
-      test('vergangene Monate fallen nie: nicht beim Abhaken, nicht beim ersten Öffnen – die Erbsen liegen nur', async ({ page }) => {
+      test('beim Öffnen fällt nie etwas: Oktober aus „Offen aus Oktober“ bezahlt, dann geöffnet – die Erbsen liegen nur', async ({ page }) => {
         test.skip(scheme === 'dark', 'Logik, einmal je Gerät');
         await page.clock.setFixedTime(NOV_5);
         await page.goto('/');

@@ -115,13 +115,14 @@
 | Walkthrough | `walk.5.text` | Am {tag} kommt dein Gehalt. Erbse zeigt dir, was frei bleibt. | 5 · 6 |
 | Dein Monat | `month.title` | Dein Monat | 2 |
 | Dein Monat | `month.salary` | Dein Gehalt am {datum} | 4 |
-| Dein Monat | `month.estimated` | geschätzt | 1 |
 | Dein Monat | `month.noSalary` | Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Monat. | 4 · 5 |
 | Dein Monat | `month.noSalary.action` | Gehalt eintragen | 2 |
 | Dein Monat | `month.toAccount` | Aufs Fixkostenkonto | 2 |
 | Dein Monat | `month.aside` | Zur Seite legen | 3 |
-| Dein Monat | `month.incl` | inkl. {betrag} für {zahlung} im {monat} | 1 · 5 |
-| Dein Monat | `month.incl.more` | inkl. {betrag} für {n} Zahlungen im {monat} | 1 · 6 |
+| Dein Monat | `month.incl.due` | inkl. {betrag} {zahlungen} | 1 · 2 |
+| Dein Monat | `month.incl.save` | inkl. {betrag} für {monat} · {zahlungen} | 1 · 4 |
+| Dein Monat | `month.split` | So teilt sich dein Gehalt | 5 |
+| Dein Monat | `month.salary.edit` | Gehalt ändern | 2 |
 | Dein Monat | `month.direct` | Direkt bezahlt | 2 |
 | Dein Monat | `month.direct.more` | {n} Posten | 2 |
 | Dein Monat | `month.wealth` | Vermögensaufbau | 1 |
@@ -155,7 +156,7 @@
 | Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.spielgeld` | Dein Spielgeld | 2 |
 | Sheet „Dein Plan“ | `plan2.spielgeld.edit` | Spielgeld ändern | 2 |
-| Sheet „Dein Plan“ | `plan2.mode` | Große Zahlungen | 2 |
+| Sheet „Dein Plan“ | `plan2.mode` | Wie zahlst du große Zahlungen? | 5 |
 | Sheet „Dein Plan“ | `plan2.mode.due` | Bei Fälligkeit | 2 |
 | Sheet „Dein Plan“ | `plan2.mode.even` | Gleichmäßig | 1 |
 | Sheet „Dein Plan“ | `plan2.mode.due.info` | Jede große Zahlung überweist du im Monat, in dem sie fällig ist. | 12 |
@@ -182,6 +183,13 @@
 | Sheet „Dein Plan“ | `plan2.pay.when` | Wie zahlst du {zahlung}? | 4 |
 | Sheet „Dein Plan“ | `plan2.pay.from` | Ansparen ab | 2 |
 | Sheet „Dein Plan“ | `plan2.pay.ready` | Fertig | 1 |
+| Gehalt (Auszahlungsmonat) | `salary.name` | {monat}-Gehalt | 1 |
+| Gehalt (Auszahlungsmonat) | `salary.subtitle` | {gehalt}, ausgezahlt am {datum} | 4 |
+| Gehalt (Auszahlungsmonat) | `salary.marked` | Überwiesen ✓ | 1 |
+| Gehalt (Auszahlungsmonat) | `salary.marked.aside` | Zur Seite gelegt ✓ | 3 |
+| Gehalt (Auszahlungsmonat) | `salary.unmarked` | Nicht markiert | 2 |
+| Gehalt (Auszahlungsmonat) | `salary.comes` | Kommt am {datum} | 3 |
+| Gehalt (Auszahlungsmonat) | `salary.rule` | Dein Gehalt heißt nach dem Monat, in dem es kommt. | 10 |
 | Einstellungen | `settings.account` | Eigenes Konto für Fixkosten | 4 |
 | Einstellungen | `settings.account.yes` | Ja | 1 |
 | Einstellungen | `settings.account.no` | Nein | 1 |

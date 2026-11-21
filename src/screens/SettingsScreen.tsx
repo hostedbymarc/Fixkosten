@@ -298,7 +298,7 @@ function MonthSection() {
           value={String(start)}
           onChange={(v) => void writeMonthStart(db, toMonthStart(v === 'last' ? 'last' : Number(v)))}
           options={MONTH_START_CHOICES.map((c) => ({ value: String(c), label: monthStartLabel(c) }))}
-          info="Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt."
+          info={`Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt. ${t('salary.rule')}`}
         />
         <p className="px-1 text-[13px] text-ink-mute" data-testid="active-month">
           Aktiver Monat: <span className="font-semibold text-ink-soft">{periodLabel(active)}</span>

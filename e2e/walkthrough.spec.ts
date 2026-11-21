@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, test, TODAY, touchSwipe } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, test, TODAY, touchSwipe, closePlan } from './fixtures';
 
 // walkthrough „So funktioniert Erbse“ (seed data, today 5 October 2026 → October active):
 // - monat-verdichtet: right after the setup „Dein Plan“ opens (not the walkthrough); the way in is
@@ -84,8 +84,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
         await expect(walk(page)).toHaveCount(0);
         await sheetIn(page);
-        await page.keyboard.press('Escape');
-        await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+        await closePlan(page);
 
         // the settings: the row opens it
         await page.goto('/#/einstellungen');

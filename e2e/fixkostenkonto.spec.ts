@@ -180,9 +180,13 @@ test('Position „Direkt“: der Betrag aufs Konto sinkt um ihren Monatsanteil',
     await goTo(page, 'einstellungen');
     await page.getByTestId('settings-open-plan').click();
     await page.getByTestId('plan-mode-even').click();
+    await expect(page.getByTestId('plan-mode-even')).toHaveAttribute('aria-checked', 'true');
     const text = (await page.getByTestId('plan-salary-row').first().locator('td').nth(1).textContent())!;
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+    // an Esc right while the sheet takes the focus can get lost: pressed again until it is closed
+    await expect(async () => {
+      if ((await page.getByTestId('plan-sheet').count()) > 0) await page.keyboard.press('Escape');
+      await expect(page.getByTestId('plan-sheet')).toHaveCount(0, { timeout: 1000 });
+    }).toPass({ intervals: [200, 500], timeout: 10000 });
     return amountOf(text);
   };
   const before = await transfer();

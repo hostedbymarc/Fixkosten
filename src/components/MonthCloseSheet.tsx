@@ -1,4 +1,8 @@
 import { AmountInput } from './form';
+import { useMonthStart } from '../lib/useToday';
+import { payday, salaryName } from '../lib/salaryMonth';
+import { t } from '../lib/kontoTexts';
+import { dayLabel } from '../lib/kontoWords';
 import { useId, useState } from 'react';
 import { freeAfterFixedAvgWith, freeAfterFixedWith, monthCloseFor } from '../lib/calc';
 import { amountToInput, currencySymbol, formatAvg, formatEUR, parseAmount } from '../lib/format';
@@ -68,6 +72,8 @@ function AmountField({
 /** Month close: net salary of the month. Nothing is saved automatically; the month note has its own card. */
 export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: Props) {
   const current = monthCloseFor(ds, period);
+  // monat-feinschliff: with another month start the salary is named after the month it is paid in
+  const start = useMonthStart();
   const previous = monthCloseFor(ds, addPeriods(period, -1));
 
   const [salaryText, setSalaryText] = useState(current?.netSalary !== undefined ? amountToInput(current.netSalary) : '');
@@ -83,7 +89,7 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
   return (
     <BottomSheet
       title={`Monatsabschluss ${periodLabel(period)}`}
-      subtitle="Netto-Gehalt des Monats"
+      subtitle={start === 1 ? 'Netto-Gehalt des Monats' : t('salary.subtitle', { gehalt: salaryName(period, start), datum: dayLabel(payday(period, start)) })}
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >

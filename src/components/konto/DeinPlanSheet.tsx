@@ -200,7 +200,7 @@ function ModeSwitch({ plan }: { plan: MonthPlan }) {
   return (
     <div className="flex flex-col gap-2" data-testid="plan-mode">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[13px] font-medium text-ink-mute">{t('plan2.mode')}</p>
+        <p className="text-[15px] font-semibold text-ink" data-testid="plan-mode-title">{t('plan2.mode')}</p>
         {plan.mode === 'custom' && (
           <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-[12px] font-semibold text-accent-ink" data-testid="plan-custom">
             {t('plan2.custom')}

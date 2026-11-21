@@ -394,6 +394,17 @@ export async function closeWalkthrough(page: Page) {
 }
 
 /**
+ * Closes „Dein Plan“ with Esc. An Esc right while the sheet takes the focus can get lost (WebKit): it is
+ * pressed again until the sheet is gone.
+ */
+export async function closePlan(page: Page) {
+  await expect(async () => {
+    if ((await page.getByTestId('plan-sheet').count()) > 0) await page.keyboard.press('Escape');
+    await expect(page.getByTestId('plan-sheet')).toHaveCount(0, { timeout: 1000 });
+  }).toPass({ intervals: [200, 500], timeout: 10000 });
+}
+
+/**
  * „Fixkosten einplanen“ (monat-verdichtet): after „Aktivieren“ the card „Dein Monat“ asks for the setup
  * first. This answers every question (own account, € 10.000 set aside, standing order running); the setup
  * closes and „Dein Plan“ opens with the recommendation – closed here, so the card shows the month.

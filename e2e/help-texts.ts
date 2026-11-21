@@ -31,7 +31,7 @@ export const HELP_TEXTS: HelpText[] = [
   { texts: ['31 = letzter Tag des Monats'], screen: 'Bearbeiten-Dialog · „Fälligkeitstag“', placement: 'tooltip' },
   { texts: ['Wird abgezogen.', 'Kommt in diesem Monat dazu.'], screen: 'Einmalbetrag-Sheet · „Betrag“', placement: 'tooltip' },
   { texts: ['Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt.'], screen: 'Einstellungen · „Spielgeld pro Monat“', placement: 'tooltip', note: 'spielgeld-planer: Text aus dem Auftrag' },
-  { texts: ['Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt.'], screen: 'Einstellungen · „Neuer Monat beginnt am“', placement: 'tooltip' },
+  { texts: ['Ab diesem Tag öffnet Erbse schon den Folgemonat. Praktisch, wenn dein Gehalt am Monatsende kommt. Dein Gehalt heißt nach dem Monat, in dem es kommt.'], screen: 'Einstellungen · „Neuer Monat beginnt am“', placement: 'tooltip' },
   { texts: ['Erbse nennt dir jeden Monat einen Betrag zum Zurücklegen. Damit kommst du nie ins Minus. Ohne Banklogin.'], screen: 'Einstellungen · „Fixkosten einplanen“', placement: 'tooltip' },
   { texts: ['Folgt deinem Gerät: hell oder dunkel, je nach Systemeinstellung.', 'Immer hell, auch wenn dein Gerät dunkel ist.', 'Immer dunkel, angenehm am Abend.'], screen: 'Einstellungen · „Design“', placement: 'tooltip' },
   { texts: ['Tippe in Safari auf Teilen, dann auf „Zum Home-Bildschirm“.'], screen: 'Einstellungen · „Erbse wie eine App öffnen“', placement: 'tooltip' },

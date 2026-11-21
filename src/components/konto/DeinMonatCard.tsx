@@ -1,18 +1,21 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
 import { answerMonthCheck } from '../../db/kontoActions';
+import { saveMonthClose } from '../../db/repo';
 import { useKonto } from '../../db/useKonto';
 import { localToday } from '../../lib/activeMonth';
-import { formatEUR } from '../../lib/format';
+import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib/format';
 import { t } from '../../lib/kontoTexts';
 import { dayLabel } from '../../lib/kontoWords';
-import { monthPlan, type MonthPlan } from '../../lib/monthPlan';
+import { inclLine, monthPlan, type MonthPlan } from '../../lib/monthPlan';
 import { monthName } from '../../lib/period';
 import { openPlan } from '../../lib/planBus';
 import type { Dataset, Period } from '../../lib/types';
 import { useMonthStart } from '../../lib/useToday';
 import { fitStyle } from '../fitText';
-import { AlertIcon, CheckIcon } from '../Icons';
+import { AlertIcon, CheckIcon, ChevronDown } from '../Icons';
+import { AmountInput } from '../form';
 import { KontoSetup, useKontoEffects } from './KontoTile';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
@@ -71,27 +74,17 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
   // the pill: the Spielgeld against F of this salary (the 12 months are in „Dein Plan“)
   const fits = plan.spielgeld === null || first.free === null ? null : Math.round(first.free * 100) >= Math.round(plan.spielgeld * 100);
   const open = (el: HTMLElement | null, editSpielgeld = false) => openPlan({ returnFocusTo: el, editSpielgeld });
+  const [splitOpen, setSplitOpen] = useSplitOpen();
 
   return (
     <section className="hero surface flex flex-col p-5 md:p-6" data-testid="dein-monat" data-state={plan.noSalary ? 'no-salary' : fits === false ? 'short' : fits ? 'ok' : 'none'} aria-labelledby="dein-monat-title">
       <h2 id="dein-monat-title" className="sr-only">
         {t('month.title')}
       </h2>
-      {/* the salary */}
+      {/* the salary: tap the amount to change it (cents allowed); every number follows at once */}
       <div className="flex items-baseline justify-between gap-3" data-testid="dein-monat-salary">
-        <p className="min-w-0 text-[15px] leading-snug text-ink-soft">
-          {t('month.salary', { datum: dayLabel(first.payday) })}
-          {first.estimated && first.salary !== null && (
-            <span className="hero-chip ml-2 inline-flex h-6 items-center rounded-full px-2 align-middle text-[12px] font-semibold" data-testid="dein-monat-estimated">
-              {t('month.estimated')}
-            </span>
-          )}
-        </p>
-        {first.salary !== null && (
-          <span className="num shrink-0 whitespace-nowrap text-[17px] font-semibold text-ink" data-testid="dein-monat-salary-value">
-            {money(first.salary)}
-          </span>
-        )}
+        <p className="min-w-0 text-[15px] leading-snug text-ink-soft">{t('month.salary', { datum: dayLabel(first.payday) })}</p>
+        {first.salary !== null && <SalaryEdit period={first.period} salary={first.salary} />}
       </div>
 
       {plan.noSalary ? (
@@ -103,20 +96,34 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
         </div>
       ) : (
         <>
-          <ol className="num mt-3 flex flex-col">
-            <Row
-              n={1}
-              label={t(account ? 'month.toAccount' : 'month.aside')}
-              value={minus(first.transfer)}
-              testId="dein-monat-transfer"
-              buttonRef={reserveRow}
-              onClick={() => open(reserveRow.current)}
-              sub={inclText(plan)}
-            />
-            <Row n={2} label={t('month.direct')} value={minus(first.direct)} testId="dein-monat-direct" sub={directNames(first.directItems.map((i) => i.name))} />
-            <Row n={3} label={t('month.wealth')} value={minus(first.wealth)} testId="dein-monat-wealth" />
-          </ol>
-          <div className="mt-3 border-t border-edge pt-3">
+          {/* „So teilt sich dein Gehalt“: ① ② ③ folded away by default, the state is kept per device */}
+          <button
+            type="button"
+            onClick={() => void setSplitOpen(!splitOpen)}
+            aria-expanded={splitOpen}
+            aria-controls="dein-monat-split"
+            className="focus-ring -mx-2 mt-2 flex min-h-11 items-center justify-between gap-2 rounded-xl px-2 text-left text-[14px] font-medium text-ink-soft hover:bg-white/5"
+            data-testid="dein-monat-split-toggle"
+          >
+            {t('month.split')}
+            <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-200 motion-reduce:transition-none ${splitOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+          </button>
+          <div id="dein-monat-split" className="fold grid" data-open={splitOpen || undefined} data-testid="dein-monat-split" aria-hidden={!splitOpen} {...(!splitOpen ? { inert: '' } : {})}>
+            <ol className="num flex min-h-0 flex-col overflow-hidden">
+              <Row
+                n={1}
+                label={t(account ? 'month.toAccount' : 'month.aside')}
+                value={minus(first.transfer)}
+                testId="dein-monat-transfer"
+                buttonRef={reserveRow}
+                onClick={() => open(reserveRow.current)}
+                sub={inclText(plan)}
+              />
+              <Row n={2} label={t('month.direct')} value={minus(first.direct)} testId="dein-monat-direct" sub={directNames(first.directItems.map((i) => i.name))} />
+              <Row n={3} label={t('month.wealth')} value={minus(first.wealth)} testId="dein-monat-wealth" />
+            </ol>
+          </div>
+          <div className="mt-2 border-t border-edge pt-3">
             <div className="fit-box" data-testid="dein-monat-free">
               <p className="text-[15px] font-semibold text-ink-soft">{t('month.free')}</p>
               <p className="num num-display fit fit-hero mt-0.5 block text-ink" style={fitStyle(money(first.free!))} data-testid="dein-monat-free-value">
@@ -174,21 +181,81 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
   );
 }
 
-/** „inkl. € A für {Zahlung} im {Monat}“: only when big payments (or rates) are part of T. */
+/** „inkl. € 326,81 für Februar · Steuerberater, Öffis“ / „inkl. € 262,00 Baurechtszins“ (monthPlan.inclLine) */
 function inclText(plan: MonthPlan): string | undefined {
-  const first = plan.first;
-  const due = first.due.filter((p) => p.mode === 'due' && p.rest > 0);
-  if (plan.mode !== 'even' && due.length === 1 && first.rates === 0)
-    return t('month.incl', { betrag: money(due[0]!.rest), zahlung: due[0]!.name, monat: monthName(first.period) });
-  if (plan.mode !== 'even' && due.length > 1 && first.rates === 0)
-    return t('month.incl.more', { betrag: money(due.reduce((a, p) => a + p.rest, 0)), n: due.length, monat: monthName(first.period) });
-  // saving up: the rates of this month, for the first payment they are for
-  const saving = plan.payments.filter((p) => p.mode === 'spread' && p.start && p.start <= first.period && p.period >= first.period && p.rates > 0);
-  const extra = first.rates + first.extra + due.reduce((a, p) => a + p.rest, 0);
-  if (extra <= 0) return undefined;
-  const target = saving[0] ?? due[0] ?? plan.payments.find((p) => p.period >= first.period && p.rest > 0);
-  if (!target) return undefined;
-  return t('month.incl', { betrag: money(Math.round(extra * 100) / 100), zahlung: target.name, monat: monthName(target.period) });
+  const line = inclLine(plan);
+  if (!line || line.names.length === 0) return undefined;
+  const zahlungen = line.names.join(', ');
+  return line.month
+    ? t('month.incl.save', { betrag: money(line.amount), monat: monthName(line.month), zahlungen })
+    : t('month.incl.due', { betrag: money(line.amount), zahlungen });
+}
+
+/** The salary of the card: a tap makes it editable (decimal keyboard, cents); Enter or a tap outside saves. */
+function SalaryEdit({ period, salary }: { period: Period; salary: number }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState('');
+  const field = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!editing) return;
+    field.current?.focus();
+    field.current?.select();
+  }, [editing]);
+  function commit() {
+    if (!editing) return;
+    setEditing(false);
+    const value = parseAmount(text);
+    if (value === null || value < 0 || Math.round(value * 100) === Math.round(salary * 100)) return;
+    void saveMonthClose(db, period, { netSalary: value });
+  }
+  if (!editing)
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setText(amountToInput(salary));
+          setEditing(true);
+        }}
+        aria-label={`${t('month.salary.edit')}: ${money(salary)}`}
+        className="focus-ring num -mr-2 shrink-0 whitespace-nowrap rounded-xl px-2 py-1 text-[17px] font-semibold text-ink hover:bg-white/5"
+        data-testid="dein-monat-salary-value"
+      >
+        {money(salary)}
+      </button>
+    );
+  return (
+    <span className="flex shrink-0 items-center rounded-xl border border-edge px-2 py-0.5">
+      <span className="mr-1 text-[15px] text-ink-soft">{currencySymbol()}</span>
+      <AmountInput
+        ref={field}
+        value={text}
+        onChange={setText}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            setEditing(false);
+          }
+        }}
+        onBlur={commit}
+        enterKeyHint="done"
+        aria-label={t('month.salary.edit')}
+        size={Math.max(5, text.length + 1)}
+        className="num w-auto max-w-[11ch] bg-transparent text-right text-[17px] font-semibold text-ink outline-none"
+        data-testid="dein-monat-salary-input"
+      />
+    </span>
+  );
+}
+
+/** „So teilt sich dein Gehalt“ open or folded – per device (a meta entry that no backup carries). */
+const SPLIT_KEY = 'monthSplitOpen';
+function useSplitOpen(): [boolean, (open: boolean) => Promise<void>] {
+  const stored = useLiveQuery(() => db.meta.get(SPLIT_KEY), []);
+  return [stored?.value === true, async (open) => void (await db.meta.put({ key: SPLIT_KEY, value: open }))];
 }
 
 /** up to two names, else „{n} Posten“ */
