@@ -1,7 +1,7 @@
 // monat-feinschliff: a salary is named after the calendar month it is paid in (payday = „Neuer Monat beginnt am“).
 import { describe, expect, it } from 'vitest';
 import { KONTO_TEXTS } from './kontoTexts';
-import { payday, salaryMonth, salaryName, salaryStatus, monthKind } from './salaryMonth';
+import { paidOut, payday, salaryMonth, salaryName, salaryWhen } from './salaryMonth';
 
 const plain = (s: string) => s.replace(/ /g, ' ');
 
@@ -37,37 +37,46 @@ describe('Gehalt nach Auszahlungsmonat', () => {
   });
 });
 
-describe('Status der Netto-Kachel je Monatsart', () => {
-  const checks = [{ period: '2026-10', deposited: true }];
-  it('Monatsart', () => {
-    expect(monthKind('2026-10', '2026-11')).toBe('past');
-    expect(monthKind('2026-11', '2026-11')).toBe('active');
-    expect(monthKind('2026-12', '2026-11')).toBe('future');
+describe('Kachel-Titel je Monat (monat-feinschliff-2)', () => {
+  it('Monatsbeginn 1: Oktober-Screen „Oktober-Gehalt“, Dezember-Screen „Dezember-Gehalt“', () => {
+    expect(salaryName('2026-10', 1)).toBe('Oktober-Gehalt');
+    expect(salaryName('2026-12', 1)).toBe('Dezember-Gehalt');
   });
-  it('vergangen und markiert: „Überwiesen ✓“ (ohne eigenes Konto „Zur Seite gelegt ✓“)', () => {
-    expect(salaryStatus('2026-10', '2026-11', 25, checks, true)).toEqual({ kind: 'marked', text: 'Überwiesen ✓' });
-    expect(salaryStatus('2026-10', '2026-11', 25, checks, false)).toEqual({ kind: 'marked', text: 'Zur Seite gelegt ✓' });
+  it('Monatsbeginn 25: Oktober-Screen „September-Gehalt“, Dezember-Screen „November-Gehalt“', () => {
+    expect(salaryName('2026-10', 25)).toBe('September-Gehalt');
+    expect(salaryName('2026-12', 25)).toBe('November-Gehalt');
   });
-  it('vergangen, nicht markiert: „Nicht markiert“', () => {
-    expect(salaryStatus('2026-09', '2026-11', 25, checks, true)).toEqual({ kind: 'unmarked', text: 'Nicht markiert' });
+  it('Jahreswechsel: Jänner-Screen „Dezember-Gehalt“ (25.), „Jänner-Gehalt“ (1.)', () => {
+    expect(salaryName('2027-01', 25)).toBe('Dezember-Gehalt');
+    expect(salaryName('2027-01', 1)).toBe('Jänner-Gehalt');
   });
-  it('künftig: „Kommt am {Auszahlungstag}“', () => {
-    const s = salaryStatus('2026-12', '2026-11', 25, checks, true, new Date(2026, 10, 10))!;
-    expect(s.kind).toBe('comes');
-    expect(plain(s.text)).toBe('Kommt am 25. November');
-    expect(plain(salaryStatus('2026-12', '2026-11', 1, checks, true, new Date(2026, 10, 10))!.text)).toBe('Kommt am 1. Dezember');
+});
+
+describe('Zeile unter dem Betrag: nur das Datum', () => {
+  const nov10 = new Date(2026, 10, 10);
+  it('vergangen: „ausgezahlt am …“, ab dem Tag selbst', () => {
+    expect(plain(salaryWhen('2026-11', 25, nov10))).toBe('ausgezahlt am 25. Oktober');
+    expect(plain(salaryWhen('2026-12', 25, new Date(2026, 10, 25)))).toBe('ausgezahlt am 25. November');
   });
-  it('aktiver Monat: kein Status (die Karte hat den Knopf)', () => {
-    expect(salaryStatus('2026-11', '2026-11', 25, checks, true)).toBeNull();
+  it('künftig: „kommt am …“', () => {
+    expect(plain(salaryWhen('2026-12', 25, nov10))).toBe('kommt am 25. November');
+    expect(plain(salaryWhen('2027-01', 1, nov10))).toBe('kommt am 1. Jänner');
   });
-  it('kein Text „nicht ausbezahlt“ und kein „geschätzt“', () => {
-    for (const p of ['2026-09', '2026-10', '2026-12'])
-      expect(salaryStatus(p, '2026-11', 25, checks, true)!.text).not.toMatch(/ausbezahlt|geschätzt/);
+  it('kein „Nicht markiert“, kein „Überwiesen ✓“', () => {
+    for (const p of ['2026-09', '2026-10', '2026-12']) expect(salaryWhen(p, 25, nov10)).not.toMatch(/markiert|Überwiesen|ausbezahlt|geschätzt/);
+  });
+  it('kurz für die Kachel: „kommt am 25.11.“', () => {
+    expect(salaryWhen('2026-12', 25, nov10, true)).toBe('kommt am 25.11.');
+    expect(salaryWhen('2026-10', 25, nov10, true)).toBe('ausgezahlt am 25.9.');
+  });
+  it('paidOut: Tag genau', () => {
+    expect(paidOut('2026-12', 25, new Date(2026, 10, 24, 23))).toBe(false);
+    expect(paidOut('2026-12', 25, new Date(2026, 10, 25, 0, 1))).toBe(true);
   });
 });
 
 describe('Texte', () => {
-  it('kein „geschätzt“ und kein „nicht ausbezahlt“ in den Texten', () => {
-    for (const text of Object.values(KONTO_TEXTS)) expect(text).not.toMatch(/geschätzt|ausbezahlt/);
+  it('kein „geschätzt“, „nicht ausbezahlt“, „Netto-Gehalt“, „Nicht markiert“ in den Texten', () => {
+    for (const text of Object.values(KONTO_TEXTS)) expect(text).not.toMatch(/geschätzt|ausbezahlt|Netto-Gehalt|Nicht markiert/);
   });
 });

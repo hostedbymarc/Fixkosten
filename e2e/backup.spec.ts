@@ -69,7 +69,7 @@ test.describe('Sicherung', () => {
     // "live": other device with its own month close
     await freshDevice(app);
     await app.getByTestId('free-tile').click();
-    await shown(app.getByLabel('Netto-Gehalt')).fill('4700');
+    await shown(app.getByTestId('close-salary')).fill('4700');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'false');
 

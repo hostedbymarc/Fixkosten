@@ -1,8 +1,7 @@
 import { AmountInput } from './form';
 import { useMonthStart } from '../lib/useToday';
-import { payday, salaryName } from '../lib/salaryMonth';
+import { salaryName, salaryWhen } from '../lib/salaryMonth';
 import { t } from '../lib/kontoTexts';
-import { dayLabel } from '../lib/kontoWords';
 import { useId, useState } from 'react';
 import { freeAfterFixedAvgWith, freeAfterFixedWith, monthCloseFor } from '../lib/calc';
 import { amountToInput, currencySymbol, formatAvg, formatEUR, parseAmount } from '../lib/format';
@@ -59,6 +58,7 @@ function AmountField({
           onChange={onChange}
           aria-invalid={invalid}
           aria-describedby={`${id}-hint`}
+          data-testid="close-salary"
           className="num h-full w-full bg-transparent text-[22px] font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
         />
       </div>
@@ -89,7 +89,7 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
   return (
     <BottomSheet
       title={`Monatsabschluss ${periodLabel(period)}`}
-      subtitle={start === 1 ? 'Netto-Gehalt des Monats' : t('salary.subtitle', { gehalt: salaryName(period, start), datum: dayLabel(payday(period, start)) })}
+      subtitle={t('salary.subtitle', { gehalt: salaryName(period, start), wann: salaryWhen(period, start) })}
       onClose={onClose}
       returnFocusTo={returnFocusTo}
     >
@@ -114,7 +114,7 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
         )}
 
         <AmountField
-          label="Netto-Gehalt"
+          label={salaryName(period, start)}
           value={salaryText}
           onChange={setSalaryText}
           placeholder={prevSalary !== undefined ? amountToInput(prevSalary) : undefined}

@@ -69,7 +69,7 @@ test.describe('Sparquote-Karte', () => {
     await expect(page.getByTestId('savings-headline-sub')).toHaveText(eur('Ø 42,8 % der letzten 3 Monate'));
     await expect(page.getByTestId('savings-saved')).toHaveText(eur('€ 1.860 aus dem Netto gespart'));
     await expect(page.getByTestId('savings-net')).toHaveText(eur('Netto € 4.788'));
-    await expect(page.getByRole('img', { name: /Sparquote 38,8\s%: € 1\.860 von € 4\.788 Netto-Gehalt/ })).toBeVisible();
+    await expect(page.getByRole('img', { name: /Sparquote 38,8\s%: € 1\.860 von € 4\.788 Gehalt/ })).toBeVisible();
 
     // directly below the distribution, in the same column
     const dist = (await page.getByTestId('distribution').boundingBox())!;
@@ -193,7 +193,7 @@ test.describe('Sparquote-Karte', () => {
   test('1 Monat mit Netto: kein Chart, „Verlauf ab 3 Monaten“', async ({ page }) => {
     await importSavings(page, 'one-month');
     await openAnalyse(page);
-    await expect(page.getByTestId('savings-headline-sub')).toHaveText('deines Netto-Gehalts fließt in Vermögensaufbau');
+    await expect(page.getByTestId('savings-headline-sub')).toHaveText('deines Gehalts fließt in Vermögensaufbau');
     await expect(page.getByTestId('savings-history-hint')).toHaveText('Verlauf ab 3 Monaten');
     await expect(page.getByTestId('savings-history')).toHaveCount(0);
   });
@@ -209,11 +209,11 @@ test.describe('Sparquote-Karte', () => {
     await importSavings(page, 'empty');
     await openAnalyse(page);
     const empty = page.getByTestId('savings-empty');
-    await expect(empty).toContainText('Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.');
+    await expect(empty).toContainText('Trag dein Gehalt im Monat ein, dann siehst du hier deine Sparquote.');
     await tap(empty.getByRole('button', { name: 'Netto eintragen' }));
     const sheet = page.getByRole('dialog', { name: 'Monatsabschluss Oktober 2026' });
     await expect(sheet).toBeVisible();
-    await sheet.getByLabel('Netto-Gehalt').fill('4.788');
+    await sheet.getByTestId('close-salary').fill('4.788');
     await sheet.getByRole('button', { name: 'Speichern' }).click();
     await expect(sheet).toBeHidden();
     await expect(page.getByTestId('savings-headline-value')).toHaveText(eur('38,8 % · € 1.860'));

@@ -34,6 +34,7 @@ import { monthName, periodLabel } from '../src/lib/period';
 import type { Dataset, Period } from '../src/lib/types';
 import { eur, expect, goTo, test } from './fixtures';
 import { importLive, NOV_TODAY, OKT_TODAY } from './live';
+import { salaryWhen } from '../src/lib/salaryMonth';
 
 const norm = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -185,6 +186,9 @@ async function checkMonth(page: Page, ds: Dataset, period: Period, soll: Record<
   await check(page.getByTestId('hero-deductions-value'), formatEUR(f.deductions), s('hero-deductions-value'), 'Abzüge');
   await check(page.getByTestId('hero-deductions-breakdown'), e.breakdown, s('hero-deductions-breakdown'), 'Aufschlüsselung');
   await check(page.getByTestId('salary-value'), formatEUR(f.netSalary!), s('salary-value'), 'Netto');
+  // monat-feinschliff-2: the date under the salary (month start 1, the period's own payday, already paid out)
+  const [y, m] = period.split('-').map(Number);
+  await check(page.getByTestId('salary-sub'), salaryWhen(period, 1, new Date(y!, m! - 1, 15), true), undefined, 'Gehalt Datum');
   await check(page.getByTestId('kpi-value'), formatAvg(fixedCostsAvg(ds, period)), s('kpi-value'), 'Ø pro Monat');
   await check(page.getByTestId('kpi-hint'), `davon ${formatAvg(reserveNeeded(ds, period))} nicht monatlich`, s('kpi-hint'), 'nicht monatlich');
   await check(page.getByTestId('free-value'), formatEUR(f.free!), s('free-value'), 'Frei');

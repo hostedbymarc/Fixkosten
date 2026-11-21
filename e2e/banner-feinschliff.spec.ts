@@ -66,11 +66,11 @@ test.describe('Feinschliff', () => {
     }
   });
 
-  test('Frei-Kachel ohne Netto: „Netto-Gehalt“ wird nicht am Bindestrich getrennt', async ({ page }) => {
+  test('Frei-Kachel ohne Netto: „Gehalt“ in einer Zeile', async ({ page }) => {
     await importLive(page, OKT_TODAY);
     await toMonth(page, 'November 2026');
     await toMonth(page, 'Dezember 2026');
-    const word = page.getByTestId('free-sub').getByText('Netto-Gehalt', { exact: true });
+    const word = page.getByTestId('free-sub').getByText('Gehalt', { exact: true });
     await expect(word).toBeVisible();
     const [h, lh] = await word.evaluate((el) => [el.getBoundingClientRect().height, parseFloat(getComputedStyle(el.parentElement!).lineHeight)]);
     expect(Math.round(h / lh)).toBe(1);

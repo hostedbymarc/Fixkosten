@@ -143,8 +143,7 @@ export const KONTO_TEXTS = {
   'walk.5.text': 'Am {tag} kommt dein Gehalt. Erbse zeigt dir, was frei bleibt.',
   // · monat-verdichtet: Karte „Dein Monat“ (aktiver Monat), für das nächste Gehalt
   'month.title': 'Dein Monat',
-  'month.salary': 'Dein Gehalt am {datum}',
-  'month.noSalary': 'Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Monat.',
+  'month.noSalary': 'Trag dein Gehalt ein. Dann rechnet Erbse deinen Monat.',
   'month.noSalary.action': 'Gehalt eintragen',
   'month.toAccount': 'Aufs Fixkostenkonto',
   'month.aside': 'Zur Seite legen',
@@ -170,6 +169,9 @@ export const KONTO_TEXTS = {
   // · Rechnungen als schmale Zeile
   'bills.title': 'Rechnungen {monat}',
   'bills.count': '{x} von {n} bezahlt',
+  'bills.count.card': '{x} von {n} Rechnungen bezahlt',
+  'bills.done.sub': 'Alle {n} Rechnungen bezahlt',
+  'bills.done.sub.one': 'Die Rechnung ist bezahlt',
   'bills.done': '{monat} erledigt',
   'bills.none': 'Nichts fällig',
 
@@ -188,7 +190,7 @@ export const KONTO_TEXTS = {
   'plan2.max': 'Geht nicht ganz. Höchstens {betrag} Spielgeld sind möglich.',
   'plan2.max.apply': 'Spielgeld auf {betrag} setzen',
   'plan2.none': 'Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan.',
-  'plan2.noSalary': 'Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Plan.',
+  'plan2.noSalary': 'Trag dein Gehalt ein. Dann rechnet Erbse deinen Plan.',
   'plan2.spielgeld': 'Dein Spielgeld',
   'plan2.spielgeld.edit': 'Spielgeld ändern',
   'plan2.mode': 'Wie zahlst du große Zahlungen?',
@@ -221,11 +223,9 @@ export const KONTO_TEXTS = {
 
   // · monat-feinschliff: das Gehalt heißt nach dem Monat, in dem es kommt
   'salary.name': '{monat}-Gehalt',
-  'salary.subtitle': '{gehalt}, ausgezahlt am {datum}',
-  'salary.marked': 'Überwiesen ✓',
-  'salary.marked.aside': 'Zur Seite gelegt ✓',
-  'salary.unmarked': 'Nicht markiert',
-  'salary.comes': 'Kommt am {datum}',
+  'salary.paid': 'ausgezahlt am {datum}',
+  'salary.comes': 'kommt am {datum}',
+  'salary.subtitle': '{gehalt}, {wann}',
   'salary.rule': 'Dein Gehalt heißt nach dem Monat, in dem es kommt.',
 
   // · Einstellungen

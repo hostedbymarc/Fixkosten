@@ -86,18 +86,20 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
         // without a salary: the hint and a button, no further rows
         await expect(card).toHaveAttribute('data-state', 'no-salary');
-        await expect(page.getByTestId('dein-monat-no-salary')).toContainText('Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Monat.');
+        await expect(page.getByTestId('dein-monat-no-salary')).toContainText('Trag dein Gehalt ein. Dann rechnet Erbse deinen Monat.');
         await expect(page.getByTestId('dein-monat-transfer')).toHaveCount(0);
         await shot(page, `${tag}-01-monat-ohne-netto`);
         await tap(page.getByTestId('dein-monat-enter-salary'));
         const close = page.getByRole('dialog', { name: 'Monatsabschluss Oktober 2026' });
         await sheetIn(page);
-        await close.getByLabel('Netto-Gehalt').fill('8.302');
+        await close.getByTestId('close-salary').fill('8.302');
         await tap(close.getByRole('button', { name: 'Speichern' }));
         await expect(close).toBeHidden();
 
         // the next salary: November, estimated from October's; the statement adds up
-        await expect(page.getByTestId('dein-monat-salary')).toContainText('Dein Gehalt am 1. November');
+        // monat-feinschliff-2: named after the month it is paid in
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^(kommt|ausgezahlt) am 1\. November$/);
         // monat-feinschliff: no „geschätzt“ – the last salary is used without a hint
         await expect(page.getByTestId('dein-monat')).not.toContainText('geschätzt');
         await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,00/);
@@ -133,7 +135,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-02-monat-passt`);
         // the iPhone: card and bills row without scrolling
         if (vp === 'iphone-15') {
-          const bills = await page.getByTestId('bills-row').boundingBox();
+          const bills = await page.getByTestId('dein-monat-bills').boundingBox();
           expect(bills!.y + bills!.height).toBeLessThanOrEqual(852);
         }
 
@@ -207,16 +209,16 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         test.skip(scheme === 'dark' && vp !== 'iphone-15' && vp !== 'desktop-1440', 'Logik, Screenshot in dunkel nur iPhone 15 und Desktop');
         await start(page);
         await setUpKonto(page);
-        // the bills row: 15 of 16 paid (the Depotentgelt is open)
-        const bills = page.getByTestId('bills-row');
-        await expect(page.getByTestId('bills-count')).toHaveText('15 von 16 bezahlt');
-        await expect(page.getByTestId('bills-bar')).toHaveAttribute('aria-valuenow', '15');
+        // the bills at the bottom of the green card (monat-feinschliff-2): 15 of 16 paid (the Depotentgelt is open)
+        const bills = page.getByTestId('dein-monat');
+        await expect(page.getByTestId('dein-monat-bills-open')).toHaveText('15 von 16 Rechnungen bezahlt');
         const depot = page.locator('[data-position="pos-depotentgelt"]').getByTestId('toggle-paid').first();
         if (!(await depot.isVisible())) await tap(page.getByRole('button', { name: 'Alle ausklappen' }));
         await depot.scrollIntoViewIfNeeded();
         await tap(depot);
         await expect(bills).toHaveAttribute('data-done', 'true');
-        await expect(page.getByTestId('bills-done')).toHaveText('Oktober erledigt');
+        await expect(page.getByTestId('dein-monat-bills-title')).toHaveText('Oktober erledigt');
+        await expect(page.getByTestId('bills-row')).toHaveCount(0);
         const confetti = bills.getByTestId('hero-confetti');
         await expect(confetti).toHaveAttribute('data-falling', '');
         // after a reload: lying still in the row (same place), no falling
@@ -245,12 +247,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await start(page);
         await setUpKonto(page);
         const card = (await page.getByTestId('dein-monat').boundingBox())!;
-        const bills = (await page.getByTestId('bills-row').boundingBox())!;
+        const bills = (await page.getByTestId('dein-monat-bills').boundingBox())!;
         const big = (await page.getByTestId('big-month').boundingBox())!;
         const cats = (await page.getByTestId('categories-label').boundingBox())!;
         if (phone) {
-          // one column: card, bills row, big month, categories
-          expect(bills.y).toBeGreaterThan(card.y + card.height - 1);
+          // one column: card (with the bills at its bottom), big month, categories
+          expect(bills.y + bills.height).toBeLessThanOrEqual(card.y + card.height);
           expect(big.y).toBeGreaterThan(bills.y + bills.height - 1);
           expect(cats.y).toBeGreaterThan(big.y);
           expect(bills.y + bills.height).toBeLessThanOrEqual(use.viewport.height);
@@ -277,7 +279,7 @@ test.describe('Monat verdichtet · „Nicht einplanen“ und „Direkt“', () =
     await page.getByTestId('dein-monat-enter-salary').click();
     const close = page.getByRole('dialog', { name: 'Monatsabschluss Oktober 2026' });
     await sheetIn(page);
-    await close.getByLabel('Netto-Gehalt').fill('8.302');
+    await close.getByTestId('close-salary').fill('8.302');
     await close.getByRole('button', { name: 'Speichern' }).click();
     await expect(close).toBeHidden();
     const transfer = await valueOf(page.getByTestId('dein-monat-transfer-value'));

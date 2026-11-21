@@ -70,7 +70,7 @@ export const HELP_TEXTS: HelpText[] = [
   { texts: ['zählt in diesem Monat, nicht im Ø pro Monat', 'zählt nur in diesem Monat, nicht im Ø'], screen: 'Einmalbetrag-Sheet (Untertitel), Positionsdetail', placement: 'sichtbar', kind: 'Label' },
   { texts: ['Fällige Ausgaben der nächsten 12 Monate', 'Umgelegte Ausgaben pro Monat nach Kategorie', 'Ø pro Monat', 'Sparquote je Monat'], screen: 'Analyse', placement: 'sichtbar', kind: 'Label' },
   { texts: ['Verlauf ab 3 Monaten', 'In den nächsten 2 Monaten keine Sonderzahlungen.', 'Noch nichts abgehakt.'], screen: 'Analyse, Monat, Positionsdetail', placement: 'sichtbar', kind: 'Status' },
-  { texts: ['Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.'], screen: 'Analyse · Sparquote', placement: 'sichtbar', kind: 'Aktion', note: 'Leerzustand mit „Netto eintragen“' },
+  { texts: ['Trag dein Gehalt im Monat ein, dann siehst du hier deine Sparquote.'], screen: 'Analyse · Sparquote', placement: 'sichtbar', kind: 'Aktion', note: 'Leerzustand mit „Netto eintragen“' },
   { texts: ['Keine archivierten Positionen. Archivieren geht in „Positionen“ per Wischen nach links oder über das ⋯-Menü.'], screen: 'Einstellungen · Archiv', placement: 'sichtbar', kind: 'Status', note: 'Leerzustand' },
   { texts: ['Neu: Fixkosten einplanen. Erbse sagt dir, wie viel du monatlich zur Seite legst.'], screen: 'Monat · Einladungskarte', placement: 'sichtbar', kind: 'Aktion' },
 ];

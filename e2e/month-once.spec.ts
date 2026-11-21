@@ -92,7 +92,7 @@ test.describe('Frei verfügbar: dieser Monat und Ø-Monat', () => {
   test('Netto-Gehalt eigene Kachel; Einmalige senken nur „diesen Monat“, Ø und Quote bleiben', async ({ app }) => {
     await expect(app.getByTestId('salary-value')).toHaveText('–');
     await app.getByTestId('salary-tile').click();
-    await shown(app.getByLabel('Netto-Gehalt')).fill('5000');
+    await shown(app.getByTestId('close-salary')).fill('5000');
     await expect(app.getByTestId('close-average')).toHaveText(
       eur('Rechnerisch frei diesen Monat € 797 · im Ø-Monat € 1.247,83'),
     );

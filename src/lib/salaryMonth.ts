@@ -2,13 +2,14 @@
 // of the period („Neuer Monat beginnt am“): with the 25th the November screen (25.10.–24.11.) holds the salary
 // paid on 25 October – the „Oktober-Gehalt“. With the 1st nothing changes (the payday lies in the month itself).
 // Stored data stays as it is (the salary belongs to its period); only the labels follow this rule.
-import type { KontoCheck } from '../db/settings';
-import type { MonthStart } from './activeMonth';
+import { localToday, type MonthStart } from './activeMonth';
+import { netSalaryForPeriod } from './calc';
 import { periodStartDate } from './kontoBalance';
 import { t } from './kontoTexts';
 import { dayLabel } from './kontoWords';
-import { monthName, toPeriod } from './period';
-import type { Period } from './types';
+import { addPeriods, monthName, toPeriod } from './period';
+import { lastSalary } from './salarySplit';
+import type { Dataset, Period } from './types';
 
 /** The day the salary of `period` is paid. */
 export function payday(period: Period, start: MonthStart): Date {
@@ -25,36 +26,49 @@ export function salaryName(period: Period, start: MonthStart): string {
   return t('salary.name', { monat: monthName(salaryMonth(period, start)) });
 }
 
-/** The kind of a month next to the active one. */
-export type MonthKind = 'past' | 'active' | 'future';
-export function monthKind(period: Period, active: Period): MonthKind {
-  return period < active ? 'past' : period > active ? 'future' : 'active';
+/** Paid out already (from the payday on, the day itself included)? */
+export function paidOut(period: Period, start: MonthStart, today: Date = localToday()): boolean {
+  const d = payday(period, start);
+  const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  return t0.getTime() >= d.getTime();
 }
 
 /**
- * The neutral status of a month's salary in the Netto tile (other months, „Fixkosten einplanen“ set up):
- * - past: „Überwiesen ✓“ (or „Zur Seite gelegt ✓“) when the transfer was marked, else „Nicht markiert“
- * - future: „Kommt am {Auszahlungstag}“
- * - active: none (the card „Dein Monat“ has its own button)
+ * „ausgezahlt am 25. November“ (from that day on) or „kommt am 25. November“; `short`: „25.11.“ (the tiles,
+ * one line even on the iPhone SE)
  */
-export interface SalaryStatus {
-  kind: 'marked' | 'unmarked' | 'comes';
-  text: string;
+export function salaryWhen(period: Period, start: MonthStart, today: Date = localToday(), short = false): string {
+  const d = payday(period, start);
+  const datum = short ? `${d.getDate()}.${d.getMonth() + 1}.` : dayLabel(d, today);
+  return t(paidOut(period, start, today) ? 'salary.paid' : 'salary.comes', { datum });
 }
 
-export function salaryStatus(
-  period: Period,
-  active: Period,
-  start: MonthStart,
-  checks: Pick<KontoCheck, 'period' | 'deposited'>[],
-  hasAccount: boolean,
-  today?: Date,
-): SalaryStatus | null {
-  const kind = monthKind(period, active);
-  if (kind === 'active') return null;
-  if (kind === 'future') return { kind: 'comes', text: t('salary.comes', { datum: dayLabel(payday(period, start), today) }) };
-  const marked = checks.some((c) => c.period === period && c.deposited);
-  return marked
-    ? { kind: 'marked', text: t(hasAccount ? 'salary.marked' : 'salary.marked.aside') }
-    : { kind: 'unmarked', text: t('salary.unmarked') };
+/**
+ * ONE salary = ONE entry (monat-feinschliff-2): the salary paid on the first day of `period` is stored in the
+ * month close of `period` – the card „Dein Monat“ (for its next salary) and the tile of that month read and write
+ * the same entry. Not entered yet: the last one entered before (the same fallback as monthPlan), muted.
+ */
+export interface SalaryView {
+  /** the month close it is stored in */
+  period: Period;
+  /** „November-Gehalt“ */
+  title: string;
+  /** the entered salary, else the fallback; null without any */
+  value: number | null;
+  /** value is the fallback (shown muted) */
+  fallback: boolean;
+  /** „ausgezahlt am 25.11.“ / „kommt am 25.11.“ (short: one line in the tile) */
+  when: string;
+}
+
+export function salaryView(ds: Dataset, period: Period, start: MonthStart, today: Date = localToday()): SalaryView {
+  const own = netSalaryForPeriod(ds, period);
+  const last = own === null ? lastSalary(ds, addPeriods(period, -1)) : null;
+  return {
+    period,
+    title: salaryName(period, start),
+    value: own ?? last?.salary ?? null,
+    fallback: own === null && last !== null,
+    when: salaryWhen(period, start, today, true),
+  };
 }

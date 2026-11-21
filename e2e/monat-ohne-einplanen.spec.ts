@@ -37,14 +37,20 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('bills-row')).toHaveCount(0);
         await expect(page.getByTestId('hero')).toBeVisible();
         await expect(page.getByTestId('free-tile')).toBeVisible();
-        const options = { animations: 'disabled', caret: 'hide', fullPage: true, maxDiffPixels: 0 } as const;
-        await expect(page).toHaveScreenshot(`monat-${vp}-${scheme}.png`, options);
+        // monat-feinschliff-2: the tiles changed on purpose („Oktober-Gehalt“, „ausgezahlt am …“, „rechnet mit dem
+        // Gehalt“ in one line, so the tile row can be lower) – the hero and the categories stay pixel for pixel as main
+        const options = { animations: 'disabled' as const, caret: 'hide' as const, maxDiffPixels: 0 };
+        const parts = async (name: string) => {
+          await expect(page.getByTestId('hero')).toHaveScreenshot(`${name}-hero-${vp}-${scheme}.png`, options);
+          await expect(page.locator('main > :not([data-tab-hidden]) section[aria-label="Fällige Positionen"]')).toHaveScreenshot(`${name}-kategorien-${vp}-${scheme}.png`, options);
+        };
+        await parts('monat');
         // the next month too
         await page.getByRole('button', { name: 'Nächster Monat' }).click();
         await expect(page.getByRole('heading', { level: 1 })).toHaveText('November 2026');
         await appSettled(page);
         await expandAll(page);
-        await expect(page).toHaveScreenshot(`november-${vp}-${scheme}.png`, options);
+        await parts('november');
       });
     });
   }

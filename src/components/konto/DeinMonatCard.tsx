@@ -9,6 +9,12 @@ import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib
 import { t } from '../../lib/kontoTexts';
 import { dayLabel } from '../../lib/kontoWords';
 import { inclLine, monthPlan, type MonthPlan } from '../../lib/monthPlan';
+import { monthFigures } from '../../lib/calc';
+import { monthDone } from '../../lib/celebration';
+import { reducedMotion } from '../../lib/entrance';
+import { salaryName, salaryWhen } from '../../lib/salaryMonth';
+import { Confetti } from '../Confetti';
+import { useCelebration } from '../useCelebration';
 import { monthName } from '../../lib/period';
 import { openPlan } from '../../lib/planBus';
 import type { Dataset, Period } from '../../lib/types';
@@ -63,7 +69,11 @@ const ACTION =
 
 function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpenSalary: () => void }) {
   const { settings } = useKonto();
+  const start = useMonthStart();
   const plan = useMonthPlan(ds, active);
+  const figures = useMemo(() => monthFigures(ds, active), [ds, active]);
+  const allPaid = monthDone(figures);
+  const { peas, run } = useCelebration(active, allPaid);
   useKontoEffects(plan.state);
   const first = plan.first;
   const account = plan.hasAccount;
@@ -77,13 +87,23 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
   const [splitOpen, setSplitOpen] = useSplitOpen();
 
   return (
-    <section className="hero surface flex flex-col p-5 md:p-6" data-testid="dein-monat" data-state={plan.noSalary ? 'no-salary' : fits === false ? 'short' : fits ? 'ok' : 'none'} aria-labelledby="dein-monat-title">
+    <section className="hero surface flex flex-col p-5 md:p-6" data-done={allPaid || undefined} data-testid="dein-monat" data-state={plan.noSalary ? 'no-salary' : fits === false ? 'short' : fits ? 'ok' : 'none'} aria-labelledby="dein-monat-title">
+      {/* the confetti of „{Monat} erledigt“: the same component as in the hero, lying at the bottom of this card */}
+      {peas !== 'none' && <Confetti key={`${active}-${run}`} seed={active} falling={peas === 'falling'} />}
       <h2 id="dein-monat-title" className="sr-only">
         {t('month.title')}
       </h2>
       {/* the salary: tap the amount to change it (cents allowed); every number follows at once */}
-      <div className="flex items-baseline justify-between gap-3" data-testid="dein-monat-salary">
-        <p className="min-w-0 text-[15px] leading-snug text-ink-soft">{t('month.salary', { datum: dayLabel(first.payday) })}</p>
+      {/* monat-feinschliff-2: „November-Gehalt“, below muted when it comes or came; the same entry as that month's tile */}
+      <div className="flex items-start justify-between gap-3" data-testid="dein-monat-salary">
+        <p className="min-w-0">
+          <span className="block text-[17px] font-semibold leading-snug text-ink" data-testid="dein-monat-salary-title">
+            {salaryName(first.period, start)}
+          </span>
+          <span className="block text-[13px] leading-5 text-ink-mute" data-testid="dein-monat-salary-when">
+            {salaryWhen(first.period, start)}
+          </span>
+        </p>
         {first.salary !== null && <SalaryEdit period={first.period} salary={first.salary} />}
       </div>
 
@@ -157,6 +177,9 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
           </div>
         </>
       )}
+
+      {/* monat-feinschliff-2: the bills of the month at the bottom of the card (no own white card any more) */}
+      <BillsLine ds={ds} active={active} />
 
       {/* the one action of the month: the transfer (replaces the monthly check) */}
       {canConfirm && first.transfer > 0 && (
@@ -311,5 +334,44 @@ function Row({
         <div className="flex min-h-11 items-start justify-between gap-3 py-1.5">{body}</div>
       )}
     </li>
+  );
+}
+
+/**
+ * „{x} von {n} Rechnungen bezahlt“ (a tap scrolls to the categories) or, when every bill is paid, a check,
+ * „{Monat} erledigt“ and „Alle {n} Rechnungen bezahlt“ – after a line, under the pill.
+ */
+function BillsLine({ ds, active }: { ds: Dataset; active: Period }) {
+  const figures = useMemo(() => monthFigures(ds, active), [ds, active]);
+  const allPaid = monthDone(figures);
+  const paid = figures.count - figures.openCount;
+  return (
+    <div className="mt-4 border-t border-edge pt-3" data-testid="dein-monat-bills" data-done={allPaid || undefined}>
+      {allPaid ? (
+        <p className="flex items-center gap-3" data-testid="dein-monat-bills-done">
+          <span className="hero-check flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700" aria-hidden="true">
+            <CheckIcon size={20} strokeWidth={2.8} />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[17px] font-semibold leading-snug text-ink" data-testid="dein-monat-bills-title">
+              {t('bills.done', { monat: monthName(active) })}
+            </span>
+            <span className="block text-[13px] leading-5 text-ink-mute">
+              {figures.count === 1 ? t('bills.done.sub.one') : t('bills.done.sub', { n: figures.count })}
+            </span>
+          </span>
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => document.querySelector('[data-testid="categories-label"]')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })}
+          className="focus-ring -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center justify-between gap-3 rounded-xl px-2 text-left text-[15px] text-ink hover:bg-white/5"
+          data-testid="dein-monat-bills-open"
+        >
+          <span className="num">{figures.count === 0 ? t('bills.none') : t('bills.count.card', { x: paid, n: figures.count })}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-ink-mute" aria-hidden="true" />
+        </button>
+      )}
+    </div>
   );
 }

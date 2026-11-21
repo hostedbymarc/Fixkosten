@@ -55,7 +55,7 @@ function SavingsBar({ card }: { card: SavingsCard }) {
     <div>
       <div
         role="img"
-        aria-label={`Sparquote ${formatPercent(card.rate)}: ${wealth} von ${net} Netto-Gehalt fließen in Vermögensaufbau`}
+        aria-label={`Sparquote ${formatPercent(card.rate)}: ${wealth} von ${net} Gehalt fließen in Vermögensaufbau`}
         className="flex h-[14px] w-full overflow-hidden"
         data-testid="savings-bar"
       >
@@ -283,7 +283,7 @@ export function SavingsSection({ ds, today }: { ds: Dataset; today: Period }) {
           Sparquote
         </h2>
         <div className={EMPTY_CARD} data-testid="savings-empty">
-          <p>Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.</p>
+          <p>Trag dein Gehalt im Monat ein, dann siehst du hier deine Sparquote.</p>
           <button
             ref={link}
             type="button"
@@ -323,7 +323,7 @@ export function SavingsSection({ ds, today }: { ds: Dataset; today: Period }) {
         ),
         sub: withChart
           ? `Ø ${formatPercent(avg.average)} der letzten ${avg.months} Monate`
-          : 'deines Netto-Gehalts fließt in Vermögensaufbau',
+          : 'deines Gehalts fließt in Vermögensaufbau',
       }}
     >
       <div ref={ref}>

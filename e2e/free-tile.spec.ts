@@ -19,7 +19,7 @@ async function liveSetup(app: Page) {
   await goTo(app, 'monat');
   await app.getByTestId('salary-tile').click();
   await animationsDone(app, 'bottom-sheet');
-  await shown(app.getByLabel('Netto-Gehalt')).fill('4788');
+  await shown(app.getByTestId('close-salary')).fill('4788');
   await app.getByRole('button', { name: 'Speichern' }).click();
   await expect(app.getByTestId('bottom-sheet')).toHaveCount(0);
 }
@@ -77,7 +77,7 @@ test.describe('Frei verfügbar & Vermögensaufbau', () => {
     // salary below the fixed costs: real minus sign, never '-€'
     await app.getByTestId('salary-tile').click();
     await animationsDone(app, 'bottom-sheet');
-    await shown(app.getByLabel('Netto-Gehalt')).fill('1922');
+    await shown(app.getByTestId('close-salary')).fill('1922');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(app.getByTestId('free-value')).toHaveText('−€ 2.281'); // 1.922 − 2.412 − Vermögensaufbau 1.791
     await expect(app.getByTestId('free-tile')).not.toContainText('-€');
