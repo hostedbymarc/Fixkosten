@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, NOV_5, setUpKonto, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, NOV_5, setUpKonto, test, TODAY, closePlan } from './fixtures';
 
 // monat-verdichtet (seed data, today 5 October 2026 → October active, a rebuilt salary € 8.302):
 // - „Dein Monat“ (only the active month, only with „Fixkosten einplanen“), for the next salary: Netto,
@@ -44,8 +44,7 @@ async function sheetIn(page: Page) {
 
 async function closeSheet(page: Page) {
   await sheetIn(page);
-  await page.keyboard.press('Escape');
-  await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+  await closePlan(page);
 }
 
 async function start(page: Page) {

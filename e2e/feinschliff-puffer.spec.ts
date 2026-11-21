@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY } from './fixtures';
+import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY, closePlan } from './fixtures';
 
 // feinschliff-puffer (seed data, today 5 October 2026 → October active; € 184,21 set aside, no own account):
 // - the month info only once: no popup over „Verlauf mit Plan“ (analysis), the card under it shows the
@@ -91,8 +91,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(setup).toHaveCount(0);
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
         await animationsDone(page, 'bottom-sheet');
-        await page.keyboard.press('Escape');
-        await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+        await closePlan(page);
 
         // the analysis: the card shows the month with the lowest balance; no popup over the chart
         await goTo(page, 'analyse');

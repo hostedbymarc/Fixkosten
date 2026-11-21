@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, goTo, setUpKonto, test } from './fixtures';
+import { animationsDone, appSettled, expect, goTo, setUpKonto, test, closePlan } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // monat-feinschliff (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
@@ -138,8 +138,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('plan-sheet').getByText('Große Zahlungen', { exact: true })).toHaveCount(1);
         await expect(page.getByTestId('plan-salaries').locator('th').nth(1)).toHaveText('aufs Konto');
         await shot(page, `${tag}-dein-plan`);
-        await page.keyboard.press('Escape');
-        await expect(page.getByTestId('plan-sheet')).toHaveCount(0);
+        await closePlan(page);
 
         // nowhere in the app: „geschätzt“, „nicht ausbezahlt“
         for (const route of ['monat', 'positionen', 'analyse', 'einstellungen'] as const) {
