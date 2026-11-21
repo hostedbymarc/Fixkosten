@@ -57,8 +57,20 @@ Alle Viewports (iPhone SE, 15, Pro Max, iPad hoch/quer, Desktop 1440, hell/dunke
 
 ## Tests
 
-ERGEBNISSE
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 1291 grün, 53 Dateien |
+| E2E desktop | 519 grün, 40 übersprungen |
+| E2E iphone-15 | 266 grün |
+| E2E iphone-pro-max | 238 grün |
+| E2E ipad-portrait | 254 grün |
+| E2E ipad-landscape | 242 grün |
+| Perf (Scrollen, Tabwechsel) | 3 grün |
+| Perf Feier (iPhone 15 / SE, 4× CPU) | 2 grün |
+| WebKit, geänderte Specs + feier | 157 grün, 21 übersprungen |
+
+Im ersten vollen Lauf war `dom-figures` in allen Projekten rot. Der Test prüft jede Zahl auf dem Schirm. Das neue Datum in der Kachel war noch nicht geprüft. Die Prüfung ist ergänzt, danach grün (desktop + iPhone 15). `start-screen` offline war einmal rot und danach grün (wackelig, unverändert).
 
 ## Merge
 
-MERGE
+Per Squash nach main, SHA steht im PR.
