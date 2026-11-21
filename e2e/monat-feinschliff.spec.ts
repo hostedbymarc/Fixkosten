@@ -138,9 +138,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.100/);
         await shot(page, `${tag}-dezember`);
 
-        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.100/);
         // „Dein Plan“: the question above the switch, „Große Zahlungen“ only once, the table head
         await toMonth(page, 'November');
+        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.100/);
         await tap(page.getByTestId('dein-monat-pill'));
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
         // the pill opens the Spielgeld editable: Esc leaves the field, the sheet stays
