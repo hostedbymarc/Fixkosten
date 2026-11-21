@@ -47,6 +47,6 @@
 | „zählt in diesem Monat, nicht im Ø pro Monat“ / „zählt nur in diesem Monat, nicht im Ø“ | Einmalbetrag-Sheet (Untertitel), Positionsdetail | bleibt sichtbar (Label) |
 | „Fällige Ausgaben der nächsten 12 Monate“ / „Umgelegte Ausgaben pro Monat nach Kategorie“ / „Ø pro Monat“ / „Sparquote je Monat“ | Analyse | bleibt sichtbar (Label) |
 | „Verlauf ab 3 Monaten“ / „In den nächsten 2 Monaten keine Sonderzahlungen.“ / „Noch nichts abgehakt.“ | Analyse, Monat, Positionsdetail | bleibt sichtbar (Status) |
-| „Trag dein Netto-Gehalt im Monat ein, dann siehst du hier deine Sparquote.“ | Analyse · Sparquote | bleibt sichtbar (Aktion) – Leerzustand mit „Netto eintragen“ |
+| „Trag dein Gehalt im Monat ein, dann siehst du hier deine Sparquote.“ | Analyse · Sparquote | bleibt sichtbar (Aktion) – Leerzustand mit „Netto eintragen“ |
 | „Keine archivierten Positionen. Archivieren geht in „Positionen“ per Wischen nach links oder über das ⋯-Menü.“ | Einstellungen · Archiv | bleibt sichtbar (Status) – Leerzustand |
 | „Neu: Fixkosten einplanen. Erbse sagt dir, wie viel du monatlich zur Seite legst.“ | Monat · Einladungskarte | bleibt sichtbar (Aktion) |

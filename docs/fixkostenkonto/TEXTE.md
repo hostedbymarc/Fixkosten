@@ -114,8 +114,7 @@
 | Walkthrough | `walk.5.title` | Dein Spielgeld ist die Prüfgröße. | 5 |
 | Walkthrough | `walk.5.text` | Am {tag} kommt dein Gehalt. Erbse zeigt dir, was frei bleibt. | 5 · 6 |
 | Dein Monat | `month.title` | Dein Monat | 2 |
-| Dein Monat | `month.salary` | Dein Gehalt am {datum} | 4 |
-| Dein Monat | `month.noSalary` | Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Monat. | 4 · 5 |
+| Dein Monat | `month.noSalary` | Trag dein Gehalt ein. Dann rechnet Erbse deinen Monat. | 4 · 5 |
 | Dein Monat | `month.noSalary.action` | Gehalt eintragen | 2 |
 | Dein Monat | `month.toAccount` | Aufs Fixkostenkonto | 2 |
 | Dein Monat | `month.aside` | Zur Seite legen | 3 |
@@ -139,6 +138,9 @@
 | Dein Monat | `month.plan` | Dein Plan öffnen | 3 |
 | Rechnungen-Zeile | `bills.title` | Rechnungen {monat} | 2 |
 | Rechnungen-Zeile | `bills.count` | {x} von {n} bezahlt | 4 |
+| Rechnungen-Zeile | `bills.count.card` | {x} von {n} Rechnungen bezahlt | 5 |
+| Rechnungen-Zeile | `bills.done.sub` | Alle {n} Rechnungen bezahlt | 4 |
+| Rechnungen-Zeile | `bills.done.sub.one` | Die Rechnung ist bezahlt | 4 |
 | Rechnungen-Zeile | `bills.done` | {monat} erledigt | 2 |
 | Rechnungen-Zeile | `bills.none` | Nichts fällig | 2 |
 | Nächster großer Monat | `big.title` | Nächster großer Monat | 3 |
@@ -153,7 +155,7 @@
 | Sheet „Dein Plan“ | `plan2.max` | Geht nicht ganz. Höchstens {betrag} Spielgeld sind möglich. | 3 · 5 |
 | Sheet „Dein Plan“ | `plan2.max.apply` | Spielgeld auf {betrag} setzen | 4 |
 | Sheet „Dein Plan“ | `plan2.none` | Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan. | 4 · 5 |
-| Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Netto-Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
+| Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.spielgeld` | Dein Spielgeld | 2 |
 | Sheet „Dein Plan“ | `plan2.spielgeld.edit` | Spielgeld ändern | 2 |
 | Sheet „Dein Plan“ | `plan2.mode` | Wie zahlst du große Zahlungen? | 5 |
@@ -184,11 +186,9 @@
 | Sheet „Dein Plan“ | `plan2.pay.from` | Ansparen ab | 2 |
 | Sheet „Dein Plan“ | `plan2.pay.ready` | Fertig | 1 |
 | Gehalt (Auszahlungsmonat) | `salary.name` | {monat}-Gehalt | 1 |
-| Gehalt (Auszahlungsmonat) | `salary.subtitle` | {gehalt}, ausgezahlt am {datum} | 4 |
-| Gehalt (Auszahlungsmonat) | `salary.marked` | Überwiesen ✓ | 1 |
-| Gehalt (Auszahlungsmonat) | `salary.marked.aside` | Zur Seite gelegt ✓ | 3 |
-| Gehalt (Auszahlungsmonat) | `salary.unmarked` | Nicht markiert | 2 |
-| Gehalt (Auszahlungsmonat) | `salary.comes` | Kommt am {datum} | 3 |
+| Gehalt (Auszahlungsmonat) | `salary.paid` | ausgezahlt am {datum} | 3 |
+| Gehalt (Auszahlungsmonat) | `salary.comes` | kommt am {datum} | 3 |
+| Gehalt (Auszahlungsmonat) | `salary.subtitle` | {gehalt}, {wann} | 2 |
 | Gehalt (Auszahlungsmonat) | `salary.rule` | Dein Gehalt heißt nach dem Monat, in dem es kommt. | 10 |
 | Einstellungen | `settings.account` | Eigenes Konto für Fixkosten | 4 |
 | Einstellungen | `settings.account.yes` | Ja | 1 |
