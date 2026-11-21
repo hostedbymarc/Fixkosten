@@ -83,4 +83,26 @@ Sprint `monat-feinschliff`. Das Gehalt heißt nach dem Monat, in dem es kommt. D
 
 ## Testergebnisse
 
-(folgt)
+**Unit und Build:**
+- Unit (vitest): 52 Dateien, 1285 Tests grün. Neu: `salaryMonth.test.ts` (Monatsbeginn 1, 15, 25, Monatsletzter, Jahreswechsel Dezember-Gehalt → Jänner-Screen; Status je Monatsart; kein „geschätzt“ / „ausbezahlt“ in den Texten), `monthPlan.test.ts` (inkl.-Zeile Gleichmäßig, Bei Fälligkeit, Eigener Plan; Fallback-Netto ohne Hinweis), `celebration.test.ts` (einmal je Monat, in jedem Monat).
+- `tsc -b` ohne Fehler, `pnpm build` grün (check-colors, check-glass-layers, check-bundle).
+
+**Layout Oktober und Dezember:** `monat-layout.spec.ts` gegen die Referenz aus main (vor dem Sprint): 12 von 12 gleich (6 Viewports × hell/dunkel; Hero, Netto- und Vermögensaufbau-Kachel, Notiz, Kategorien – Lage und Größe auf den Pixel). Vorher/Nachher-Screenshots in `docs/screenshots/monat-feinschliff/`.
+
+**Volle E2E-Suite (Chromium), einmal komplett:**
+
+| Projekt | Ergebnis |
+|---|---|
+| desktop | 522 grün, 40 übersprungen, 1 rot: Esc im Test-Helfer ging beim Öffnen des Sheets verloren. Helfer wiederholt Esc jetzt (`closePlan`); 3 × wiederholt grün. |
+| iphone-15 | 269 grün |
+| iphone-pro-max | 241 grün |
+| ipad-portrait | 257 grün |
+| ipad-landscape | 245 grün |
+| perf | 3 grün: Scrollen Monat 15,5 ms, Analyse 13,8 ms, Tabwechsel 13,1 ms (normalisiert, Grenze 16) |
+| perf-feier (isoliert) | 2 grün: iPhone 15 16,1 ms (Grenze 22), iPhone SE 15,7 ms (Grenze 16) |
+
+**WebKit** (`monat-feinschliff`, `feier`, `monat-verdichtet`, `fixkostenkonto`, `feinschliff-puffer`): 121 grün, 16 absichtlich übersprungen, 1 rot (dieselbe Esc-Ursache im Test). Mit `closePlan` neu: `feinschliff-puffer` und `walkthrough` 30 grün. Der Layout-Vergleich läuft nur in Chromium (die Referenz ist in Chromium gemessen; WebKit setzt Schrift anders). WebKit-Screenshots verworfen.
+
+**Nach den letzten Test-Änderungen (Chromium):** `monat-feinschliff`, `monat-verdichtet`, `walkthrough`, `feinschliff-puffer`: 76 grün, 11 übersprungen.
+
+**Viewports:** iPhone SE, iPhone 15, iPhone Pro Max, iPad hoch und quer, Desktop 1440, je hell und dunkel (`monat-feinschliff`, `monat-layout`).
