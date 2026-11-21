@@ -65,6 +65,10 @@ describe('Zeile unter dem Betrag: nur das Datum', () => {
   it('kein „Nicht markiert“, kein „Überwiesen ✓“', () => {
     for (const p of ['2026-09', '2026-10', '2026-12']) expect(salaryWhen(p, 25, nov10)).not.toMatch(/markiert|Überwiesen|ausbezahlt|geschätzt/);
   });
+  it('kurz für die Kachel: „kommt am 25.11.“', () => {
+    expect(salaryWhen('2026-12', 25, nov10, true)).toBe('kommt am 25.11.');
+    expect(salaryWhen('2026-10', 25, nov10, true)).toBe('ausgezahlt am 25.9.');
+  });
   it('paidOut: Tag genau', () => {
     expect(paidOut('2026-12', 25, new Date(2026, 10, 24, 23))).toBe(false);
     expect(paidOut('2026-12', 25, new Date(2026, 10, 25, 0, 1))).toBe(true);

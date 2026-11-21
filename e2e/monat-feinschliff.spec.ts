@@ -123,11 +123,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // October (past) and December (future): the Netto tile with the neutral status
         await toMonth(page, 'Oktober');
         await expect(page.getByTestId('salary-title')).toHaveText('September-Gehalt');
-        await expect(page.getByTestId('salary-sub')).toHaveText('ausgezahlt am 25. September');
+        await expect(page.getByTestId('salary-sub')).toHaveText('ausgezahlt am 25.9.');
         await shot(page, `${tag}-oktober`);
         await toMonth(page, 'Dezember');
         await expect(page.getByTestId('salary-title')).toHaveText('November-Gehalt');
-        await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25. November');
+        await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25.11.');
         // the same entry as the card (8.302,50 from above)
         await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.302,5/);
         // and the other way round: changed in December's month close → the card in November shows it

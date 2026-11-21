@@ -33,9 +33,13 @@ export function paidOut(period: Period, start: MonthStart, today: Date = localTo
   return t0.getTime() >= d.getTime();
 }
 
-/** „ausgezahlt am 25. November“ (from that day on) or „kommt am 25. November“ */
-export function salaryWhen(period: Period, start: MonthStart, today: Date = localToday()): string {
-  const datum = dayLabel(payday(period, start), today);
+/**
+ * „ausgezahlt am 25. November“ (from that day on) or „kommt am 25. November“; `short`: „25.11.“ (the tiles,
+ * one line even on the iPhone SE)
+ */
+export function salaryWhen(period: Period, start: MonthStart, today: Date = localToday(), short = false): string {
+  const d = payday(period, start);
+  const datum = short ? `${d.getDate()}.${d.getMonth() + 1}.` : dayLabel(d, today);
   return t(paidOut(period, start, today) ? 'salary.paid' : 'salary.comes', { datum });
 }
 
@@ -53,7 +57,7 @@ export interface SalaryView {
   value: number | null;
   /** value is the fallback (shown muted) */
   fallback: boolean;
-  /** „ausgezahlt am …“ / „kommt am …“ */
+  /** „ausgezahlt am 25.11.“ / „kommt am 25.11.“ (short: one line in the tile) */
   when: string;
 }
 
@@ -65,6 +69,6 @@ export function salaryView(ds: Dataset, period: Period, start: MonthStart, today
     title: salaryName(period, start),
     value: own ?? last?.salary ?? null,
     fallback: own === null && last !== null,
-    when: salaryWhen(period, start, today),
+    when: salaryWhen(period, start, today, true),
   };
 }
