@@ -35,6 +35,7 @@ import type { Dataset, Period } from '../src/lib/types';
 import { eur, expect, goTo, test } from './fixtures';
 import { importLive, NOV_TODAY, OKT_TODAY } from './live';
 import { salaryWhen } from '../src/lib/salaryMonth';
+import { monthDeviation } from '../src/lib/monthCard';
 
 const norm = (s: string) => s.replace(/[\u00a0\u202f]/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -220,6 +221,9 @@ async function checkMonth(page: Page, ds: Dataset, period: Period, soll: Record<
     const next = nextPlannedChange(i.position, period);
     if (next) await check(row.getByTestId('next-change'), `ab ${isoDate(effectiveDate(next))} · ${formatEUR(next.amount)}`, undefined, `Änderung ${i.position.name}`);
     if (!i.fromNet) await check(row.getByTestId('not-from-net'), 'nicht vom Netto', undefined, `Chip ${i.position.name}`);
+    const dev = monthDeviation(i);
+    if (dev) await check(row.getByTestId('month-deviation'), `in diesem Monat ${formatEUR(dev.x)} statt ${formatEUR(dev.y)}`, undefined, `Abweichung ${i.position.name}`);
+    else await expect(row.getByTestId('month-deviation')).toHaveCount(0);
   }
 
   // Kommt bald (iPhone: the rest after „Alle anzeigen (n)“)
