@@ -1,6 +1,7 @@
 import { nextPlannedChange, type DueItem } from '../lib/calc';
 import { formatDelta, formatEUR } from '../lib/format';
 import { t } from '../lib/kontoTexts';
+import { monthDeviation } from '../lib/monthCard';
 import type { OneOff } from '../lib/types';
 import { Badge, DeltaChip, planChangeLabel, scheduleLabel } from './Chips';
 import { Pea, PeaOpen } from './Pea';
@@ -38,6 +39,8 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
   const schedule = item.plan ? scheduleLabel(item.plan, item.period) : null;
   const amount = status === 'paid' ? payment!.actualAmount : item.planned;
   const next = nextPlannedChange(position, item.period);
+  // monat-ist-monat: „in diesem Monat € X statt € Y“ when this month's amount is not the usual one
+  const deviation = monthDeviation(item);
 
   return (
     <li data-testid="position-row" data-position={position.id} data-paid={status === 'paid'} data-status={status} data-unplanned={item.unplanned || undefined}>
@@ -98,6 +101,11 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
                     </span>
                   )}
                   {payment?.note && <span className="min-w-0 basis-full truncate text-[13px] text-ink-mute">{payment.note}</span>}
+                </span>
+              )}
+              {deviation && (
+                <span className="num mt-1 block text-[13px] leading-5 text-ink-mute" data-testid="month-deviation">
+                  {t('month.deviation', { x: formatEUR(deviation.x), y: formatEUR(deviation.y) })}
                 </span>
               )}
             </span>

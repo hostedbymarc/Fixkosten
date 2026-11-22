@@ -138,13 +138,13 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
       if (!position) {
         const id = await createPosition(
           db,
-          { name, categoryId, note, plan: nextPlan, fromNet: showFromNet ? fromNet : undefined, account: storedAccount },
+          { name, categoryId, note, plan: nextPlan, fromNet: showFromNet || unplanned ? fromNet : undefined, account: storedAccount },
           validFrom,
         );
         onSaved(id);
         return;
       }
-      await updatePositionInfo(db, position.id, { name, categoryId, note, fromNet: showFromNet ? fromNet : undefined });
+      await updatePositionInfo(db, position.id, { name, categoryId, note, fromNet: showFromNet || unplanned ? fromNet : undefined });
       // „Nicht einplanen“ on → 'spielgeld'; switched off → 'girokonto' (or Rücklage / Direkt as chosen)
       const wasUnplanned = position.account === 'spielgeld';
       if (unplanned !== wasUnplanned || (konto && !unplanned && accountChoice && accountChoice !== accountOf(ds, position))) {
@@ -245,6 +245,21 @@ export function PositionFormSheet({ ds, today, position, onClose, onSaved, retur
           info={t('unplanned.info')}
           testId="unplanned-field"
         />
+        {/* monat-ist-monat: „nicht eingeplant“ from the salary counts against the Spielgeld (④), from another source not */}
+        {unplanned && !showFromNet && (
+          <div data-testid="source-field">
+            <Segmented<'salary' | 'other'>
+              label={t('source.label')}
+              value={fromNet ? 'salary' : 'other'}
+              onChange={(v) => setFromNet(v === 'salary')}
+              options={[
+                { value: 'salary', label: t('source.salary') },
+                { value: 'other', label: t('source.other') },
+              ]}
+              info={t('source.info')}
+            />
+          </div>
+        )}
         {frequencies.length > 0 ? (
           <Segmented
             label="Häufigkeit"

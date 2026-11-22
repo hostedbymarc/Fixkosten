@@ -72,6 +72,7 @@ for (const [mode, vars] of [
         expect(contrast(rgb(vars, '--hero-chip-ink'), bg)).toBeGreaterThanOrEqual(4.5);
       });
     }
+    it('Spielgeld-Pille „drüber“ (monat-ist-monat): warn auf warn-soft ≥ 4,5:1', () => expect(contrast(rgb(vars, '--c-warn'), rgb(vars, '--c-warn-soft'))).toBeGreaterThanOrEqual(4.5));
     it('Knopf „… überwiesen“: brand-700 auf brand-100 ≥ 4,5:1', () => expect(contrast(rgb(vars, '--brand-700'), rgb(vars, '--brand-100'))).toBeGreaterThanOrEqual(4.5));
     it('Nummern ①②③: hero-chip-ink auf dem Glas ≥ 4,5:1', () => {
       for (const [, ground] of grounds) expect(contrast(rgb(vars, '--hero-chip-ink'), over(rgb(vars, '--hero-chip-ink'), 0, rgb(vars, '--hero-chip-bg', ground)))).toBeGreaterThanOrEqual(4.5);

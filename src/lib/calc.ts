@@ -393,6 +393,18 @@ interface MonthEntry {
   account: Account;
   /** position name (a one-off without position: its label) */
   name: string;
+  /** stable key: position id (one-off: its id) and the period */
+  key: string;
+  /** due date in the period (YYYY-MM-DD): the due day, a one-time payment's date; null when unknown (one-offs) */
+  date: string | null;
+}
+
+/** The due date of an item in its period: a one-time payment's date, else the due day of the plan; null without one. */
+export function dueDateIn(plan: PlanEntry | null, period: Period): string | null {
+  if (!plan) return null;
+  if (plan.frequency === 'once') return plan.dueDate ?? null;
+  const day = dueDayInPeriod(plan.dueDay, period);
+  return day === undefined ? null : `${period}-${String(day).padStart(2, '0')}`;
 }
 
 function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
@@ -404,6 +416,8 @@ function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
     fromNet: i.fromNet,
     account: i.position.account ?? defaultAccount(i.kind),
     name: i.position.name,
+    key: `${i.position.id}@${period}`,
+    date: dueDateIn(i.plan, period),
   }));
   const cats = categoryMap(ds);
   for (const o of ds.oneOffs) {
@@ -420,6 +434,8 @@ function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
       fromNet: true,
       account: position ? (position.account ?? defaultAccount(kind)) : 'girokonto',
       name: position ? `${position.name}: ${o.label}` : o.label,
+      key: `${o.id}@${period}`,
+      date: null,
     });
   }
   return entries;
@@ -528,11 +544,14 @@ export interface SourceItem {
   account: Account;
   fromNet: boolean;
   paid: boolean;
+  /** monat-ist-monat: stable key and the due date in the period (null: unknown, e.g. a one-off) */
+  key: string;
+  date: string | null;
 }
 
 /** Everything due in `period` (positions and one-offs, as in monthFigures) with its source. */
 export function monthItems(ds: Dataset, period: Period): SourceItem[] {
-  return monthEntries(ds, period).map((e) => ({ name: e.name, amount: fromCents(e.cents), kind: e.kind, account: e.account, fromNet: e.fromNet, paid: e.paid }));
+  return monthEntries(ds, period).map((e) => ({ name: e.name, amount: fromCents(e.cents), kind: e.kind, account: e.account, fromNet: e.fromNet, paid: e.paid, key: e.key, date: e.date }));
 }
 
 /** The figures of one category in a month (empty tally when nothing is due). */
