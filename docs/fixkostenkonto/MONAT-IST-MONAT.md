@@ -109,8 +109,23 @@ Unter ② steht jetzt die Anzahl („14 Posten“). Die Namen stehen in der aufg
 
 ## Tests
 
-ERGEBNISSE
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 1351 grün, 55 Dateien. Neu: `golden-month-card.test.ts` (29), `monthCard.test.ts` (12) |
+| E2E `monat-ist-monat` | 12 grün: iPhone SE, 15, Pro Max, iPad hoch/quer, Desktop 1440, je hell und dunkel |
+| Volle E2E-Suite, desktop | 534 grün, 40 übersprungen. „Start ohne Netz“ (Splash, 6× CPU-Drosselung) einmal rot, danach 3 von 3 grün |
+| Volle E2E-Suite, iphone-15 | 269 grün |
+| Volle E2E-Suite, iphone-pro-max | 241 grün |
+| Volle E2E-Suite, ipad-portrait | 257 grün |
+| Volle E2E-Suite, ipad-landscape | 245 grün |
+| Perf | 3 grün. Perf-Feier: 2 grün |
+| WebKit (geänderte Specs: monat-ist-monat, monat-feinschliff, monat-verdichtet, month-once, from-net, tooltips) | 74 grün, 11 übersprungen. `from-net` einmal Zeitüberschreitung, einzeln 3 von 3 grün |
+
+**Angepasste bestehende Tests:**
+- `dom-figures` prüft jetzt auch die Abweichungszeile.
+- `tooltips` schließt „Dein Plan“ mit `closePlan`. Das Escape konnte im Spielgeld-Feld landen.
+- `monat-feinschliff` und `monat-verdichtet` folgen der neuen Karte: aktiver Zeitraum, Pille mit ④.
 
 ## Merge
 
-MERGE
+Per Squash nach `main`. Merge-SHA und Deploy-Hinweis stehen im Abschlussbericht des PRs.
