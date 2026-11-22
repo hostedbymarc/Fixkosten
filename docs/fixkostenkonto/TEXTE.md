@@ -125,9 +125,25 @@
 | Dein Monat | `month.direct` | Direkt bezahlt | 2 |
 | Dein Monat | `month.direct.more` | {n} Posten | 2 |
 | Dein Monat | `month.wealth` | Vermögensaufbau | 1 |
-| Dein Monat | `month.free` | Frei für dich | 3 |
-| Dein Monat | `month.pill.ok` | Dein Spielgeld {betrag} passt | 4 |
-| Dein Monat | `month.pill.short` | Dir fehlen {betrag} für dein Spielgeld | 6 |
+| Dein Monat | `month.free` | Übrig in diesem Monat | 4 |
+| Dein Monat | `month.before` | Vor Spielgeld frei: {betrag} | 4 |
+| Dein Monat | `month.unplanned` | Nicht eingeplant | 2 |
+| Dein Monat | `month.pill.rest` | Spielgeld: {betrag} von {limit} · {rest} übrig | 6 |
+| Dein Monat | `month.pill.over` | Spielgeld: {betrag} von {limit} · {over} drüber | 6 |
+| Dein Monat | `month.wealth.notFromNet` | {betrag} nicht vom Netto | 4 |
+| Dein Monat | `month.unplanned.other` | {betrag} aus anderer Quelle | 4 |
+| Dein Monat | `month.list.save` | Für später zur Seite | 4 |
+| Dein Monat | `month.list.take` | Aus dem Angesparten | 3 |
+| Dein Monat | `month.list.empty` | Nichts in diesem Monat | 4 |
+| Dein Monat | `month.list.notFromNet` | nicht vom Netto | 3 |
+| Dein Monat | `month.list.other` | aus anderer Quelle | 3 |
+| Dein Monat | `month.next` | {gehalt} · {wann} | 2 |
+| Dein Monat | `month.next.plan` | Plan ansehen | 2 |
+| Dein Monat | `month.deviation` | in diesem Monat {x} statt {y} | 6 |
+| undefined | `source.label` | Bezahlt aus | 2 |
+| undefined | `source.salary` | Gehalt | 1 |
+| undefined | `source.other` | Andere Quelle | 2 |
+| undefined | `source.info` | Andere Quelle zählt nicht gegen dein Spielgeld. | 7 |
 | Dein Monat | `month.pill.none` | Spielgeld festlegen | 2 |
 | Dein Monat | `month.confirm.account` | {betrag} aufs Fixkostenkonto überwiesen | 4 |
 | Dein Monat | `month.confirm.aside` | {betrag} zur Seite gelegt | 4 |

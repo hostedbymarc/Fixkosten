@@ -79,10 +79,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test('Gehalt nach Auszahlungsmonat, aufklappen gemerkt, Gehalt ändern, kein „geschätzt“ / „nicht ausbezahlt“', async ({ page }) => {
         await start(page);
         const card = page.getByTestId('dein-monat');
-        // November is active: the next salary is the one of 25 November („November-Gehalt“, in the December screen)
-        // monat-feinschliff-2: „November-Gehalt“, muted when it comes
-        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
-        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText('kommt am 25. November');
+        // monat-ist-monat: November is active (25.10.–24.11.): the card shows the salary at its start, the
+        // „Oktober-Gehalt“ paid on 25 October; the next one is the line under the card
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('Oktober-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText('ausgezahlt am 25. Oktober');
+        await expect(page.getByTestId('next-salary-text')).toHaveText('November-Gehalt · kommt am 25. November');
         await expect(card).not.toContainText('geschätzt');
 
         // folded by default: salary, „Frei für dich“, pill; ① ② ③ hidden
@@ -117,6 +118,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('Enter');
         await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,50/);
         await expect.poll(() => valueOf(page.getByTestId('dein-monat-free-value'))).toBeCloseTo(free + 8302.5 - salary, 2);
+        // the same entry as November's salary tile
+        await expect(page.getByTestId('salary-title')).toHaveText('Oktober-Gehalt');
+        await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.302,5/);
         await tap(page.getByTestId('dein-monat-split-toggle'));
         await expect(page.getByTestId('dein-monat-split-toggle')).toHaveAttribute('aria-expanded', 'false');
 
@@ -128,19 +132,18 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await toMonth(page, 'Dezember');
         await expect(page.getByTestId('salary-title')).toHaveText('November-Gehalt');
         await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25.11.');
-        // the same entry as the card (8.302,50 from above)
-        await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.302,5/);
-        // and the other way round: changed in December's month close → the card in November shows it
+        await shot(page, `${tag}-dezember`);
+
+        // and the other way round: changed in November's month close (the tile) → the card shows it
+        await toMonth(page, 'November');
         await tap(page.getByTestId('salary-tile'));
         await expect(page.getByTestId('close-salary')).toBeVisible();
         await page.getByTestId('close-salary').fill('8.100');
         await tap(page.getByRole('button', { name: 'Speichern' }));
         await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.100/);
-        await shot(page, `${tag}-dezember`);
+        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.100/);
 
         // „Dein Plan“: the question above the switch, „Große Zahlungen“ only once, the table head
-        await toMonth(page, 'November');
-        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.100/);
         await tap(page.getByTestId('dein-monat-pill'));
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
         // the pill opens the Spielgeld editable: Esc leaves the field, the sheet stays

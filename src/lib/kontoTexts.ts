@@ -141,7 +141,7 @@ export const KONTO_TEXTS = {
   'walk.4.none': 'Fehlt etwas, zeigt dir „Dein Plan“ einen Vorschlag.',
   'walk.5.title': 'Dein Spielgeld ist die Prüfgröße.',
   'walk.5.text': 'Am {tag} kommt dein Gehalt. Erbse zeigt dir, was frei bleibt.',
-  // · monat-verdichtet: Karte „Dein Monat“ (aktiver Monat), für das nächste Gehalt
+  // · monat-ist-monat: Karte „Dein Monat“ für den aktiven Zeitraum (das Gehalt an seinem Anfang)
   'month.title': 'Dein Monat',
   'month.noSalary': 'Trag dein Gehalt ein. Dann rechnet Erbse deinen Monat.',
   'month.noSalary.action': 'Gehalt eintragen',
