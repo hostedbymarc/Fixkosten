@@ -386,7 +386,7 @@ function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
         {(item.date || note) && <span className="text-ink-mute"> · {[shortDate(item.date), note].filter(Boolean).join(' · ')}</span>}
       </span>
       <span className="num shrink-0 whitespace-nowrap font-medium" data-testid={`${testId}-item-amount`}>
-        {signed(item.amount)}
+        {item.amount < 0 ? minus(-item.amount) : money(item.amount)}
       </span>
     </li>
   );

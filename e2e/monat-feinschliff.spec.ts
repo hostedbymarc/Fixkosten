@@ -118,9 +118,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('Enter');
         await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,50/);
         await expect.poll(() => valueOf(page.getByTestId('dein-monat-free-value'))).toBeCloseTo(free + 8302.5 - salary, 2);
-        // the same entry as November's salary tile
-        await expect(page.getByTestId('salary-title')).toHaveText('Oktober-Gehalt');
-        await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.302,5/);
         await tap(page.getByTestId('dein-monat-split-toggle'));
         await expect(page.getByTestId('dein-monat-split-toggle')).toHaveAttribute('aria-expanded', 'false');
 
@@ -134,14 +131,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25.11.');
         await shot(page, `${tag}-dezember`);
 
-        // and the other way round: changed in November's month close (the tile) → the card shows it
+        // the next salary is its own entry: the card in November keeps the Oktober-Gehalt
         await toMonth(page, 'November');
-        await tap(page.getByTestId('salary-tile'));
-        await expect(page.getByTestId('close-salary')).toBeVisible();
-        await page.getByTestId('close-salary').fill('8.100');
-        await tap(page.getByRole('button', { name: 'Speichern' }));
-        await expect(page.getByTestId('salary-value')).toHaveText(/€\s8\.100/);
-        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.100/);
+        await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,50/);
 
         // „Dein Plan“: the question above the switch, „Große Zahlungen“ only once, the table head
         await tap(page.getByTestId('dein-monat-pill'));

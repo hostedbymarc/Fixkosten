@@ -31,7 +31,7 @@ const cents = (text: string) => {
   return negative ? -v : v;
 };
 const centsOf = async (l: Locator) => cents((await l.textContent())!);
-const plain = (s: string | null) => (s ?? '').replace(/[  ]/g, ' ');
+const plain = (s: string | null) => (s ?? '').replace(/[\u00a0\u202f]/g, ' ');
 
 async function shot(page: Page, name: string, target?: Locator) {
   if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
@@ -83,9 +83,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(plain(await page.getByTestId('dein-monat-salary-when').textContent())).toBe('ausgezahlt am 25. Oktober');
         expect(plain(await page.getByTestId('next-salary-text').textContent())).toBe('November-Gehalt · kommt am 25. November');
         await expect(page.getByTestId('next-salary')).toContainText('Plan ansehen');
-        // the same entry as the salary tile of November
-        await expect(page.getByTestId('salary-title')).toHaveText('Oktober-Gehalt');
-        expect(await centsOf(page.getByTestId('dein-monat-salary-value'))).toBe(await centsOf(page.getByTestId('salary-value')));
 
         // a Spielgeld of € 300 through the pill
         await tap(page.getByTestId('dein-monat-pill'));
