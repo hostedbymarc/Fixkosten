@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { liveBackup } from '../tests/fixtures/live';
-import { animationsDone, appSettled, expandAll, expect, goTo, setUpKonto, test } from './fixtures';
+import { animationsDone, appSettled, closePlan, expandAll, expect, goTo, setUpKonto, test } from './fixtures';
 import { NEVER_IN_TOOLTIP, TOOLTIP_TEXTS } from './help-texts';
 import { OKT_TODAY } from './live';
 
@@ -201,7 +201,7 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await expect(page.getByTestId('konto-setup')).toHaveCount(0);
       await expect(page.getByTestId('plan-sheet')).toBeVisible();
       await animationsDone(page, 'bottom-sheet');
-      await page.keyboard.press('Escape');
+      await closePlan(page);
       await expect(page.getByRole('dialog')).toHaveCount(0);
 
       // --- Monat: the active month has no hero (and no tile ⓘ); the next month shows the hero as before

@@ -96,10 +96,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(close.getByRole('button', { name: 'Speichern' }));
         await expect(close).toBeHidden();
 
-        // the next salary: November, estimated from October's; the statement adds up
-        // monat-feinschliff-2: named after the month it is paid in
-        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
-        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^(kommt|ausgezahlt) am 1\. November$/);
+        // monat-ist-monat: the active period October, paid by the Oktober-Gehalt; the statement adds up
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('Oktober-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText('ausgezahlt am 1. Oktober');
         // monat-feinschliff: no „geschätzt“ – the last salary is used without a hint
         await expect(page.getByTestId('dein-monat')).not.toContainText('geschätzt');
         await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,00/);
@@ -107,8 +106,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const transfer = await valueOf(page.getByTestId('dein-monat-transfer-value'));
         const direct = await valueOf(page.getByTestId('dein-monat-direct-value'));
         const wealth = await valueOf(page.getByTestId('dein-monat-wealth-value'));
+        const unplanned = await valueOf(page.getByTestId('dein-monat-unplanned-value'));
         const free = await valueOf(page.getByTestId('dein-monat-free-value'));
-        expect(free).toBeCloseTo(8302 - transfer - direct - wealth, 2);
+        expect(free).toBeCloseTo(8302 - transfer - direct - wealth - unplanned, 2);
         // no Spielgeld: „Spielgeld festlegen“
         const pill = page.getByTestId('dein-monat-pill');
         await expect(pill).toHaveAttribute('data-status', 'none');
@@ -129,7 +129,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-11-plan-passt`);
         await closeSheet(page);
         await expect(pill).toHaveAttribute('data-status', 'ok');
-        await expect(pill).toHaveText(/^Dein Spielgeld €\s1\.200,00 passt$/);
+        // monat-ist-monat: ④ (nothing „nicht eingeplant“ in October) against the limit
+        await expect(pill).toHaveText(/^Spielgeld: €\s0,00 von €\s1\.200,00 · €\s1\.200,00 übrig$/);
         await expect(pill.locator('svg')).toHaveCount(1);
         await expect(card).toHaveAttribute('data-state', 'ok');
         await shot(page, `${tag}-02-monat-passt`);
@@ -180,11 +181,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.locator('[data-testid=plan-salary-row][data-short]').first()).toBeAttached();
         await shot(page, `${tag}-13-plan-geht-nicht`);
         await closeSheet(page);
-        // the card: what is missing, with a warning symbol (never colour only)
-        await expect(pill).toHaveAttribute('data-status', 'short');
-        await expect(pill).toHaveText(/^Dir fehlen €\s[\d.]+,\d{2} für dein Spielgeld$/);
-        // S − F of this salary (the 12 months are in „Dein Plan“)
-        expect(await valueOf(pill)).toBeCloseTo(6000 - (await valueOf(page.getByTestId('dein-monat-free-value'))), 2);
+        // monat-ist-monat: the card compares only ④ of this month with the limit – what the plan cannot keep is in „Dein Plan“
+        await expect(pill).toHaveAttribute('data-status', 'ok');
+        await expect(pill).toHaveText(/^Spielgeld: €\s0,00 von €\s6\.000,00 · €\s6\.000,00 übrig$/);
         await expect(pill.locator('svg')).toHaveCount(1);
         await shot(page, `${tag}-03-monat-fehlt`);
         await tap(pill);
@@ -314,7 +313,10 @@ test.describe('Monat verdichtet · „Nicht einplanen“ und „Direkt“', () =
     await page.keyboard.press('Escape');
     await goTo(page, 'monat');
     await expect.poll(() => valueOf(page.getByTestId('dein-monat-direct-value'))).toBeCloseTo(direct + 1008, 2);
-    await expect(page.getByTestId('dein-monat-direct-sub')).toContainText('Miete');
+    // monat-ist-monat: the row opens its items – Miete is among them
+    if ((await page.getByTestId('dein-monat-split-toggle').getAttribute('aria-expanded')) !== 'true') await page.getByTestId('dein-monat-split-toggle').click();
+    await page.getByTestId('dein-monat-direct-toggle').click();
+    await expect(page.getByTestId('dein-monat-direct-list')).toContainText('Miete');
   });
 
   test('Einstellungen: Spielgeld mit Tausenderpunkt, eigenes Konto nein → „Zur Seite legen“, „Dein Plan öffnen“', async ({ page }) => {

@@ -19,7 +19,7 @@
 import type { KontoSettings, PlanMode } from '../db/settings';
 import type { MonthStart } from './activeMonth';
 import { dueItems, netSalaryForPeriod, type SourceItem } from './calc';
-import { onKonto, roundStep, simulateKonto, type KontoSimulation } from './fixkostenkonto';
+import { onKonto, roundStep, simulateKonto, standingOrder, type KontoSimulation } from './fixkostenkonto';
 import { kontoState, periodStartDate, type KontoState } from './kontoBalance';
 import { addPeriods } from './period';
 import { lastSalary, salaryParts } from './salarySplit';
@@ -142,6 +142,12 @@ export interface MonthPlan {
   months: PlanMonth[];
   /** the next salary („Dein Gehalt am …“) */
   first: PlanMonth;
+  /**
+   * monat-ist-monat: the ACTIVE period with the chosen plan („Dein Monat“). Before this month's deposit it is
+   * `first`; after it, the same plan computed from the start of the active period (its deposit and what was
+   * paid from it since are taken back out of today's balance).
+   */
+  current: PlanMonth;
   /** no net salary entered at all */
   noSalary: boolean;
   payments: BigPayment[];
@@ -399,6 +405,17 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   const chosen = run(mode, savings);
   const due = mode === 'due' ? chosen : run('due', savings);
   const even = mode === 'even' ? chosen : run('even', savings);
+  // the active period from its start (monat-ist-monat): only needed once this month's deposit is in
+  let current = chosen.months[0]!;
+  if (first !== active) {
+    const fromStart = Array.from({ length: PLAN_MONTHS }, (_, i) => addPeriods(active, i));
+    const allBills = fromStart.map((p) => billsOf(ds, p, false));
+    const check = s.checks.find((c) => c.period === active && c.deposited);
+    const deposit = cents(check?.amount ?? (check ? standingOrder(ds, active, step).amount : state.months[0]?.amount ?? state.order));
+    const sum = (b: Bill[]) => b.reduce((a, x) => a + x.amount, 0);
+    const paidSince = sum(allBills[0]!) - sum(billsOf(ds, active, true));
+    current = core(ds, state, fromStart, allBills, cents(state.balance) - deposit + paidSince, mode, savings, step, start, spielgeld).months[0]!;
+  }
   const noSalary = chosen.months.some((m) => m.salary === null);
   const lowestFree = lowest(chosen.months);
   const fits = spielgeld === null || lowestFree === null ? null : cents(lowestFree) >= cents(spielgeld);
@@ -457,6 +474,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     balance: state.balance,
     months: chosen.months,
     first: chosen.months[0]!,
+    current,
     noSalary,
     payments: chosen.payments,
     spielgeld,
