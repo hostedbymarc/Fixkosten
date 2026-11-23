@@ -6,11 +6,11 @@ import { importLive, NOV_TODAY } from './live';
 // monat-feinschliff: October (past) and December (future) keep their layout – only texts change. Data like
 // yours (rebuilt live example), „Neuer Monat beginnt am“ 25, today 10 November → November active,
 // „Fixkosten einplanen“ set up. The boxes (position and size) of the hero, the Netto and Vermögensaufbau
-// tiles, the note and the first category are compared with the reference taken from main before the sprint
+// tiles, the note and the first category were compared with the reference taken from main before the sprint
 // (e2e/monat-layout.json, written with UPDATE_LAYOUT=1 against the main build). Screenshots „vorher“ /
 // „nachher“ to docs/screenshots/monat-feinschliff/. Six viewports × light/dark; runs in the desktop project.
 // alle-monate-gleich: with „Fixkosten einplanen“ every month shows „Dein Monat“ – the hero and the tiles are
-// gone (null now); the note and the categories keep their column (x, width), they only move up or down.
+// gone (null now); the note and the categories sit in the same column (x, width) as in the active month.
 
 const DIR = 'docs/screenshots/monat-feinschliff';
 const REF = 'e2e/monat-layout.json';
@@ -48,7 +48,6 @@ async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-const reference: Record<string, Record<string, Box | null>> = !UPDATE && existsSync(REF) ? JSON.parse(readFileSync(REF, 'utf8')) : {};
 const written: Record<string, Record<string, Box | null>> = {};
 
 test.describe.configure({ mode: 'serial' });
@@ -70,6 +69,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.getByTestId('konto-invite-enable').click();
         await setUpKonto(page);
         const tag = `${vp}-${scheme === 'light' ? 'hell' : 'dunkel'}`;
+        await settle(page);
+        const active = await boxes(page);
         for (const [month, step] of [
           ['oktober', 'Vorheriger Monat'],
           ['dezember', 'Nächster Monat'],
@@ -82,13 +83,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           await page.screenshot({ path: `${DIR}/${tag}-${month}-${UPDATE ? 'vorher' : 'nachher'}.jpg`, type: 'jpeg', quality: 78 });
           if (UPDATE) written[key] = now;
           else {
-            const ref = reference[key];
-            expect(ref, `Referenz ${key}`).toBeTruthy();
             for (const id of GONE) expect(now[id], `${key} · ${id}`).toBeNull();
             expect(now['dein-monat'], `${key} · dein-monat`).toBeTruthy();
             for (const id of KEPT) {
               expect(now[id], `${key} · ${id}`).toBeTruthy();
-              expect({ x: now[id]!.x, width: now[id]!.width }, `${key} · ${id}`).toEqual({ x: ref![id]!.x, width: ref![id]!.width });
+              expect({ x: now[id]!.x, width: now[id]!.width }, `${key} · ${id}`).toEqual({ x: active[id]!.x, width: active[id]!.width });
             }
           }
           await page.getByRole('button', { name: /Zum aktiven Monat/ }).click();

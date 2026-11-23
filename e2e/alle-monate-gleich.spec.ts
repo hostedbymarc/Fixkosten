@@ -216,7 +216,7 @@ test.describe('Alle Monate gleich · Abläufe', () => {
     // December (future): the salary is the last one (muted); entering it moves the Überschuss at once
     await toMonth(page, 'Dezember', tap);
     const value = page.getByTestId('dein-monat-salary-value');
-    await expect(value).toHaveAttribute('data-fallback', '');
+    await expect(value).toHaveAttribute('data-fallback');
     const before = await centsOf(page.getByTestId('dein-monat-free-value'));
     const old = await centsOf(value);
     await tap(value);
@@ -224,7 +224,7 @@ test.describe('Alle Monate gleich · Abläufe', () => {
     await expect(field).toBeFocused();
     await field.fill('5000');
     await page.keyboard.press('Enter');
-    await expect(value).not.toHaveAttribute('data-fallback', '');
+    await expect(value).not.toHaveAttribute('data-fallback');
     await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(before + 500000 - old);
 
     // ticking December completely: the bills row says done, the peas lie – no live celebration

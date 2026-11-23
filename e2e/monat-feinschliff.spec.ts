@@ -121,14 +121,15 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByTestId('dein-monat-split-toggle'));
         await expect(page.getByTestId('dein-monat-split-toggle')).toHaveAttribute('aria-expanded', 'false');
 
-        // October (past) and December (future): the Netto tile with the neutral status
+        // October (past) and December (future): the same card head (alle-monate-gleich), no Netto tile
         await toMonth(page, 'Oktober');
-        await expect(page.getByTestId('salary-title')).toHaveText('September-Gehalt');
-        await expect(page.getByTestId('salary-sub')).toHaveText('ausgezahlt am 25.9.');
+        await expect(page.getByTestId('salary-title')).toHaveCount(0);
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('September-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^ausgezahlt am 25\.\sSeptember$/);
         await shot(page, `${tag}-oktober`);
         await toMonth(page, 'Dezember');
-        await expect(page.getByTestId('salary-title')).toHaveText('November-Gehalt');
-        await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25.11.');
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^kommt am 25\.\sNovember$/);
         await shot(page, `${tag}-dezember`);
 
         // the next salary is its own entry: the card in November keeps the Oktober-Gehalt
