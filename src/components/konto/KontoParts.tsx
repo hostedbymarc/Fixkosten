@@ -1,7 +1,7 @@
 import type { MonthStart } from '../../lib/activeMonth';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { db } from '../../db/db';
-import { setAnchor, setSpielgeld } from '../../db/kontoActions';
+import { setAnchor, setPlanSalary, setSpielgeld } from '../../db/kontoActions';
 import { BUFFERS, writeKonto, type Buffer, type KontoSettings } from '../../db/settings';
 import { localToday } from '../../lib/activeMonth';
 import { ROUNDING_CHOICES, type KontoMonth, type KontoSimulation, type Rounding } from '../../lib/fixkostenkonto';
@@ -283,5 +283,38 @@ export function SpielgeldField({ spielgeld }: { spielgeld: number | null }) {
       info={t('settings.spielgeld.info')}
       testId="konto-spielgeld"
     />
+  );
+}
+
+/** „Gehalt zum Planen“ (gehalt-zum-planen): saved as you type; empty = not set (the last salary entered counts). */
+export function PlanSalaryField({ planSalary }: { planSalary: number | null }) {
+  const [text, setText] = useState(planSalary === null ? '' : amountToInput(planSalary));
+  const box = useRef<HTMLDivElement>(null);
+  // while the field has the focus it keeps what is typed; otherwise it follows the stored value (an import)
+  useEffect(() => {
+    if (box.current?.contains(document.activeElement)) return;
+    setText(planSalary === null ? '' : amountToInput(planSalary));
+  }, [planSalary]);
+  const parsed = text.trim() === '' ? null : parseAmount(text);
+  return (
+    <div ref={box}>
+      <AmountField
+        label={t('settings.planSalary')}
+        value={text}
+        onChange={(v) => {
+          setText(v);
+          if (v.trim() === '') void setPlanSalary(db, null);
+          else {
+            const value = parseAmount(v);
+            if (value !== null) void setPlanSalary(db, value);
+          }
+        }}
+        placeholder="z. B. 2.850,00"
+        error={text.trim() !== '' && parsed === null ? 'Bitte einen Betrag eingeben, z. B. 2.850,00' : null}
+        hint={t('settings.planSalary.hint')}
+        info={t('settings.planSalary.info')}
+        testId="plan-salary"
+      />
+    </div>
   );
 }

@@ -20,11 +20,12 @@
 
 import type { KontoSettings, PlanMode } from '../db/settings';
 import type { MonthStart } from './activeMonth';
-import { dueItems, netSalaryForPeriod, type SourceItem } from './calc';
+import { dueItems, type SourceItem } from './calc';
 import { onKonto, roundStep, simulateKonto, standingOrder, type KontoSimulation } from './fixkostenkonto';
 import { kontoState, periodStartDate, type KontoState } from './kontoBalance';
 import { addPeriods } from './period';
-import { lastSalary, salaryParts } from './salarySplit';
+import { salaryParts } from './salarySplit';
+import { plannedSalary } from './salaryMonth';
 import type { Dataset, Period, Position, SavingSetting } from './types';
 
 export type { PlanMode };
@@ -79,8 +80,9 @@ export interface PlanMonth {
   period: Period;
   /** the day the salary comes („Neuer Monat beginnt am“) */
   payday: Date;
-  /** net salary; missing: the last one entered (estimated); null without any */
+  /** net salary; missing: „Gehalt zum Planen“, else the last one entered (estimated); null without any */
   salary: number | null;
+  /** planned, not entered („geplant“) */
   estimated: boolean;
   /** T: to the account in this month */
   transfer: number;
@@ -166,6 +168,29 @@ export interface MonthPlan {
   bigMonth: BigMonth | null;
   /** the balance with the plan followed (analysis chart) */
   simulation: KontoSimulation;
+  /** „Gehalt zum Planen“ (settings); null: not set */
+  planSalary: number | null;
+  /**
+   * gehalt-zum-planen: the largest amount missing in the plan – the month and how much its „Frei für dich“
+   * is below the Spielgeld (none set: below 0). null when nothing is missing or a salary is missing.
+   */
+  shortfall: Shortfall | null;
+}
+
+export interface Shortfall {
+  period: Period;
+  amount: number;
+}
+
+/** The month whose „Frei für dich“ is furthest below `target` (the first of equal ones); null when none is. */
+export function shortfallOf(months: PlanMonth[], target: number): Shortfall | null {
+  let worst: Shortfall | null = null;
+  for (const m of months) {
+    if (m.free === null) return null;
+    const miss = cents(target) - cents(m.free);
+    if (miss > 0 && (worst === null || miss > cents(worst.amount))) worst = { period: m.period, amount: euros(miss) };
+  }
+  return worst;
 }
 
 export interface PlanOptions {
@@ -221,11 +246,10 @@ function billsOf(ds: Dataset, period: Period, start: MonthStart = 1): Bill[] {
 
 const byDate = (a: Bill, b: Bill) => (a.period < b.period ? -1 : a.period > b.period ? 1 : a.day - b.day || b.amount - a.amount || a.sortOrder - b.sortOrder);
 
-/** The net salary of a month; missing: the last one entered before it. */
-function salaryOf(ds: Dataset, period: Period): { salary: number | null; estimated: boolean } {
-  const own = netSalaryForPeriod(ds, period);
-  if (own !== null) return { salary: own, estimated: false };
-  return { salary: lastSalary(ds, addPeriods(period, -1))?.salary ?? null, estimated: true };
+/** The net salary of a month (plannedSalary): its entry, else „Gehalt zum Planen“, else the last one entered. */
+function salaryOf(ds: Dataset, period: Period, planSalary: number | null): { salary: number | null; estimated: boolean } {
+  const { value, source } = plannedSalary(ds, period, planSalary);
+  return { salary: value, estimated: source === 'plan' || source === 'last' };
 }
 
 interface Core {
@@ -246,6 +270,7 @@ function core(
   step: number,
   start: MonthStart,
   spielgeld: number | null,
+  planSalary: number | null,
 ): Core {
   const first = periods[0]!;
   const index = new Map(periods.map((p, i) => [p, i]));
@@ -321,7 +346,7 @@ function core(
       transfer = roundUp(monthly + dueRest + rateCents[i]!, step);
     }
     transfers.push(transfer);
-    const { salary, estimated } = salaryOf(ds, period);
+    const { salary, estimated } = salaryOf(ds, period, planSalary);
     const parts = salaryParts(ds, period, start);
     const free = salary === null ? null : euros(cents(salary) - transfer - cents(parts.direct) - cents(parts.wealth));
     months.push({
@@ -409,7 +434,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   const nowBills = first !== active ? sum(billsOf(ds, active, start)) : 0;
   const available = planBalance - nowBills;
   const step = roundStep(s);
-  const run: Run = (m, sv) => core(ds, state, periods, bills, available, m, sv, step, start, spielgeld);
+  const run: Run = (m, sv) => core(ds, state, periods, bills, available, m, sv, step, start, spielgeld, s.planSalary);
   const chosen = run(mode, savings);
   const due = mode === 'due' ? chosen : run('due', savings);
   const even = mode === 'even' ? chosen : run('even', savings);
@@ -420,7 +445,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     const allBills = fromStart.map((p) => billsOf(ds, p, start));
     const check = s.checks.find((c) => c.period === active && c.deposited);
     const deposit = cents(check?.amount ?? (check ? standingOrder(ds, active, step).amount : state.months[0]?.amount ?? state.order));
-    current = core(ds, state, fromStart, allBills, planBalance - deposit, mode, savings, step, start, spielgeld).months[0]!;
+    current = core(ds, state, fromStart, allBills, planBalance - deposit, mode, savings, step, start, spielgeld, s.planSalary).months[0]!;
   }
   const noSalary = chosen.months.some((m) => m.salary === null);
   const lowestFree = lowest(chosen.months);
@@ -491,6 +516,8 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     recommended,
     bigMonth,
     simulation,
+    planSalary: s.planSalary,
+    shortfall: noSalary ? null : shortfallOf(chosen.months, spielgeld ?? 0),
   };
 }
 

@@ -172,6 +172,16 @@ export async function cleanCelebrated(db: FixkostenDB, active: Period): Promise<
 }
 
 /** „Spielgeld pro Monat“: an amount (cents allowed) or null = off. */
+/** „Gehalt zum Planen“ (gehalt-zum-planen): empty or € 0 → not set (the last salary entered counts). */
+export async function setPlanSalary(db: FixkostenDB, amount: number | null): Promise<void> {
+  await writeKonto(db, { planSalary: amount !== null && amount > 0 ? Math.round(amount * 100) / 100 : null });
+}
+
+/** „Leg dein Gehalt zum Planen fest ›“ was tapped: the hint does not come back. */
+export async function markPlanSalaryHintSeen(db: FixkostenDB): Promise<void> {
+  await writeKonto(db, { planSalaryHintSeen: true });
+}
+
 export async function setSpielgeld(db: FixkostenDB, amount: number | null): Promise<void> {
   await writeKonto(db, { spielgeld: amount !== null && amount > 0 ? Math.round(amount * 100) / 100 : null });
 }

@@ -143,6 +143,17 @@ export function MonthCloseSheet({ ds, period, onClose, onSave, returnFocusTo }: 
         >
           Speichern
         </button>
+        {/* gehalt-zum-planen: only with an entry; the planned salary counts again (an empty field + Speichern does the same) */}
+        {current?.netSalary !== undefined && (
+          <button
+            type="button"
+            onClick={() => onSave({ netSalary: undefined })}
+            className="focus-ring h-11 self-center rounded-xl px-3 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft"
+            data-testid="close-salary-remove"
+          >
+            {t('month.salary.remove')}
+          </button>
+        )}
       </form>
     </BottomSheet>
   );

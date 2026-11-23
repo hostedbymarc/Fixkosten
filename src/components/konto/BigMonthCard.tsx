@@ -8,26 +8,17 @@ import { AlertIcon, CheckIcon, ChevronRight } from '../Icons';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
 
-/** The proposal of „Dein Plan“ for „Plane vor: …“ (the first one, else the maximum). */
-function prepareText(plan: MonthPlan): string {
-  const a = plan.answer;
-  if (a?.kind === 'save')
-    return a.via === 'even' || !a.proposals[0]
-      ? t('plan2.proposal.even')
-      : t('plan2.proposal', { monat: monthName(a.proposals[0].start), betrag: money(a.proposals[0].rate), zahlung: a.proposals[0].name });
-  if (a?.kind === 'max') return t('plan2.max', { betrag: money(a.max) });
-  return t('plan2.none');
-}
-
 /**
  * „Nächster großer Monat“: only when a month of the next 12 is 25 % above their average. The month and its
- * bills, its two largest big payments and whether the plan is ready for it. A tap opens „Dein Plan“.
+ * bills, its two largest big payments and whether the plan is ready for it (else: what is missing). A tap opens „Dein Plan“.
  */
 export function BigMonthCard({ plan, className = '' }: { plan: MonthPlan; className?: string }) {
   const button = useRef<HTMLButtonElement>(null);
   const big = plan.bigMonth;
   if (!big) return null;
-  const ready = big.ready && plan.fits !== false;
+  // gehalt-zum-planen: not ready → the largest amount missing in the plan (monthPlan.shortfall)
+  const short = big.ready && plan.fits !== false ? null : plan.shortfall;
+  const ready = short === null;
   return (
     <button
       ref={button}
@@ -57,7 +48,7 @@ export function BigMonthCard({ plan, className = '' }: { plan: MonthPlan; classN
       )}
       <span className={`flex items-start gap-1.5 text-[14px] font-medium leading-snug ${ready ? 'text-paid-ink' : 'text-over'}`} data-testid="big-month-status">
         {ready ? <CheckIcon size={16} strokeWidth={2.6} className="mt-0.5 shrink-0" aria-hidden="true" /> : <AlertIcon size={16} className="mt-0.5 shrink-0" aria-hidden="true" />}
-        <span className="num">{ready ? t('big.ready') : t('big.prepare', { vorschlag: prepareText(plan) })}</span>
+        <span className="num">{short === null ? t('big.ready') : t('big.short', { betrag: money(short.amount) })}</span>
       </span>
     </button>
   );

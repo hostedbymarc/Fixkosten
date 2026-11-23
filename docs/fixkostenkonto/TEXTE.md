@@ -79,6 +79,10 @@
 | Einstellungen | `settings.spielgeld` | Spielgeld pro Monat | 3 |
 | Einstellungen | `settings.spielgeld.info` | Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt. | 3 · 8 |
 | Einstellungen | `settings.spielgeld.hint` | Leer lassen, wenn du kein Spielgeld planst. | 7 |
+| Einstellungen | `settings.salary.title` | Gehalt | 1 |
+| Einstellungen | `settings.planSalary` | Gehalt zum Planen | 3 |
+| Einstellungen | `settings.planSalary.info` | Dein normales Netto ohne Sonderzahlungen. Lieber vorsichtig. | 5 · 2 |
+| Einstellungen | `settings.planSalary.hint` | Gilt für Monate ohne eingetragenes Gehalt. | 6 |
 | Analyse | `analyse.order.until` | {betrag} bis {monat}, danach {basis} | 5 |
 | Walkthrough | `walk.title` | So funktioniert Erbse | 3 |
 | Walkthrough | `walk.example` | Beispiel | 1 |
@@ -117,6 +121,9 @@
 | Dein Monat | `month.incl.save` | inkl. {betrag} für {monat} · {zahlungen} | 1 · 4 |
 | Dein Monat | `month.split` | So teilt sich dein Gehalt | 5 |
 | Dein Monat | `month.salary.edit` | Gehalt ändern | 2 |
+| Dein Monat | `month.salary.remove` | Gehalt entfernen | 2 |
+| Dein Monat | `month.salary.planned` | geplant · {wann} | 2 |
+| Dein Monat | `month.planSalary.hint` | Leg dein Gehalt zum Planen fest | 6 |
 | Dein Monat | `month.direct` | Direkt bezahlt | 2 |
 | Dein Monat | `month.direct.more` | {n} Posten | 2 |
 | Dein Monat | `month.wealth` | Vermögensaufbau | 1 |
@@ -157,7 +164,7 @@
 | Rechnungen-Zeile | `bills.none` | Nichts fällig | 2 |
 | Nächster großer Monat | `big.title` | Nächster großer Monat | 3 |
 | Nächster großer Monat | `big.ready` | Mit deinem Plan bist du vorbereitet. | 6 |
-| Nächster großer Monat | `big.prepare` | Plane vor: {vorschlag} | 3 |
+| Nächster großer Monat | `big.short` | Geht sich nicht aus. Dir fehlen {betrag}. | 4 · 3 |
 | Sheet „Dein Plan“ | `plan2.title` | Dein Plan | 2 |
 | Sheet „Dein Plan“ | `plan2.ok` | Passt so. Dein Spielgeld bleibt jeden Monat übrig. | 2 · 6 |
 | Sheet „Dein Plan“ | `plan2.save` | Passt, wenn du ansparst. | 4 |
@@ -166,6 +173,7 @@
 | Sheet „Dein Plan“ | `plan2.apply` | Übernehmen | 1 |
 | Sheet „Dein Plan“ | `plan2.max` | Geht nicht ganz. Höchstens {betrag} Spielgeld sind möglich. | 3 · 5 |
 | Sheet „Dein Plan“ | `plan2.max.apply` | Spielgeld auf {betrag} setzen | 4 |
+| Sheet „Dein Plan“ | `plan2.short` | {monat} geht sich nicht aus. Dir fehlen {betrag}. | 5 · 3 |
 | Sheet „Dein Plan“ | `plan2.none` | Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.spielgeld` | Dein Spielgeld | 2 |
@@ -186,6 +194,8 @@
 | Sheet „Dein Plan“ | `plan2.table.short` | weniger als dein Spielgeld | 4 |
 | Sheet „Dein Plan“ | `plan2.table.more` | Alle 12 Monate | 3 |
 | Sheet „Dein Plan“ | `plan2.table.less` | Nur 4 Monate | 3 |
+| Sheet „Dein Plan“ | `plan2.table.planned` | geplant | 1 |
+| Sheet „Dein Plan“ | `plan2.planned` | Ohne Eintrag geplant mit {betrag}. | 5 |
 | Sheet „Dein Plan“ | `plan2.payments` | Große Zahlungen | 2 |
 | Sheet „Dein Plan“ | `plan2.payments.empty` | In den nächsten 12 Monaten kommt keine große Zahlung. | 9 |
 | Sheet „Dein Plan“ | `plan2.pay.due` | im {monat} zahlen | 3 |

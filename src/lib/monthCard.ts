@@ -1,7 +1,7 @@
 // „Dein Monat“ for EVERY month (alle-monate-gleich; monat-ist-monat: the period of a month, start 25: November
 // = 25.10.–24.11.), paid by the salary that came at its start. The next salary is planned in „Dein Plan“.
 //
-//   Netto      the salary of the period (salaryView: own entry, else the last one entered)
+//   Netto      the salary of the period (salaryView: own entry, else „Gehalt zum Planen“, else the last one entered)
 //   ①          what goes to the Rücklage in the period (transferOf): the active period with the chosen plan
 //              (monthPlan.current), a later one as in „Dein Plan“, an earlier one what was transferred
 //   ②          Direkt bezahlt: the direct bills due in this period (no Vermögensaufbau, nothing that starts later)
@@ -146,7 +146,7 @@ function unplannedItems(ds: Dataset, period: Period, start: MonthStart): CardIte
  */
 export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: MonthStart = 1, today: Date = localToday()): MonthCard {
   const active = period;
-  const salary = salaryView(ds, active, start, today);
+  const salary = salaryView(ds, active, start, today, plan.planSalary);
   const transfer = transferOf(ds, active, plan, start);
   const reserve = row(reserveItems(ds, active, transfer, start));
   const items = monthItems(ds, active, start);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db';
-import { answerMonthCheck } from '../../db/kontoActions';
+import { answerMonthCheck, markPlanSalaryHintSeen } from '../../db/kontoActions';
 import { saveMonthClose } from '../../db/repo';
 import { useKonto } from '../../db/useKonto';
 import { localToday } from '../../lib/activeMonth';
@@ -116,11 +116,13 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
             {card.salary.title}
           </span>
           <span className="block text-[13px] leading-5 text-ink-mute" data-testid="dein-monat-salary-when">
-            {salaryWhen(period, start)}
+            {/* gehalt-zum-planen: no entry → the planned salary, „geplant · kommt am 25.11.“ (short: one line on the iPhone SE) */}
+            {card.salary.fallback ? t('month.salary.planned', { wann: salaryWhen(period, start, localToday(), true) }) : salaryWhen(period, start)}
           </span>
         </p>
         {card.salary.value !== null && <SalaryEdit period={period} salary={card.salary.value} fallback={card.salary.fallback} />}
       </div>
+      {isActive && settings.planSalary === null && !settings.planSalaryHintSeen && <PlanSalaryHint />}
 
       {noSalary ? (
         <div className="mt-4 flex flex-col items-start gap-3" data-testid="dein-monat-no-salary">
@@ -262,19 +264,64 @@ function inclText(plan: MonthPlan): string | undefined {
     : t('month.incl.due', { betrag: money(line.amount), zahlungen });
 }
 
-/** The salary of the card: a tap makes it editable (decimal keyboard, cents); Enter or a tap outside saves. */
+/**
+ * „Leg dein Gehalt zum Planen fest ›“ (gehalt-zum-planen): in the active month while „Gehalt zum Planen“ is not
+ * set, until it is tapped once. Opens the settings at „Gehalt“.
+ */
+function PlanSalaryHint() {
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void markPlanSalaryHintSeen(db);
+        window.location.hash = '#einstellungen';
+        // once the settings are shown (they may still load): the field in view and focused
+        const until = Date.now() + 3000;
+        const reach = () => {
+          const field = document.querySelector<HTMLInputElement>('main > :not([data-tab-hidden]) [data-testid="plan-salary"]');
+          if (field) {
+            field.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+            field.focus({ preventScroll: true });
+          } else if (Date.now() < until) window.setTimeout(reach, 50);
+        };
+        window.setTimeout(reach, 50);
+      }}
+      className="focus-ring -mx-2 mt-1 inline-flex min-h-11 items-center gap-0.5 self-start rounded-xl px-2 text-[14px] font-semibold text-accent-ink"
+      data-testid="dein-monat-plan-salary-hint"
+    >
+      {t('month.planSalary.hint')}
+      <ChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+    </button>
+  );
+}
+
+/**
+ * The salary of the card: a tap makes it editable (decimal keyboard, cents); Enter or a tap outside saves.
+ * gehalt-zum-planen: empty and confirmed, or „Gehalt entfernen“ (only with an entry), deletes the entry of the
+ * month – the planned salary counts again at once. € 0 stays an entry.
+ */
 function SalaryEdit({ period, salary, fallback }: { period: Period; salary: number; fallback: boolean }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
   const field = useRef<HTMLInputElement>(null);
+  const removing = useRef(false);
   useEffect(() => {
     if (!editing) return;
+    removing.current = false;
     field.current?.focus();
     field.current?.select();
   }, [editing]);
-  function commit() {
-    if (!editing) return;
+  function remove() {
     setEditing(false);
+    void saveMonthClose(db, period, { netSalary: undefined });
+  }
+  function commit() {
+    if (!editing || removing.current) return;
+    setEditing(false);
+    if (text.trim() === '') {
+      if (!fallback) remove();
+      return;
+    }
     const value = parseAmount(text);
     // the fallback (the last salary entered) is not this month's entry yet: saving it as it is stores it
     if (value === null || value < 0 || (!fallback && Math.round(value * 100) === Math.round(salary * 100))) return;
@@ -297,29 +344,44 @@ function SalaryEdit({ period, salary, fallback }: { period: Period; salary: numb
       </button>
     );
   return (
-    <span className="flex shrink-0 items-center rounded-xl border border-edge px-2 py-0.5">
-      <span className="mr-1 text-[15px] text-ink-soft">{currencySymbol()}</span>
-      <AmountInput
-        ref={field}
-        value={text}
-        onChange={setText}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            commit();
-          } else if (e.key === 'Escape') {
-            e.preventDefault();
-            e.stopPropagation();
-            setEditing(false);
-          }
-        }}
-        onBlur={commit}
-        enterKeyHint="done"
-        aria-label={t('month.salary.edit')}
-        size={Math.max(5, text.length + 1)}
-        className="num w-auto max-w-[11ch] bg-transparent text-right text-[17px] font-semibold text-ink outline-none"
-        data-testid="dein-monat-salary-input"
-      />
+    <span className="flex shrink-0 flex-col items-end gap-1">
+      <span className="flex items-center rounded-xl border border-edge px-2 py-0.5">
+        <span className="mr-1 text-[15px] text-ink-soft">{currencySymbol()}</span>
+        <AmountInput
+          ref={field}
+          value={text}
+          onChange={setText}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              e.stopPropagation();
+              setEditing(false);
+            }
+          }}
+          onBlur={commit}
+          enterKeyHint="done"
+          aria-label={t('month.salary.edit')}
+          size={Math.max(5, text.length + 1)}
+          className="num w-auto max-w-[11ch] bg-transparent text-right text-[17px] font-semibold text-ink outline-none"
+          data-testid="dein-monat-salary-input"
+        />
+      </span>
+      {!fallback && (
+        <button
+          type="button"
+          // before the field loses the focus: the blur must not save what is typed
+          onPointerDown={() => (removing.current = true)}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={remove}
+          className="focus-ring -mr-2 min-h-11 rounded-xl px-2 text-[14px] font-semibold text-accent-ink"
+          data-testid="dein-monat-salary-remove"
+        >
+          {t('month.salary.remove')}
+        </button>
+      )}
     </span>
   );
 }

@@ -129,7 +129,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-oktober`);
         await toMonth(page, 'Dezember');
         await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
-        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^kommt am 25\.\sNovember$/);
+        // gehalt-zum-planen: December has no entry – the planned salary
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^geplant · kommt am 25\.11\.$/);
         await shot(page, `${tag}-dezember`);
 
         // the next salary is its own entry: the card in November keeps the Oktober-Gehalt

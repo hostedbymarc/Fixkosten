@@ -9,7 +9,7 @@ import { KontoSetup } from '../components/konto/KontoTile';
 import { t } from '../lib/kontoTexts';
 import { openWalkthrough } from '../lib/walkthroughBus';
 import { ChevronRight } from '../components/Icons';
-import { BalanceField, BufferField, RoundingField, SpielgeldField } from '../components/konto/KontoParts';
+import { BalanceField, BufferField, PlanSalaryField, RoundingField, SpielgeldField } from '../components/konto/KontoParts';
 import { setHasAccount } from '../db/kontoActions';
 import { openPlan } from '../lib/planBus';
 import { useKonto } from '../db/useKonto';
@@ -68,6 +68,7 @@ export function SettingsScreen({ ds }: { ds: Dataset }) {
       <div className="flex max-w-2xl flex-col gap-6">
         <AppearanceSection />
         <MonthSection />
+        <SalarySection />
         <KontoSection ds={ds} />
         <CountrySection />
 
@@ -303,6 +304,24 @@ function MonthSection() {
         <p className="px-1 text-[13px] text-ink-mute" data-testid="active-month">
           Aktiver Monat: <span className="font-semibold text-ink-soft">{periodLabel(active)}</span>
         </p>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * „Gehalt“ (gehalt-zum-planen): „Gehalt zum Planen“ – the salary of every month without an entry. Stored with
+ * the Fixkostenkonto settings (meta), carried by backups; a backup without it reads as not set.
+ */
+function SalarySection() {
+  const { settings } = useKonto();
+  return (
+    <section aria-labelledby="salary-title" id="gehalt">
+      <h2 id="salary-title" className="section-title mb-2 px-1">
+        {t('settings.salary.title')}
+      </h2>
+      <div className="glass flex flex-col gap-2 p-4" data-testid="salary-settings">
+        <PlanSalaryField planSalary={settings.planSalary} />
       </div>
     </section>
   );
