@@ -63,7 +63,22 @@ Gelöscht: `big.prepare` („Plane vor: {vorschlag}“) samt Vorschlagslogik in 
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+Alles nach der letzten Code-Änderung (e9175fd):
+
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 1402 bestanden, davon 16 neu in `gehalt-zum-planen.test.ts` plus ein neuer Golden-Fall |
+| `tsc -b` | sauber |
+| E2E desktop | 573 bestanden, 40 übersprungen |
+| E2E iphone-15 | 269 bestanden |
+| E2E iphone-pro-max | 241 bestanden |
+| E2E ipad-portrait | 257 bestanden |
+| E2E ipad-landscape | 245 bestanden |
+| perf | 3 bestanden |
+| perf-feier | 2 bestanden |
+| WebKit (gehalt-zum-planen, alle-monate-gleich, monat-feinschliff, monat-verdichtet) | 72 bestanden, 11 übersprungen |
+
+Übersprungene Tests gehören zu anderen Projekten oder Viewports. Es gab keine Fehler und keine Wiederholungen.
 
 ## Screenshots
 
@@ -71,7 +86,7 @@ TESTERGEBNISSE
 
 ## Merge
 
-MERGE
+Per Squash nach `main`, sobald alles grün ist. Den SHA meldet der Abschlussbericht.
 
 ## Hinweis Production-Deploy
 
