@@ -169,7 +169,7 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
             <div className="fit-box" data-testid="dein-monat-free">
               <p className="text-[15px] font-semibold text-ink-soft">{t('month.free')}</p>
               <p
-                className={`num num-display fit fit-hero mt-0.5 block ${card.left! < 0 ? 'text-warn' : 'text-ink'}`}
+                className={`num num-display fit fit-hero mt-0.5 block ${card.left! < 0 ? 'hero-warn' : 'text-ink'}`}
                 style={fitStyle(money(card.left!))}
                 data-testid="dein-monat-free-value"
                 data-negative={card.left! < 0 || undefined}
@@ -374,11 +374,17 @@ function Row({ n, label, row, sub, subOver, testId }: { n: number; label: string
           </span>
           <span className="min-w-0">
             <span className="block text-[15px] leading-6 text-ink">{label}</span>
-            {sub && (
-              <span className={`block text-[13px] leading-5 ${subOver ? 'font-medium text-warn' : 'text-ink-mute'}`} data-testid={`${testId}-sub`} data-over={subOver || undefined}>
-                {sub}
-              </span>
-            )}
+            {sub &&
+              (subOver ? (
+                // over the limit: the warn tokens (warn on warn-soft, as the pill)
+                <span className="hero-chip pill-over mt-0.5 inline-block rounded-full px-2 text-[13px] font-medium leading-5" data-testid={`${testId}-sub`} data-over="">
+                  {sub}
+                </span>
+              ) : (
+                <span className="block text-[13px] leading-5 text-ink-mute" data-testid={`${testId}-sub`}>
+                  {sub}
+                </span>
+              ))}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-1">

@@ -7,7 +7,6 @@ import { upgradePositionV5 } from '../db/migrations';
 import { costSources, monthFigures } from './calc';
 import { kontoState } from './kontoBalance';
 import { lastSalary, nextSalarySplit, salarySplit } from './salarySplit';
-import { heroSourceRows } from './heroSources';
 import type { Account, Category, Dataset, Position } from './types';
 
 const ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -216,23 +215,5 @@ describe('Nächstes Gehalt (Standard der Aufteilung)', () => {
     const ds = { ...DATA, monthClose: [] };
     const s = settings(BALANCE);
     expect(nextSalarySplit(ds, NOV, kontoState(ds, NOV, s), s).rest).toBeNull();
-  });
-});
-
-describe('„Woraus du bezahlst“: nur Quellen > 0, Summe = Fixkosten', () => {
-  it('zwei Quellen in fester Reihenfolge: Rücklage, Direkt bezahlt', () => {
-    const rows = heroSourceRows(costSources(DATA, NOV));
-    expect(rows.map((r) => [r.key, r.label, r.value])).toEqual([
-      ['reserve', 'Rücklage', 2500],
-      ['salary', 'Direkt bezahlt', 450],
-    ]);
-    expect(Math.round(rows.reduce((a, r) => a + r.value, 0) * 100)).toBe(Math.round(monthFigures(DATA, NOV).total * 100));
-  });
-  it('Quellen mit 0 fallen weg; alles aus der Rücklage: eine Zeile', () => {
-    const allReserve = { ...DATA, positions: POSITIONS.map((p) => (p.account === 'spielgeld' ? p : { ...p, account: 'fixkostenkonto' as const })) };
-    const rows = heroSourceRows(costSources(allReserve, NOV));
-    expect(rows.map((r) => r.key)).toEqual(['reserve']);
-    expect(heroSourceRows({ reserve: 0, salary: 12 }).map((r) => r.key)).toEqual(['salary']);
-    expect(heroSourceRows({ reserve: 5, salary: 0.004 }).map((r) => r.key)).toEqual(['reserve']);
   });
 });

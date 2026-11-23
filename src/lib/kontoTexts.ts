@@ -17,7 +17,6 @@ export const KONTO_TEXTS = {
   'plan.when.order': 'per Dauerauftrag am {datum}',
 
   // · Kachel auf dem Monats-Screen
-  'tile.streak': '{n} Monate in Folge',
   'invite.title': 'Neu: Fixkosten einplanen.',
   'invite.text': 'Erbse sagt dir, wie viel du monatlich zur Seite legst.',
 
@@ -84,14 +83,10 @@ export const KONTO_TEXTS = {
   'settings.edit': 'Einrichtung ändern',
   'settings.walkthrough': 'So funktioniert Erbse',
 
-  // · Monats-Screen, Hero: woraus die Fixkosten bezahlt werden (nur Zeilen > 0)
+  // · Monats-Screen, Hero (ohne „Fixkosten einplanen“): Monat erledigt
   'hero.done.title': '{monat} erledigt',
   'hero.done.sub': 'Alle {n} Rechnungen bezahlt',
   'hero.done.sub.one': 'Deine Rechnung ist bezahlt',
-  'hero.src.title': 'Woraus du bezahlst',
-  'hero.src.title.done': 'Woraus du bezahlt hast',
-  'hero.src.reserve': 'Rücklage',
-  'hero.src.salary': 'Direkt bezahlt',
 
   // · Woraus zahlst du das? (Bearbeiten-Dialog, Positionen-Liste)
   'account.question': 'Woraus zahlst du das?',

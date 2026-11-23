@@ -595,6 +595,10 @@ body[data-sheets] #root .glass:is(.tone-butter, .tone-peach, .tone-sky, .tone-li
     background-color: rgb(var(--c-warn-soft));
     color: rgb(var(--c-warn));
   }
+  /* alle-monate-gleich: a negative „Überschuss“ – the big number in the card's warn ink */
+  .hero-warn {
+    color: rgb(var(--hero-warn));
+  }
 
   .tile {
     position: relative;

@@ -147,6 +147,8 @@
   --hero-to: #5a7a2e;
   --hero-ink: 255 255 255;
   --hero-ink-soft: 244 247 239;
+  /* alle-monate-gleich: a negative „Überschuss“ on the green card (big number, ≥ 3:1): the light butter */
+  --hero-warn: var(--butter-deep);
   --hero-rule: rgba(255, 255, 255, 0.2);
   --hero-ring: 255 255 255;
   --hero-ring-track: rgba(255, 255, 255, 0.2);
@@ -352,6 +354,7 @@
     --hero-to: #4b6626;
     --hero-ink: 255 255 255;
     --hero-ink-soft: 238 243 228;
+    --hero-warn: var(--c-warn);
     --hero-rule: rgba(255, 255, 255, 0.16);
     --hero-ring: 255 255 255;
     --hero-ring-track: rgba(255, 255, 255, 0.16);
@@ -534,6 +537,7 @@
   --hero-to: #4b6626;
   --hero-ink: 255 255 255;
   --hero-ink-soft: 238 243 228;
+  --hero-warn: var(--c-warn);
   --hero-rule: rgba(255, 255, 255, 0.16);
   --hero-ring: 255 255 255;
   --hero-ring-track: rgba(255, 255, 255, 0.16);
