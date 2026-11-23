@@ -83,7 +83,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // „Oktober-Gehalt“ paid on 25 October; the next one is the line under the card
         await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('Oktober-Gehalt');
         await expect(page.getByTestId('dein-monat-salary-when')).toHaveText('ausgezahlt am 25. Oktober');
-        await expect(page.getByTestId('next-salary-text')).toHaveText('November-Gehalt · kommt am 25. November');
+        await expect(page.getByTestId('next-salary-text')).toHaveText('November-Gehalt · kommt am 25.11.');
         await expect(card).not.toContainText('geschätzt');
 
         // folded by default: salary, „Frei für dich“, pill; ① ② ③ hidden
