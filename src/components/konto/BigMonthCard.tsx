@@ -20,7 +20,8 @@ export function BigMonthCard({ plan, period, className = '' }: { plan: MonthPlan
   const big = bigMonthFrom(plan, period);
   if (!big) return null;
   // gehalt-zum-planen: not ready → the largest amount missing in the plan (monthPlan.shortfall)
-  const short = big.saved || (big.ready && plan.fits !== false) ? null : plan.shortfall;
+  // komplett-ansparen: „✓ Schon angespart“ only when nothing is missing – a missing amount comes first
+  const short = big.ready && plan.fits !== false ? null : plan.shortfall;
   const ready = short === null;
   return (
     <button
@@ -30,7 +31,7 @@ export function BigMonthCard({ plan, period, className = '' }: { plan: MonthPlan
       className={`glass glass-tile surface press focus-ring flex w-full min-w-0 flex-col gap-2 p-4 text-left md:p-5 ${className}`}
       data-testid="big-month"
       data-ready={ready}
-      data-saved={big.saved || undefined}
+      data-saved={(ready && big.saved) || undefined}
       data-period={big.period}
     >
       <span className="flex w-full items-center justify-between gap-2">
@@ -53,7 +54,7 @@ export function BigMonthCard({ plan, period, className = '' }: { plan: MonthPlan
       )}
       <span className={`flex items-start gap-1.5 text-[14px] font-medium leading-snug ${ready ? 'text-paid-ink' : 'text-over'}`} data-testid="big-month-status">
         {ready ? <CheckIcon size={16} strokeWidth={2.6} className="mt-0.5 shrink-0" aria-hidden="true" /> : <AlertIcon size={16} className="mt-0.5 shrink-0" aria-hidden="true" />}
-        <span className="num">{big.saved ? t('big.saved') : short === null ? t('big.ready') : t('big.short', { betrag: money(short.amount) })}</span>
+        <span className="num">{short !== null ? t('big.short', { betrag: money(short.amount) }) : big.saved ? t('big.saved') : t('big.ready')}</span>
       </span>
     </button>
   );
