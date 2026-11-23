@@ -103,7 +103,7 @@ Alle Läufe nach der letzten Code-Änderung (Feier-Fix `tickSignal`).
 | E2E ipad-landscape | 245 grün (2. Lauf, siehe unten) |
 | Perf (Scrollen, Tabwechsel) | 3 grün |
 | Perf-Feier (iPhone 15, iPhone SE) | 2 grün (2. Lauf, siehe unten) |
-| WebKit (7 geänderte/neue Specs) | WEBKIT |
+| WebKit (7 geänderte/neue Specs) | 113 grün, 11 übersprungen (nur Chromium) |
 
 Zwei Ausreißer im ersten Gesamtlauf, beide ohne Code-Änderung wiederholt:
 - `month.spec.ts:57` auf iPad quer: der Haken blieb einmal stehen. Einzeln 3 von 3 grün, im zweiten Gesamtlauf grün. Die Spec ist in diesem Sprint unverändert.
@@ -115,7 +115,7 @@ Zwei Ausreißer im ersten Gesamtlauf, beide ohne Code-Änderung wiederholt:
 
 ## Merge
 
-MERGE
+Squash-Merge nach `main` nach grüner Gesamtsuite. Die Merge-SHA steht in der Abschlussmeldung des PRs.
 
 ## Hinweis Production-Deploy
 
