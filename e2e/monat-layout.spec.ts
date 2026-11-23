@@ -9,6 +9,8 @@ import { importLive, NOV_TODAY } from './live';
 // tiles, the note and the first category are compared with the reference taken from main before the sprint
 // (e2e/monat-layout.json, written with UPDATE_LAYOUT=1 against the main build). Screenshots „vorher“ /
 // „nachher“ to docs/screenshots/monat-feinschliff/. Six viewports × light/dark; runs in the desktop project.
+// alle-monate-gleich: with „Fixkosten einplanen“ every month shows „Dein Monat“ – the hero and the tiles are
+// gone (null now); the note and the categories keep their column (x, width), they only move up or down.
 
 const DIR = 'docs/screenshots/monat-feinschliff';
 const REF = 'e2e/monat-layout.json';
@@ -25,7 +27,9 @@ const VIEWPORTS = {
 } as const;
 
 type Box = { x: number; y: number; width: number; height: number };
-const ELEMENTS = ['hero', 'salary-tile', 'wealth-tile', 'note-card', 'categories-label', 'category-group'] as const;
+const ELEMENTS = ['hero', 'salary-tile', 'wealth-tile', 'dein-monat', 'note-card', 'categories-label', 'category-group'] as const;
+const GONE = ['hero', 'salary-tile', 'wealth-tile'] as const;
+const KEPT = ['note-card', 'categories-label', 'category-group'] as const;
 
 async function boxes(page: Page): Promise<Record<string, Box | null>> {
   const out: Record<string, Box | null> = {};
@@ -59,7 +63,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
       test.setTimeout(120_000);
 
-      test('Oktober und Dezember: Kacheln an derselben Stelle wie vor dem Sprint', async ({ page }) => {
+      test('Oktober und Dezember: „Dein Monat“ statt Hero und Kacheln, Notiz und Kategorien in derselben Spalte', async ({ page }) => {
         await importLive(page, NOV_TODAY, (b) => {
           b.settings = { ...(b.settings ?? {}), monthStartDay: 25 };
         });
@@ -80,7 +84,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           else {
             const ref = reference[key];
             expect(ref, `Referenz ${key}`).toBeTruthy();
-            for (const id of ELEMENTS) expect(now[id], `${key} · ${id}`).toEqual(ref![id]);
+            for (const id of GONE) expect(now[id], `${key} · ${id}`).toBeNull();
+            expect(now['dein-monat'], `${key} · dein-monat`).toBeTruthy();
+            for (const id of KEPT) {
+              expect(now[id], `${key} · ${id}`).toBeTruthy();
+              expect({ x: now[id]!.x, width: now[id]!.width }, `${key} · ${id}`).toEqual({ x: ref![id]!.x, width: ref![id]!.width });
+            }
           }
           await page.getByRole('button', { name: /Zum aktiven Monat/ }).click();
           await expect(page.getByRole('heading', { level: 1 })).toHaveText('November 2026');

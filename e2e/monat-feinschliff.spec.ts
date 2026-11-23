@@ -203,18 +203,19 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await appSettled(page);
         await expect(page.getByTestId('dein-monat').getByTestId('hero-confetti')).not.toHaveAttribute('data-falling', '');
 
-        // December (future): the same, in its card
+        // December (future, alle-monate-gleich): the same card; done → the peas only lie, no live celebration
         await toMonth(page, 'Dezember');
         await tickAll(page);
-        await expect(confetti()).toHaveAttribute('data-falling', '');
+        await expect(confetti()).toHaveCount(1);
+        await expect(confetti()).not.toHaveAttribute('data-falling', '');
         await page.reload();
         await appSettled(page);
         await toMonth(page, 'Dezember');
         await expect(confetti()).toHaveCount(1);
         await expect(confetti()).not.toHaveAttribute('data-falling', '');
         // never over text: the peas lie in the strip below the last line of the card
-        const card = shown(page).getByTestId('hero');
-        const lastText = await card.locator('[data-testid=hero-sources], [data-testid=hero-deductions]').last().boundingBox();
+        const card = shown(page).getByTestId('dein-monat');
+        const lastText = await card.getByTestId('dein-monat-bills-title').boundingBox();
         const peas = await confetti().locator('span').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
         expect(Math.min(...peas)).toBeGreaterThanOrEqual(lastText!.y + lastText!.height - 1);
       });

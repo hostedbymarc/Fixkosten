@@ -192,6 +192,10 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await appSettled(page);
       // „Frei verfügbar“ (im Ø-Monat) only without „Fixkosten einplanen“: the split replaces it
       await exercise(page, info(page, 'im Ø-Monat'), mode, seen);
+      // the hero only without „Fixkosten einplanen“ (alle-monate-gleich): its ⓘ in the next month
+      await page.getByRole('button', { name: 'Nächster Monat' }).click();
+      await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
+      await page.getByRole('button', { name: 'Vorheriger Monat' }).click();
       await page.getByTestId('konto-invite-enable').click();
       // setup without an own account, nothing set aside (monat-verdichtet: „Dein Monat“, then „Dein Plan“)
       await page.getByTestId('dein-monat-setup').click();
@@ -204,10 +208,11 @@ for (const [vp, { use, tap, hover }] of Object.entries(VIEWPORTS)) {
       await closePlan(page);
       await expect(page.getByRole('dialog')).toHaveCount(0);
 
-      // --- Monat: the active month has no hero (and no tile ⓘ); the next month shows the hero as before
+      // --- Monat: no hero and no tile ⓘ in any month, the active one and the next one (alle-monate-gleich)
       await expect(info(page, 'im Ø-Monat')).toHaveCount(0);
       await page.getByRole('button', { name: 'Nächster Monat' }).click();
-      await exercise(page, info(page, 'Abzüge vom Netto'), mode, seen);
+      await expect(info(page, 'Abzüge vom Netto')).toHaveCount(0);
+      await expect(info(page, 'im Ø-Monat')).toHaveCount(0);
       await page.getByRole('button', { name: 'Vorheriger Monat' }).click();
 
       // --- Analyse: „Verlauf mit Plan“

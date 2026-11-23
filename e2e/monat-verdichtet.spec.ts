@@ -197,11 +197,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('plan-mode-info')).toHaveText('Du sparst alle großen Zahlungen vorher in gleichen Raten an.');
         await closeSheet(page);
 
-        // another month: the hero as before, no card
+        // another month (alle-monate-gleich): the same card, no hero, no status line, no next-salary line
         await tap(page.getByRole('button', { name: 'Nächster Monat' }));
         await expect(page.getByRole('heading', { level: 1 })).toHaveText('November 2026');
-        await expect(page.getByTestId('dein-monat')).toHaveCount(0);
-        await expect(page.getByTestId('hero')).toBeVisible();
+        await expect(page.getByTestId('dein-monat')).toHaveAttribute('data-when', 'future');
+        await expect(page.getByTestId('hero')).toHaveCount(0);
+        await expect(page.getByTestId('next-salary')).toHaveCount(0);
       });
 
       test('„Überwiesen“ bestätigen; Rechnungen-Zeile: Konfetti einmal, dann liegende Erbsen', async ({ page }) => {
