@@ -91,7 +91,23 @@ Der Perf-Test „Feier Oktober erledigt“ war wackelig: etwa jeder zweite Lauf 
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+Alle Läufe nach der letzten Code-Änderung (Feier-Fix `tickSignal`).
+
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 1358 grün; `tsc` sauber |
+| E2E desktop | 548 grün |
+| E2E iphone-15 | 269 grün |
+| E2E iphone-pro-max | 241 grün |
+| E2E ipad-portrait | 257 grün |
+| E2E ipad-landscape | 245 grün (2. Lauf, siehe unten) |
+| Perf (Scrollen, Tabwechsel) | 3 grün |
+| Perf-Feier (iPhone 15, iPhone SE) | 2 grün (2. Lauf, siehe unten) |
+| WebKit (7 geänderte/neue Specs) | WEBKIT |
+
+Zwei Ausreißer im ersten Gesamtlauf, beide ohne Code-Änderung wiederholt:
+- `month.spec.ts:57` auf iPad quer: der Haken blieb einmal stehen. Einzeln 3 von 3 grün, im zweiten Gesamtlauf grün. Die Spec ist in diesem Sprint unverändert.
+- Perf-Feier iPhone SE: 16,0 ms bei einer Grenze von < 16 ms. In 4 Einzelläufen 12,1–15,4 ms (normalisiert), im zweiten Gesamtlauf grün.
 
 ## Screenshots
 
