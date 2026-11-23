@@ -10,7 +10,8 @@
 
 import type { GapMode, KontoCheck, KontoSettings, Milestone } from '../db/settings';
 import { MILESTONES } from '../db/settings';
-import type { MonthStart } from './activeMonth';
+import { activeMonth, type MonthStart } from './activeMonth';
+import { dueDateIn, dueItems } from './calc';
 import { kontoOverview, onKonto, roundStep, simulateKonto, standingOrder, type KontoDebit, type KontoOverview, type KontoSimulation } from './fixkostenkonto';
 import { addPeriods, toPeriod } from './period';
 import type { Dataset, Period } from './types';
@@ -35,6 +36,54 @@ export function expectedBalance(ds: Dataset, s: Pick<KontoSettings, 'anchor' | '
     if (!o.paidAt || !o.positionId || !after(o.paidAt, anchor.at)) continue;
     const position = ds.positions.find((x) => x.id === o.positionId);
     if (position && onKonto(ds, position, o.period)) total -= cents(o.amount);
+  }
+  return total / 100;
+}
+
+/**
+ * spielgeld-pille-rechenfehler: the balance the plan starts from – the same whatever is ticked. The expected
+ * balance takes a bill off when it is ticked; the plan counts every bill of the active month and later in its
+ * month, ticked or not, so a tick took it off twice. Here instead:
+ *   anchor + confirmed deposits since − every bill of the account due after the anchor in a month before the
+ *   active one (ticked or not, „Entfallen“ not) – plus a bill ticked after the anchor although due before it
+ *   (it was still open at the anchor) – plus a bill of the active month or later ticked before the anchor (it is
+ *   off the anchor already and counted again in its month).
+ * Without an anchor (data from PR #39): the stored balance, ticks never counted there.
+ */
+export function planBalance(ds: Dataset, s: Pick<KontoSettings, 'anchor' | 'balance' | 'checks' | 'rounding' | 'roundingOn'>, active: Period, start: MonthStart = 1): number {
+  const anchor = s.anchor;
+  if (!anchor) return s.balance;
+  let total = cents(anchor.amount);
+  for (const c of s.checks) {
+    if (c.deposited && after(c.answeredAt, anchor.at)) total += cents(c.amount ?? standingOrder(ds, c.period, roundStep(s)).amount);
+  }
+  const at = new Date(anchor.at);
+  const dayAt = dayKey(at);
+  const from = addPeriods(activeMonth(at, start), -1);
+  const ticked = (paidAt: string | undefined) => !!paidAt && after(paidAt, anchor.at);
+  // from the month of the anchor (one before: „Neuer Monat beginnt am“) to the last month of the plan
+  const last = addPeriods(active, 12);
+  for (let period = from; period <= last; period = addPeriods(period, 1)) {
+    const ahead = period >= active;
+    for (const i of dueItems(ds, period, start)) {
+      if (!i.due || i.status === 'skipped' || !i.fromNet || !onKonto(ds, i.position, period)) continue;
+      const amount = cents(i.status === 'paid' ? i.payment!.actualAmount : i.planned);
+      const paid = i.status === 'paid';
+      if (ahead) {
+        if (paid && !ticked(i.payment!.paidAt)) total += amount;
+      } else {
+        const date = dueDateIn(i.plan, period);
+        if ((date !== null && date > dayAt) || (paid && ticked(i.payment!.paidAt))) total -= amount;
+      }
+    }
+    for (const o of ds.oneOffs) {
+      if (o.period !== period || !o.positionId) continue;
+      const position = ds.positions.find((p) => p.id === o.positionId);
+      if (!position || !onKonto(ds, position, period)) continue;
+      if (ahead) {
+        if (o.paidAt && !ticked(o.paidAt)) total += cents(o.amount);
+      } else if (dayKey(periodStartDate(period, start)) > dayAt || ticked(o.paidAt)) total -= cents(o.amount);
+    }
   }
   return total / 100;
 }
@@ -78,6 +127,8 @@ export interface KontoState {
   overview: KontoOverview;
   /** expected amount set aside today („Schon zur Seite gelegt“) */
   balance: number;
+  /** what the plan starts from: `balance`, with `planning` plus the bills ticked ahead (see kontoState) */
+  planBalance: number;
   /** Sicherheitspuffer: with the plan no month ends below it */
   buffer: number;
   /** Grundbetrag: the rounded 12-month amount (= overview.order.amount) */
@@ -143,10 +194,17 @@ function bigBills(sim: KontoSimulation, period: Period | null, max = 4): KontoDe
   return (month?.items ?? []).filter((i) => !i.monthly && i.amount > 0).slice(0, max);
 }
 
-export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start: MonthStart = 1): KontoState {
+/**
+ * `planning` (monthPlan, spielgeld-pille-rechenfehler): the plan is the same whatever is ticked. It starts from
+ * planBalance and counts every bill of the active month on, ticked or not. `balance` stays the expected balance
+ * of today; `planBalance` is the one the plan starts from.
+ */
+export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start: MonthStart = 1, opts: { planning?: boolean } = {}): KontoState {
   const balance = expectedBalance(ds, s);
+  const planning = !!opts.planning;
+  const planBal = planning ? planBalance(ds, s, active, start) : balance;
   const monthDone = depositDone(s, active);
-  const overview = kontoOverview(ds, active, { balance, receivedFor: monthDone ? active : null, rounding: roundStep(s) });
+  const overview = kontoOverview(ds, active, { balance: planBal, receivedFor: monthDone ? active : null, rounding: roundStep(s), countPaid: planning });
   const sim = overview.simulation;
   const base = overview.order.amount;
   // the gap against the Sicherheitspuffer: what is missing so no month ends below it
@@ -172,8 +230,9 @@ export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start:
     mode === null
       ? sim
       : simulateKonto(ds, active, {
-          balance: balance + (lumpIndex === 0 && monthDone ? lump : 0),
+          balance: planBal + (lumpIndex === 0 && monthDone ? lump : 0),
           receivedThisMonth: monthDone,
+          countPaid: planning,
           deposit: base,
           deposits: deposits$,
         });
@@ -181,6 +240,7 @@ export function kontoState(ds: Dataset, active: Period, s: KontoSettings, start:
   return {
     overview,
     balance,
+    planBalance: planBal,
     buffer: s.buffer,
     order: base,
     hasAccount: s.hasAccount !== false,

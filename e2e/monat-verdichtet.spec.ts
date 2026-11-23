@@ -4,8 +4,9 @@ import { animationsDone, appSettled, expect, FIXTURE, goTo, NOV_5, setUpKonto, t
 
 // monat-verdichtet (seed data, today 5 October 2026 → October active, a rebuilt salary € 8.302):
 // - „Dein Monat“ (only the active month, only with „Fixkosten einplanen“), for the next salary: Netto,
-//   ① to the account, ② direct, ③ Vermögensaufbau, „Frei für dich“; the pill in every state (fits, missing,
-//   not set, no salary); the pill opens „Dein Plan“ with the Spielgeld editable; the transfer confirmed.
+//   ① to the account, ② direct, ③ Vermögensaufbau, „Frei für dich“; the Spielgeld in every state (fits,
+//   missing, not set, no salary) under ④; „Plan ansehen“ opens „Dein Plan“ with the Spielgeld; the transfer
+//   confirmed. spielgeld-pille-rechenfehler: no pill any more.
 // - „Dein Plan“: the three answers (passt so / ansparen with a proposal / geht nicht with the maximum),
 //   „Übernehmen“, „Spielgeld auf € M setzen“, the switch, one payment changed on its own („Eigener Plan“).
 // - The bills row: the confetti once live at the last tick, afterwards lying peas in the row.
@@ -57,10 +58,12 @@ async function start(page: Page) {
   await page.getByTestId('konto-invite-enable').click();
 }
 
-/** The Spielgeld through the pill: „Dein Plan“ opens with the amount editable. */
-async function spielgeldViaPill(page: Page, tap: (l: Locator) => Promise<void>, amount: string) {
-  await tap(page.getByTestId('dein-monat-pill'));
+/** The Spielgeld through „Plan ansehen“ (spielgeld-pille-rechenfehler: the pill is gone). */
+async function spielgeldViaPlan(page: Page, tap: (l: Locator) => Promise<void>, amount: string) {
+  await tap(page.getByTestId('next-salary'));
   await sheetIn(page);
+  await page.getByTestId('plan-spielgeld-amount').scrollIntoViewIfNeeded();
+  await tap(page.getByTestId('plan-spielgeld-amount'));
   const input = page.getByTestId('plan-spielgeld-input');
   await expect(input).toBeFocused();
   await page.keyboard.press('ControlOrMeta+a');
@@ -109,14 +112,16 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const unplanned = await valueOf(page.getByTestId('dein-monat-unplanned-value'));
         const free = await valueOf(page.getByTestId('dein-monat-free-value'));
         expect(free).toBeCloseTo(8302 - transfer - direct - wealth - unplanned, 2);
-        // no Spielgeld: „Spielgeld festlegen“
-        const pill = page.getByTestId('dein-monat-pill');
-        await expect(pill).toHaveAttribute('data-status', 'none');
-        await expect(pill).toHaveText('Spielgeld festlegen');
+        // no Spielgeld: „Kein Spielgeld festgelegt“ under ④, no pill
+        await expect(page.getByTestId('dein-monat-pill')).toHaveCount(0);
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText('Kein Spielgeld festgelegt');
+        await expect(card).toHaveAttribute('data-state', 'none');
 
-        // the pill: „Dein Plan“ with the Spielgeld editable (the thousands dot while typing)
-        await tap(pill);
+        // „Plan ansehen“: „Dein Plan“ with the Spielgeld editable (the thousands dot while typing)
+        await tap(page.getByTestId('next-salary'));
         await sheetIn(page);
+        await page.getByTestId('plan-spielgeld-amount').scrollIntoViewIfNeeded();
+        await tap(page.getByTestId('plan-spielgeld-amount'));
         const input = page.getByTestId('plan-spielgeld-input');
         await expect(input).toBeFocused();
         await page.keyboard.type('1200');
@@ -128,10 +133,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('plan-answer')).toHaveText('Passt so. Dein Spielgeld bleibt jeden Monat übrig.');
         await shot(page, `${tag}-11-plan-passt`);
         await closeSheet(page);
-        await expect(pill).toHaveAttribute('data-status', 'ok');
-        // monat-ist-monat: ④ (nothing „nicht eingeplant“ in October) against the limit
-        await expect(pill).toHaveText(/^Spielgeld: €\s0,00 von €\s1\.200,00 · €\s1\.200,00 übrig$/);
-        await expect(pill.locator('svg')).toHaveCount(1);
+        // monat-ist-monat: ④ (nothing „nicht eingeplant“ in October) against the limit; not over: no line
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText(/^€\s0,00 von €\s1\.200,00 ausgegeben$/);
+        await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
         await expect(card).toHaveAttribute('data-state', 'ok');
         await shot(page, `${tag}-02-monat-passt`);
         // the iPhone: card and bills row without scrolling
@@ -141,7 +145,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         }
 
         // € 3.000 with „Bei Fälligkeit“: February misses it – answer 2 with a proposal; „Übernehmen“ → Eigener Plan
-        await spielgeldViaPill(page, tap, '3000');
+        await spielgeldViaPlan(page, tap, '3000');
         await tap(page.getByTestId('plan-mode-due'));
         await expect(page.getByTestId('plan-mode-due')).toHaveAttribute('aria-checked', 'true');
         await expect(page.getByTestId('plan-answer')).toHaveAttribute('data-kind', 'save');
@@ -182,11 +186,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-13-plan-geht-nicht`);
         await closeSheet(page);
         // monat-ist-monat: the card compares only ④ of this month with the limit – what the plan cannot keep is in „Dein Plan“
-        await expect(pill).toHaveAttribute('data-status', 'ok');
-        await expect(pill).toHaveText(/^Spielgeld: €\s0,00 von €\s6\.000,00 · €\s6\.000,00 übrig$/);
-        await expect(pill.locator('svg')).toHaveCount(1);
+        await expect(card).toHaveAttribute('data-state', 'ok');
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText(/^€\s0,00 von €\s6\.000,00 ausgegeben$/);
+        await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
         await shot(page, `${tag}-03-monat-fehlt`);
-        await tap(pill);
+        await tap(page.getByTestId('next-salary'));
         await sheetIn(page);
         await tap(page.getByTestId('plan-set-max'));
         await expect(page.getByTestId('plan-answer')).toHaveAttribute('data-kind', 'ok');

@@ -126,8 +126,7 @@
 | Dein Monat | `month.spielgeld.spent` | {betrag} von {limit} ausgegeben | 4 |
 | Dein Monat | `month.spielgeld.over` | {betrag} ausgegeben · {over} drüber | 4 |
 | Dein Monat | `month.spielgeld.none` | Kein Spielgeld festgelegt | 3 |
-| Dein Monat | `month.pill.rest` | Spielgeld: {betrag} von {limit} · {rest} übrig | 6 |
-| Dein Monat | `month.pill.over` | Spielgeld: {betrag} von {limit} · {over} drüber | 6 |
+| Dein Monat | `month.over` | Spielgeld {betrag} drüber | 3 |
 | Dein Monat | `month.wealth.notFromNet` | {betrag} nicht vom Netto | 4 |
 | Dein Monat | `month.list.save` | Für später zur Seite | 4 |
 | Dein Monat | `month.list.take` | Aus dem Angesparten | 3 |
@@ -142,7 +141,6 @@
 | undefined | `source.salary` | Gehalt | 1 |
 | undefined | `source.other` | Andere Quelle | 2 |
 | undefined | `source.info` | Andere Quelle zählt nicht gegen dein Spielgeld. | 7 |
-| Dein Monat | `month.pill.none` | Spielgeld festlegen | 2 |
 | Dein Monat | `month.confirm.account` | {betrag} aufs Fixkostenkonto überwiesen | 4 |
 | Dein Monat | `month.confirm.aside` | {betrag} zur Seite gelegt | 4 |
 | Dein Monat | `month.done.account` | Überwiesen. Erledigt am {datum}. | 1 · 3 |

@@ -47,7 +47,6 @@ const STRUCTURE = [
   'dein-monat-free',
   'dein-monat-free-value',
   'dein-monat-before',
-  'dein-monat-pill',
   'dein-monat-bills',
 ];
 
@@ -196,11 +195,13 @@ test.describe('Alle Monate gleich · Abläufe', () => {
 
   test('④ Spielgeld und Überschuss; Gehalt im Dezember eintragen → Überschuss sofort; Dezember abhaken → keine Feier, November erledigt → genau eine', async ({ page }) => {
     await start(page);
-    // Spielgeld € 300 (through the pill): ④ is at least the limit, „Kein Spielgeld festgelegt“ before
+    // Spielgeld € 300 (through „Plan ansehen“): ④ is at least the limit, „Kein Spielgeld festgelegt“ before
     await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText('Kein Spielgeld festgelegt');
     const without = await centsOf(page.getByTestId('dein-monat-free-value'));
     const spent = -(await centsOf(page.getByTestId('dein-monat-unplanned-value')));
-    await tap(page.getByTestId('dein-monat-pill'));
+    await tap(page.getByTestId('next-salary'));
+    await expect(page.getByTestId('bottom-sheet')).not.toHaveAttribute('data-animating', '');
+    await tap(page.getByTestId('plan-spielgeld-amount'));
     const input = page.getByTestId('plan-spielgeld-input');
     await expect(input).toBeFocused();
     await page.keyboard.press('ControlOrMeta+a');

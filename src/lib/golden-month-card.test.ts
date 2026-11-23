@@ -69,8 +69,8 @@ describe('Golden Test „Dein Monat“ in jedem Monat (Monatsbeginn 25, heute 10
         expect(card.left).toBe(r2(SALARY - e.reserve - e.direct - e.wealth - e.spielgeld));
       });
 
-      it('Spielgeld-Pille: ausgegeben gegen das Limit', () => {
-        expect(card.pill).toEqual({ limit: SPIELGELD, used: e.spent, rest: e.rest, over: e.over });
+      it('Spielgeld: ausgegeben gegen das Limit', () => {
+        expect(card.spielgeld).toEqual({ limit: SPIELGELD, used: e.spent, rest: e.rest, over: e.over });
       });
 
       it('Summen des Monats: ② = Direkt, ③ = Vermögensaufbau vom Netto, Abzüge = ① + ② + ③; ④ in keiner', () => {
@@ -103,11 +103,11 @@ describe('Golden Test „Dein Monat“ in jedem Monat (Monatsbeginn 25, heute 10
     expect(list).toMatchObject({ amount: 80, date: '2026-11-27', muted: false });
   });
 
-  it('ohne Spielgeld-Limit: ④ = ausgegeben, keine Pille', () => {
+  it('ohne Spielgeld-Limit: ④ = ausgegeben, kein Spielgeld-Status', () => {
     const free = monthPlan(ds, ACTIVE, goldenSettings({ spielgeld: null }), 25);
     const nov = monthCard(ds, P1, free, 25, TODAY);
     expect(nov.unplanned.total).toBe(120);
-    expect(nov.pill).toBeNull();
+    expect(nov.spielgeld).toBeNull();
     expect(nov.left).toBe(1212);
     expect(nov.unplanned.items.some((i) => i.balance === 'rest')).toBe(false);
     expect(monthCard(ds, P3, free, 25, TODAY).unplanned.total).toBe(0);
