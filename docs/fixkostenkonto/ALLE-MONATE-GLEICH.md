@@ -57,6 +57,14 @@ Weitere Fälle im Golden Test:
   - Kontrast ≥ 3:1 per Test geprüft;
   - die Unterzeile „… drüber“ ist ein Chip (`hero-chip pill-over`).
 
+## Nebenbei gefunden: Feier beim Laden
+
+Der Perf-Test „Feier Oktober erledigt“ war wackelig: etwa jeder zweite Lauf war rot.
+
+- **Ursache:** Nach einem Import kommen die Daten in Schritten an. Der Monat steht dann kurz auf „offen“ und gleich danach auf „erledigt“. Das galt als letzter Haken: Das Konfetti fiel beim Öffnen, und der Monat wurde gemerkt. Der echte Haken danach feierte deshalb nicht mehr.
+- **Fix:** Die Feier fällt jetzt nur nach einem Haken (`src/lib/tickSignal.ts`). Gezählt werden `markPaid`, `markSkipped`, `restorePayment` und `toggleOneOffPaid`. Ohne Haken dazwischen fällt nichts.
+- **Beleg:** Vor dem Fix waren von 6 Läufen 2 rot, die Debug-Ausgabe zeigte die Schritte. Nach dem Fix war `perf-feier` dreimal hintereinander grün.
+
 ## Gelöschte Komponenten
 
 - `HeroSources` („Woraus du bezahlst“) in `MonthScreen.tsx`
