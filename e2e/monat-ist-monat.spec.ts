@@ -6,9 +6,9 @@ import { importLive, NOV_TODAY } from './live';
 // monat-ist-monat (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
 // - „Dein Monat“ shows the active period: the Oktober-Gehalt (paid 25 October) and ① – ④ of November
 // - every row opens its items; the counted items add up to the row
-// - a one-time payment „nicht eingeplant“: ④ and „Übrig“ change at once, the Spielgeld pill turns to „drüber“;
+// - a one-time payment „nicht eingeplant“: ④ (Spielgeld) and „Überschuss“ change at once, the Spielgeld pill turns to „drüber“;
 //   set to „Andere Quelle“ it no longer counts (listed muted)
-// - under the card: „November-Gehalt · kommt am 25. November · Plan ansehen“ opens „Dein Plan“
+// - under the card: „November-Gehalt · kommt am 25.11. · Plan ansehen“ opens „Dein Plan“
 // - in the categories: „in diesem Monat € 450 statt € 480“ (Lebensmittel, debited less)
 // iPhone SE, iPhone 15, iPhone Pro Max, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to
 // docs/screenshots/monat-ist-monat/. Runs in the desktop project; every viewport is its own context.
@@ -81,7 +81,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // the salary at the start of November (25 October), the next one under the card
         await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('Oktober-Gehalt');
         expect(plain(await page.getByTestId('dein-monat-salary-when').textContent())).toBe('ausgezahlt am 25. Oktober');
-        expect(plain(await page.getByTestId('next-salary-text').textContent())).toBe('November-Gehalt · kommt am 25. November');
+        expect(plain(await page.getByTestId('next-salary-text').textContent())).toBe('November-Gehalt · kommt am 25.11.');
         await expect(page.getByTestId('next-salary')).toContainText('Plan ansehen');
 
         // a Spielgeld of € 300 through the pill
@@ -105,15 +105,17 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           await expect(page.getByTestId(`${id}-list`)).toBeVisible();
           await expectListIsRow(page, id);
         }
-        // Übrig = Netto − ① − ② − ③ − ④, „Vor Spielgeld frei“ = Netto − ① − ② − ③
+        // Überschuss = Netto − ① − ② − ③ − ④, „Vor Spielgeld frei“ = Netto − ① − ② − ③ (alle-monate-gleich: ④ = max(Spielgeld, ausgegeben))
         const net = await centsOf(page.getByTestId('dein-monat-salary-value'));
         const parts = await Promise.all(ROWS.map((id) => centsOf(page.getByTestId(`${id}-value`))));
         const left = await centsOf(page.getByTestId('dein-monat-free-value'));
         expect(left).toBe(net + parts.reduce((a, b) => a + b, 0));
         expect(await centsOf(page.getByTestId('dein-monat-before'))).toBe(left - parts[3]!);
+        const spielgeld = -parts[3]!;
+        expect(spielgeld).toBeGreaterThanOrEqual(30000);
         await shot(page, `${tag}-01-zeilen-offen`, card);
 
-        // a one-time payment „nicht eingeplant“ of € 450 in November: ④ and Übrig follow at once, the pill turns
+        // a one-time payment „nicht eingeplant“ of € 450 in November: ④ and Überschuss follow at once, the pill turns
         await page.getByTestId('add-once').scrollIntoViewIfNeeded();
         await tap(page.getByTestId('add-once'));
         await sheetIn(page);
@@ -127,7 +129,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(form.getByRole('button', { name: 'Zahlung anlegen' }));
         await expect(page.getByTestId('bottom-sheet')).toHaveCount(0);
         await expect(page.getByTestId('dein-monat-unplanned-value')).toHaveText(/450,00/);
-        await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left - 45000);
+        await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left - (45000 - spielgeld));
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveAttribute('data-over', '');
+        expect(plain(await page.getByTestId('dein-monat-unplanned-sub').textContent())).toBe('€ 450,00 ausgegeben · € 150,00 drüber');
         await expect(page.getByTestId('dein-monat-pill')).toHaveAttribute('data-status', 'over');
         expect(plain(await page.getByTestId('dein-monat-pill').textContent())).toBe('Spielgeld: € 450,00 von € 300,00 · € 150,00 drüber');
         await expect(card).toHaveAttribute('data-state', 'short');
@@ -146,10 +150,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByTestId('source-field').getByRole('radio', { name: 'Andere Quelle' }));
         await tap(page.getByTestId('position-form').getByRole('button', { name: 'Speichern' }));
         await expect(page.getByTestId('bottom-sheet')).toHaveCount(0);
-        await expect.poll(() => centsOf(page.getByTestId('dein-monat-unplanned-value'))).toBe(-0);
+        await expect.poll(() => centsOf(page.getByTestId('dein-monat-unplanned-value'))).toBe(-spielgeld);
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left);
         await expect(page.getByTestId('dein-monat-pill')).toHaveAttribute('data-status', 'ok');
-        await expect(page.getByTestId('dein-monat-unplanned-sub')).toContainText('aus anderer Quelle');
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toContainText('von € 300,00 ausgegeben');
         await expect(page.getByTestId('dein-monat-unplanned-list').locator('[data-muted]')).toContainText('Konzert');
         await page.getByTestId('dein-monat').scrollIntoViewIfNeeded();
         await shot(page, `${tag}-03-andere-quelle`, card);

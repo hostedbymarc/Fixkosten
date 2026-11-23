@@ -28,15 +28,23 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 80 });
 }
 
-async function start(page: Page) {
+async function load(page: Page) {
   await page.clock.setFixedTime(TODAY);
   await page.goto('/');
   await expect(page.getByTestId('setup-dialog')).toBeVisible();
   await page.getByTestId('import-file').setInputFiles(FIXTURE);
   await expect(page.getByTestId('hero')).toBeVisible();
   await appSettled(page);
+}
+
+async function enableKonto(page: Page) {
   await page.getByTestId('konto-invite-enable').click();
   await setUpKonto(page);
+}
+
+async function start(page: Page) {
+  await load(page);
+  await enableKonto(page);
 }
 
 for (const [vp, use] of Object.entries(VIEWPORTS)) {
@@ -49,9 +57,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       const tap = (l: Locator) => (use.hasTouch ? l.tap() : l.click());
 
       test('ⓘ im Hero und am Verlauf; Diagrammpunkt füllt die Karte, kein Popup', async ({ page }) => {
-        await start(page);
-
-        // screen (a month that is not the active one: the hero): ⓘ „Abzüge vom Netto“, then the ⓘ of a tile
+        // the hero exists only without „Fixkosten einplanen“ (alle-monate-gleich): its ⓘ „Abzüge vom Netto“ first
+        await load(page);
         await tap(page.getByRole('button', { name: 'Nächster Monat' }));
         const heroInfo = page.getByTestId('hero-deductions-info');
         await heroInfo.scrollIntoViewIfNeeded();
@@ -61,6 +68,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-hero`);
         await page.keyboard.press('Escape');
         await expect(popovers(page)).toHaveCount(0);
+        await tap(page.getByRole('button', { name: 'Vorheriger Monat' }));
+        await enableKonto(page);
 
         // analysis: ⓘ „Verlauf mit Plan“, then a point of the chart → no popup, the card shows the month
         await goTo(page, 'analyse');

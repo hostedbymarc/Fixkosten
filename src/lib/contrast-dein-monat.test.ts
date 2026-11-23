@@ -67,6 +67,7 @@ for (const [mode, vars] of [
         expect(contrast(rgb(vars, '--hero-ink-soft'), ground)).toBeGreaterThanOrEqual(4.5);
       });
       it(`„Frei für dich“ (große Zahl) gegen ${name} ≥ 3:1`, () => expect(contrast(rgb(vars, '--hero-ink'), ground)).toBeGreaterThanOrEqual(3));
+      it(`negativer Überschuss (große Zahl, hero-warn) gegen ${name} ≥ 3:1`, () => expect(contrast(rgb(vars, '--hero-warn'), ground)).toBeGreaterThanOrEqual(3));
       it(`Pille: hero-chip-ink auf hellem Glas über ${name} ≥ 4,5:1`, () => {
         const bg = rgb(vars, '--hero-chip-bg', ground);
         expect(contrast(rgb(vars, '--hero-chip-ink'), bg)).toBeGreaterThanOrEqual(4.5);

@@ -1,6 +1,7 @@
 // Every write of the Fixkostenkonto: setup, plan, monthly check, new anchor, milestones. All through
 // the one meta entry (src/db/settings.ts); the schema does not change.
 
+import { celebratedUpTo } from '../lib/celebration';
 import { dayKey } from '../lib/kontoBalance';
 import { setupAccount } from '../lib/monthPlan';
 import type { Period, SavingSetting } from '../lib/types';
@@ -158,6 +159,16 @@ export async function markWalkthroughSeen(db: FixkostenDB): Promise<void> {
 export async function markCelebrated(db: FixkostenDB, period: Period): Promise<void> {
   const current = await readKonto(db);
   if (!current.celebratedMonths.includes(period)) await writeKonto(db, { celebratedMonths: [...current.celebratedMonths, period].slice(-36) });
+}
+
+/**
+ * alle-monate-gleich, once at the start: months after the active one leave celebratedMonths (ticking a
+ * future month no longer celebrates; an old entry would keep its celebration from ever falling).
+ */
+export async function cleanCelebrated(db: FixkostenDB, active: Period): Promise<void> {
+  const current = await readKonto(db);
+  const kept = celebratedUpTo(current.celebratedMonths, active);
+  if (kept.length !== current.celebratedMonths.length) await writeKonto(db, { celebratedMonths: kept });
 }
 
 /** „Spielgeld pro Monat“: an amount (cents allowed) or null = off. */

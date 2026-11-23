@@ -11,7 +11,6 @@
 | Dein Plan | `plan.lump.now` | Leg jetzt {betrag} extra zur Seite. | 6 |
 | Dein Plan | `plan.when` | am {datum}, wenn dein Gehalt kommt | 6 |
 | Dein Plan | `plan.when.order` | per Dauerauftrag am {datum} | 4 |
-| Kachel | `tile.streak` | {n} Monate in Folge | 4 |
 | Einladung | `invite.title` | Neu: Fixkosten einplanen. | 3 |
 | Einladung | `invite.text` | Erbse sagt dir, wie viel du monatlich zur Seite legst. | 10 |
 | Einrichtung | `setup.title` | Fixkosten einplanen | 2 |
@@ -70,10 +69,6 @@
 | Monats-Screen | `hero.done.title` | {monat} erledigt | 2 |
 | Monats-Screen | `hero.done.sub` | Alle {n} Rechnungen bezahlt | 4 |
 | Monats-Screen | `hero.done.sub.one` | Deine Rechnung ist bezahlt | 4 |
-| Monats-Screen | `hero.src.title` | Woraus du bezahlst | 3 |
-| Monats-Screen | `hero.src.title.done` | Woraus du bezahlt hast | 4 |
-| Monats-Screen | `hero.src.reserve` | Rücklage | 1 |
-| Monats-Screen | `hero.src.salary` | Direkt bezahlt | 2 |
 | Bearbeiten-Dialog | `account.question` | Woraus zahlst du das? | 4 |
 | Bearbeiten-Dialog | `account.reserve` | Rücklage | 1 |
 | Bearbeiten-Dialog | `account.salary` | Direkt | 1 |
@@ -125,15 +120,18 @@
 | Dein Monat | `month.direct` | Direkt bezahlt | 2 |
 | Dein Monat | `month.direct.more` | {n} Posten | 2 |
 | Dein Monat | `month.wealth` | Vermögensaufbau | 1 |
-| Dein Monat | `month.free` | Übrig in diesem Monat | 4 |
+| Dein Monat | `month.free` | Überschuss in diesem Monat | 4 |
 | Dein Monat | `month.before` | Vor Spielgeld frei: {betrag} | 4 |
-| Dein Monat | `month.unplanned` | Nicht eingeplant | 2 |
+| Dein Monat | `month.unplanned` | Spielgeld | 1 |
+| Dein Monat | `month.spielgeld.spent` | {betrag} von {limit} ausgegeben | 4 |
+| Dein Monat | `month.spielgeld.over` | {betrag} ausgegeben · {over} drüber | 4 |
+| Dein Monat | `month.spielgeld.none` | Kein Spielgeld festgelegt | 3 |
 | Dein Monat | `month.pill.rest` | Spielgeld: {betrag} von {limit} · {rest} übrig | 6 |
 | Dein Monat | `month.pill.over` | Spielgeld: {betrag} von {limit} · {over} drüber | 6 |
 | Dein Monat | `month.wealth.notFromNet` | {betrag} nicht vom Netto | 4 |
-| Dein Monat | `month.unplanned.other` | {betrag} aus anderer Quelle | 4 |
 | Dein Monat | `month.list.save` | Für später zur Seite | 4 |
 | Dein Monat | `month.list.take` | Aus dem Angesparten | 3 |
+| Dein Monat | `month.list.rest` | Noch nicht ausgegeben | 3 |
 | Dein Monat | `month.list.empty` | Nichts in diesem Monat | 4 |
 | Dein Monat | `month.list.notFromNet` | nicht vom Netto | 3 |
 | Dein Monat | `month.list.other` | aus anderer Quelle | 3 |

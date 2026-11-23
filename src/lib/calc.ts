@@ -9,6 +9,7 @@
 // only once at the end, so category sums and totals stay exactly consistent.
 
 import { defaultAccount } from '../db/migrations';
+import { activeMonth, type MonthStart } from './activeMonth';
 import { addPeriods, monthOf } from './period';
 import type {
   Account,
@@ -96,9 +97,20 @@ export function effectiveDate(entry: PlanEntry): string {
   return entry.changedOn ?? `${entry.validFrom}-01`;
 }
 
-/** 'once' entries: the month of the due date. */
-export function oncePeriod(plan: PlanEntry): Period | null {
-  return plan.frequency === 'once' && plan.dueDate ? plan.dueDate.slice(0, 7) : null;
+/**
+ * 'once' entries: the period of the due date (alle-monate-gleich): with „Neuer Monat beginnt am“ 25 a
+ * purchase on 27.11. belongs to December (25.11.–24.12.). Start 1: the calendar month of the date.
+ */
+export function oncePeriod(plan: PlanEntry, start: MonthStart = 1): Period | null {
+  if (plan.frequency !== 'once' || !plan.dueDate) return null;
+  if (start === 1) return plan.dueDate.slice(0, 7);
+  const [y, m, d] = plan.dueDate.split('-').map(Number);
+  return activeMonth(new Date(y!, m! - 1, d!), start);
+}
+
+/** The one 'once' entry of a position (one-time payments have exactly one), else null. */
+function onceEntry(position: Position): PlanEntry | null {
+  return position.history.length > 0 && position.history.every((e) => e.frequency === 'once') ? position.history[position.history.length - 1]! : null;
 }
 
 export function amountForPeriod(position: Position, period: Period): number | null {
@@ -127,11 +139,11 @@ export function dueMonthsOfPlan(plan: PlanEntry): number[] {
   return plan.frequency === 'monthly' ? ALL_MONTHS : plan.dueMonths;
 }
 
-/** Is the position debited in this month? 'once' only in the month of its due date. */
-export function dueInPeriod(position: Position, period: Period): boolean {
+/** Is the position debited in this month? 'once' only in the period of its due date (see oncePeriod). */
+export function dueInPeriod(position: Position, period: Period, start: MonthStart = 1): boolean {
   const plan = planForPeriod(position, period);
   if (plan === null || !isActiveInPeriod(position, period)) return false;
-  if (plan.frequency === 'once') return oncePeriod(plan) === period;
+  if (plan.frequency === 'once') return oncePeriod(plan, start) === period;
   return dueMonthsOfPlan(plan).includes(monthOf(period));
 }
 
@@ -278,15 +290,20 @@ export interface DueItem {
  * A position archived later in the month still shows up if it was paid.
  * Positions with one-offs but no due payment are included with `due: false`.
  */
-export function dueItems(ds: Dataset, period: Period): DueItem[] {
+export function dueItems(ds: Dataset, period: Period, start: MonthStart = 1): DueItem[] {
   const cats = categoryMap(ds);
   const items: DueItem[] = [];
   for (const position of sortedPositions(ds.positions)) {
     const category = cats.get(position.categoryId);
     if (!category) continue;
-    const payment = paymentFor(ds, position.id, period);
+    // a one-time payment lives in exactly one period (its date, by „Neuer Monat beginnt am“); a tick
+    // stored under another month (ticked before the start day moved it) belongs to it there
+    const once = start === 1 ? null : onceEntry(position);
+    const oncePer = once ? oncePeriod(once, start) : null;
+    if (once && oncePer !== period) continue;
+    const payment = once ? ds.payments.find((p) => p.positionId === position.id) : paymentFor(ds, position.id, period);
     const oneOffs = ds.oneOffs.filter((o) => o.positionId === position.id && o.period === period);
-    const due = dueInPeriod(position, period) || payment !== undefined;
+    const due = dueInPeriod(position, period, start) || payment !== undefined;
     if (!due && oneOffs.length === 0) continue;
     const plan = planForPeriod(position, period);
     const planned = due ? plannedAmount(plan, payment) : 0;
@@ -407,8 +424,8 @@ export function dueDateIn(plan: PlanEntry | null, period: Period): string | null
   return day === undefined ? null : `${period}-${String(day).padStart(2, '0')}`;
 }
 
-function monthEntries(ds: Dataset, period: Period): MonthEntry[] {
-  const entries: MonthEntry[] = counted(dueItems(ds, period)).map((i) => ({
+function monthEntries(ds: Dataset, period: Period, start: MonthStart = 1): MonthEntry[] {
+  const entries: MonthEntry[] = counted(dueItems(ds, period, start)).map((i) => ({
     kind: i.kind,
     categoryId: i.category.id,
     cents: toCents(i.status === 'paid' ? i.payment!.actualAmount : i.planned),
@@ -494,8 +511,8 @@ export interface MonthFigures extends Tally {
  * Abzüge vom Netto = Gesamt + Vermögensaufbau vom Netto · Frei verfügbar = Netto − Abzüge ·
  * Sparquote = Vermögensaufbau vom Netto ÷ Netto.
  */
-export function monthFigures(ds: Dataset, period: Period): MonthFigures {
-  const entries = monthEntries(ds, period);
+export function monthFigures(ds: Dataset, period: Period, start: MonthStart = 1): MonthFigures {
+  const entries = monthEntries(ds, period, start);
   const expense = tally(entries.filter((e) => e.kind === 'expense'));
   const savings = entries.filter((e) => e.kind === 'savings');
   const wealthCents = savings.reduce((acc, e) => acc + e.cents, 0);
@@ -550,8 +567,8 @@ export interface SourceItem {
 }
 
 /** Everything due in `period` (positions and one-offs, as in monthFigures) with its source. */
-export function monthItems(ds: Dataset, period: Period): SourceItem[] {
-  return monthEntries(ds, period).map((e) => ({ name: e.name, amount: fromCents(e.cents), kind: e.kind, account: e.account, fromNet: e.fromNet, paid: e.paid, key: e.key, date: e.date }));
+export function monthItems(ds: Dataset, period: Period, start: MonthStart = 1): SourceItem[] {
+  return monthEntries(ds, period, start).map((e) => ({ name: e.name, amount: fromCents(e.cents), kind: e.kind, account: e.account, fromNet: e.fromNet, paid: e.paid, key: e.key, date: e.date }));
 }
 
 /** The figures of one category in a month (empty tally when nothing is due). */

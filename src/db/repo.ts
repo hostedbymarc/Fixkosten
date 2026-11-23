@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { format } from 'date-fns';
 import { localToday } from '../lib/activeMonth';
+import { noteTick } from '../lib/tickSignal';
 import { archivedPeriod, compareEntries, currentPlan, entryKey, planForPeriod, planHistory } from '../lib/calc';
 import { addPeriods, periodLabel } from '../lib/period';
 import type {
@@ -67,6 +68,7 @@ export async function markPaid(
   period: Period,
   plannedAmount: number,
 ): Promise<Payment> {
+  noteTick();
   const existing = await db.payments.where({ positionId, period }).first();
   if (existing?.status === 'paid') return existing;
   if (existing) {
@@ -92,6 +94,7 @@ export async function markSkipped(
   period: Period,
   plannedAmount: number,
 ): Promise<Payment> {
+  noteTick();
   const existing = await db.payments.where({ positionId, period }).first();
   if (existing) return existing;
   return addPayment(db, {
@@ -121,6 +124,7 @@ export async function removePayment(db: FixkostenDB, id: string): Promise<Paymen
 }
 
 export async function restorePayment(db: FixkostenDB, payment: Payment): Promise<void> {
+  noteTick();
   await db.payments.put(payment);
 }
 
@@ -651,6 +655,7 @@ export async function saveOneOff(db: FixkostenDB, draft: OneOffDraft, id?: strin
 }
 
 export async function toggleOneOffPaid(db: FixkostenDB, id: string): Promise<void> {
+  noteTick();
   await db.oneOffs
     .where('id')
     .equals(id)

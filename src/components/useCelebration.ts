@@ -5,9 +5,13 @@ import { useKonto } from '../db/useKonto';
 import { celebrateLive, confettiState } from '../lib/celebration';
 import { reducedMotion } from '../lib/entrance';
 import type { Period } from '../lib/types';
+import { tickCount } from '../lib/tickSignal';
+import { useActiveMonth } from '../lib/useToday';
 
 /** what the hero showed last (survives the remount of a swipe): ticking the last position celebrates live */
 const heroLast: { period: Period; done: boolean } | { period: null; done: false } = { period: null, done: false };
+/** the tick count when the hero was seen last: a change without a tick in between (data loading) never falls */
+let seenTicks = tickCount();
 
 /**
  * The confetti of „{Monat} erledigt“ (hero, or the bills row of „Dein Monat“): falls once, live, when the
@@ -16,10 +20,13 @@ const heroLast: { period: Period; done: boolean } | { period: null; done: false 
 export function useCelebration(period: Period, allPaid: boolean) {
   const { settings } = useKonto();
   const celebrated = settings.celebratedMonths.includes(period);
+  const active = useActiveMonth();
   const [run, setRun] = useState(0);
   useEffect(() => {
-    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid, celebrated);
+    const ticked = tickCount() !== seenTicks;
+    const live = ticked && celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid, celebrated, active);
     Object.assign(heroLast, { period, done: allPaid });
+    seenTicks = tickCount();
     if (live) {
       setRun((n) => n + 1);
       // once per month: remembered, a later 100 % only shows the peas lying

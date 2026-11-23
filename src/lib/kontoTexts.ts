@@ -17,7 +17,6 @@ export const KONTO_TEXTS = {
   'plan.when.order': 'per Dauerauftrag am {datum}',
 
   // · Kachel auf dem Monats-Screen
-  'tile.streak': '{n} Monate in Folge',
   'invite.title': 'Neu: Fixkosten einplanen.',
   'invite.text': 'Erbse sagt dir, wie viel du monatlich zur Seite legst.',
 
@@ -84,14 +83,10 @@ export const KONTO_TEXTS = {
   'settings.edit': 'Einrichtung ändern',
   'settings.walkthrough': 'So funktioniert Erbse',
 
-  // · Monats-Screen, Hero: woraus die Fixkosten bezahlt werden (nur Zeilen > 0)
+  // · Monats-Screen, Hero (ohne „Fixkosten einplanen“): Monat erledigt
   'hero.done.title': '{monat} erledigt',
   'hero.done.sub': 'Alle {n} Rechnungen bezahlt',
   'hero.done.sub.one': 'Deine Rechnung ist bezahlt',
-  'hero.src.title': 'Woraus du bezahlst',
-  'hero.src.title.done': 'Woraus du bezahlt hast',
-  'hero.src.reserve': 'Rücklage',
-  'hero.src.salary': 'Direkt bezahlt',
 
   // · Woraus zahlst du das? (Bearbeiten-Dialog, Positionen-Liste)
   'account.question': 'Woraus zahlst du das?',
@@ -141,7 +136,7 @@ export const KONTO_TEXTS = {
   'walk.4.none': 'Fehlt etwas, zeigt dir „Dein Plan“ einen Vorschlag.',
   'walk.5.title': 'Dein Spielgeld ist die Prüfgröße.',
   'walk.5.text': 'Am {tag} kommt dein Gehalt. Erbse zeigt dir, was frei bleibt.',
-  // · monat-ist-monat: Karte „Dein Monat“ für den aktiven Zeitraum (das Gehalt an seinem Anfang)
+  // · monat-ist-monat / alle-monate-gleich: Karte „Dein Monat“ für jeden Monat (das Gehalt am Anfang des Zeitraums)
   'month.title': 'Dein Monat',
   'month.noSalary': 'Trag dein Gehalt ein. Dann rechnet Erbse deinen Monat.',
   'month.noSalary.action': 'Gehalt eintragen',
@@ -154,15 +149,18 @@ export const KONTO_TEXTS = {
   'month.direct': 'Direkt bezahlt',
   'month.direct.more': '{n} Posten',
   'month.wealth': 'Vermögensaufbau',
-  'month.free': 'Übrig in diesem Monat',
+  'month.free': 'Überschuss in diesem Monat',
   'month.before': 'Vor Spielgeld frei: {betrag}',
-  'month.unplanned': 'Nicht eingeplant',
+  'month.unplanned': 'Spielgeld',
+  'month.spielgeld.spent': '{betrag} von {limit} ausgegeben',
+  'month.spielgeld.over': '{betrag} ausgegeben · {over} drüber',
+  'month.spielgeld.none': 'Kein Spielgeld festgelegt',
   'month.pill.rest': 'Spielgeld: {betrag} von {limit} · {rest} übrig',
   'month.pill.over': 'Spielgeld: {betrag} von {limit} · {over} drüber',
   'month.wealth.notFromNet': '{betrag} nicht vom Netto',
-  'month.unplanned.other': '{betrag} aus anderer Quelle',
   'month.list.save': 'Für später zur Seite',
   'month.list.take': 'Aus dem Angesparten',
+  'month.list.rest': 'Noch nicht ausgegeben',
   'month.list.empty': 'Nichts in diesem Monat',
   'month.list.notFromNet': 'nicht vom Netto',
   'month.list.other': 'aus anderer Quelle',

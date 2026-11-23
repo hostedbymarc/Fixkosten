@@ -1,16 +1,19 @@
-// monat-ist-monat: „Dein Monat“ shows the ACTIVE period (start 25: November = 25.10.–24.11.), paid by the salary
-// that came at its start. It no longer plans the next salary; that stays in „Dein Plan“.
+// „Dein Monat“ for EVERY month (alle-monate-gleich; monat-ist-monat: the period of a month, start 25: November
+// = 25.10.–24.11.), paid by the salary that came at its start. The next salary is planned in „Dein Plan“.
 //
-//   Netto      the salary of the active period (salaryView: own entry, else the last one entered)
-//   ①          what goes to the Rücklage in this period with the chosen plan (monthPlan.current.transfer)
+//   Netto      the salary of the period (salaryView: own entry, else the last one entered)
+//   ①          what goes to the Rücklage in the period (transferOf): the active period with the chosen plan
+//              (monthPlan.current), a later one as in „Dein Plan“, an earlier one what was transferred
 //   ②          Direkt bezahlt: the direct bills due in this period (no Vermögensaufbau, nothing that starts later)
 //   ③          Vermögensaufbau from the net salary, this month's real amount; „nicht vom Netto“ only shown
-//   ④          Nicht eingeplant: positions „nicht eingeplant“ (and their one-offs) due in this period;
-//              „aus anderer Quelle“ (fromNet false) is listed muted and does not count
-//   Übrig      Netto − ① − ② − ③ − ④ · „Vor Spielgeld frei“ = Netto − ① − ② − ③
-//   Spielgeld  ④ against the limit: „€ ④ von € Limit · € Rest übrig“ / „… € Überschuss drüber“
+//   ④          Spielgeld: max(limit, spent); spent = positions „nicht eingeplant“ (and their one-offs) in the
+//              period; „aus anderer Quelle“ (fromNet false) is listed muted and does not count. No limit: spent
+//   Überschuss Netto − ① − ② − ③ − ④ · „Vor Spielgeld frei“ = Netto − ① − ② − ③
+//   Pill       spent against the limit: „€ spent von € Limit · € Rest übrig“ / „… € over drüber“
 //
-// Every row has its items (name · amount · date); the sum of a row's counted items is the row's amount.
+// Every row has its items (name · amount · date); the sum of a row's counted items is the row's amount (①: a
+// line „Für später zur Seite“ / „Aus dem Angesparten“, ④: „Noch nicht ausgegeben“ bring the items to it).
+// One-time payments belong to the period of their date (calc.oncePeriod, „Neuer Monat beginnt am“).
 // Money in integer cents; pure functions over monthPlan, monthItems and dueItems.
 import type { MonthStart } from './activeMonth';
 import { localToday } from './activeMonth';
@@ -33,8 +36,8 @@ export interface CardItem {
   muted: boolean;
   /** what a muted line is: not from the net salary (③) or from another source (④) */
   note?: 'notFromNet' | 'other';
-  /** ① only: the line that brings the bills to the transfer (saved for later / taken from what is saved) */
-  balance?: 'save' | 'take';
+  /** the line that brings the items to the row: ① saved for later / taken from what is saved, ④ not spent yet */
+  balance?: 'save' | 'take' | 'rest';
 }
 
 export interface CardRow {
@@ -60,10 +63,11 @@ export interface MonthCard {
   reserve: CardRow;
   direct: CardRow;
   wealth: CardRow & { notFromNet: number };
-  unplanned: CardRow & { other: number };
+  /** ④ Spielgeld: total = max(limit, spent); spent = the counted items „nicht eingeplant“ */
+  unplanned: CardRow & { other: number; spent: number };
   /** Netto − ① − ② − ③; null without a salary */
   beforeSpielgeld: number | null;
-  /** „Übrig in diesem Monat“ = beforeSpielgeld − ④; null without a salary */
+  /** „Überschuss in diesem Monat“ = beforeSpielgeld − ④; null without a salary */
   left: number | null;
   /** null: no Spielgeld set */
   pill: SpielgeldPill | null;
@@ -80,9 +84,29 @@ function row(items: CardItem[]): CardRow {
 
 const fromSource = (i: SourceItem, muted = false, note?: CardItem['note']): CardItem => ({ key: i.key, name: i.name, amount: i.amount, date: i.date, muted, ...(note ? { note } : {}) });
 
+const accountBills = (ds: Dataset, period: Period, start: MonthStart) => monthItems(ds, period, start).filter((i) => i.account === 'fixkostenkonto' && i.fromNet);
+
+/**
+ * ① of a period: the active one with the chosen plan from its start (monthPlan.current), a later one as in
+ * „Dein Plan“; an earlier one what was transferred (the monthly check), else its bills of the account (paid
+ * from the account when due). Beyond the plan: its bills of the account as well.
+ */
+export function transferOf(ds: Dataset, period: Period, plan: MonthPlan, start: MonthStart = 1): number {
+  const active = plan.current.period;
+  if (period === active) return plan.current.transfer;
+  if (period > active) {
+    const month = plan.months.find((m) => m.period === period);
+    if (month) return month.transfer;
+  } else {
+    const check = plan.checks.find((c) => c.period === period && c.deposited);
+    if (check?.amount !== undefined) return check.amount;
+  }
+  return euros(accountBills(ds, period, start).reduce((a, i) => a + cents(i.amount), 0));
+}
+
 /** ① its bills: every bill of the account in the period, plus the line that brings them to the transfer. */
-function reserveItems(ds: Dataset, period: Period, transfer: number): CardItem[] {
-  const bills = monthItems(ds, period).filter((i) => i.account === 'fixkostenkonto' && i.fromNet);
+function reserveItems(ds: Dataset, period: Period, transfer: number, start: MonthStart): CardItem[] {
+  const bills = accountBills(ds, period, start);
   const items = bills.map((i) => fromSource(i));
   const diff = cents(transfer) - bills.reduce((a, i) => a + cents(i.amount), 0);
   if (diff !== 0) items.push({ key: `balance@${period}`, name: '', amount: euros(diff), date: null, muted: false, balance: diff > 0 ? 'save' : 'take' });
@@ -90,9 +114,9 @@ function reserveItems(ds: Dataset, period: Period, transfer: number): CardItem[]
 }
 
 /** ④: positions „nicht eingeplant“ due in the period and their one-offs; „aus anderer Quelle“ muted. */
-function unplannedItems(ds: Dataset, period: Period): CardItem[] {
+function unplannedItems(ds: Dataset, period: Period, start: MonthStart): CardItem[] {
   const out: CardItem[] = [];
-  for (const i of dueItems(ds, period)) {
+  for (const i of dueItems(ds, period, start)) {
     if (!i.unplanned) continue;
     const other = i.position.fromNet === false;
     if (i.due && i.status !== 'skipped') {
@@ -112,24 +136,37 @@ function unplannedItems(ds: Dataset, period: Period): CardItem[] {
   return out.filter((i) => cents(i.amount) !== 0);
 }
 
-export function monthCard(ds: Dataset, active: Period, plan: MonthPlan, start: MonthStart = 1, today: Date = localToday()): MonthCard {
+/**
+ * The card of `period` (any month: past, active, future). `plan`: monthPlan of the ACTIVE month – the same
+ * plan for every card, so ① of a later month is the one of „Dein Plan“.
+ */
+export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: MonthStart = 1, today: Date = localToday()): MonthCard {
+  const active = period;
   const salary = salaryView(ds, active, start, today);
-  const transfer = plan.current.transfer;
-  const reserve = row(reserveItems(ds, active, transfer));
-  const items = monthItems(ds, active);
+  const transfer = transferOf(ds, active, plan, start);
+  const reserve = row(reserveItems(ds, active, transfer, start));
+  const items = monthItems(ds, active, start);
   const direct = row(items.filter((i) => i.kind === 'expense' && i.account === 'girokonto' && i.fromNet).map((i) => fromSource(i)));
   const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
   const wealth = {
     ...row(wealthItems.map((i) => (i.fromNet ? fromSource(i) : fromSource(i, true, 'notFromNet')))),
     notFromNet: euros(wealthItems.filter((i) => !i.fromNet).reduce((a, i) => a + cents(i.amount), 0)),
   };
-  const unplannedList = unplannedItems(ds, active);
-  const unplanned = { ...row(unplannedList), other: euros(unplannedList.filter((i) => i.muted).reduce((a, i) => a + cents(i.amount), 0)) };
+  const unplannedList = unplannedItems(ds, active, start);
+  const limit = plan.spielgeld;
+  const used = unplannedList.filter((i) => !i.muted).reduce((a, i) => a + cents(i.amount), 0);
+  // ④ = max(limit, spent): what is not spent yet stays booked for the Spielgeld („Noch nicht ausgegeben“)
+  const notSpent = limit === null ? 0 : Math.max(cents(limit) - used, 0);
+  if (notSpent > 0) unplannedList.push({ key: `rest@${active}`, name: '', amount: euros(notSpent), date: null, muted: false, balance: 'rest' });
+  const unplanned = {
+    ...row(unplannedList),
+    other: euros(unplannedList.filter((i) => i.muted).reduce((a, i) => a + cents(i.amount), 0)),
+    spent: euros(used),
+  };
+  if (notSpent > 0) unplanned.count -= 1;
   const net = salary.value;
   const before = net === null ? null : cents(net) - cents(reserve.total) - cents(direct.total) - cents(wealth.total);
-  const limit = plan.spielgeld;
-  const used = cents(unplanned.total);
-  const pill = limit === null ? null : { limit, used: euros(used), rest: euros(Math.max(cents(limit) - used, 0)), over: euros(Math.max(used - cents(limit), 0)) };
+  const pill = limit === null ? null : { limit, used: euros(used), rest: euros(notSpent), over: euros(Math.max(used - cents(limit), 0)) };
   const nextPeriod = addPeriods(active, 1);
   return {
     period: active,
@@ -139,7 +176,7 @@ export function monthCard(ds: Dataset, active: Period, plan: MonthPlan, start: M
     wealth,
     unplanned,
     beforeSpielgeld: before === null ? null : euros(before),
-    left: before === null ? null : euros(before - used),
+    left: before === null ? null : euros(before - cents(unplanned.total)),
     pill,
     next: { period: nextPeriod, title: salaryName(nextPeriod, start), when: salaryWhen(nextPeriod, start, today) },
   };

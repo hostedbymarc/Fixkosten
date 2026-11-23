@@ -83,7 +83,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         // „Oktober-Gehalt“ paid on 25 October; the next one is the line under the card
         await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('Oktober-Gehalt');
         await expect(page.getByTestId('dein-monat-salary-when')).toHaveText('ausgezahlt am 25. Oktober');
-        await expect(page.getByTestId('next-salary-text')).toHaveText('November-Gehalt · kommt am 25. November');
+        await expect(page.getByTestId('next-salary-text')).toHaveText('November-Gehalt · kommt am 25.11.');
         await expect(card).not.toContainText('geschätzt');
 
         // folded by default: salary, „Frei für dich“, pill; ① ② ③ hidden
@@ -121,14 +121,15 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByTestId('dein-monat-split-toggle'));
         await expect(page.getByTestId('dein-monat-split-toggle')).toHaveAttribute('aria-expanded', 'false');
 
-        // October (past) and December (future): the Netto tile with the neutral status
+        // October (past) and December (future): the same card head (alle-monate-gleich), no Netto tile
         await toMonth(page, 'Oktober');
-        await expect(page.getByTestId('salary-title')).toHaveText('September-Gehalt');
-        await expect(page.getByTestId('salary-sub')).toHaveText('ausgezahlt am 25.9.');
+        await expect(page.getByTestId('salary-title')).toHaveCount(0);
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('September-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^ausgezahlt am 25\.\sSeptember$/);
         await shot(page, `${tag}-oktober`);
         await toMonth(page, 'Dezember');
-        await expect(page.getByTestId('salary-title')).toHaveText('November-Gehalt');
-        await expect(page.getByTestId('salary-sub')).toHaveText('kommt am 25.11.');
+        await expect(page.getByTestId('dein-monat-salary-title')).toHaveText('November-Gehalt');
+        await expect(page.getByTestId('dein-monat-salary-when')).toHaveText(/^kommt am 25\.\sNovember$/);
         await shot(page, `${tag}-dezember`);
 
         // the next salary is its own entry: the card in November keeps the Oktober-Gehalt
@@ -203,18 +204,19 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await appSettled(page);
         await expect(page.getByTestId('dein-monat').getByTestId('hero-confetti')).not.toHaveAttribute('data-falling', '');
 
-        // December (future): the same, in its card
+        // December (future, alle-monate-gleich): the same card; done → the peas only lie, no live celebration
         await toMonth(page, 'Dezember');
         await tickAll(page);
-        await expect(confetti()).toHaveAttribute('data-falling', '');
+        await expect(confetti()).toHaveCount(1);
+        await expect(confetti()).not.toHaveAttribute('data-falling', '');
         await page.reload();
         await appSettled(page);
         await toMonth(page, 'Dezember');
         await expect(confetti()).toHaveCount(1);
         await expect(confetti()).not.toHaveAttribute('data-falling', '');
         // never over text: the peas lie in the strip below the last line of the card
-        const card = shown(page).getByTestId('hero');
-        const lastText = await card.locator('[data-testid=hero-sources], [data-testid=hero-deductions]').last().boundingBox();
+        const card = shown(page).getByTestId('dein-monat');
+        const lastText = await card.getByTestId('dein-monat-bills-title').boundingBox();
         const peas = await confetti().locator('span').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
         expect(Math.min(...peas)).toBeGreaterThanOrEqual(lastText!.y + lastText!.height - 1);
       });
