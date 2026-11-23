@@ -65,8 +65,10 @@ describe('Listen unter den Zeilen', () => {
     const card = monthCard(ds, P2, monthPlan(ds, P2, s, 25), 25, DEC10);
     const gift = card.unplanned.items.find((i) => i.name === 'Geschenk von Oma');
     expect(gift).toMatchObject({ muted: true, note: 'other', amount: 200 });
-    expect(card.unplanned.total).toBe(450);
-    expect(card.unplanned.count).toBe(1);
+    // Fahrrad € 450 and the Jacke of 27 November (start 25: December) – the gift does not count
+    expect(card.unplanned.spent).toBe(530);
+    expect(card.unplanned.total).toBe(530);
+    expect(card.unplanned.count).toBe(2);
   });
 
   it('③: „nicht vom Netto“ gedämpft, nicht in der Summe', () => {

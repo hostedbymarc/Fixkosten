@@ -5,6 +5,7 @@ import { useKonto } from '../db/useKonto';
 import { celebrateLive, confettiState } from '../lib/celebration';
 import { reducedMotion } from '../lib/entrance';
 import type { Period } from '../lib/types';
+import { useActiveMonth } from '../lib/useToday';
 
 /** what the hero showed last (survives the remount of a swipe): ticking the last position celebrates live */
 const heroLast: { period: Period; done: boolean } | { period: null; done: false } = { period: null, done: false };
@@ -16,9 +17,10 @@ const heroLast: { period: Period; done: boolean } | { period: null; done: false 
 export function useCelebration(period: Period, allPaid: boolean) {
   const { settings } = useKonto();
   const celebrated = settings.celebratedMonths.includes(period);
+  const active = useActiveMonth();
   const [run, setRun] = useState(0);
   useEffect(() => {
-    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid, celebrated);
+    const live = celebrateLive(heroLast.period === null ? null : heroLast, period, allPaid, celebrated, active);
     Object.assign(heroLast, { period, done: allPaid });
     if (live) {
       setRun((n) => n + 1);

@@ -4,6 +4,7 @@
 // the rest is the Überschuss. Positions „nicht eingeplant“ count nowhere (calc.isPlanned).
 // Only reads: kontoState, monthItems, the net salary.
 import type { KontoSettings } from '../db/settings';
+import type { MonthStart } from './activeMonth';
 import { monthItems, netSalaryForPeriod, type SourceItem } from './calc';
 import { addPeriods } from './period';
 import type { KontoState } from './kontoBalance';
@@ -35,8 +36,8 @@ export interface SalarySplit {
 }
 
 /** The parts of one month that come out of the net salary, from the same items as monthFigures. */
-export function salaryParts(ds: Dataset, period: Period) {
-  const items = monthItems(ds, period).filter((i) => i.fromNet);
+export function salaryParts(ds: Dataset, period: Period, start: MonthStart = 1) {
+  const items = monthItems(ds, period, start).filter((i) => i.fromNet);
   const directItems = items.filter((i) => i.kind === 'expense' && i.account === 'girokonto');
   const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
   return { directItems, direct: sum(directItems), wealth: sum(wealthItems) };

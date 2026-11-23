@@ -7,6 +7,7 @@ import { ToastProvider } from './components/Toast';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { needsSetup } from './db/backup';
 import { db } from './db/db';
+import { cleanCelebrated } from './db/kontoActions';
 import { useDataset } from './db/useDataset';
 import { WalkthroughHost } from './components/konto/WalkthroughHost';
 import { PlanHost } from './components/konto/PlanHost';
@@ -186,7 +187,14 @@ export function App() {
     };
   }, []);
 
-  // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
+  // once per app start (alle-monate-gleich): celebrated months after the active one are forgotten
+  const cleaned = useRef(false);
+  useEffect(() => {
+    if (!active || cleaned.current) return;
+    cleaned.current = true;
+    void cleanCelebrated(db, active);
+  }, [active]);
+    // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
   useEffect(() => startGlassBudget(), []);
   // once per app start: the Analyse tab, built hidden
   useEffect(() => {

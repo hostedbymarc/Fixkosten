@@ -2,6 +2,8 @@
 //   6 monthly + 3 Immo + 5 Abo positions paid directly; 1 direct position that starts 3 months later;
 //   2 Vermögensaufbau positions; a semiannual and an annual Rücklage position; 2 one-time payments „nicht
 //   eingeplant“, 1 one-time payment „nicht eingeplant“ from another source; 1 month with its own amount.
+// alle-monate-gleich: 1 purchase „nicht eingeplant“ on 27 November – with „Neuer Monat beginnt am“ 25 it
+//   belongs to December (25.11.–24.12.).
 // The three periods: November 2026, December 2026, January 2027 (Neuer Monat beginnt am 25).
 import { toKontoSettings, type KontoSettings } from '../../src/db/settings';
 import type { Account, Dataset, PlanEntry, Position } from '../../src/lib/types';
@@ -74,6 +76,7 @@ export function goldenDataset(): Dataset {
       once('g-konzert', 'Konzert', 120, '2026-11-14'),
       once('g-fahrrad', 'Fahrrad', 450, '2026-12-05'),
       once('g-geschenk', 'Geschenk von Oma', 200, '2026-12-20', false),
+      once('g-jacke', 'Jacke', 80, '2026-11-27'),
     ],
     payments: [],
     oneOffs: [],

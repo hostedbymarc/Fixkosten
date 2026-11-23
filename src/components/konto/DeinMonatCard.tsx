@@ -9,7 +9,7 @@ import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib
 import { t } from '../../lib/kontoTexts';
 import { dayLabel } from '../../lib/kontoWords';
 import { inclLine, monthPlan, type MonthPlan } from '../../lib/monthPlan';
-import { monthCard, type CardItem, type CardRow } from '../../lib/monthCard';
+import { monthCard, type CardItem, type CardRow, type MonthCard } from '../../lib/monthCard';
 import { monthFigures } from '../../lib/calc';
 import { monthDone } from '../../lib/celebration';
 import { reducedMotion } from '../../lib/entrance';
@@ -19,7 +19,7 @@ import { useCelebration } from '../useCelebration';
 import { monthName } from '../../lib/period';
 import { openPlan } from '../../lib/planBus';
 import type { Dataset, Period } from '../../lib/types';
-import { useMonthStart } from '../../lib/useToday';
+import { useActiveMonth, useMonthStart } from '../../lib/useToday';
 import { fitStyle } from '../fitText';
 import { AlertIcon, CheckIcon, ChevronDown, ChevronRight } from '../Icons';
 import { AmountInput } from '../form';
@@ -36,20 +36,23 @@ export function useMonthPlan(ds: Dataset, active: Period): MonthPlan {
 }
 
 /**
- * „Dein Monat“ (monat-ist-monat): ONE card for the ACTIVE period, paid by the salary that came at its start:
- * Netto, ① to the Fixkostenkonto (or set aside), ② paid directly, ③ Vermögensaufbau, ④ nicht eingeplant, then
- * „Übrig in diesem Monat“ as the biggest number of the screen. Under it the Spielgeld pill (④ against the limit)
- * and the one action of the month. Under the card: the next salary and „Plan ansehen“. Every number: monthCard().
+ * „Dein Monat“ (alle-monate-gleich): ONE card for EVERY month – past, active, future – the same component in the
+ * same order. The period of the month, paid by the salary that came at its start: Netto, ① to the
+ * Fixkostenkonto (or set aside), ② paid directly, ③ Vermögensaufbau, ④ Spielgeld, then „Überschuss in diesem
+ * Monat“ as the biggest number of the screen, the Spielgeld pill and, in the active month, the one action of the
+ * month. The bills row and the confetti at the bottom. Under the card, in the active month only: the next
+ * salary and „Plan ansehen“. Every number: monthCard() with the plan of the active month.
  */
-export function DeinMonatCard({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpenSalary: () => void }) {
+export function DeinMonatCard({ ds, period, onOpenSalary }: { ds: Dataset; period: Period; onOpenSalary: () => void }) {
   const { settings } = useKonto();
+  const active = useActiveMonth();
   const [setup, setSetup] = useState(false);
   return (
     <>
       {settings.setupDone ? (
         <>
-          <Card ds={ds} active={active} onOpenSalary={onOpenSalary} />
-          <NextSalaryLine ds={ds} active={active} />
+          <Card ds={ds} period={period} active={active} onOpenSalary={onOpenSalary} />
+          {period === active && <NextSalaryLine ds={ds} active={active} />}
         </>
       ) : (
         <section className="hero surface flex flex-col items-start gap-3 p-5 md:p-6" data-testid="dein-monat" data-state="setup" aria-labelledby="dein-monat-title">
@@ -71,20 +74,22 @@ export function DeinMonatCard({ ds, active, onOpenSalary }: { ds: Dataset; activ
 const ACTION =
   'focus-ring press inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-brand-100 px-5 text-center text-[15px] font-semibold leading-snug text-brand-700 shadow-card';
 
-function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpenSalary: () => void }) {
+function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Period; active: Period; onOpenSalary: () => void }) {
   const { settings } = useKonto();
   const start = useMonthStart();
   const plan = useMonthPlan(ds, active);
-  const card = useMemo(() => monthCard(ds, active, plan, start), [ds, active, plan, start]);
-  const figures = useMemo(() => monthFigures(ds, active), [ds, active]);
+  const card = useMemo(() => monthCard(ds, period, plan, start), [ds, period, plan, start]);
+  const figures = useMemo(() => monthFigures(ds, period, start), [ds, period, start]);
   const allPaid = monthDone(figures);
-  const { peas, run } = useCelebration(active, allPaid);
+  const { peas, run } = useCelebration(period, allPaid);
   useKontoEffects(plan.state);
+  const isActive = period === active;
   const current = plan.current;
   const account = plan.hasAccount;
   const pill = useRef<HTMLButtonElement>(null);
-  const check = settings.checks.find((c) => c.period === active && c.deposited);
-  const canConfirm = !plan.state.monthDone;
+  // the monthly transfer: an action of the active month only
+  const check = isActive ? settings.checks.find((c) => c.period === active && c.deposited) : undefined;
+  const canConfirm = isActive && !plan.state.monthDone;
   const p = card.pill;
   const status = p === null ? 'none' : p.over > 0 ? 'over' : 'ok';
   const open = (el: HTMLElement | null, editSpielgeld = false) => openPlan({ returnFocusTo: el, editSpielgeld });
@@ -92,23 +97,31 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
   const noSalary = card.salary.value === null;
 
   return (
-    <section className="hero surface flex flex-col p-5 md:p-6" data-done={allPaid || undefined} data-testid="dein-monat" data-state={noSalary ? 'no-salary' : status === 'over' ? 'short' : status} aria-labelledby="dein-monat-title">
-      {/* the confetti of „{Monat} erledigt“: the same component as in the hero, lying at the bottom of this card */}
-      {peas !== 'none' && <Confetti key={`${active}-${run}`} seed={active} falling={peas === 'falling'} />}
+    <section
+      className="hero surface flex flex-col p-5 md:p-6"
+      data-done={allPaid || undefined}
+      data-testid="dein-monat"
+      data-period={period}
+      data-when={isActive ? 'active' : period < active ? 'past' : 'future'}
+      data-state={noSalary ? 'no-salary' : status === 'over' ? 'short' : status}
+      aria-labelledby="dein-monat-title"
+    >
+      {/* the confetti of „{Monat} erledigt“: lying at the bottom of this card, in every month */}
+      {peas !== 'none' && <Confetti key={`${period}-${run}`} seed={period} falling={peas === 'falling'} />}
       <h2 id="dein-monat-title" className="sr-only">
         {t('month.title')}
       </h2>
-      {/* monat-ist-monat: the salary at the start of the ACTIVE period – the same entry as this month's salary tile */}
+      {/* the salary at the start of the period: „ausgezahlt am …“ once the day is reached, else „kommt am …“ */}
       <div className="flex items-start justify-between gap-3" data-testid="dein-monat-salary">
         <p className="min-w-0">
           <span className="block text-[17px] font-semibold leading-snug text-ink" data-testid="dein-monat-salary-title">
             {card.salary.title}
           </span>
           <span className="block text-[13px] leading-5 text-ink-mute" data-testid="dein-monat-salary-when">
-            {salaryWhen(active, start)}
+            {salaryWhen(period, start)}
           </span>
         </p>
-        {card.salary.value !== null && <SalaryEdit period={active} salary={card.salary.value} />}
+        {card.salary.value !== null && <SalaryEdit period={period} salary={card.salary.value} fallback={card.salary.fallback} />}
       </div>
 
       {noSalary ? (
@@ -139,7 +152,7 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
                 label={t(account ? 'month.toAccount' : 'month.aside')}
                 row={card.reserve}
                 testId="dein-monat-transfer"
-                sub={current.period === plan.first.period ? inclText(plan) : undefined}
+                sub={isActive && current.period === plan.first.period ? inclText(plan) : undefined}
               />
               <Row n={2} label={t('month.direct')} row={card.direct} testId="dein-monat-direct" sub={card.direct.count > 0 ? t('month.direct.more', { n: card.direct.count }) : undefined} />
               <Row
@@ -149,19 +162,18 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
                 testId="dein-monat-wealth"
                 sub={card.wealth.notFromNet > 0 ? t('month.wealth.notFromNet', { betrag: money(card.wealth.notFromNet) }) : undefined}
               />
-              <Row
-                n={4}
-                label={t('month.unplanned')}
-                row={card.unplanned}
-                testId="dein-monat-unplanned"
-                sub={card.unplanned.other > 0 ? t('month.unplanned.other', { betrag: money(card.unplanned.other) }) : undefined}
-              />
+              <Row n={4} label={t('month.unplanned')} row={card.unplanned} testId="dein-monat-unplanned" sub={spielgeldSub(card)} subOver={p !== null && p.over > 0} />
             </ol>
           </div>
           <div className="mt-2 border-t border-edge pt-3">
             <div className="fit-box" data-testid="dein-monat-free">
               <p className="text-[15px] font-semibold text-ink-soft">{t('month.free')}</p>
-              <p className="num num-display fit fit-hero mt-0.5 block text-ink" style={fitStyle(money(card.left!))} data-testid="dein-monat-free-value">
+              <p
+                className={`num num-display fit fit-hero mt-0.5 block ${card.left! < 0 ? 'text-warn' : 'text-ink'}`}
+                style={fitStyle(money(card.left!))}
+                data-testid="dein-monat-free-value"
+                data-negative={card.left! < 0 || undefined}
+              >
                 {signed(card.left!)}
               </p>
               <p className="num mt-0.5 text-[13px] leading-5 text-ink-mute" data-testid="dein-monat-before">
@@ -197,7 +209,7 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
       )}
 
       {/* monat-feinschliff-2: the bills of the month at the bottom of the card (no own white card any more) */}
-      <BillsLine ds={ds} active={active} />
+      <BillsLine ds={ds} period={period} />
 
       {/* the one action of the month: the transfer (replaces the monthly check) */}
       {canConfirm && current.transfer > 0 && (
@@ -222,22 +234,26 @@ function Card({ ds, active, onOpenSalary }: { ds: Dataset; active: Period; onOpe
   );
 }
 
-/** „{Monat}-Gehalt · kommt am {Datum} · Plan ansehen ›“ under the card: „Dein Plan“ plans from the next salary. */
+/**
+ * „{Monat}-Gehalt · kommt am 25.11. · Plan ansehen ›“ under the card of the active month: „Dein Plan“ plans from
+ * the next salary. One line down to the iPhone SE: the short date, nothing wraps.
+ */
 function NextSalaryLine({ ds, active }: { ds: Dataset; active: Period }) {
   const start = useMonthStart();
   const plan = useMonthPlan(ds, active);
   const card = useMemo(() => monthCard(ds, active, plan, start), [ds, active, plan, start]);
   const button = useRef<HTMLButtonElement>(null);
+  const when = salaryWhen(card.next.period, start, localToday(), true);
   return (
     <button
       ref={button}
       type="button"
       onClick={() => openPlan({ returnFocusTo: button.current })}
-      className="focus-ring flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl px-4 text-left text-[14px] text-ink-soft hover:bg-zinc-50/60"
+      className="focus-ring flex min-h-11 w-full items-center justify-between gap-2 whitespace-nowrap rounded-2xl px-2 text-left text-[13px] tracking-[-0.01em] text-ink-soft hover:bg-zinc-50/60 sm:px-4 sm:text-[14px] sm:tracking-normal"
       data-testid="next-salary"
     >
       <span className="min-w-0" data-testid="next-salary-text">
-        {t('month.next', { gehalt: card.next.title, wann: card.next.when })}
+        {t('month.next', { gehalt: card.next.title, wann: when })}
       </span>
       <span className="flex shrink-0 items-center gap-0.5 font-semibold text-accent-ink">
         {t('month.next.plan')}
@@ -248,6 +264,13 @@ function NextSalaryLine({ ds, active }: { ds: Dataset; active: Period }) {
 }
 
 const signed = (v: number) => (v < 0 ? `−${money(-v)}` : money(v));
+
+/** under ④: „€ 120,00 von € 300,00 ausgegeben“ / „€ 450,00 ausgegeben · € 150,00 drüber“ / „Kein Spielgeld festgelegt“ */
+function spielgeldSub(card: MonthCard): string {
+  const p = card.pill;
+  if (p === null) return t('month.spielgeld.none');
+  return p.over > 0 ? t('month.spielgeld.over', { betrag: money(p.used), over: money(p.over) }) : t('month.spielgeld.spent', { betrag: money(p.used), limit: money(p.limit) });
+}
 
 /** „inkl. € 326,81 für Februar · Steuerberater, Öffis“ / „inkl. € 262,00 Baurechtszins“ (monthPlan.inclLine) */
 function inclText(plan: MonthPlan): string | undefined {
@@ -260,7 +283,7 @@ function inclText(plan: MonthPlan): string | undefined {
 }
 
 /** The salary of the card: a tap makes it editable (decimal keyboard, cents); Enter or a tap outside saves. */
-function SalaryEdit({ period, salary }: { period: Period; salary: number }) {
+function SalaryEdit({ period, salary, fallback }: { period: Period; salary: number; fallback: boolean }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
   const field = useRef<HTMLInputElement>(null);
@@ -273,7 +296,8 @@ function SalaryEdit({ period, salary }: { period: Period; salary: number }) {
     if (!editing) return;
     setEditing(false);
     const value = parseAmount(text);
-    if (value === null || value < 0 || Math.round(value * 100) === Math.round(salary * 100)) return;
+    // the fallback (the last salary entered) is not this month's entry yet: saving it as it is stores it
+    if (value === null || value < 0 || (!fallback && Math.round(value * 100) === Math.round(salary * 100))) return;
     void saveMonthClose(db, period, { netSalary: value });
   }
   if (!editing)
@@ -285,8 +309,9 @@ function SalaryEdit({ period, salary }: { period: Period; salary: number }) {
           setEditing(true);
         }}
         aria-label={`${t('month.salary.edit')}: ${money(salary)}`}
-        className="focus-ring num -mr-2 shrink-0 whitespace-nowrap rounded-xl px-2 py-1 text-[17px] font-semibold text-ink hover:bg-white/5"
+        className={`focus-ring num -mr-2 shrink-0 whitespace-nowrap rounded-xl px-2 py-1 text-[17px] font-semibold hover:bg-white/5 ${fallback ? 'text-ink-mute' : 'text-ink'}`}
         data-testid="dein-monat-salary-value"
+        data-fallback={fallback || undefined}
       >
         {money(salary)}
       </button>
@@ -330,7 +355,7 @@ function useSplitOpen(): [boolean, (open: boolean) => Promise<void>] {
 const shortDate = (d: string | null) => (d ? `${Number(d.slice(8, 10))}.${Number(d.slice(5, 7))}.` : '');
 
 /** One row ① – ④: a tap opens its items (name · amount · date); the counted items add up to the row. */
-function Row({ n, label, row, sub, testId }: { n: number; label: string; row: CardRow; sub?: string; testId: string }) {
+function Row({ n, label, row, sub, subOver, testId }: { n: number; label: string; row: CardRow; sub?: string; subOver?: boolean; testId: string }) {
   const [open, setOpen] = useState(false);
   const listId = `${testId}-list`;
   return (
@@ -350,7 +375,7 @@ function Row({ n, label, row, sub, testId }: { n: number; label: string; row: Ca
           <span className="min-w-0">
             <span className="block text-[15px] leading-6 text-ink">{label}</span>
             {sub && (
-              <span className="block text-[13px] leading-5 text-ink-mute" data-testid={`${testId}-sub`}>
+              <span className={`block text-[13px] leading-5 ${subOver ? 'font-medium text-warn' : 'text-ink-mute'}`} data-testid={`${testId}-sub`} data-over={subOver || undefined}>
                 {sub}
               </span>
             )}
@@ -377,7 +402,7 @@ function Row({ n, label, row, sub, testId }: { n: number; label: string; row: Ca
 }
 
 function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
-  const name = item.balance === 'save' ? t('month.list.save') : item.balance === 'take' ? t('month.list.take') : item.name;
+  const name = item.balance === 'save' ? t('month.list.save') : item.balance === 'take' ? t('month.list.take') : item.balance === 'rest' ? t('month.list.rest') : item.name;
   const note = item.note === 'notFromNet' ? t('month.list.notFromNet') : item.note === 'other' ? t('month.list.other') : null;
   return (
     <li className={`flex items-baseline justify-between gap-3 py-1 text-[13px] leading-5 ${item.muted ? 'text-ink-mute' : 'text-ink-soft'}`} data-testid={`${testId}-item`} data-muted={item.muted || undefined}>
@@ -396,8 +421,9 @@ function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
  * „{x} von {n} Rechnungen bezahlt“ (a tap scrolls to the categories) or, when every bill is paid, a check,
  * „{Monat} erledigt“ and „Alle {n} Rechnungen bezahlt“ – after a line, under the pill.
  */
-function BillsLine({ ds, active }: { ds: Dataset; active: Period }) {
-  const figures = useMemo(() => monthFigures(ds, active), [ds, active]);
+function BillsLine({ ds, period }: { ds: Dataset; period: Period }) {
+  const start = useMonthStart();
+  const figures = useMemo(() => monthFigures(ds, period, start), [ds, period, start]);
   const allPaid = monthDone(figures);
   const paid = figures.count - figures.openCount;
   return (
@@ -409,7 +435,7 @@ function BillsLine({ ds, active }: { ds: Dataset; active: Period }) {
           </span>
           <span className="min-w-0">
             <span className="block text-[17px] font-semibold leading-snug text-ink" data-testid="dein-monat-bills-title">
-              {t('bills.done', { monat: monthName(active) })}
+              {t('bills.done', { monat: monthName(period) })}
             </span>
             <span className="block text-[13px] leading-5 text-ink-mute">
               {figures.count === 1 ? t('bills.done.sub.one') : t('bills.done.sub', { n: figures.count })}

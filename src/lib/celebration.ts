@@ -4,6 +4,8 @@
 // (celebratedMonths). Never when a month is opened, never again on a tap. Every other time the peas lie
 // still at the bottom of the card (same place every time: seed = the month). A position set back to
 // open: no peas. Done again: they lie, without a second celebration.
+// alle-monate-gleich: a month AFTER the active one never celebrates live (ticking ahead is planning, not
+// done yet): the peas lie, nothing is remembered. When it becomes the active month it celebrates once.
 import type { Period } from './types';
 
 /** All positions of the month paid (at least one is due). */
@@ -15,8 +17,20 @@ export function monthDone(figures: { count: number; openCount: number }): boolea
  * Live: the last open position of the month shown was ticked (done now, not done before, same month) – in
  * every month (monat-feinschliff), but only once per month: a month in `celebratedMonths` never falls again.
  */
-export function celebrateLive(before: { period: Period; done: boolean } | null, period: Period, done: boolean, celebrated: boolean): boolean {
+export function celebrateLive(
+  before: { period: Period; done: boolean } | null,
+  period: Period,
+  done: boolean,
+  celebrated: boolean,
+  active: Period | null = null,
+): boolean {
+  if (active !== null && period > active) return false;
   return !celebrated && !!before && before.period === period && !before.done && done;
+}
+
+/** One-time cleanup at the start: months after the active one are no celebrated months (they never fell live). */
+export function celebratedUpTo(months: Period[], active: Period): Period[] {
+  return months.filter((p) => p <= active);
 }
 
 /**

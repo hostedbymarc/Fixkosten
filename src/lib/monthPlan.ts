@@ -131,6 +131,8 @@ export interface BigMonth {
 }
 
 export interface MonthPlan {
+  /** the monthly checks of the settings (alle-monate-gleich: ① of a past month is what was transferred) */
+  checks: KontoSettings['checks'];
   /** the plan mode in use */
   mode: PlanMode;
   /** „Aufs Fixkostenkonto“ (true) or „Zur Seite legen“ (false) */
@@ -189,9 +191,9 @@ function dayOf(date: string | undefined): number {
 }
 
 /** Every bill of the account in `period` (the active month: only the open ones), as in simulateKonto. */
-function billsOf(ds: Dataset, period: Period, openOnly: boolean): Bill[] {
+function billsOf(ds: Dataset, period: Period, openOnly: boolean, start: MonthStart = 1): Bill[] {
   const out: Bill[] = [];
-  for (const i of dueItems(ds, period)) {
+  for (const i of dueItems(ds, period, start)) {
     if (!i.due || i.status === 'skipped' || !i.fromNet || !onKonto(ds, i.position, period)) continue;
     if (openOnly && i.status !== 'open') continue;
     const amount = cents(i.status === 'paid' ? i.payment!.actualAmount : i.planned);
@@ -319,7 +321,7 @@ function core(
     }
     transfers.push(transfer);
     const { salary, estimated } = salaryOf(ds, period);
-    const parts = salaryParts(ds, period);
+    const parts = salaryParts(ds, period, start);
     const free = salary === null ? null : euros(cents(salary) - transfer - cents(parts.direct) - cents(parts.wealth));
     months.push({
       period,
@@ -396,9 +398,9 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   const state = kontoState(ds, active, { ...s, gapMode: 'spread' }, start);
   const first = state.next.period;
   const periods = Array.from({ length: PLAN_MONTHS }, (_, i) => addPeriods(first, i));
-  const bills = periods.map((p) => billsOf(ds, p, p === active));
+  const bills = periods.map((p) => billsOf(ds, p, p === active, start));
   // this month's deposit is in already: the open bills of this month are paid from the balance first
-  const openNow = first !== active ? billsOf(ds, active, true).reduce((a, b) => a + b.amount, 0) : 0;
+  const openNow = first !== active ? billsOf(ds, active, true, start).reduce((a, b) => a + b.amount, 0) : 0;
   const available = cents(state.balance) - openNow;
   const step = roundStep(s);
   const run: Run = (m, sv) => core(ds, state, periods, bills, available, m, sv, step, start, spielgeld);
@@ -409,11 +411,11 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   let current = chosen.months[0]!;
   if (first !== active) {
     const fromStart = Array.from({ length: PLAN_MONTHS }, (_, i) => addPeriods(active, i));
-    const allBills = fromStart.map((p) => billsOf(ds, p, false));
+    const allBills = fromStart.map((p) => billsOf(ds, p, false, start));
     const check = s.checks.find((c) => c.period === active && c.deposited);
     const deposit = cents(check?.amount ?? (check ? standingOrder(ds, active, step).amount : state.months[0]?.amount ?? state.order));
     const sum = (b: Bill[]) => b.reduce((a, x) => a + x.amount, 0);
-    const paidSince = sum(allBills[0]!) - sum(billsOf(ds, active, true));
+    const paidSince = sum(allBills[0]!) - sum(billsOf(ds, active, true, start));
     current = core(ds, state, fromStart, allBills, cents(state.balance) - deposit + paidSince, mode, savings, step, start, spielgeld).months[0]!;
   }
   const noSalary = chosen.months.some((m) => m.salary === null);
@@ -469,6 +471,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
 
   return {
     mode,
+    checks: s.checks,
     hasAccount: state.hasAccount,
     state,
     balance: state.balance,

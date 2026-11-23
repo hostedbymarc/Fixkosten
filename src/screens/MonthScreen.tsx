@@ -9,12 +9,10 @@ import { useKonto } from '../db/useKonto';
 import { DeinMonatCard, useMonthPlan } from '../components/konto/DeinMonatCard';
 import { BigMonthCard } from '../components/konto/BigMonthCard';
 import { t } from '../lib/kontoTexts';
-import { heroSourceRows } from '../lib/heroSources';
 import { monthDone } from '../lib/celebration';
 import { useCelebration } from '../components/useCelebration';
 import { Confetti } from '../components/Confetti';
 import { reducedMotion } from '../lib/entrance';
-import { streakBadge, streakOf } from '../lib/kontoBalance';
 import { Screen } from '../components/Screen';
 import { InfoTip } from '../components/InfoTip';
 import { averageMonthExplanation, deductionsExplanation, type AverageMonthExplanation } from '../lib/explain';
@@ -71,8 +69,6 @@ import {
   type CategoryGroup,
   type DueItem,
   type OpenGroup,
-  costSources,
-  type CostSources,
 } from '../lib/calc';
 import { formatAvg, formatEUR, formatPercent } from '../lib/format';
 import { addPeriods, monthName, periodLabel } from '../lib/period';
@@ -109,12 +105,14 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const noteCard = useRef<HTMLButtonElement>(null);
   const [noteOpen, setNoteOpen] = useState(false);
 
-  const items = useMemo(() => dueItems(ds, period), [ds, period]);
+  const monthStart = useMonthStart();
+  // „Fixkosten einplanen“ on: one-time payments belong to the period of their date („Neuer Monat beginnt am“)
+  const { settings: konto } = useKonto();
+  const start = konto.enabled ? monthStart : 1;
+  const items = useMemo(() => dueItems(ds, period, start), [ds, period, start]);
   const groups = useMemo(() => groupByCategory(items), [items]);
   // every amount of the month comes from here (hero, tiles, category headers)
-  const figures = useMemo(() => monthFigures(ds, period), [ds, period]);
-  // „Fixkosten einplanen“: Hero by source, „So teilt sich dein Gehalt“ and „Dein Spielgeld“ instead of „Frei verfügbar“ / „Ø pro Monat“
-  const { settings: konto } = useKonto();
+  const figures = useMemo(() => monthFigures(ds, period, start), [ds, period, start]);
   // fully paid categories start collapsed, categories with something open expanded
   const collapse = useMonthCollapse(period, (id) => {
     const t = categoryFigures(figures, id);
@@ -132,9 +130,10 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
   const upcoming = useMemo(() => upcomingDue(ds, period, 2), [ds, period]);
   const reminders = FEATURE_REMINDERS ? remindersForPeriod(ds, period) : [];
   const today = useActiveMonth();
-  const monthStart = useMonthStart();
-  // monat-verdichtet: the active month with „Fixkosten einplanen“ shows „Dein Monat“ instead of hero and tiles
-  const verdichtet = konto.enabled && period === today;
+  // alle-monate-gleich: with „Fixkosten einplanen“ EVERY month (past, active, future) shows „Dein Monat“ –
+  // no hero, no salary or Vermögensaufbau tile. Without it the month screen is unchanged.
+  const verdichtet = konto.enabled;
+  const isActive = period === today;
   const openGroups = useMemo(() => openFromPrevious(ds, period, today), [ds, period, today]);
   const openItem =
     openKey === null
@@ -234,11 +233,11 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           data-testid="month-verdichtet"
         >
           <div className="order-1 flex min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:gap-4">
-            <KontoCheckCard ds={ds} active={today} />
-            <DeinMonatCard ds={ds} active={today} onOpenSalary={() => openClose(null)} />
+            {isActive && <KontoCheckCard ds={ds} active={today} />}
+            <DeinMonatCard ds={ds} period={period} onOpenSalary={() => openClose(null)} />
           </div>
           <aside className="contents md:col-start-2 md:row-span-2 md:row-start-1 md:flex md:flex-col md:gap-6 md:self-start">
-            <BigMonthSlot ds={ds} active={today} className="order-3" />
+            {isActive && <BigMonthSlot ds={ds} active={today} className="order-3" />}
             <div className="order-5 mt-5 flex min-w-0 flex-col gap-6 md:mt-0">
               {FEATURE_REMINDERS && (
               <section aria-labelledby="reminders-title">
@@ -345,11 +344,8 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             <HeroCard
               period={period}
               figures={figures}
-              sources={konto.enabled ? costSources(ds, period) : null}
               openOnly={filtering}
               onToggleOpenOnly={() => setOpenOnlyFor(filtering ? null : period)}
-              active={today}
-              streak={konto.enabled && konto.setupDone && period === today ? streakBadge(streakOf(konto.checks, today)) : null}
             />
             {/* Bento: iPhone 2 × 2, from iPad 4 in a row; each tile: label, value, at most one subline */}
             {/* getöntes Glas: the four tiles share one blur surface (GlassGroup); their numbers share one
@@ -364,31 +360,26 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
                 ]),
               )}
             >
-            {/* „Fixkosten einplanen“ on (a month that is not the active one): Netto-Gehalt and Vermögensaufbau
-                (no „Ø pro Monat“, no „Frei verfügbar“); off: the four tiles as before */}
-            <GlassGroup className={`grid grid-cols-2 gap-3 md:gap-4 ${konto.enabled ? '' : 'md:grid-cols-4'}`}>
+            {/* without „Fixkosten einplanen“ only (with it every month shows „Dein Monat“): the four tiles */}
+            <GlassGroup className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
               <SalaryTile
                 ref={salaryTile}
                 view={salaryView(ds, period, monthStart)}
                 onOpen={() => openClose(salaryTile.current)}
               />
-              {!konto.enabled && (
-                <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
-                  <span data-testid="kpi-hint">
-                    davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
-                  </span>
-                </KpiTile>
-              )}
-              {!konto.enabled && (
-                <FreeTile
-                  ref={closeTile}
-                  period={period}
-                  calculated={figures.free}
-                  average={freeAfterFixedAvg(ds, period)}
-                  explanation={averageMonthExplanation(ds, period)}
-                  onOpen={() => openClose(closeTile.current)}
-                />
-              )}
+              <KpiTile label="Ø pro Monat" value={formatAvg(fixedCostsAvg(ds, period))}>
+                <span data-testid="kpi-hint">
+                  davon <Amount>{formatAvg(reserveNeeded(ds, period))}</Amount> nicht monatlich
+                </span>
+              </KpiTile>
+              <FreeTile
+                ref={closeTile}
+                period={period}
+                calculated={figures.free}
+                average={freeAfterFixedAvg(ds, period)}
+                explanation={averageMonthExplanation(ds, period)}
+                onOpen={() => openClose(closeTile.current)}
+              />
               <WealthTile wealth={figures.wealth} notFromNet={figures.wealthNotFromNet} rate={figures.savingsRate} />
             </GlassGroup>
             </TileFit.Provider>
@@ -682,22 +673,15 @@ function BigMonthSlot({ ds, active, className }: { ds: Dataset; active: Period; 
   return <BigMonthCard plan={plan} className={className} />;
 }
 
+/** The hero of a month without „Fixkosten einplanen“ (with it, every month shows „Dein Monat“). */
 function HeroCard({
   period,
   figures,
-  sources,
   openOnly,
   onToggleOpenOnly,
-  streak,
 }: {
   period: Period;
-  /** the active month (monat-feinschliff: every month celebrates once, see useCelebration) */
-  active: Period;
   figures: MonthFigures;
-  /** „{n} Monate in Folge“ (Fixkosten einplanen, from 2 on) */
-  streak: number | 'new' | null;
-  /** „Fixkosten einplanen“ on: what pays the Fixkosten (Rücklage, Direkt bezahlt); off: null */
-  sources: CostSources | null;
   openOnly: boolean;
   onToggleOpenOnly: () => void;
 }) {
@@ -730,7 +714,7 @@ function HeroCard({
       </span>
       {peas !== 'none' && <Confetti key={`${period}-${run}`} seed={period} falling={peas === 'falling'} />}
       {allPaid ? (
-        <HeroDone period={period} figures={figures} streak={streak} pop={peas === 'falling'} />
+        <HeroDone period={period} figures={figures} pop={peas === 'falling'} />
       ) : (
       <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7">
         <ProgressRing
@@ -780,17 +764,16 @@ function HeroCard({
         </div>
       </div>
       )}
-      <HeroDeductions figures={figures} sources={sources} allPaid={allPaid} />
+      <HeroDeductions figures={figures} />
     </div>
   );
 }
 
 /**
  * „{Monat} erledigt“: every position of the month is paid. A big check in a light brand circle (it pops
- * only together with the falling peas, it is not a button), title and subtitle, the amount big,
- * „{n} Monate in Folge“ from 2 on.
+ * only together with the falling peas, it is not a button), title and subtitle, the amount big.
  */
-function HeroDone({ period, figures, streak, pop }: { period: Period; figures: MonthFigures; streak: number | 'new' | null; pop: boolean }) {
+function HeroDone({ period, figures, pop }: { period: Period; figures: MonthFigures; pop: boolean }) {
   return (
     <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-7" data-testid="hero-done">
       <span
@@ -816,12 +799,6 @@ function HeroDone({ period, figures, streak, pop }: { period: Period; figures: M
           style={fitStyle(formatEUR(figures.paid))}
           testId="hero-paid"
         />
-        {typeof streak === 'number' && (
-          <span className="hero-chip mt-2 inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-[13px] font-semibold" data-testid="hero-streak">
-            <Pea size={10} />
-            {t('tile.streak', { n: streak })}
-          </span>
-        )}
       </div>
     </div>
   );
@@ -830,9 +807,9 @@ function HeroDone({ period, figures, streak, pop }: { period: Period; figures: M
 /**
  * „Abzüge vom Netto“ = Fixkosten + Vermögensaufbau vom Netto (monthFigures.deductions). Up to desktop a
  * row under ring and amount (the amount keeps the whole width); from 1280 px a column of fixed width on
- * the right, so the big number never shrinks for it. „Fixkosten einplanen“ on: „Woraus du bezahlst“.
+ * the right, so the big number never shrinks for it.
  */
-function HeroDeductions({ figures, sources, allPaid }: { figures: MonthFigures; sources: CostSources | null; allPaid: boolean }) {
+function HeroDeductions({ figures }: { figures: MonthFigures }) {
   const explanation = deductionsExplanation(figures);
   return (
     <div
@@ -861,50 +838,6 @@ function HeroDeductions({ figures, sources, allPaid }: { figures: MonthFigures; 
       <div className="num mt-0.5 text-[12px] leading-4 text-ink-mute lg:text-[13px]" data-testid="hero-deductions-breakdown">
         {explanation.breakdown}
       </div>
-      {sources && <HeroSources sources={sources} allPaid={allPaid} />}
-    </div>
-  );
-}
-
-/**
- * „Woraus du bezahlst“ („… bezahlt hast“ when everything is paid): a segmented bar of the shares (only
- * with two or more sources) and one row per source – dot, name, amount with cents. Only sources > 0;
- * the rows add up to the Fixkosten (costSources).
- */
-function HeroSources({ sources, allPaid }: { sources: CostSources; allPaid: boolean }) {
-  const rows = heroSourceRows(sources);
-  if (rows.length === 0) return null;
-  const total = rows.reduce((sum, r) => sum + r.value, 0);
-  return (
-    <div className="mt-4" data-testid="hero-sources" data-count={rows.length}>
-      <p className="text-[13px] font-medium text-ink-mute" data-testid="hero-sources-title">
-        {t(allPaid ? 'hero.src.title.done' : 'hero.src.title')}
-      </p>
-      {rows.length > 1 && (
-        <div className="mt-2 flex h-[10px] gap-[2px] overflow-hidden rounded-full" role="img" aria-label={rows.map((r) => `${r.label} ${formatEUR(r.value, { fixed: true })}`).join(', ')} data-testid="hero-sources-bar">
-          {rows.map((r) => (
-            <span
-              key={r.key}
-              className="h-full min-w-[4px]"
-              style={{ flexGrow: r.value / total, flexBasis: 0, backgroundColor: `rgb(var(--hero-src-${r.key}))` }}
-              data-testid={`hero-sources-bar-${r.key}`}
-            />
-          ))}
-        </div>
-      )}
-      <ul className="num mt-2 flex flex-col gap-1 text-[14px] leading-5">
-        {rows.map((r) => (
-          <li key={r.key} className="flex items-center justify-between gap-3" data-testid={`hero-source-${r.key}`}>
-            <span className="flex min-w-0 items-center gap-2 text-ink">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: `rgb(var(--hero-src-${r.key}))` }} aria-hidden="true" />
-              <span className="truncate">{r.label}</span>
-            </span>
-            <span className="whitespace-nowrap font-semibold text-ink" data-testid={`hero-source-${r.key}-value`}>
-              {formatEUR(r.value, { fixed: true })}
-            </span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
