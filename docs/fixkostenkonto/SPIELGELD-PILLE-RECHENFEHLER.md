@@ -90,7 +90,23 @@ Gelöscht ist auch die Pille selbst (Button `dein-monat-pill` in `DeinMonatCard.
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+Alle Läufe nach der letzten Code-Änderung (Commit `477772a`). Danach kamen nur Bericht und Screenshots.
+
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 1376 grün; `tsc` sauber |
+| E2E desktop | 560 grün (enthält die neue Spec in sechs Viewports hell/dunkel) |
+| E2E iphone-15 | 269 grün |
+| E2E iphone-pro-max | 241 grün |
+| E2E ipad-portrait | 257 grün |
+| E2E ipad-landscape | 245 grün (2. Lauf, siehe unten) |
+| Perf (Scrollen, Tabwechsel) | 3 grün |
+| Perf-Feier (iPhone 15, iPhone SE) | grün in 4 von 6 Läufen; die letzten 3 hintereinander grün |
+| WebKit (5 geänderte/neue Specs) | 83 grün |
+
+Ausreißer, ohne Code-Änderung wiederholt:
+- iPad quer: Der erste Gesamtlauf wurde am Zeitlimit der Umgebung abgebrochen, nicht wegen eines Fehlers. Der Neulauf war ganz grün.
+- Perf-Feier iPhone SE: zweimal 16,0 ms bei einer Grenze unter 16 ms. Derselbe Grenzfall stand schon im Bericht „Alle Monate gleich“. Drei Neuläufe: 14,3, 12,7 und 12,9 ms (normalisiert).
 
 ## Screenshots
 
@@ -98,7 +114,7 @@ TESTERGEBNISSE
 
 ## Merge
 
-MERGE
+Squash-Merge nach `main` nach grüner Gesamtsuite. Die Merge-SHA steht in der Abschlussmeldung des PRs.
 
 ## Hinweis Production-Deploy
 
