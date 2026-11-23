@@ -12,8 +12,10 @@
 //   custom „Eigener Plan“: like due, but a position with saving.mode 'spread' is saved up before it is
 //          due, in equal rates from its start month (default: the first salary) up to the month it is due
 // What is saved already (the expected balance of kontoState) is handed out to the next big payments in
-// date order: „€ Y schon angespart · {Monat} noch € Z“. When this month's deposit is in already, the open
-// bills of this month are taken from it first.
+// date order: „€ Y schon angespart · {Monat} noch € Z“. When this month's deposit is in already, the bills
+// of this month are taken from it first.
+// Ticks change nothing here (spielgeld-pille-rechenfehler): every bill counts, ticked or not, from the
+// balance of kontoBalance.planBalance.
 // Money in integer cents. Pure functions; only kontoState, dueItems and the salary parts are read.
 
 import type { KontoSettings, PlanMode } from '../db/settings';
@@ -86,7 +88,7 @@ export interface PlanMonth {
   extra: number;
   /** of T: the rates of payments saved up in this month (custom) */
   rates: number;
-  /** every bill of the account in this month (this month: only what is still open) */
+  /** every bill of the account in this month (ticked or not) */
   bills: number;
   /** the big payments due in this month with what they still need („inkl. € A für …“) */
   due: BigPayment[];
@@ -146,8 +148,8 @@ export interface MonthPlan {
   first: PlanMonth;
   /**
    * monat-ist-monat: the ACTIVE period with the chosen plan („Dein Monat“). Before this month's deposit it is
-   * `first`; after it, the same plan computed from the start of the active period (its deposit and what was
-   * paid from it since are taken back out of today's balance).
+   * `first`; after it, the same plan computed from the start of the active period (its deposit is taken back out
+   * of the plan's balance).
    */
   current: PlanMonth;
   /** no net salary entered at all */
@@ -190,12 +192,11 @@ function dayOf(date: string | undefined): number {
   return Number.isFinite(d) ? d : 32;
 }
 
-/** Every bill of the account in `period` (the active month: only the open ones), as in simulateKonto. */
-function billsOf(ds: Dataset, period: Period, openOnly: boolean, start: MonthStart = 1): Bill[] {
+/** Every bill of the account in `period`, ticked or not (as simulateKonto with countPaid). */
+function billsOf(ds: Dataset, period: Period, start: MonthStart = 1): Bill[] {
   const out: Bill[] = [];
   for (const i of dueItems(ds, period, start)) {
     if (!i.due || i.status === 'skipped' || !i.fromNet || !onKonto(ds, i.position, period)) continue;
-    if (openOnly && i.status !== 'open') continue;
     const amount = cents(i.status === 'paid' ? i.payment!.actualAmount : i.planned);
     if (amount === 0) continue;
     out.push({
@@ -210,7 +211,7 @@ function billsOf(ds: Dataset, period: Period, openOnly: boolean, start: MonthSta
     });
   }
   for (const o of ds.oneOffs) {
-    if (o.period !== period || !o.positionId || (openOnly && o.paidAt)) continue;
+    if (o.period !== period || !o.positionId) continue;
     const position = ds.positions.find((p) => p.id === o.positionId);
     if (!position || !onKonto(ds, position, period) || cents(o.amount) === 0) continue;
     out.push({ key: `${o.id}@${period}`, positionId: null, name: `${position.name}: ${o.label}`, amount: cents(o.amount), period, monthly: false, day: 32, sortOrder: position.sortOrder });
@@ -395,13 +396,18 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   const spielgeld = opts.spielgeld === undefined ? s.spielgeld : opts.spielgeld;
   const savings = opts.savings ?? storedSavings(ds);
   // the even plan is kontoState with the gap spread (lump only when no deposit is left before it)
-  const state = kontoState(ds, active, { ...s, gapMode: 'spread' }, start);
+  // spielgeld-pille-rechenfehler: the plan does not depend on what is ticked. Every bill counts in its month,
+  // ticked or not, from planBalance (kontoBalance): a tick used to take a bill off the balance while it still
+  // counted in its month – twice, so ① rose by what was saved for it
+  const state = kontoState(ds, active, { ...s, gapMode: 'spread' }, start, { planning: true });
   const first = state.next.period;
   const periods = Array.from({ length: PLAN_MONTHS }, (_, i) => addPeriods(first, i));
-  const bills = periods.map((p) => billsOf(ds, p, p === active, start));
-  // this month's deposit is in already: the open bills of this month are paid from the balance first
-  const openNow = first !== active ? billsOf(ds, active, true, start).reduce((a, b) => a + b.amount, 0) : 0;
-  const available = cents(state.balance) - openNow;
+  const bills = periods.map((p) => billsOf(ds, p, start));
+  const sum = (b: Bill[]) => b.reduce((a, x) => a + x.amount, 0);
+  const planBalance = cents(state.planBalance);
+  // this month's deposit is in already: the bills of this month are paid from the balance first
+  const nowBills = first !== active ? sum(billsOf(ds, active, start)) : 0;
+  const available = planBalance - nowBills;
   const step = roundStep(s);
   const run: Run = (m, sv) => core(ds, state, periods, bills, available, m, sv, step, start, spielgeld);
   const chosen = run(mode, savings);
@@ -411,12 +417,10 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   let current = chosen.months[0]!;
   if (first !== active) {
     const fromStart = Array.from({ length: PLAN_MONTHS }, (_, i) => addPeriods(active, i));
-    const allBills = fromStart.map((p) => billsOf(ds, p, false, start));
+    const allBills = fromStart.map((p) => billsOf(ds, p, start));
     const check = s.checks.find((c) => c.period === active && c.deposited);
     const deposit = cents(check?.amount ?? (check ? standingOrder(ds, active, step).amount : state.months[0]?.amount ?? state.order));
-    const sum = (b: Bill[]) => b.reduce((a, x) => a + x.amount, 0);
-    const paidSince = sum(allBills[0]!) - sum(billsOf(ds, active, true, start));
-    current = core(ds, state, fromStart, allBills, cents(state.balance) - deposit + paidSince, mode, savings, step, start, spielgeld).months[0]!;
+    current = core(ds, state, fromStart, allBills, planBalance - deposit, mode, savings, step, start, spielgeld).months[0]!;
   }
   const noSalary = chosen.months.some((m) => m.salary === null);
   const lowestFree = lowest(chosen.months);
@@ -467,7 +471,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   const simulation =
     mode === 'even'
       ? state.planSimulation
-      : simulateKonto(ds, active, { balance: state.balance, receivedThisMonth: first !== active, deposit: 0, deposits });
+      : simulateKonto(ds, active, { balance: state.planBalance, receivedThisMonth: first !== active, deposit: 0, deposits, countPaid: true });
 
   return {
     mode,

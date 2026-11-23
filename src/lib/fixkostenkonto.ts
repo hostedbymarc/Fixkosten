@@ -194,6 +194,11 @@ export interface KontoInput {
    * when its deposit already arrived.
    */
   deposits?: number[];
+  /**
+   * spielgeld-pille-rechenfehler: the active month counts every bill, ticked or not (the plan: `balance` is
+   * then kontoBalance.planBalance). Without it the active month only counts what is still open.
+   */
+  countPaid?: boolean;
 }
 
 export interface KontoDebit {
@@ -293,7 +298,8 @@ export function simulateKonto(ds: Dataset, active: Period, input: KontoInput, co
     const first = i === 0;
     const planned = input.deposits ? Math.max(toCents(input.deposits[i] ?? input.deposit), 0) : depositCents;
     const deposit = first && input.receivedThisMonth ? 0 : planned;
-    const debits = first ? d.openCents : d.allCents;
+    const openOnly = first && !input.countPaid;
+    const debits = openOnly ? d.openCents : d.allCents;
     const start = balance;
     balance = start + deposit - debits;
     allDebits += d.allCents;
@@ -306,7 +312,7 @@ export function simulateKonto(ds: Dataset, active: Period, input: KontoInput, co
       start: fromCents(start),
       deposit: fromCents(deposit),
       debits: fromCents(debits),
-      items: first ? d.openItems : d.allItems,
+      items: openOnly ? d.openItems : d.allItems,
       bills: fromCents(d.allCents),
       end: fromCents(balance),
     });
@@ -329,8 +335,8 @@ export interface KontoOverview {
   simulation: KontoSimulation;
 }
 
-export function kontoOverview(ds: Dataset, active: Period, settings: { balance: number; receivedFor: Period | null; rounding: RoundStep }): KontoOverview {
+export function kontoOverview(ds: Dataset, active: Period, settings: { balance: number; receivedFor: Period | null; rounding: RoundStep; countPaid?: boolean }): KontoOverview {
   const order = standingOrder(ds, active, settings.rounding);
-  const simulation = simulateKonto(ds, active, { balance: settings.balance, receivedThisMonth: settings.receivedFor === active, deposit: order.amount });
+  const simulation = simulateKonto(ds, active, { balance: settings.balance, receivedThisMonth: settings.receivedFor === active, deposit: order.amount, countPaid: settings.countPaid });
   return { order, simulation };
 }

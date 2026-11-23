@@ -89,12 +89,12 @@ describe('Listen unter den Zeilen', () => {
     expect(card.wealth.items.find((i) => i.name === 'Mieteinnahme')).toMatchObject({ muted: true, note: 'notFromNet' });
   });
 
-  it('④ mit Einmalbetrag an einer nicht eingeplanten Position und ohne Spielgeld: keine Pille', () => {
+  it('④ mit Einmalbetrag an einer nicht eingeplanten Position und ohne Spielgeld: kein Spielgeld-Status', () => {
     const data = goldenDataset();
     data.oneOffs.push({ id: 'o-1', positionId: 'g-konzert', period: P1, amount: 30, label: 'Garderobe' });
     const card = monthCard(data, P1, monthPlan(data, P1, goldenSettings({ spielgeld: null }), 25), 25, NOV10);
     expect(card.unplanned.total).toBe(150);
-    expect(card.pill).toBeNull();
+    expect(card.spielgeld).toBeNull();
   });
 });
 

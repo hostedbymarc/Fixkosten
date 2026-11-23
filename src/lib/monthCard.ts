@@ -9,7 +9,10 @@
 //   ④          Spielgeld: max(limit, spent); spent = positions „nicht eingeplant“ (and their one-offs) in the
 //              period; „aus anderer Quelle“ (fromNet false) is listed muted and does not count. No limit: spent
 //   Überschuss Netto − ① − ② − ③ − ④ · „Vor Spielgeld frei“ = Netto − ① − ② − ③
-//   Pill       spent against the limit: „€ spent von € Limit · € Rest übrig“ / „… € over drüber“
+//   Spielgeld  spent against the limit (the subline of ④; over it: „Spielgeld € X drüber“ under the Überschuss)
+//
+// spielgeld-pille-rechenfehler: ①–④, „Vor Spielgeld frei“ and the Überschuss do not depend on what is ticked.
+// A tick only changes the bills row and the confetti (monthPlan plans with every bill, see there).
 //
 // Every row has its items (name · amount · date); the sum of a row's counted items is the row's amount (①: a
 // line „Für später zur Seite“ / „Aus dem Angesparten“, ④: „Noch nicht ausgegeben“ bring the items to it).
@@ -48,10 +51,11 @@ export interface CardRow {
   items: CardItem[];
 }
 
-export interface SpielgeldPill {
+/** ④ against the Spielgeld limit: the subline of ④ and the line „Spielgeld € X drüber“. */
+export interface SpielgeldStatus {
   limit: number;
   used: number;
-  /** limit − used, ≥ 0: „übrig“ */
+  /** limit − used, ≥ 0: not spent yet */
   rest: number;
   /** used − limit, > 0: „drüber“ */
   over: number;
@@ -70,7 +74,7 @@ export interface MonthCard {
   /** „Überschuss in diesem Monat“ = beforeSpielgeld − ④; null without a salary */
   left: number | null;
   /** null: no Spielgeld set */
-  pill: SpielgeldPill | null;
+  spielgeld: SpielgeldStatus | null;
   /** the next salary (the line under the card) */
   next: { period: Period; title: string; when: string };
 }
@@ -166,7 +170,7 @@ export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: M
   if (notSpent > 0) unplanned.count -= 1;
   const net = salary.value;
   const before = net === null ? null : cents(net) - cents(reserve.total) - cents(direct.total) - cents(wealth.total);
-  const pill = limit === null ? null : { limit, used: euros(used), rest: euros(notSpent), over: euros(Math.max(used - cents(limit), 0)) };
+  const spielgeld = limit === null ? null : { limit, used: euros(used), rest: euros(notSpent), over: euros(Math.max(used - cents(limit), 0)) };
   const nextPeriod = addPeriods(active, 1);
   return {
     period: active,
@@ -177,7 +181,7 @@ export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: M
     unplanned,
     beforeSpielgeld: before === null ? null : euros(before),
     left: before === null ? null : euros(before - cents(unplanned.total)),
-    pill,
+    spielgeld,
     next: { period: nextPeriod, title: salaryName(nextPeriod, start), when: salaryWhen(nextPeriod, start, today) },
   };
 }

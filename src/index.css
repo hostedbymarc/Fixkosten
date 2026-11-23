@@ -590,12 +590,12 @@ body[data-sheets] #root .glass:is(.tone-butter, .tone-peach, .tone-sky, .tone-li
     background-color: rgb(var(--hero-chip-on-bg));
     color: rgb(var(--hero-chip-on-ink));
   }
-  /* monat-ist-monat: the Spielgeld pill when ④ is above the limit – the warn tokens (light and dark) */
+  /* the subline of ④ when it is above the limit – the warn tokens (light and dark) */
   .hero-chip.pill-over {
     background-color: rgb(var(--c-warn-soft));
     color: rgb(var(--c-warn));
   }
-  /* alle-monate-gleich: a negative „Überschuss“ – the big number in the card's warn ink */
+  /* a negative „Überschuss“ and the line „Spielgeld € X drüber“ – the card's warn ink */
   .hero-warn {
     color: rgb(var(--hero-warn));
   }

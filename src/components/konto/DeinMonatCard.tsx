@@ -21,7 +21,7 @@ import { openPlan } from '../../lib/planBus';
 import type { Dataset, Period } from '../../lib/types';
 import { useActiveMonth, useMonthStart } from '../../lib/useToday';
 import { fitStyle } from '../fitText';
-import { AlertIcon, CheckIcon, ChevronDown, ChevronRight } from '../Icons';
+import { CheckIcon, ChevronDown, ChevronRight } from '../Icons';
 import { AmountInput } from '../form';
 import { KontoSetup, useKontoEffects } from './KontoTile';
 
@@ -39,7 +39,7 @@ export function useMonthPlan(ds: Dataset, active: Period): MonthPlan {
  * „Dein Monat“ (alle-monate-gleich): ONE card for EVERY month – past, active, future – the same component in the
  * same order. The period of the month, paid by the salary that came at its start: Netto, ① to the
  * Fixkostenkonto (or set aside), ② paid directly, ③ Vermögensaufbau, ④ Spielgeld, then „Überschuss in diesem
- * Monat“ as the biggest number of the screen, the Spielgeld pill and, in the active month, the one action of the
+ * Monat“ as the biggest number of the screen, over the limit „Spielgeld € X drüber“ and, in the active month, the one action of the
  * month. The bills row and the confetti at the bottom. Under the card, in the active month only: the next
  * salary and „Plan ansehen“. Every number: monthCard() with the plan of the active month.
  */
@@ -86,13 +86,11 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
   const isActive = period === active;
   const current = plan.current;
   const account = plan.hasAccount;
-  const pill = useRef<HTMLButtonElement>(null);
   // the monthly transfer: an action of the active month only
   const check = isActive ? settings.checks.find((c) => c.period === active && c.deposited) : undefined;
   const canConfirm = isActive && !plan.state.monthDone;
-  const p = card.pill;
+  const p = card.spielgeld;
   const status = p === null ? 'none' : p.over > 0 ? 'over' : 'ok';
-  const open = (el: HTMLElement | null, editSpielgeld = false) => openPlan({ returnFocusTo: el, editSpielgeld });
   const [splitOpen, setSplitOpen] = useSplitOpen();
   const noSalary = card.salary.value === null;
 
@@ -179,31 +177,13 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
               <p className="num mt-0.5 text-[13px] leading-5 text-ink-mute" data-testid="dein-monat-before">
                 {t('month.before', { betrag: signed(card.beforeSpielgeld!) })}
               </p>
+              {/* only over the limit: a muted line in the warn token (spielgeld-pille-rechenfehler) */}
+              {p !== null && p.over > 0 && (
+                <p className="num hero-warn mt-0.5 text-[13px] leading-5" data-testid="dein-monat-over">
+                  {t('month.over', { betrag: money(p.over) })}
+                </p>
+              )}
             </div>
-            <button
-              ref={pill}
-              type="button"
-              onClick={() => open(pill.current, true)}
-              className="focus-ring -my-1 mt-2 inline-flex min-h-11 max-w-full items-center rounded-full"
-              data-testid="dein-monat-pill"
-              data-status={status}
-            >
-              <span className={`hero-chip num inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full px-3.5 py-1 text-left text-[14px] font-semibold leading-snug ${status === 'over' ? 'pill-over' : ''}`}>
-                {p === null ? (
-                  t('month.pill.none')
-                ) : p.over > 0 ? (
-                  <>
-                    <AlertIcon size={16} className="shrink-0" aria-hidden="true" />
-                    {t('month.pill.over', { betrag: money(p.used), limit: money(p.limit), over: money(p.over) })}
-                  </>
-                ) : (
-                  <>
-                    <CheckIcon size={16} strokeWidth={2.6} className="shrink-0" aria-hidden="true" />
-                    {t('month.pill.rest', { betrag: money(p.used), limit: money(p.limit), rest: money(p.rest) })}
-                  </>
-                )}
-              </span>
-            </button>
           </div>
         </>
       )}
@@ -267,7 +247,7 @@ const signed = (v: number) => (v < 0 ? `−${money(-v)}` : money(v));
 
 /** under ④: „€ 120,00 von € 300,00 ausgegeben“ / „€ 450,00 ausgegeben · € 150,00 drüber“ / „Kein Spielgeld festgelegt“ */
 function spielgeldSub(card: MonthCard): string {
-  const p = card.pill;
+  const p = card.spielgeld;
   if (p === null) return t('month.spielgeld.none');
   return p.over > 0 ? t('month.spielgeld.over', { betrag: money(p.used), over: money(p.over) }) : t('month.spielgeld.spent', { betrag: money(p.used), limit: money(p.limit) });
 }
@@ -376,7 +356,7 @@ function Row({ n, label, row, sub, subOver, testId }: { n: number; label: string
             <span className="block text-[15px] leading-6 text-ink">{label}</span>
             {sub &&
               (subOver ? (
-                // over the limit: the warn tokens (warn on warn-soft, as the pill)
+                // over the limit: the warn tokens (warn on warn-soft)
                 <span className="hero-chip pill-over mt-0.5 inline-block rounded-full px-2 text-[13px] font-medium leading-5" data-testid={`${testId}-sub`} data-over="">
                   {sub}
                 </span>
@@ -425,7 +405,7 @@ function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
 
 /**
  * „{x} von {n} Rechnungen bezahlt“ (a tap scrolls to the categories) or, when every bill is paid, a check,
- * „{Monat} erledigt“ and „Alle {n} Rechnungen bezahlt“ – after a line, under the pill.
+ * „{Monat} erledigt“ and „Alle {n} Rechnungen bezahlt“ – after a line, under the Überschuss.
  */
 function BillsLine({ ds, period }: { ds: Dataset; period: Period }) {
   const start = useMonthStart();

@@ -86,13 +86,13 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('next-salary-text')).toHaveText('November-Gehalt · kommt am 25.11.');
         await expect(card).not.toContainText('geschätzt');
 
-        // folded by default: salary, „Frei für dich“, pill; ① ② ③ hidden
+        // folded by default: salary, „Frei für dich“; ① ② ③ hidden; no pill (spielgeld-pille-rechenfehler)
         const toggle = page.getByTestId('dein-monat-split-toggle');
         await expect(toggle).toHaveText('So teilt sich dein Gehalt');
         await expect(toggle).toHaveAttribute('aria-expanded', 'false');
         await expect(page.getByTestId('dein-monat-transfer')).toBeHidden();
         await expect(page.getByTestId('dein-monat-free-value')).toBeVisible();
-        await expect(page.getByTestId('dein-monat-pill')).toBeVisible();
+        await expect(page.getByTestId('dein-monat-pill')).toHaveCount(0);
         await shot(page, `${tag}-november-zu`);
         await tap(toggle);
         await expect(toggle).toHaveAttribute('aria-expanded', 'true');
@@ -137,9 +137,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('dein-monat-salary-value')).toHaveText(/€\s8\.302,50/);
 
         // „Dein Plan“: the question above the switch, „Große Zahlungen“ only once, the table head
-        await tap(page.getByTestId('dein-monat-pill'));
+        await tap(page.getByTestId('next-salary'));
         await expect(page.getByTestId('plan-sheet')).toBeVisible();
-        // the pill opens the Spielgeld editable: Esc leaves the field, the sheet stays
+        await expect(page.getByTestId('bottom-sheet').last()).not.toHaveAttribute('data-animating', '');
+        // the Spielgeld editable: Esc leaves the field, the sheet stays
+        await page.getByTestId('plan-spielgeld-amount').scrollIntoViewIfNeeded();
+        await tap(page.getByTestId('plan-spielgeld-amount'));
         await expect(page.getByTestId('plan-spielgeld-input')).toBeFocused();
         await page.keyboard.press('Escape');
         await expect(page.getByTestId('plan-spielgeld-input')).toHaveCount(0);

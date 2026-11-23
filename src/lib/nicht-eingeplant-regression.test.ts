@@ -111,7 +111,8 @@ function figures(ds: Dataset, today: Period) {
     savingsCard: savingsCard(ds, today),
     savingsHistory: savingsHistory(ds, today),
     order: standingOrder(ds, today),
-    konto: state,
+    // spielgeld-pille-rechenfehler: planBalance is new (= balance without „planning“), not in the stored figures
+    konto: (({ planBalance, ...rest }) => (planBalance === rest.balance ? rest : { planBalance, ...rest }))(state),
     split: pick(split),
     next: pick(next),
   });

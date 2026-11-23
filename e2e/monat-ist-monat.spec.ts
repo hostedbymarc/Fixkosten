@@ -6,7 +6,7 @@ import { importLive, NOV_TODAY } from './live';
 // monat-ist-monat (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
 // - „Dein Monat“ shows the active period: the Oktober-Gehalt (paid 25 October) and ① – ④ of November
 // - every row opens its items; the counted items add up to the row
-// - a one-time payment „nicht eingeplant“: ④ (Spielgeld) and „Überschuss“ change at once, the Spielgeld pill turns to „drüber“;
+// - a one-time payment „nicht eingeplant“: ④ (Spielgeld) and „Überschuss“ change at once, under „Vor Spielgeld frei“ the line „Spielgeld € X drüber“;
 //   set to „Andere Quelle“ it no longer counts (listed muted)
 // - under the card: „November-Gehalt · kommt am 25.11. · Plan ansehen“ opens „Dein Plan“
 // - in the categories: „in diesem Monat € 450 statt € 480“ (Lebensmittel, debited less)
@@ -84,9 +84,11 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(plain(await page.getByTestId('next-salary-text').textContent())).toBe('November-Gehalt · kommt am 25.11.');
         await expect(page.getByTestId('next-salary')).toContainText('Plan ansehen');
 
-        // a Spielgeld of € 300 through the pill
-        await tap(page.getByTestId('dein-monat-pill'));
+        // a Spielgeld of € 300 through „Plan ansehen“ (spielgeld-pille-rechenfehler: no pill)
+        await tap(page.getByTestId('next-salary'));
         await sheetIn(page);
+        await page.getByTestId('plan-spielgeld-amount').scrollIntoViewIfNeeded();
+        await tap(page.getByTestId('plan-spielgeld-amount'));
         const input = page.getByTestId('plan-spielgeld-input');
         await expect(input).toBeFocused();
         await page.keyboard.press('ControlOrMeta+a');
@@ -94,7 +96,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('Enter');
         await expect(input).toHaveCount(0);
         await closePlan(page);
-        await expect(page.getByTestId('dein-monat-pill')).toHaveAttribute('data-status', 'ok');
+        await expect(page.getByTestId('dein-monat')).toHaveAttribute('data-state', 'ok');
+        await expect(page.getByTestId('dein-monat-pill')).toHaveCount(0);
+        await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
 
         // ① – ④: open, every list adds up to its row
         if ((await page.getByTestId('dein-monat-split-toggle').getAttribute('aria-expanded')) !== 'true') await tap(page.getByTestId('dein-monat-split-toggle'));
@@ -115,7 +119,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(spielgeld).toBeGreaterThanOrEqual(30000);
         await shot(page, `${tag}-01-zeilen-offen`, card);
 
-        // a one-time payment „nicht eingeplant“ of € 450 in November: ④ and Überschuss follow at once, the pill turns
+        // a one-time payment „nicht eingeplant“ of € 450 in November: ④ and Überschuss follow at once, the line „drüber“ appears
         await page.getByTestId('add-once').scrollIntoViewIfNeeded();
         await tap(page.getByTestId('add-once'));
         await sheetIn(page);
@@ -132,8 +136,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left - (45000 - spielgeld));
         await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveAttribute('data-over', '');
         expect(plain(await page.getByTestId('dein-monat-unplanned-sub').textContent())).toBe('€ 450,00 ausgegeben · € 150,00 drüber');
-        await expect(page.getByTestId('dein-monat-pill')).toHaveAttribute('data-status', 'over');
-        expect(plain(await page.getByTestId('dein-monat-pill').textContent())).toBe('Spielgeld: € 450,00 von € 300,00 · € 150,00 drüber');
+        // over the limit: one muted line in the warn token under „Vor Spielgeld frei“
+        expect(plain(await page.getByTestId('dein-monat-over').textContent())).toBe('Spielgeld € 150,00 drüber');
         await expect(card).toHaveAttribute('data-state', 'short');
         await expect(page.getByTestId('dein-monat-unplanned-list')).toContainText('Konzert');
         await expectListIsRow(page, 'dein-monat-unplanned');
@@ -152,7 +156,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('bottom-sheet')).toHaveCount(0);
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-unplanned-value'))).toBe(-spielgeld);
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left);
-        await expect(page.getByTestId('dein-monat-pill')).toHaveAttribute('data-status', 'ok');
+        await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
         await expect(page.getByTestId('dein-monat-unplanned-sub')).toContainText('von € 300,00 ausgegeben');
         await expect(page.getByTestId('dein-monat-unplanned-list').locator('[data-muted]')).toContainText('Konzert');
         await page.getByTestId('dein-monat').scrollIntoViewIfNeeded();

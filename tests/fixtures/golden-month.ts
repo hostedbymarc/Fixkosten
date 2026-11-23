@@ -104,3 +104,28 @@ export function goldenSettings(extra: Partial<KontoSettings> = {}): KontoSetting
     ...extra,
   });
 }
+
+// spielgeld-pille-rechenfehler: the golden scenario with cents in every period (invented as well):
+//   a direct position € 8,03 (②), a monthly Rücklage position € 18,36 (①), an annual Rücklage position
+//   € 123,45 due in January (①, before the Steuerberater), one-time payments „nicht eingeplant“ with cents in
+//   each period (④: € 12,49 in November, € 4,51 in December, € 23,99 in January). Saved already: € 500.
+export const CENT_SAVED = 500;
+
+export function goldenCentDataset(): Dataset {
+  const ds = goldenDataset();
+  order = 100;
+  ds.positions.push(
+    monthly('c-parken', 'Parkplatz', 'g-wohnen', 8.03, 7),
+    monthly('c-rundfunk', 'Rundfunk', 'g-ruecklage', 18.36, 15, 'fixkostenkonto'),
+    every('c-kammer', 'Kammerbeitrag', 123.45, 'annual', [1], 10),
+    once('c-kino', 'Kino', 12.49, '2026-11-20'),
+    once('c-kaffee', 'Kaffee', 4.51, '2026-12-12'),
+    once('c-buch', 'Buch', 23.99, '2027-01-05'),
+  );
+  return ds;
+}
+
+/** goldenSettings with € 500 saved already (anchor before every tick of the tests). */
+export function goldenCentSettings(extra: Partial<KontoSettings> = {}): KontoSettings {
+  return goldenSettings({ anchor: { amount: CENT_SAVED, at: '2026-10-20T08:00:00.000Z' }, ...extra });
+}
