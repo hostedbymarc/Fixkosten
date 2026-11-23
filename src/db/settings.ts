@@ -97,6 +97,10 @@ export interface KontoSettings {
   celebratedMonths: Period[];
   /** „Dein Plan“; null: not chosen – derived from gapMode (planModeOf) */
   planMode: PlanMode | null;
+  /** „Gehalt zum Planen“ (gehalt-zum-planen): the net salary of months without an entry; null = the last one entered */
+  planSalary: number | null;
+  /** the hint „Leg dein Gehalt zum Planen fest“ was tapped: it does not come back */
+  planSalaryHintSeen: boolean;
 }
 
 /** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
@@ -147,6 +151,8 @@ export const DEFAULT_KONTO: KontoSettings = {
   spielgeldOverflow: {},
   celebratedMonths: [],
   planMode: null,
+  planSalary: null,
+  planSalaryHintSeen: false,
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -214,16 +220,19 @@ export function toKontoSettings(value: unknown): KontoSettings {
       (p, i, all): p is Period => typeof p === 'string' && isPeriod(p) && all.indexOf(p) === i,
     ),
     planMode: PLAN_MODES.includes(v.planMode as PlanMode) ? (v.planMode as PlanMode) : null,
+    planSalary: money(v.planSalary) !== null && money(v.planSalary)! > 0 ? money(v.planSalary) : null,
+    planSalaryHintSeen: v.planSalaryHintSeen === true,
   };
 }
 
 /**
  * Never touched „Fixkosten einplanen“: no entry, or one that only remembers celebrated months
- * („{Monat} erledigt“ writes them for everyone) – the invitation card still shows.
+ * („{Monat} erledigt“ writes them for everyone) or „Gehalt zum Planen“ – the invitation card still shows.
  */
 export function kontoUntouched(stored: KontoSettings | null): boolean {
   if (stored === null) return true;
-  return JSON.stringify(storedKonto({ ...stored, celebratedMonths: [] })) === JSON.stringify(storedKonto(DEFAULT_KONTO));
+  // „Gehalt zum Planen“ is a setting of its own (Einstellungen → Gehalt): it does not count as touched either
+  return JSON.stringify(storedKonto({ ...stored, celebratedMonths: [], planSalary: null, planSalaryHintSeen: false })) === JSON.stringify(storedKonto(DEFAULT_KONTO));
 }
 
 const isRounding = (v: unknown) => v === 1 || v === 5 || v === 10;
@@ -265,6 +274,8 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (Object.keys(s.spielgeldOverflow).length) out.spielgeldOverflow = s.spielgeldOverflow;
   if (s.celebratedMonths.length) out.celebratedMonths = s.celebratedMonths;
   if (s.planMode) out.planMode = s.planMode;
+  if (s.planSalary !== null) out.planSalary = s.planSalary;
+  if (s.planSalaryHintSeen) out.planSalaryHintSeen = true;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;

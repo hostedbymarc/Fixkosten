@@ -136,6 +136,24 @@ describe('Golden Test „Dein Monat“ in jedem Monat (Monatsbeginn 25, heute 10
     expect(card.unplanned.total).toBe(300);
   });
 
+  // gehalt-zum-planen: January has no entry. With „Gehalt zum Planen“ € 3.500 it counts with 3.500 instead of the
+  // last salary entered (4.000): Netto 3.500 − ① 600 − ② 2.318 − ③ 350 = 232 vor Spielgeld; − ④ 300 = −68.
+  // „Dein Plan“: the same 3.500, marked „geplant“; January is € 68 short of the Spielgeld.
+  it('künftiger Monat ohne Eintrag mit „Gehalt zum Planen“ € 3.500', () => {
+    const planned = monthPlan(ds, ACTIVE, goldenSettings({ planSalary: 3500 }), 25);
+    const jan = monthCard(ds, P3, planned, 25, TODAY);
+    expect([jan.salary.title, jan.salary.value, jan.salary.fallback, jan.salary.source]).toEqual(['Dezember-Gehalt', 3500, true, 'plan']);
+    expect([jan.reserve.total, jan.direct.total, jan.wealth.total, jan.unplanned.total]).toEqual([600, 2318, 350, 300]);
+    expect(jan.beforeSpielgeld).toBe(232);
+    expect(jan.left).toBe(-68);
+    const month = planned.months.find((m) => m.period === P3)!;
+    expect([month.salary, month.estimated, month.free, month.short]).toEqual([3500, true, 232, true]);
+    expect(planned.shortfall).toEqual({ period: P3, amount: 68 });
+    // the months with an entry keep it: December stays at 4.000 and its numbers
+    const dec = monthCard(ds, P2, planned, 25, TODAY);
+    expect([dec.salary.value, dec.salary.fallback, dec.left]).toEqual([SALARY, false, 427]);
+  });
+
   it('Positionen-Ø: monatliche + halbjährlich/12 + jährlich/12, ohne Einmalzahlungen und späteren Start', () => {
     // 2.318 direct + 360·2/12 + 600/12 = 2.428 (November); December has Strom € 95
     expect(fixedCostsAvg(ds, P1)).toBe(2428);

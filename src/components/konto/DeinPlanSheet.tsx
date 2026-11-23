@@ -109,6 +109,14 @@ function Answer({ plan }: { plan: MonthPlan }) {
       </div>
     );
   }
+  // gehalt-zum-planen: not even € 0 Spielgeld fits → which month and how much is missing, no button
+  if (a.max <= 0 && plan.shortfall)
+    return (
+      <p className="num flex items-start gap-2 text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="short">
+        <AlertIcon size={22} className="mt-0.5 shrink-0 text-over" aria-hidden="true" />
+        {t('plan2.short', { monat: monthName(plan.shortfall.period), betrag: money(plan.shortfall.amount) })}
+      </p>
+    );
   return (
     <div className="flex flex-col gap-3" data-testid="plan-answer" data-kind="max">
       <p className="num flex items-start gap-2 text-[19px] font-semibold leading-snug text-ink">
@@ -241,6 +249,8 @@ function ModeSwitch({ plan }: { plan: MonthPlan }) {
 function Salaries({ plan }: { plan: MonthPlan }) {
   const [all, setAll] = useState(false);
   const rows = all ? plan.months : plan.months.slice(0, 4);
+  // the salary planned for months without an entry („Gehalt zum Planen“, else the last one entered)
+  const planned = plan.months.find((m) => m.estimated && m.salary !== null)?.salary ?? undefined;
   return (
     <div className="flex flex-col gap-2" data-testid="plan-salaries">
       <p className="text-[13px] font-medium text-ink-mute">{t('plan2.table')}</p>
@@ -255,7 +265,14 @@ function Salaries({ plan }: { plan: MonthPlan }) {
         <tbody className="divide-y divide-line">
           {rows.map((m) => (
             <tr key={m.period} data-testid="plan-salary-row" data-period={m.period} data-short={m.short || undefined}>
-              <td className="py-2 text-ink">{monthName(m.period)}</td>
+              <td className="py-2 text-ink">
+                {monthName(m.period)}
+                {m.estimated && m.salary !== null && (
+                  <span className="ml-1.5 text-[13px] text-ink-mute" data-testid="plan-salary-planned">
+                    {t('plan2.table.planned')}
+                  </span>
+                )}
+              </td>
               <td className="py-2 text-right text-ink-soft">{money(m.transfer)}</td>
               <td className={`py-2 text-right font-semibold ${m.short ? 'text-over' : 'text-ink'}`}>
                 {m.short && <AlertIcon size={14} className="mr-1 inline-block align-[-2px]" aria-label={t('plan2.table.short')} />}
@@ -265,6 +282,11 @@ function Salaries({ plan }: { plan: MonthPlan }) {
           ))}
         </tbody>
       </table>
+      {planned !== undefined && (
+        <p className="num px-1 text-[13px] leading-5 text-ink-mute" data-testid="plan-planned-note">
+          {t('plan2.planned', { betrag: money(planned) })}
+        </p>
+      )}
       <button type="button" onClick={() => setAll(!all)} className="focus-ring h-11 self-start rounded-xl px-2 text-[14px] font-medium text-accent-ink hover:bg-accent-soft" aria-expanded={all} data-testid="plan-salaries-more">
         {t(all ? 'plan2.table.less' : 'plan2.table.more')}
       </button>

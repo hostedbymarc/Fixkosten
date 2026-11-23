@@ -6,7 +6,7 @@ import { importLive, NOV_TODAY } from './live';
 // alle-monate-gleich (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
 // - Oktober (past), November (active), Dezember (future): the same card „Dein Monat“, the same DOM structure;
 //   no hero, no salary tile, no Vermögensaufbau tile in any month
-// - head: „September-Gehalt · ausgezahlt am 25. September“ / … / „November-Gehalt · kommt am 25. November“
+// - head: „September-Gehalt · ausgezahlt am 25. September“ / … / „November-Gehalt · geplant · kommt am 25.11.“
 // - „Nächstes Gehalt … Plan ansehen“ and „Nächster großer Monat“ only in the active month; one line on the iPhone SE
 // - ④ „Spielgeld“ = max(limit, spent), „Überschuss in diesem Monat“ = Netto − ① − ② − ③ − ④
 // - salary entered in December: the Überschuss follows at once
@@ -136,7 +136,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const HEAD = {
           Oktober: ['September-Gehalt', 'ausgezahlt am 25. September', 'past'],
           November: ['Oktober-Gehalt', 'ausgezahlt am 25. Oktober', 'active'],
-          Dezember: ['November-Gehalt', 'kommt am 25. November', 'future'],
+          // gehalt-zum-planen: no entry for December → the planned salary, „geplant · kommt am …“
+          Dezember: ['November-Gehalt', 'geplant · kommt am 25.11.', 'future'],
         } as const;
         for (const month of ['Oktober', 'November', 'Dezember'] as const) {
           await toMonth(page, month, tap);

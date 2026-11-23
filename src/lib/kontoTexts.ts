@@ -101,6 +101,10 @@ export const KONTO_TEXTS = {
   'settings.spielgeld': 'Spielgeld pro Monat',
   'settings.spielgeld.info': 'Dein geplantes Spielgeld. Erbse prüft, ob es neben der Rücklage passt.',
   'settings.spielgeld.hint': 'Leer lassen, wenn du kein Spielgeld planst.',
+  'settings.salary.title': 'Gehalt',
+  'settings.planSalary': 'Gehalt zum Planen',
+  'settings.planSalary.info': 'Dein normales Netto ohne Sonderzahlungen. Lieber vorsichtig.',
+  'settings.planSalary.hint': 'Gilt für Monate ohne eingetragenes Gehalt.',
 
   // · So teilt sich dein Gehalt (statt „Frei verfügbar“, nur mit Fixkosten einplanen)
   'analyse.order.until': '{betrag} bis {monat}, danach {basis}',
@@ -146,6 +150,9 @@ export const KONTO_TEXTS = {
   'month.incl.save': 'inkl. {betrag} für {monat} · {zahlungen}',
   'month.split': 'So teilt sich dein Gehalt',
   'month.salary.edit': 'Gehalt ändern',
+  'month.salary.remove': 'Gehalt entfernen',
+  'month.salary.planned': 'geplant · {wann}',
+  'month.planSalary.hint': 'Leg dein Gehalt zum Planen fest',
   'month.direct': 'Direkt bezahlt',
   'month.direct.more': '{n} Posten',
   'month.wealth': 'Vermögensaufbau',
@@ -190,7 +197,7 @@ export const KONTO_TEXTS = {
   // · Nächster großer Monat
   'big.title': 'Nächster großer Monat',
   'big.ready': 'Mit deinem Plan bist du vorbereitet.',
-  'big.prepare': 'Plane vor: {vorschlag}',
+  'big.short': 'Geht sich nicht aus. Dir fehlen {betrag}.',
 
   // · Sheet „Dein Plan“
   'plan2.title': 'Dein Plan',
@@ -201,6 +208,7 @@ export const KONTO_TEXTS = {
   'plan2.apply': 'Übernehmen',
   'plan2.max': 'Geht nicht ganz. Höchstens {betrag} Spielgeld sind möglich.',
   'plan2.max.apply': 'Spielgeld auf {betrag} setzen',
+  'plan2.short': '{monat} geht sich nicht aus. Dir fehlen {betrag}.',
   'plan2.none': 'Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan.',
   'plan2.noSalary': 'Trag dein Gehalt ein. Dann rechnet Erbse deinen Plan.',
   'plan2.spielgeld': 'Dein Spielgeld',
@@ -221,6 +229,8 @@ export const KONTO_TEXTS = {
   'plan2.table.short': 'weniger als dein Spielgeld',
   'plan2.table.more': 'Alle 12 Monate',
   'plan2.table.less': 'Nur 4 Monate',
+  'plan2.table.planned': 'geplant',
+  'plan2.planned': 'Ohne Eintrag geplant mit {betrag}.',
   'plan2.payments': 'Große Zahlungen',
   'plan2.payments.empty': 'In den nächsten 12 Monaten kommt keine große Zahlung.',
   'plan2.pay.due': 'im {monat} zahlen',
