@@ -10,7 +10,9 @@
 //          minus what is already saved for them (no Sicherheitspuffer: the money is used when it is due)
 //   even   „Gleichmäßig“: the amount of kontoState (12-month standing order, extra, Sicherheitspuffer)
 //   custom „Eigener Plan“: like due, but a position with saving.mode 'spread' is saved up before it is
-//          due, in equal rates from its start month (default: the first salary) up to the month it is due
+//          due, in equal rates from its start month (default: the first salary) up to the month it is due;
+//          one with saving.mode 'once' (komplett-ansparen) comes from ONE salary – all of it, or a part and
+//          the rest when it is due. Its due month takes it „aus Rücklage“.
 // What is saved already (the expected balance of kontoState) is handed out to the next big payments in
 // date order: „€ Y schon angespart · {Monat} noch € Z“. When this month's deposit is in already, the bills
 // of this month are taken from it first.
@@ -62,8 +64,8 @@ export interface BigPayment {
   amount: number;
   /** the month it is due */
   period: Period;
-  /** due: paid in its month · spread: saved up in rates before · even: in the even amount */
-  mode: 'due' | 'spread' | 'even';
+  /** due: paid in its month · spread: saved up in rates before · once: from one salary · even: in the even amount */
+  mode: 'due' | 'spread' | 'once' | 'even';
   /** spread: first month of the rates */
   start: Period | null;
   /** spread: number of rates (up to and including the due month) */
@@ -74,6 +76,31 @@ export interface BigPayment {
   saved: number;
   /** what is still needed in its month (due) or by its month (spread): amount − saved */
   rest: number;
+  /** once: the period whose salary carries it („vom {Monat}-Gehalt“) */
+  salaryMonth: Period | null;
+  /** once: what that salary carries (≤ rest) */
+  fromSalary: number;
+  /** once: a part was chosen („Teilbetrag“), not all of it */
+  partial: boolean;
+  /** what goes to the account for it in its own month (due: rest, once: rest − fromSalary, spread: the last rate) */
+  atDue: number;
+}
+
+/**
+ * komplett-ansparen: one line of ① in a month of the plan. `due`: a bill due this month („{Name} · fällig
+ * {Monat}“) with what this salary still carries and what was saved for it before; `for`: money set aside for a
+ * later payment („{Name} · für {Monat}“).
+ */
+export interface ReserveLine {
+  key: string;
+  name: string;
+  kind: 'due' | 'for';
+  /** the month the bill is due */
+  period: Period;
+  /** what this month's salary carries for it */
+  amount: number;
+  /** due: saved for it before („€ X schon angespart“) */
+  saved: number;
 }
 
 export interface PlanMonth {
@@ -101,6 +128,10 @@ export interface PlanMonth {
   free: number | null;
   /** F below the planned Spielgeld */
   short: boolean;
+  /** the lines of ① (custom and due; null with „Gleichmäßig“): their sum plus rounding is `transfer` */
+  lines: ReserveLine[] | null;
+  /** of the bills due this month: what was saved before („€ X aus Rücklage“) */
+  fromReserve: number;
 }
 
 export interface Proposal {
@@ -132,6 +163,8 @@ export interface BigMonth {
   top: BigPayment[];
   /** the chosen plan keeps the Spielgeld in that month */
   ready: boolean;
+  /** komplett-ansparen: every big payment of it is saved up before it („✓ Schon angespart“) */
+  saved: boolean;
 }
 
 export interface MonthPlan {
@@ -290,14 +323,26 @@ function core(
     const s = saved.get(b.key) ?? 0;
     const need = b.amount - s;
     const setting = b.positionId ? savings[b.positionId] : undefined;
-    const pmode: BigPayment['mode'] = mode === 'even' ? 'even' : mode === 'custom' && setting?.mode === 'spread' ? 'spread' : 'due';
+    const prevDue = b.positionId ? lastDue.get(b.positionId) : undefined;
+    // once: the occurrence its salary saves for (the first one due from that salary on); later ones when due
+    const onceHere = setting?.mode === 'once' && !!setting.salaryMonth && setting.salaryMonth <= b.period && (!prevDue || setting.salaryMonth > prevDue);
+    const pmode: BigPayment['mode'] =
+      mode === 'even' ? 'even' : mode === 'custom' && setting?.mode === 'spread' ? 'spread' : mode === 'custom' && onceHere ? 'once' : 'due';
     let startP: Period | null = null;
     let rates = 0;
     let rate = 0;
+    let salaryP: Period | null = null;
+    let fromSalary = 0;
+    if (pmode === 'once') {
+      const wanted = setting!.salaryMonth!;
+      salaryP = wanted < first ? first : wanted;
+      fromSalary = need <= 0 ? 0 : setting!.amount === undefined ? need : Math.min(Math.max(Math.round(setting!.amount), 0), need);
+      const at = index.get(salaryP);
+      if (at !== undefined) rateCents[at] = rateCents[at]! + fromSalary;
+    }
     if (pmode === 'spread' && need > 0) {
       // the first occurrence from its start month, every later one from the month after the one before
-      const prev = b.positionId ? lastDue.get(b.positionId) : undefined;
-      const wanted = prev ? addPeriods(prev, 1) : (setting?.startMonth ?? first);
+      const wanted = prevDue ? addPeriods(prevDue, 1) : (setting?.startMonth ?? first);
       startP = wanted < first ? first : wanted > b.period ? b.period : wanted;
       const from = index.get(startP) ?? 0;
       const to = index.get(b.period) ?? 0;
@@ -319,6 +364,10 @@ function core(
       rate: euros(rate),
       saved: euros(s),
       rest: euros(need),
+      salaryMonth: salaryP,
+      fromSalary: euros(fromSalary),
+      partial: pmode === 'once' && setting!.amount !== undefined,
+      atDue: euros(pmode === 'once' ? need - fromSalary : pmode === 'spread' ? (rates > 0 ? rate : 0) : Math.max(need, 0)),
     };
   });
   const months: PlanMonth[] = [];
@@ -342,13 +391,36 @@ function core(
     } else {
       // the monthly bills, the big ones paid when due (what is not saved yet), the rates of this month
       const monthly = own.filter((b) => b.monthly).reduce((a, b) => a + b.amount, 0);
-      const dueRest = duePays.filter((p) => p.mode === 'due').reduce((a, p) => a + cents(p.rest), 0);
+      const dueRest = duePays.filter((p) => p.mode === 'due' || p.mode === 'once').reduce((a, p) => a + cents(p.atDue), 0);
       transfer = roundUp(monthly + dueRest + rateCents[i]!, step);
     }
     transfers.push(transfer);
     const { salary, estimated } = salaryOf(ds, period, planSalary);
     const parts = salaryParts(ds, period, start);
     const free = salary === null ? null : euros(cents(salary) - transfer - cents(parts.direct) - cents(parts.wealth));
+    // ① line by line (not with „Gleichmäßig“: its standing order is not made of single bills)
+    let lines: ReserveLine[] | null = null;
+    let fromReserve = 0;
+    if (mode !== 'even') {
+      lines = [];
+      for (const b of [...own].sort(byDate)) {
+        const pay = b.monthly ? undefined : duePays.find((p) => p.key === b.key);
+        const amount = pay ? cents(pay.atDue) : b.amount;
+        const saved = b.amount - amount;
+        fromReserve += saved;
+        lines.push({ key: b.key, name: b.name, kind: 'due', period, amount: euros(amount), saved: euros(saved) });
+      }
+      for (const p of payments) {
+        if (p.period <= period) continue;
+        const here =
+          p.mode === 'once' && p.salaryMonth === period
+            ? cents(p.fromSalary)
+            : p.mode === 'spread' && p.start !== null && p.start <= period && p.rates > 0
+              ? cents(p.rate)
+              : 0;
+        if (here > 0) lines.push({ key: `${p.key}>${period}`, name: p.name, kind: 'for', period: p.period, amount: euros(here), saved: 0 });
+      }
+    }
     months.push({
       period,
       payday: periodStartDate(period, start),
@@ -364,6 +436,8 @@ function core(
       wealth: parts.wealth,
       free,
       short: free !== null && spielgeld !== null && cents(free) < cents(spielgeld),
+      lines,
+      fromReserve: euros(fromReserve),
     });
   }
   return { months, payments, transfers };
@@ -477,19 +551,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     }
   }
 
-  // „Nächster großer Monat“: the first month whose bills are 25 % above the average of the 12
-  const totals = chosen.months.map((m) => cents(m.bills));
-  const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
-  const bigIndex = avg > 0 ? totals.findIndex((t) => t >= avg * BIG_MONTH_FACTOR) : -1;
-  const bigMonth: BigMonth | null =
-    bigIndex < 0
-      ? null
-      : {
-          period: periods[bigIndex]!,
-          total: euros(totals[bigIndex]!),
-          top: [...chosen.months[bigIndex]!.due].sort((a, b) => b.amount - a.amount).slice(0, 2),
-          ready: spielgeld === null ? chosen.months[bigIndex]!.free === null || chosen.months[bigIndex]!.free! >= 0 : !chosen.months[bigIndex]!.short && fits !== false,
-        };
+  const bigMonth = bigMonthOf(chosen.months, first, spielgeld, fits);
 
   // the balance with the plan: deposits from the active month on (this month's is in already: none)
   const deposits = [first === active ? chosen.transfers[0]! : 0, ...chosen.transfers.slice(first === active ? 1 : 0)].map(euros);
@@ -522,6 +584,34 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
 }
 
 /**
+ * „Nächster großer Monat“: from `from` on (komplett-ansparen: the month shown, the active one or a later one), the
+ * first month whose bills are 25 % above the average of the 12 months of the plan. null: none (or beyond the plan).
+ */
+function bigMonthOf(months: PlanMonth[], from: Period, spielgeld: number | null, fits: boolean | null): BigMonth | null {
+  const totals = months.map((m) => cents(m.bills));
+  const avg = totals.reduce((a, b) => a + b, 0) / totals.length;
+  if (!(avg > 0)) return null;
+  const i = months.findIndex((m, k) => m.period >= from && totals[k]! >= avg * BIG_MONTH_FACTOR);
+  if (i < 0) return null;
+  const month = months[i]!;
+  const due = month.due;
+  return {
+    period: month.period,
+    total: euros(totals[i]!),
+    top: [...due].sort((a, b) => b.amount - a.amount).slice(0, 2),
+    ready: spielgeld === null ? month.free === null || month.free >= 0 : !month.short && fits !== false,
+    saved: due.length > 0 && due.every((p) => cents(p.atDue) === 0),
+  };
+}
+
+/** „Nächster großer Monat“ for the month shown (`period`): from it on; none for a month before the active one. */
+export function bigMonthFrom(plan: MonthPlan, period: Period): BigMonth | null {
+  if (period < plan.current.period) return null;
+  if (period <= plan.first.period) return plan.bigMonth;
+  return bigMonthOf(plan.months, period, plan.spielgeld, plan.fits);
+}
+
+/**
  * „inkl. …“ under ① (monat-feinschliff): what of T this salary carries beyond its monthly bills, and for whom.
  * - Gleichmäßig: the extra (or the one-time amount) – for the month the money is short and its big payments
  *   („inkl. € 326,81 für Februar · Steuerberater, Öffis“)
@@ -550,13 +640,15 @@ export function inclLine(plan: MonthPlan): InclLine | null {
     return { amount, month, names: names.length ? names : state.gapBills.map((b) => b.name) };
   }
   if (first.rates > 0) {
-    const saving = plan.payments.filter((p) => p.mode === 'spread' && p.rates > 0 && p.start !== null && p.start <= first.period && p.period >= first.period);
+    const saving = plan.payments.filter(
+      (p) => (p.mode === 'spread' && p.rates > 0 && p.start !== null && p.start <= first.period && p.period >= first.period) || (p.mode === 'once' && p.salaryMonth === first.period && p.fromSalary > 0),
+    );
     const month = saving.reduce<Period | null>((m, p) => (m === null || p.period < m ? p.period : m), null);
     return { amount: first.rates, month, names: saving.filter((p) => p.period === month).map((p) => p.name) };
   }
-  const due = first.due.filter((p) => p.mode === 'due' && p.rest > 0);
+  const due = first.due.filter((p) => (p.mode === 'due' || p.mode === 'once') && p.atDue > 0);
   if (due.length === 0) return null;
-  return { amount: Math.round(due.reduce((a, p) => a + p.rest, 0) * 100) / 100, month: null, names: due.map((p) => p.name) };
+  return { amount: Math.round(due.reduce((a, p) => a + p.atDue, 0) * 100) / 100, month: null, names: due.map((p) => p.name) };
 }
 
 /**

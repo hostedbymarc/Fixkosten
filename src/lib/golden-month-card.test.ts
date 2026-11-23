@@ -154,6 +154,35 @@ describe('Golden Test „Dein Monat“ in jedem Monat (Monatsbeginn 25, heute 10
     expect([dec.salary.value, dec.salary.fallback, dec.left]).toEqual([SALARY, false, 427]);
   });
 
+  // komplett-ansparen: an annual payment € 240 due in March (active + 3), all of it from the active salary
+  // (November-Gehalt, period December). December ① 360 + 240 = 600 → Überschuss 427 − 240 = 187. March ① 0
+  // („Kfz-Steuer · fällig März € 0,00 (€ 240,00 schon angespart)“, „€ 240,00 aus Rücklage“) → Überschuss
+  // 762 + 240 = 1.002. January and February stay as they are.
+  it('Zahlung im Monat +3 komplett vom aktiven Gehalt: ① aktiv + Betrag, Fälligkeitsmonat ohne Betrag', () => {
+    const steuer = { id: 'k-steuer', name: 'Kfz-Steuer', categoryId: 'g-ruecklage', history: [{ validFrom: '2026-01', amount: 240, frequency: 'annual' as const, dueMonths: [3], dueDay: 10 }], createdAt: '2026-01-01T08:00:00.000Z', sortOrder: 50, account: 'fixkostenkonto' as const };
+    const base = { ...ds, positions: [...ds.positions, steuer] };
+    const saved = { ...ds, positions: [...ds.positions, { ...steuer, saving: { mode: 'once' as const, salaryMonth: ACTIVE } }] };
+    const MAR = '2027-03';
+    const before = monthPlan(base, ACTIVE, goldenSettings(), 25);
+    const after = monthPlan(saved, ACTIVE, goldenSettings({ planMode: 'custom' }), 25);
+    const card = (d: typeof ds, plan: typeof before, p: Period) => monthCard(d, p, plan, 25, TODAY);
+    expect([card(base, before, ACTIVE).reserve.total, card(base, before, ACTIVE).left]).toEqual([360, 427]);
+    expect([card(base, before, MAR).reserve.total, card(base, before, MAR).left]).toEqual([240, 762]);
+    const dec = card(saved, after, ACTIVE);
+    expect([dec.reserve.total, dec.beforeSpielgeld, dec.left, dec.fromReserve]).toEqual([600, 717, 187, 0]);
+    expect(dec.reserve.items.map((i) => [i.name, i.amount, i.plan?.kind, i.plan?.period])).toEqual([
+      ['Kfz-Versicherung', 360, 'due', ACTIVE],
+      ['Kfz-Steuer', 240, 'for', MAR],
+    ]);
+    const mar = card(saved, after, MAR);
+    expect([mar.reserve.total, mar.beforeSpielgeld, mar.left, mar.fromReserve]).toEqual([0, 1302, 1002, 240]);
+    expect(mar.reserve.items.map((i) => [i.name, i.amount, i.plan?.kind, i.plan?.saved])).toEqual([['Kfz-Steuer', 0, 'due', 240]]);
+    for (const p of [P3, '2027-02']) expect(card(saved, after, p).left).toBe(card(base, before, p).left);
+    // „Dein Plan“ says the same
+    expect(after.months.find((m) => m.period === ACTIVE)!.transfer).toBe(600);
+    expect(after.months.find((m) => m.period === MAR)!.transfer).toBe(0);
+  });
+
   it('Positionen-Ø: monatliche + halbjährlich/12 + jährlich/12, ohne Einmalzahlungen und späteren Start', () => {
     // 2.318 direct + 360·2/12 + 600/12 = 2.428 (November); December has Strom € 95
     expect(fixedCostsAvg(ds, P1)).toBe(2428);

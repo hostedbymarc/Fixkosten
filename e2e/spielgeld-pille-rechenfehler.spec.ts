@@ -111,8 +111,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           // ② with its cents: the Parkplatz € 8,03 is in every month
           await expect(page.getByTestId('dein-monat-direct-value'), month).toHaveText(/,\d3$/);
           if (month === 'Dezember') {
-            // € 150 of € 100: the subline of ④ in the warn chip, the line under „Vor Spielgeld frei“
-            expect(plain(await page.getByTestId('dein-monat-unplanned-sub').textContent())).toBe('€ 150,00 ausgegeben · € 50,00 drüber');
+            // € 150 of € 100: no subline under ④ (komplett-ansparen), the line under „Vor Spielgeld frei“ stays
+            await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
             await expect(page.getByTestId('dein-monat-over')).toHaveText(/^Spielgeld €\s50,00 drüber$/);
             await expect(page.getByTestId('dein-monat-over')).toHaveClass(/hero-warn/);
             const [before, over] = await Promise.all([page.getByTestId('dein-monat-before').boundingBox(), page.getByTestId('dein-monat-over').boundingBox()]);

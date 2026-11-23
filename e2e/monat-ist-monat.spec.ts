@@ -134,8 +134,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('bottom-sheet')).toHaveCount(0);
         await expect(page.getByTestId('dein-monat-unplanned-value')).toHaveText(/450,00/);
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left - (45000 - spielgeld));
-        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveAttribute('data-over', '');
-        expect(plain(await page.getByTestId('dein-monat-unplanned-sub').textContent())).toBe('€ 450,00 ausgegeben · € 150,00 drüber');
+        // komplett-ansparen: no subline under ④
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
         // over the limit: one muted line in the warn token under „Vor Spielgeld frei“
         expect(plain(await page.getByTestId('dein-monat-over').textContent())).toBe('Spielgeld € 150,00 drüber');
         await expect(card).toHaveAttribute('data-state', 'short');
@@ -157,7 +157,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-unplanned-value'))).toBe(-spielgeld);
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(left);
         await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
-        await expect(page.getByTestId('dein-monat-unplanned-sub')).toContainText('von € 300,00 ausgegeben');
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
         await expect(page.getByTestId('dein-monat-unplanned-list').locator('[data-muted]')).toContainText('Konzert');
         await page.getByTestId('dein-monat').scrollIntoViewIfNeeded();
         await shot(page, `${tag}-03-andere-quelle`, card);

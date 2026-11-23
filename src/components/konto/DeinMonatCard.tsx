@@ -9,7 +9,7 @@ import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib
 import { t } from '../../lib/kontoTexts';
 import { dayLabel } from '../../lib/kontoWords';
 import { inclLine, monthPlan, type MonthPlan } from '../../lib/monthPlan';
-import { monthCard, type CardItem, type CardRow, type MonthCard } from '../../lib/monthCard';
+import { monthCard, type CardItem, type CardRow } from '../../lib/monthCard';
 import { monthFigures } from '../../lib/calc';
 import { monthDone } from '../../lib/celebration';
 import { reducedMotion } from '../../lib/entrance';
@@ -153,6 +153,7 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
                 row={card.reserve}
                 testId="dein-monat-transfer"
                 sub={isActive && current.period === plan.first.period ? inclText(plan) : undefined}
+                note={card.fromReserve > 0 ? t('month.fromReserve', { betrag: money(card.fromReserve) }) : undefined}
               />
               <Row n={2} label={t('month.direct')} row={card.direct} testId="dein-monat-direct" sub={card.direct.count > 0 ? t('month.direct.more', { n: card.direct.count }) : undefined} />
               <Row
@@ -162,7 +163,8 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
                 testId="dein-monat-wealth"
                 sub={card.wealth.notFromNet > 0 ? t('month.wealth.notFromNet', { betrag: money(card.wealth.notFromNet) }) : undefined}
               />
-              <Row n={4} label={t('month.unplanned')} row={card.unplanned} testId="dein-monat-unplanned" sub={spielgeldSub(card)} subOver={p !== null && p.over > 0} />
+              {/* komplett-ansparen: ④ only title and amount; over the limit: the line under „Vor Spielgeld frei“ */}
+              <Row n={4} label={t('month.unplanned')} row={card.unplanned} testId="dein-monat-unplanned" />
             </ol>
           </div>
           <div className="mt-2 border-t border-edge pt-3">
@@ -246,13 +248,6 @@ function NextSalaryLine({ ds, active }: { ds: Dataset; active: Period }) {
 }
 
 const signed = (v: number) => (v < 0 ? `−${money(-v)}` : money(v));
-
-/** under ④: „€ 120,00 von € 300,00 ausgegeben“ / „€ 450,00 ausgegeben · € 150,00 drüber“ / „Kein Spielgeld festgelegt“ */
-function spielgeldSub(card: MonthCard): string {
-  const p = card.spielgeld;
-  if (p === null) return t('month.spielgeld.none');
-  return p.over > 0 ? t('month.spielgeld.over', { betrag: money(p.used), over: money(p.over) }) : t('month.spielgeld.spent', { betrag: money(p.used), limit: money(p.limit) });
-}
 
 /** „inkl. € 326,81 für Februar · Steuerberater, Öffis“ / „inkl. € 262,00 Baurechtszins“ (monthPlan.inclLine) */
 function inclText(plan: MonthPlan): string | undefined {
@@ -397,7 +392,7 @@ function useSplitOpen(): [boolean, (open: boolean) => Promise<void>] {
 const shortDate = (d: string | null) => (d ? `${Number(d.slice(8, 10))}.${Number(d.slice(5, 7))}.` : '');
 
 /** One row ① – ④: a tap opens its items (name · amount · date); the counted items add up to the row. */
-function Row({ n, label, row, sub, subOver, testId }: { n: number; label: string; row: CardRow; sub?: string; subOver?: boolean; testId: string }) {
+function Row({ n, label, row, sub, subOver, note, testId }: { n: number; label: string; row: CardRow; sub?: string; subOver?: boolean; note?: string; testId: string }) {
   const [open, setOpen] = useState(false);
   const listId = `${testId}-list`;
   return (
@@ -427,6 +422,11 @@ function Row({ n, label, row, sub, subOver, testId }: { n: number; label: string
                   {sub}
                 </span>
               ))}
+            {note && (
+              <span className="num block text-[13px] leading-5 text-ink-mute" data-testid={`${testId}-note`}>
+                {note}
+              </span>
+            )}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-1">
@@ -452,6 +452,24 @@ function Row({ n, label, row, sub, subOver, testId }: { n: number; label: string
 function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
   const name = item.balance === 'save' ? t('month.list.save') : item.balance === 'take' ? t('month.list.take') : item.balance === 'rest' ? t('month.list.rest') : item.name;
   const note = item.note === 'notFromNet' ? t('month.list.notFromNet') : item.note === 'other' ? t('month.list.other') : null;
+  if (item.plan)
+    return (
+      <li className="flex items-baseline justify-between gap-3 py-1 text-[13px] leading-5 text-ink-soft" data-testid={`${testId}-item`} data-kind={item.plan.kind} data-period={item.plan.period}>
+        <span className="min-w-0">
+          <span className="break-words" data-testid={`${testId}-item-name`}>{name}</span>
+          <span className="text-ink-mute"> · {t(item.plan.kind === 'due' ? 'month.list.due' : 'month.list.for', { monat: monthName(item.plan.period) })}</span>
+          {item.plan.saved > 0 && (
+            <span className="num text-ink-mute" data-testid={`${testId}-item-saved`}>
+              {' '}
+              {t('month.list.saved', { betrag: money(item.plan.saved) })}
+            </span>
+          )}
+        </span>
+        <span className="num shrink-0 whitespace-nowrap font-medium" data-testid={`${testId}-item-amount`}>
+          {money(item.amount)}
+        </span>
+      </li>
+    );
   return (
     <li className={`flex items-baseline justify-between gap-3 py-1 text-[13px] leading-5 ${item.muted ? 'text-ink-mute' : 'text-ink-soft'}`} data-testid={`${testId}-item`} data-muted={item.muted || undefined}>
       <span className="min-w-0">

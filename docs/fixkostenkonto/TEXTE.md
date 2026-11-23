@@ -130,12 +130,13 @@
 | Dein Monat | `month.free` | Überschuss in diesem Monat | 4 |
 | Dein Monat | `month.before` | Vor Spielgeld frei: {betrag} | 4 |
 | Dein Monat | `month.unplanned` | Spielgeld | 1 |
-| Dein Monat | `month.spielgeld.spent` | {betrag} von {limit} ausgegeben | 4 |
-| Dein Monat | `month.spielgeld.over` | {betrag} ausgegeben · {over} drüber | 4 |
-| Dein Monat | `month.spielgeld.none` | Kein Spielgeld festgelegt | 3 |
 | Dein Monat | `month.over` | Spielgeld {betrag} drüber | 3 |
 | Dein Monat | `month.wealth.notFromNet` | {betrag} nicht vom Netto | 4 |
 | Dein Monat | `month.list.save` | Für später zur Seite | 4 |
+| Dein Monat | `month.list.due` | fällig {monat} | 2 |
+| Dein Monat | `month.list.for` | für {monat} | 2 |
+| Dein Monat | `month.list.saved` | ({betrag} schon angespart) | 3 |
+| Dein Monat | `month.fromReserve` | {betrag} aus Rücklage | 3 |
 | Dein Monat | `month.list.take` | Aus dem Angesparten | 3 |
 | Dein Monat | `month.list.rest` | Noch nicht ausgegeben | 3 |
 | Dein Monat | `month.list.empty` | Nichts in diesem Monat | 4 |
@@ -165,6 +166,7 @@
 | Nächster großer Monat | `big.title` | Nächster großer Monat | 3 |
 | Nächster großer Monat | `big.ready` | Mit deinem Plan bist du vorbereitet. | 6 |
 | Nächster großer Monat | `big.short` | Geht sich nicht aus. Dir fehlen {betrag}. | 4 · 3 |
+| Nächster großer Monat | `big.saved` | Schon angespart | 2 |
 | Sheet „Dein Plan“ | `plan2.title` | Dein Plan | 2 |
 | Sheet „Dein Plan“ | `plan2.ok` | Passt so. Dein Spielgeld bleibt jeden Monat übrig. | 2 · 6 |
 | Sheet „Dein Plan“ | `plan2.save` | Passt, wenn du ansparst. | 4 |
@@ -201,6 +203,12 @@
 | Sheet „Dein Plan“ | `plan2.pay.due` | im {monat} zahlen | 3 |
 | Sheet „Dein Plan“ | `plan2.pay.spread` | vorher ansparen: {n} × {betrag} ab {monat} | 6 |
 | Sheet „Dein Plan“ | `plan2.pay.even` | gleichmäßig angespart | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.once` | komplett vom {gehalt} | 3 |
+| Sheet „Dein Plan“ | `plan2.pay.oncePart` | {betrag} vom {gehalt}, Rest bei Fälligkeit | 6 |
+| Sheet „Dein Plan“ | `plan2.pay.onceAll` | Komplett vom | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.oncePartLabel` | Teilbetrag vom | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.salary` | Von welchem Gehalt? | 3 |
+| Sheet „Dein Plan“ | `plan2.pay.partAmount` | Teilbetrag | 1 |
 | Sheet „Dein Plan“ | `plan2.pay.saved` | {betrag} schon angespart · {monat} noch {rest} | 6 |
 | Sheet „Dein Plan“ | `plan2.pay.savedAll` | {betrag} schon angespart | 3 |
 | Sheet „Dein Plan“ | `plan2.pay.edit` | ändern | 1 |
