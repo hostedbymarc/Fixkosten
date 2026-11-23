@@ -194,7 +194,7 @@ export function App() {
     cleaned.current = true;
     void cleanCelebrated(db, active);
   }, [active]);
-    // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
+  // at most 8 blur surfaces per screen, the visible ones first (src/lib/glassBudget.ts)
   useEffect(() => startGlassBudget(), []);
   // once per app start: the Analyse tab, built hidden
   useEffect(() => {
