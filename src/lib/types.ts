@@ -76,16 +76,21 @@ export interface Position {
 /**
  * „im {Monat} zahlen“ (due), „vorher ansparen“ (spread, in equal rates from startMonth up to the month it is due)
  * or „vom {Monat}-Gehalt“ (once, komplett-ansparen: from the salary of salaryMonth – all of it, or `amount`
- * and the rest when it is due)
+ * and the rest when it is due) or „Aufteilen: vom {Monat}- bis {Monat}-Gehalt“ (range, plan-optionen: equal
+ * rates from the salary of fromSalaryMonth to the one of toSalaryMonth, the cent rest on the first rate)
  */
 export interface SavingSetting {
-  mode: 'due' | 'spread' | 'once';
+  mode: 'due' | 'spread' | 'once' | 'range';
   /** spread: first month of the rates; missing = the next salary */
   startMonth?: Period;
   /** once: the period whose salary carries it */
   salaryMonth?: Period;
   /** once: a part only, in integer cents („Teilbetrag“); missing = all of it („Komplett“) */
   amount?: number;
+  /** range: the first salary that carries a rate */
+  fromSalaryMonth?: Period;
+  /** range: the last salary that carries a rate (at the latest the month it is due) */
+  toSalaryMonth?: Period;
 }
 
 export type PaymentStatus = 'paid' | 'skipped';

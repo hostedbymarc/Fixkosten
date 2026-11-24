@@ -669,8 +669,9 @@ const heroShown: { period: Period | null } = { period: null };
 function BigMonthSlot({ ds, active, period, className }: { ds: Dataset; active: Period; period: Period; className?: string }) {
   const { settings } = useKonto();
   const plan = useMonthPlan(ds, active);
+  const start = useMonthStart();
   if (!settings.setupDone) return null;
-  return <BigMonthCard plan={plan} period={period} className={className} />;
+  return <BigMonthCard ds={ds} plan={plan} period={period} start={start} className={className} />;
 }
 
 /** The hero of a month without „Fixkosten einplanen“ (with it, every month shows „Dein Monat“). */

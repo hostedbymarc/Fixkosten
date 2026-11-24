@@ -193,16 +193,23 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('Enter');
         await expect(sg).toHaveCount(0);
         const answer = page.getByTestId('plan-answer');
+        // plan-optionen: red names the first month that misses its fixed costs, with month and year
         await expect(answer).toHaveAttribute('data-kind', 'short');
-        await expect(answer).toHaveText(/^[A-ZÄÖÜ][a-zäöü]+ geht sich nicht aus\. Dir fehlen €\s[\d.]+,\d{2}\.$/);
+        await expect(answer).toHaveText(/^[A-ZÄÖÜ][a-zäöü]+ \d{4} geht sich nicht aus\. Dir fehlen €\s[\d.]+,\d{2}\.$/);
         await expect(page.getByTestId('plan-set-max')).toHaveCount(0);
-        const missing = (await textOf(answer)).match(/€ [\d.]+,\d{2}/)![0];
         await answer.scrollIntoViewIfNeeded();
         await page.screenshot({ path: `${DIR}/${tag}-plan-fehlt.jpg`, type: 'jpeg', quality: 78 });
         await closePlan(page);
+        // „Nächster großer Monat“: the same two steps for its month alone – as its row in „Dein Plan“
         const big = page.getByTestId('big-month');
-        await expect(big).toHaveAttribute('data-ready', 'false');
-        expect(await textOf(big.getByTestId('big-month-status'))).toBe(`Geht sich nicht aus. Dir fehlen ${missing}.`);
+        const bigPeriod = (await big.getAttribute('data-period'))!;
+        const bigLevel = (await big.getAttribute('data-level'))!;
+        await expect(big).toHaveAttribute('data-ready', String(bigLevel === 'ok'));
+        if (bigLevel === 'short') expect(await textOf(big.getByTestId('big-month-status'))).toMatch(/^Geht sich nicht aus\. Dir fehlen €\s[\d.]+,\d{2}\.$/);
+        await openPlan(page, tap);
+        await tap(page.getByTestId('plan-salaries-more'));
+        await expect(page.locator(`[data-testid=plan-salary-row][data-period="${bigPeriod}"]`)).toHaveAttribute('data-level', bigLevel);
+        await closePlan(page);
       });
     });
   }

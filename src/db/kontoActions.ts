@@ -185,3 +185,8 @@ export async function markPlanSalaryHintSeen(db: FixkostenDB): Promise<void> {
 export async function setSpielgeld(db: FixkostenDB, amount: number | null): Promise<void> {
   await writeKonto(db, { spielgeld: amount !== null && amount > 0 ? Math.round(amount * 100) / 100 : null });
 }
+
+/** plan-optionen: „Überschuss als Polster mitnehmen“ in „Dein Plan“. */
+export async function setCushion(db: FixkostenDB, on: boolean): Promise<void> {
+  await writeKonto(db, { cushion: on });
+}

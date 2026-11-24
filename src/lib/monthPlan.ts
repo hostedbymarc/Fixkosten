@@ -13,6 +13,8 @@
 //          due, in equal rates from its start month (default: the first salary) up to the month it is due;
 //          one with saving.mode 'once' (komplett-ansparen) comes from ONE salary – all of it, or a part and
 //          the rest when it is due. Its due month takes it „aus Rücklage“.
+//          One with saving.mode 'range' (plan-optionen) is split in equal rates over the salaries from
+//          fromSalaryMonth to toSalaryMonth, the cent rest on the first rate.
 // What is saved already (the expected balance of kontoState) is handed out to the next big payments in
 // date order: „€ Y schon angespart · {Monat} noch € Z“. When this month's deposit is in already, the bills
 // of this month are taken from it first.
@@ -64,14 +66,18 @@ export interface BigPayment {
   amount: number;
   /** the month it is due */
   period: Period;
-  /** due: paid in its month · spread: saved up in rates before · once: from one salary · even: in the even amount */
-  mode: 'due' | 'spread' | 'once' | 'even';
-  /** spread: first month of the rates */
+  /** due: paid in its month · spread: saved up in rates before · once: from one salary · range: split over chosen salaries · even: in the even amount */
+  mode: 'due' | 'spread' | 'once' | 'range' | 'even';
+  /** spread, range: first month of the rates */
   start: Period | null;
-  /** spread: number of rates (up to and including the due month) */
+  /** range: last month of the rates; spread: the month it is due */
+  end: Period | null;
+  /** spread: number of rates (up to and including the due month); range: of the chosen salaries */
   rates: number;
-  /** spread: one rate (rounded up to the cent) */
+  /** spread: one rate (rounded up to the cent); range: every rate but the first */
   rate: number;
+  /** range: the first rate (it carries the cent rest); spread: = rate */
+  firstRate: number;
   /** already saved for it (from today's balance, in date order) */
   saved: number;
   /** what is still needed in its month (due) or by its month (spread): amount − saved */
@@ -82,7 +88,7 @@ export interface BigPayment {
   fromSalary: number;
   /** once: a part was chosen („Teilbetrag“), not all of it */
   partial: boolean;
-  /** what goes to the account for it in its own month (due: rest, once: rest − fromSalary, spread: the last rate) */
+  /** what goes to the account for it in its own month (due: rest, once: rest − fromSalary, spread: the last rate, range: its rate in that month or 0) */
   atDue: number;
 }
 
@@ -326,11 +332,23 @@ function core(
     const prevDue = b.positionId ? lastDue.get(b.positionId) : undefined;
     // once: the occurrence its salary saves for (the first one due from that salary on); later ones when due
     const onceHere = setting?.mode === 'once' && !!setting.salaryMonth && setting.salaryMonth <= b.period && (!prevDue || setting.salaryMonth > prevDue);
+    // range (plan-optionen): likewise the first occurrence due from its first salary on
+    const rangeHere = setting?.mode === 'range' && !!setting.fromSalaryMonth && setting.fromSalaryMonth <= b.period && (!prevDue || setting.fromSalaryMonth > prevDue);
     const pmode: BigPayment['mode'] =
-      mode === 'even' ? 'even' : mode === 'custom' && setting?.mode === 'spread' ? 'spread' : mode === 'custom' && onceHere ? 'once' : 'due';
+      mode === 'even'
+        ? 'even'
+        : mode === 'custom' && setting?.mode === 'spread'
+          ? 'spread'
+          : mode === 'custom' && onceHere
+            ? 'once'
+            : mode === 'custom' && rangeHere
+              ? 'range'
+              : 'due';
     let startP: Period | null = null;
+    let endP: Period | null = null;
     let rates = 0;
     let rate = 0;
+    let firstRate = 0;
     let salaryP: Period | null = null;
     let fromSalary = 0;
     if (pmode === 'once') {
@@ -349,7 +367,22 @@ function core(
       rates = to - from + 1;
       const r = Math.ceil(need / rates - 1e-9);
       rate = r;
+      firstRate = r;
+      endP = b.period;
       for (let i = from; i <= to; i++) rateCents[i] = rateCents[i]! + r;
+    }
+    if (pmode === 'range' && need > 0) {
+      // equal rates over the chosen salaries (within the plan, up to the month it is due), the cent rest first
+      const wantFrom = setting!.fromSalaryMonth!;
+      startP = wantFrom < first ? first : wantFrom;
+      const wantTo = setting!.toSalaryMonth ?? b.period;
+      endP = wantTo > b.period ? b.period : wantTo < startP ? startP : wantTo;
+      const from = index.get(startP) ?? 0;
+      const to = index.get(endP) ?? from;
+      rates = to - from + 1;
+      rate = Math.floor(need / rates);
+      firstRate = need - rate * (rates - 1);
+      for (let i = from; i <= to; i++) rateCents[i] = rateCents[i]! + (i === from ? firstRate : rate);
     }
     if (b.positionId) lastDue.set(b.positionId, b.period);
     return {
@@ -360,14 +393,30 @@ function core(
       period: b.period,
       mode: pmode,
       start: startP,
+      end: endP,
       rates,
       rate: euros(rate),
+      firstRate: euros(firstRate),
       saved: euros(s),
       rest: euros(need),
       salaryMonth: salaryP,
       fromSalary: euros(fromSalary),
       partial: pmode === 'once' && setting!.amount !== undefined,
-      atDue: euros(pmode === 'once' ? need - fromSalary : pmode === 'spread' ? (rates > 0 ? rate : 0) : Math.max(need, 0)),
+      atDue: euros(
+        pmode === 'once'
+          ? need - fromSalary
+          : pmode === 'spread'
+            ? rates > 0
+              ? rate
+              : 0
+            : pmode === 'range'
+              ? rates > 0 && endP === b.period
+                ? rates === 1
+                  ? firstRate
+                  : rate
+                : 0
+              : Math.max(need, 0),
+      ),
     };
   });
   const months: PlanMonth[] = [];
@@ -417,7 +466,9 @@ function core(
             ? cents(p.fromSalary)
             : p.mode === 'spread' && p.start !== null && p.start <= period && p.rates > 0
               ? cents(p.rate)
-              : 0;
+              : p.mode === 'range' && p.start !== null && p.end !== null && p.start <= period && period <= p.end && p.rates > 0
+                ? cents(p.start === period ? p.firstRate : p.rate)
+                : 0;
         if (here > 0) lines.push({ key: `${p.key}>${period}`, name: p.name, kind: 'for', period: p.period, amount: euros(here), saved: 0 });
       }
     }
@@ -641,7 +692,10 @@ export function inclLine(plan: MonthPlan): InclLine | null {
   }
   if (first.rates > 0) {
     const saving = plan.payments.filter(
-      (p) => (p.mode === 'spread' && p.rates > 0 && p.start !== null && p.start <= first.period && p.period >= first.period) || (p.mode === 'once' && p.salaryMonth === first.period && p.fromSalary > 0),
+      (p) =>
+        (p.mode === 'spread' && p.rates > 0 && p.start !== null && p.start <= first.period && p.period >= first.period) ||
+        (p.mode === 'range' && p.rates > 0 && p.start !== null && p.end !== null && p.start <= first.period && first.period <= p.end) ||
+        (p.mode === 'once' && p.salaryMonth === first.period && p.fromSalary > 0),
     );
     const month = saving.reduce<Period | null>((m, p) => (m === null || p.period < m ? p.period : m), null);
     return { amount: first.rates, month, names: saving.filter((p) => p.period === month).map((p) => p.name) };

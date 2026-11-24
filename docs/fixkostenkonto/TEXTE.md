@@ -167,6 +167,7 @@
 | Nächster großer Monat | `big.ready` | Mit deinem Plan bist du vorbereitet. | 6 |
 | Nächster großer Monat | `big.short` | Geht sich nicht aus. Dir fehlen {betrag}. | 4 · 3 |
 | Nächster großer Monat | `big.saved` | Schon angespart | 2 |
+| Nächster großer Monat | `big.spielgeld` | Dein Gehalt zum Planen reicht nicht fürs volle Spielgeld. | 9 |
 | Sheet „Dein Plan“ | `plan2.title` | Dein Plan | 2 |
 | Sheet „Dein Plan“ | `plan2.ok` | Passt so. Dein Spielgeld bleibt jeden Monat übrig. | 2 · 6 |
 | Sheet „Dein Plan“ | `plan2.save` | Passt, wenn du ansparst. | 4 |
@@ -176,6 +177,11 @@
 | Sheet „Dein Plan“ | `plan2.max` | Geht nicht ganz. Höchstens {betrag} Spielgeld sind möglich. | 3 · 5 |
 | Sheet „Dein Plan“ | `plan2.max.apply` | Spielgeld auf {betrag} setzen | 4 |
 | Sheet „Dein Plan“ | `plan2.short` | {monat} geht sich nicht aus. Dir fehlen {betrag}. | 5 · 3 |
+| Sheet „Dein Plan“ | `plan2.spielgeldShort` | Ab {monat} reicht dein Gehalt zum Planen nicht fürs volle Spielgeld. | 11 |
+| Sheet „Dein Plan“ | `plan2.cushion.until` | Dein Polster reicht bis {monat}. | 5 |
+| Sheet „Dein Plan“ | `plan2.cushion.all` | Reicht für alle 12 Monate. | 5 |
+| Sheet „Dein Plan“ | `plan2.cushion` | Überschuss als Polster mitnehmen | 4 |
+| Sheet „Dein Plan“ | `plan2.cushion.info` | Nur einschalten, wenn du Überschüsse liegen lässt. | 7 |
 | Sheet „Dein Plan“ | `plan2.none` | Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.spielgeld` | Dein Spielgeld | 2 |
@@ -192,8 +198,11 @@
 | Sheet „Dein Plan“ | `plan2.table.month` | Monat | 1 |
 | Sheet „Dein Plan“ | `plan2.table.transfer` | aufs Konto | 2 |
 | Sheet „Dein Plan“ | `plan2.table.aside` | zur Seite | 2 |
-| Sheet „Dein Plan“ | `plan2.table.free` | frei für dich | 3 |
+| Sheet „Dein Plan“ | `plan2.table.left` | Überschuss | 1 |
+| Sheet „Dein Plan“ | `plan2.table.cushion` | Polster | 1 |
 | Sheet „Dein Plan“ | `plan2.table.short` | weniger als dein Spielgeld | 4 |
+| Sheet „Dein Plan“ | `plan2.table.miss` | Geht sich nicht aus | 4 |
+| Sheet „Dein Plan“ | `plan2.table.jump` | Zu {monat} springen | 3 |
 | Sheet „Dein Plan“ | `plan2.table.more` | Alle 12 Monate | 3 |
 | Sheet „Dein Plan“ | `plan2.table.less` | Nur 4 Monate | 3 |
 | Sheet „Dein Plan“ | `plan2.table.planned` | geplant | 1 |
@@ -209,12 +218,18 @@
 | Sheet „Dein Plan“ | `plan2.pay.oncePartLabel` | Teilbetrag vom | 2 |
 | Sheet „Dein Plan“ | `plan2.pay.salary` | Von welchem Gehalt? | 3 |
 | Sheet „Dein Plan“ | `plan2.pay.partAmount` | Teilbetrag | 1 |
+| Sheet „Dein Plan“ | `plan2.pay.range` | aufgeteilt vom {von}- bis {bis}-Gehalt | 5 |
+| Sheet „Dein Plan“ | `plan2.pay.rangeLabel` | Aufteilen: vom | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.rangeTo` | bis | 1 |
+| Sheet „Dein Plan“ | `plan2.pay.rangeFrom` | Erstes Gehalt | 2 |
+| Sheet „Dein Plan“ | `plan2.pay.rangeLast` | Letztes Gehalt | 2 |
+| Sheet „Dein Plan“ | `plan2.preview` | Überschuss vorher → nachher | 3 |
+| Sheet „Dein Plan“ | `plan2.preview.none` | Kein Monat ändert sich. | 4 |
 | Sheet „Dein Plan“ | `plan2.pay.saved` | {betrag} schon angespart · {monat} noch {rest} | 6 |
 | Sheet „Dein Plan“ | `plan2.pay.savedAll` | {betrag} schon angespart | 3 |
 | Sheet „Dein Plan“ | `plan2.pay.edit` | ändern | 1 |
 | Sheet „Dein Plan“ | `plan2.pay.when` | Wie zahlst du {zahlung}? | 4 |
 | Sheet „Dein Plan“ | `plan2.pay.from` | Ansparen ab | 2 |
-| Sheet „Dein Plan“ | `plan2.pay.ready` | Fertig | 1 |
 | Gehalt (Auszahlungsmonat) | `salary.name` | {monat}-Gehalt | 1 |
 | Gehalt (Auszahlungsmonat) | `salary.paid` | ausgezahlt am {datum} | 3 |
 | Gehalt (Auszahlungsmonat) | `salary.comes` | kommt am {datum} | 3 |

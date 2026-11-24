@@ -236,7 +236,17 @@ export function App() {
           </main>
           <TabBar route={route} />
           {ds && <WalkthroughHost ds={ds} active={active} />}
-          {ds && <PlanHost ds={ds} active={active} />}
+          {ds && (
+            <PlanHost
+              ds={ds}
+              active={active}
+              onJump={(p) => {
+                setPeriod(p);
+                if (route !== 'monat') window.location.hash = '#monat';
+                else window.scrollTo({ top: 0 });
+              }}
+            />
+          )}
         </div>
       </ToastProvider>
     </ActiveMonthContext.Provider>

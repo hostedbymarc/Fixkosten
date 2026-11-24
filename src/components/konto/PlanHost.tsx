@@ -6,7 +6,8 @@ import type { Dataset, Period } from '../../lib/types';
 import { DeinPlanSheet } from './DeinPlanSheet';
 
 /** The one place „Dein Plan“ lives: opened via openPlan() (card, big month, settings, after the setup). */
-export function PlanHost({ ds, active }: { ds: Dataset; active: Period }) {
+/** `onJump` (plan-optionen): a row of „Deine nächsten Gehälter“ closes the sheet and shows its month. */
+export function PlanHost({ ds, active, onJump }: { ds: Dataset; active: Period; onJump: (period: Period) => void }) {
   const { settings } = useKonto();
   const [open, setOpen] = useState<OpenPlan | null>(null);
   useEffect(
@@ -25,6 +26,10 @@ export function PlanHost({ ds, active }: { ds: Dataset; active: Period }) {
       editSpielgeld={open.editSpielgeld}
       fromSetup={open.fromSetup}
       returnFocusTo={open.returnFocusTo}
+      onJump={(p) => {
+        setOpen(null);
+        onJump(p);
+      }}
       onClose={() => setOpen(null)}
     />
   );
