@@ -61,7 +61,22 @@ Gelöscht: `month.spielgeld.spent` („€ X von € L ausgegeben“), `month.sp
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+Alles nach der letzten Code-Änderung (ae6a024):
+
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 1423 bestanden, davon neu `komplett-ansparen.test.ts` plus ein neuer Golden-Fall |
+| `tsc -b` | sauber |
+| E2E desktop (5 Teile) | 585 bestanden |
+| E2E iphone-15 | 269 bestanden |
+| E2E iphone-pro-max | 241 bestanden |
+| E2E ipad-portrait | 257 bestanden |
+| E2E ipad-landscape | 245 bestanden |
+| perf | 3 bestanden |
+| perf-feier | 2 bestanden |
+| WebKit (komplett-ansparen, alle-monate-gleich, monat-verdichtet, monat-ist-monat, spielgeld-pille-rechenfehler, gehalt-zum-planen, monat-feinschliff) | 108 bestanden |
+
+Es gab keine Fehler und keine Wiederholungen.
 
 ## Screenshots
 
