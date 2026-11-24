@@ -146,9 +146,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           await expect(page.getByTestId('dein-monat-salary-title')).toHaveText(title);
           expect(plain(await page.getByTestId('dein-monat-salary-when').textContent())).toBe(when);
           for (const gone of ['hero', 'salary-tile', 'wealth-tile', 'free-tile', 'kpi-value', 'hero-sources']) await expect(page.getByTestId(gone), gone).toHaveCount(0);
-          // the next salary and the next big month: only in the active month
+          // the next salary: only in the active month; the next big month (komplett-ansparen): never in a past one
           await expect(page.getByTestId('next-salary')).toHaveCount(kind === 'active' ? 1 : 0);
-          await expect(page.getByTestId('big-month')).toHaveCount(kind === 'active' ? 1 : 0);
+          if (kind !== 'future') await expect(page.getByTestId('big-month')).toHaveCount(kind === 'active' ? 1 : 0);
           await expect(page.getByTestId('dein-monat-bills')).toHaveCount(1);
           if (kind === 'active') {
             // one line, down to the iPhone SE
@@ -196,8 +196,8 @@ test.describe('Alle Monate gleich · Abläufe', () => {
 
   test('④ Spielgeld und Überschuss; Gehalt im Dezember eintragen → Überschuss sofort; Dezember abhaken → keine Feier, November erledigt → genau eine', async ({ page }) => {
     await start(page);
-    // Spielgeld € 300 (through „Plan ansehen“): ④ is at least the limit, „Kein Spielgeld festgelegt“ before
-    await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText('Kein Spielgeld festgelegt');
+    // Spielgeld € 300 (through „Plan ansehen“): ④ is at least the limit; ④ has no subline (komplett-ansparen)
+    await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
     const without = await centsOf(page.getByTestId('dein-monat-free-value'));
     const spent = -(await centsOf(page.getByTestId('dein-monat-unplanned-value')));
     await tap(page.getByTestId('next-salary'));
@@ -213,7 +213,7 @@ test.describe('Alle Monate gleich · Abläufe', () => {
     const booked = Math.max(30000, spent);
     await expect.poll(() => centsOf(page.getByTestId('dein-monat-unplanned-value'))).toBe(-booked);
     expect(await centsOf(page.getByTestId('dein-monat-free-value'))).toBe(without - (booked - spent));
-    expect(plain(await page.getByTestId('dein-monat-unplanned-sub').textContent())).toMatch(/^€ [\d.,]+ von € 300,00 ausgegeben$|ausgegeben · € [\d.,]+ drüber$/);
+    await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
 
     // December (future): the salary is the last one (muted); entering it moves the Überschuss at once
     await toMonth(page, 'Dezember', tap);

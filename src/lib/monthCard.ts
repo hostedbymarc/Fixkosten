@@ -21,7 +21,7 @@
 import type { MonthStart } from './activeMonth';
 import { localToday } from './activeMonth';
 import { dueDateIn, dueItems, monthItems, planForPeriod, type DueItem, type SourceItem } from './calc';
-import type { MonthPlan } from './monthPlan';
+import type { MonthPlan, PlanMonth } from './monthPlan';
 import { addPeriods } from './period';
 import { salaryName, salaryView, salaryWhen, type SalaryView } from './salaryMonth';
 import type { Dataset, Period, Position } from './types';
@@ -41,6 +41,11 @@ export interface CardItem {
   note?: 'notFromNet' | 'other';
   /** the line that brings the items to the row: ① saved for later / taken from what is saved, ④ not spent yet */
   balance?: 'save' | 'take' | 'rest';
+  /**
+   * komplett-ansparen, ① of a month of the plan: „{Name} · fällig {Monat}“ (due) or „{Name} · für {Monat}“ (for),
+   * with what was saved for it before („€ X schon angespart“)
+   */
+  plan?: { kind: 'due' | 'for'; period: Period; saved: number };
 }
 
 export interface CardRow {
@@ -75,6 +80,8 @@ export interface MonthCard {
   left: number | null;
   /** null: no Spielgeld set */
   spielgeld: SpielgeldStatus | null;
+  /** komplett-ansparen: of the bills due in the period, what was saved before („€ X aus Rücklage“); 0: none */
+  fromReserve: number;
   /** the next salary (the line under the card) */
   next: { period: Period; title: string; when: string };
 }
@@ -83,7 +90,9 @@ const byDate = (a: CardItem, b: CardItem) => (a.date ?? '9999').localeCompare(b.
 
 function row(items: CardItem[]): CardRow {
   const counted = items.filter((i) => !i.muted);
-  return { total: euros(counted.reduce((a, i) => a + cents(i.amount), 0)), count: counted.length, items: [...items].sort(byDate) };
+  // the lines of the plan keep their order (due by date, then the ones for later, then the balancing line)
+  const sorted = items.some((i) => i.plan) ? items : [...items].sort(byDate);
+  return { total: euros(counted.reduce((a, i) => a + cents(i.amount), 0)), count: counted.length, items: sorted };
 }
 
 const fromSource = (i: SourceItem, muted = false, note?: CardItem['note']): CardItem => ({ key: i.key, name: i.name, amount: i.amount, date: i.date, muted, ...(note ? { note } : {}) });
@@ -108,8 +117,25 @@ export function transferOf(ds: Dataset, period: Period, plan: MonthPlan, start: 
   return euros(accountBills(ds, period, start).reduce((a, i) => a + cents(i.amount), 0));
 }
 
-/** ① its bills: every bill of the account in the period, plus the line that brings them to the transfer. */
-function reserveItems(ds: Dataset, period: Period, transfer: number, start: MonthStart): CardItem[] {
+/** The month of the plan behind ① of `period` (the active one or a later one); null before it or beyond it. */
+export function planMonthOf(plan: MonthPlan, period: Period): PlanMonth | null {
+  if (period === plan.current.period) return plan.current;
+  if (period < plan.current.period) return null;
+  return plan.months.find((m) => m.period === period) ?? null;
+}
+
+/**
+ * ① its items. A month of the plan (komplett-ansparen): its lines – each bill due with what this salary carries,
+ * the money set aside for later payments. Else every bill of the account in the period. Plus the line that
+ * brings them to the transfer (rounding, the even plan, an earlier month).
+ */
+function reserveItems(ds: Dataset, period: Period, transfer: number, start: MonthStart, month: PlanMonth | null): CardItem[] {
+  if (month?.lines) {
+    const items: CardItem[] = month.lines.map((l) => ({ key: l.key, name: l.name, amount: l.amount, date: null, muted: false, plan: { kind: l.kind, period: l.period, saved: l.saved } }));
+    const diff = cents(transfer) - items.reduce((a, i) => a + cents(i.amount), 0);
+    if (diff !== 0) items.push({ key: `balance@${period}`, name: '', amount: euros(diff), date: null, muted: false, balance: diff > 0 ? 'save' : 'take' });
+    return items;
+  }
   const bills = accountBills(ds, period, start);
   const items = bills.map((i) => fromSource(i));
   const diff = cents(transfer) - bills.reduce((a, i) => a + cents(i.amount), 0);
@@ -148,7 +174,8 @@ export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: M
   const active = period;
   const salary = salaryView(ds, active, start, today, plan.planSalary);
   const transfer = transferOf(ds, active, plan, start);
-  const reserve = row(reserveItems(ds, active, transfer, start));
+  const month = planMonthOf(plan, active);
+  const reserve = row(reserveItems(ds, active, transfer, start, month));
   const items = monthItems(ds, active, start);
   const direct = row(items.filter((i) => i.kind === 'expense' && i.account === 'girokonto' && i.fromNet).map((i) => fromSource(i)));
   const wealthItems = items.filter((i) => i.kind === 'savings' && i.account === 'girokonto');
@@ -182,6 +209,7 @@ export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: M
     beforeSpielgeld: before === null ? null : euros(before),
     left: before === null ? null : euros(before - cents(unplanned.total)),
     spielgeld,
+    fromReserve: month?.lines ? month.fromReserve : 0,
     next: { period: nextPeriod, title: salaryName(nextPeriod, start), when: salaryWhen(nextPeriod, start, today) },
   };
 }

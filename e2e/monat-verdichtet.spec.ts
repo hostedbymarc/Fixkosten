@@ -112,9 +112,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const unplanned = await valueOf(page.getByTestId('dein-monat-unplanned-value'));
         const free = await valueOf(page.getByTestId('dein-monat-free-value'));
         expect(free).toBeCloseTo(8302 - transfer - direct - wealth - unplanned, 2);
-        // no Spielgeld: „Kein Spielgeld festgelegt“ under ④, no pill
+        // no Spielgeld: no pill; komplett-ansparen: ④ only title and amount, no subline
         await expect(page.getByTestId('dein-monat-pill')).toHaveCount(0);
-        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText('Kein Spielgeld festgelegt');
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
         await expect(card).toHaveAttribute('data-state', 'none');
 
         // „Plan ansehen“: „Dein Plan“ with the Spielgeld editable (the thousands dot while typing)
@@ -134,7 +134,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-11-plan-passt`);
         await closeSheet(page);
         // monat-ist-monat: ④ (nothing „nicht eingeplant“ in October) against the limit; not over: no line
-        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText(/^€\s0,00 von €\s1\.200,00 ausgegeben$/);
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
         await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
         await expect(card).toHaveAttribute('data-state', 'ok');
         await shot(page, `${tag}-02-monat-passt`);
@@ -187,7 +187,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await closeSheet(page);
         // monat-ist-monat: the card compares only ④ of this month with the limit – what the plan cannot keep is in „Dein Plan“
         await expect(card).toHaveAttribute('data-state', 'ok');
-        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveText(/^€\s0,00 von €\s6\.000,00 ausgegeben$/);
+        await expect(page.getByTestId('dein-monat-unplanned-sub')).toHaveCount(0);
         await expect(page.getByTestId('dein-monat-over')).toHaveCount(0);
         await shot(page, `${tag}-03-monat-fehlt`);
         await tap(page.getByTestId('next-salary'));

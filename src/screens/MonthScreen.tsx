@@ -237,7 +237,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
             <DeinMonatCard ds={ds} period={period} onOpenSalary={() => openClose(null)} />
           </div>
           <aside className="contents md:col-start-2 md:row-span-2 md:row-start-1 md:flex md:flex-col md:gap-6 md:self-start">
-            {isActive && <BigMonthSlot ds={ds} active={today} className="order-3" />}
+            {period >= today && <BigMonthSlot ds={ds} active={today} period={period} className="order-3" />}
             <div className="order-5 mt-5 flex min-w-0 flex-col gap-6 md:mt-0">
               {FEATURE_REMINDERS && (
               <section aria-labelledby="reminders-title">
@@ -665,12 +665,12 @@ function MonthHeader({
 
 /** The month the hero showed last (module level: a swipe re-creates the hero). */
 const heroShown: { period: Period | null } = { period: null };
-/** „Nächster großer Monat“ from the plan (only once set up). */
-function BigMonthSlot({ ds, active, className }: { ds: Dataset; active: Period; className?: string }) {
+/** „Nächster großer Monat“ from the plan (only once set up): in the active month and every later one, from the month shown. */
+function BigMonthSlot({ ds, active, period, className }: { ds: Dataset; active: Period; period: Period; className?: string }) {
   const { settings } = useKonto();
   const plan = useMonthPlan(ds, active);
   if (!settings.setupDone) return null;
-  return <BigMonthCard plan={plan} className={className} />;
+  return <BigMonthCard plan={plan} period={period} className={className} />;
 }
 
 /** The hero of a month without „Fixkosten einplanen“ (with it, every month shows „Dein Monat“). */

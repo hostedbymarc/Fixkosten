@@ -6,6 +6,9 @@ import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib
 import { t } from '../../lib/kontoTexts';
 import type { BigPayment, MonthPlan } from '../../lib/monthPlan';
 import { addPeriods, monthName } from '../../lib/period';
+import { salaryName } from '../../lib/salaryMonth';
+import type { MonthStart } from '../../lib/activeMonth';
+import { useMonthStart } from '../../lib/useToday';
 import type { Dataset, Period, SavingSetting } from '../../lib/types';
 import { BottomSheet } from '../BottomSheet';
 import { AmountInput } from '../form';
@@ -297,6 +300,7 @@ function Salaries({ plan }: { plan: MonthPlan }) {
 /** „Große Zahlungen“: every big payment of the next 12 months, by date, with its state and „ändern“. */
 function Payments({ plan }: { plan: MonthPlan }) {
   const [editing, setEditing] = useState<string | null>(null);
+  const start = useMonthStart();
   return (
     <div className="flex flex-col gap-2" data-testid="plan-payments">
       <p className="text-[13px] font-medium text-ink-mute">{t('plan2.payments')}</p>
@@ -311,7 +315,7 @@ function Payments({ plan }: { plan: MonthPlan }) {
                 <span className="num shrink-0 text-[15px] font-semibold text-ink">{money(p.amount)}</span>
               </div>
               <div className="num mt-0.5 flex items-center justify-between gap-3 text-[13px] leading-5 text-ink-mute">
-                <span data-testid="plan-payment-state">{stateText(p)}</span>
+                <span data-testid="plan-payment-state">{stateText(p, start)}</span>
                 {p.positionId && (
                   <button
                     type="button"
@@ -329,7 +333,7 @@ function Payments({ plan }: { plan: MonthPlan }) {
                   {p.rest > 0 ? t('plan2.pay.saved', { betrag: money(p.saved), monat: monthName(p.period), rest: money(p.rest) }) : t('plan2.pay.savedAll', { betrag: money(p.saved) })}
                 </p>
               )}
-              {editing === p.key && p.positionId && <PaymentEditor plan={plan} payment={p} onDone={() => setEditing(null)} />}
+              {editing === p.key && p.positionId && <PaymentEditor plan={plan} payment={p} start={start} onDone={() => setEditing(null)} />}
             </li>
           ))}
         </ul>
@@ -338,17 +342,31 @@ function Payments({ plan }: { plan: MonthPlan }) {
   );
 }
 
-function stateText(p: BigPayment): string {
+function stateText(p: BigPayment, start: MonthStart): string {
   if (p.mode === 'even') return t('plan2.pay.even');
   if (p.mode === 'spread' && p.rates > 0) return t('plan2.pay.spread', { n: p.rates, betrag: money(p.rate), monat: monthName(p.start!) });
+  if (p.mode === 'once' && p.salaryMonth) {
+    const gehalt = salaryName(p.salaryMonth, start);
+    return p.atDue > 0 ? t('plan2.pay.oncePart', { betrag: money(p.fromSalary), gehalt }) : t('plan2.pay.once', { gehalt });
+  }
   return t('plan2.pay.due', { monat: monthName(p.period) });
 }
 
-/** „im {Monat} zahlen“ or „vorher ansparen“ from a chosen month (the rate is computed). */
-function PaymentEditor({ plan, payment, onDone }: { plan: MonthPlan; payment: BigPayment; onDone: () => void }) {
+type Choice = 'due' | 'spread' | 'all' | 'part';
+
+/**
+ * „im {Monat} zahlen“, „Ansparen ab {Monat}“ (the rate is computed), and (komplett-ansparen) „Komplett vom
+ * {Monat}-Gehalt“ or „Teilbetrag vom {Monat}-Gehalt: € …“ – the salaries from the next one up to the month it
+ * is due; the rest of a part is paid when due.
+ */
+function PaymentEditor({ plan, payment, start, onDone }: { plan: MonthPlan; payment: BigPayment; start: MonthStart; onDone: () => void }) {
   const first = plan.first.period;
-  const spread = payment.mode === 'spread' || payment.mode === 'even';
+  const initial: Choice = payment.mode === 'once' ? (payment.partial ? 'part' : 'all') : payment.mode === 'spread' || payment.mode === 'even' ? 'spread' : 'due';
+  const [choice, setChoice] = useState<Choice>(initial);
   const [from, setFrom] = useState<Period>(payment.start ?? first);
+  const [salary, setSalary] = useState<Period>(payment.salaryMonth ?? first);
+  const [part, setPart] = useState(payment.partial ? amountToInput(payment.fromSalary) : '');
+  const partField = useRef<HTMLInputElement>(null);
   const months: Period[] = [];
   for (let p = first; p <= payment.period; p = addPeriods(p, 1)) months.push(p);
   // coming from „Gleichmäßig“: every other big payment keeps saving up from the next salary
@@ -357,21 +375,65 @@ function PaymentEditor({ plan, payment, onDone }: { plan: MonthPlan; payment: Bi
       ? Object.fromEntries(plan.payments.filter((x) => x.positionId && x.positionId !== payment.positionId).map((x) => [x.positionId!, { mode: 'spread', startMonth: first } as SavingSetting]))
       : {};
   const save = (setting: SavingSetting) => void setSaving(db, { [payment.positionId!]: setting }, others());
+  /** the part in cents, or null while nothing valid is typed */
+  const partCents = (text: string): number | null => {
+    const v = text.trim() === '' ? null : parseAmount(text);
+    return v === null || v <= 0 ? null : Math.round(v * 100);
+  };
+  const savePart = (month: Period, text: string) => {
+    const c = partCents(text);
+    if (c !== null) save({ mode: 'once', salaryMonth: month, amount: c });
+  };
+  const pick = (c: Choice) => {
+    setChoice(c);
+    if (c === 'due') save({ mode: 'due' });
+    else if (c === 'spread') save({ mode: 'spread', startMonth: from });
+    else if (c === 'all') save({ mode: 'once', salaryMonth: salary });
+    else {
+      if (partCents(part) !== null) savePart(salary, part);
+      window.setTimeout(() => partField.current?.focus(), 0);
+    }
+  };
+  const salarySelect = (c: 'all' | 'part') => (
+    <select
+      value={salary}
+      onChange={(e) => {
+        const p = e.target.value as Period;
+        setSalary(p);
+        setChoice(c);
+        if (c === 'all') save({ mode: 'once', salaryMonth: p });
+        else savePart(p, part);
+      }}
+      className="focus-ring h-10 min-w-0 rounded-lg border border-control-edge bg-field px-2 text-[15px] text-ink"
+      aria-label={t('plan2.pay.salary')}
+      data-testid={`plan-payment-${c}-salary`}
+    >
+      {months.map((m) => (
+        <option key={m} value={m}>
+          {salaryName(m, start)}
+        </option>
+      ))}
+    </select>
+  );
+  const radio = (c: Choice, testId: string) => (
+    <input type="radio" name={`pay-${payment.key}`} checked={choice === c} onChange={() => pick(c)} className="h-5 w-5 shrink-0 accent-[rgb(var(--c-accent))]" data-testid={testId} />
+  );
   return (
     <fieldset className="mt-3 flex flex-col gap-2 rounded-xl bg-control p-3" data-testid="plan-payment-editor">
       <legend className="sr-only">{t('plan2.pay.when', { zahlung: payment.name })}</legend>
       <label className="flex min-h-11 items-center gap-3 text-[15px] text-ink">
-        <input type="radio" name={`pay-${payment.key}`} checked={!spread} onChange={() => save({ mode: 'due' })} className="h-5 w-5 accent-[rgb(var(--c-accent))]" data-testid="plan-payment-due" />
+        {radio('due', 'plan-payment-due')}
         {t('plan2.pay.due', { monat: monthName(payment.period) })}
       </label>
-      <label className="flex min-h-11 items-center gap-3 text-[15px] text-ink">
-        <input type="radio" name={`pay-${payment.key}`} checked={spread} onChange={() => save({ mode: 'spread', startMonth: from })} className="h-5 w-5 accent-[rgb(var(--c-accent))]" data-testid="plan-payment-spread" />
+      <label className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
+        {radio('spread', 'plan-payment-spread')}
         {t('plan2.pay.from')}
         <select
           value={from}
           onChange={(e) => {
             const p = e.target.value as Period;
             setFrom(p);
+            setChoice('spread');
             save({ mode: 'spread', startMonth: p });
           }}
           className="focus-ring h-10 rounded-lg border border-control-edge bg-field px-2 text-[15px] text-ink"
@@ -385,6 +447,40 @@ function PaymentEditor({ plan, payment, onDone }: { plan: MonthPlan; payment: Bi
           ))}
         </select>
       </label>
+      <label className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
+        {radio('all', 'plan-payment-all')}
+        {t('plan2.pay.onceAll')}
+        {salarySelect('all')}
+      </label>
+      <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
+        <label className="flex items-center gap-3">
+          {radio('part', 'plan-payment-part')}
+          {t('plan2.pay.oncePartLabel')}
+        </label>
+        {salarySelect('part')}
+        <span className="flex items-center rounded-lg border border-control-edge bg-field px-2">
+          <span className="mr-1 text-ink-mute">{currencySymbol()}</span>
+          <AmountInput
+            ref={partField}
+            value={part}
+            onChange={setPart}
+            onFocus={() => setChoice('part')}
+            onBlur={() => choice === 'part' && savePart(salary, part)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                savePart(salary, part);
+              }
+            }}
+            enterKeyHint="done"
+            aria-label={t('plan2.pay.partAmount')}
+            placeholder="0,00"
+            size={Math.max(6, part.length + 1)}
+            className="num h-10 w-auto max-w-[10ch] bg-transparent text-right text-[15px] text-ink outline-none placeholder:text-ink-faint"
+            data-testid="plan-payment-part-amount"
+          />
+        </span>
+      </div>
       <button type="button" onClick={onDone} className="focus-ring h-11 self-end rounded-xl px-3 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft" data-testid="plan-payment-ready">
         {t('plan2.pay.ready')}
       </button>
