@@ -136,6 +136,7 @@ async function frameWork(browser: Browser, page: Page, name: string, action: () 
     avgFrameMs: r1(mean(frames)),
     maxFrameMs: r1(Math.max(0, ...frames)),
     avgFrameWorkMs: r1(mean(work)),
+    totalWorkMs: Math.round(work.reduce((a, b) => a + b, 0)),
     maxFrameWorkMs: r1(Math.max(0, ...work)),
   };
 }
@@ -255,7 +256,7 @@ for (const [device, viewport, minPeas] of [
     await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
     await page.waitForTimeout(1500);
     const fallingNow = () =>
-      page.evaluate(() => document.getAnimations().filter((a) => a.id === 'confetti-fall' && a.playState === 'running').length > 0);
+      page.evaluate(() => [...document.querySelectorAll('[data-testid=hero-confetti] .confetti-pea')].some((p) => p.getAnimations().some((a) => a.playState === 'running')));
     expect(await fallingNow(), 'the peas fall when the window opens').toBe(true);
     const m = await frameWork(browser, page, `feier-${device}`, async () => {
       await page.waitForTimeout(2600);
