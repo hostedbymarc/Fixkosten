@@ -240,3 +240,89 @@ export function usualAmount(position: Position, period: Period): number | null {
   if (before && after && cents(before.amount) === cents(after.amount) && cents(before.amount) !== cents(plan.amount)) return before.amount;
   return plan.amount;
 }
+
+/**
+ * plan-optionen: one row of „Deine nächsten Gehälter“, straight from the month card of its period – ① is the
+ * card's ①, the Überschuss its large amount (after the Spielgeld). `cushion`: the running sum of the
+ * Überschüsse from the first row on („Polster“).
+ */
+export interface PlanRow {
+  period: Period;
+  /** the salary is planned, not entered („geplant“) */
+  estimated: boolean;
+  /** ① of the card */
+  transfer: number;
+  /** „Vor Spielgeld frei“ of the card; null without a salary */
+  before: number | null;
+  /** the Überschuss of the card; null without a salary */
+  left: number | null;
+  /** ④ of the card */
+  spielgeld: number;
+  /** running sum of `left` up to this row; null without a salary */
+  cushion: number | null;
+}
+
+/** The rows of „Deine nächsten Gehälter“: the 12 months of the plan, each from its month card. */
+export function planRows(ds: Dataset, plan: MonthPlan, start: MonthStart = 1, today: Date = localToday()): PlanRow[] {
+  let sum: number | null = 0;
+  return plan.months.map((m) => {
+    const card = monthCard(ds, m.period, plan, start, today);
+    sum = sum === null || card.left === null ? null : sum + cents(card.left);
+    return {
+      period: m.period,
+      estimated: m.estimated && m.salary !== null,
+      transfer: card.reserve.total,
+      before: card.beforeSpielgeld,
+      left: card.left,
+      spielgeld: card.unplanned.total,
+      cushion: sum === null ? null : euros(sum),
+    };
+  });
+}
+
+/**
+ * plan-optionen: the message on top of „Dein Plan“, in two steps.
+ * - short: a month does not cover its fixed costs and Vermögensaufbau (Vor Spielgeld < 0) – the first one, and
+ *   how much it misses („{Monat Jahr} geht sich nicht aus. Dir fehlen € X.“, red)
+ * - spielgeld: only the Spielgeld is not covered – from the first such month on (muted, warn token)
+ * - ok: every month keeps its Spielgeld
+ * With the Polster on: the running sum of the Überschüsse decides – it lasts for all 12 months (cushionAll), or
+ * up to the month before it goes below 0 (cushion; short when that month misses its fixed costs even without its
+ * Spielgeld, else spielgeld). Goes the very first month below 0, the two steps apply as without the Polster.
+ * null without a salary.
+ */
+export type PlanStatus =
+  | { kind: 'short'; period: Period; amount: number }
+  | { kind: 'spielgeld'; period: Period }
+  | { kind: 'ok' }
+  | { kind: 'cushion'; until: Period; level: 'short' | 'spielgeld' }
+  | { kind: 'cushionAll' };
+
+/** One month alone (the „Nächster großer Monat“): short, spielgeld or ok. */
+export type MonthLevel = { kind: 'short'; amount: number } | { kind: 'spielgeld' } | { kind: 'ok' };
+
+export function monthLevel(row: Pick<PlanRow, 'before' | 'left'>): MonthLevel | null {
+  if (row.before === null || row.left === null) return null;
+  if (cents(row.before) < 0) return { kind: 'short', amount: euros(-cents(row.before)) };
+  if (cents(row.left) < 0) return { kind: 'spielgeld' };
+  return { kind: 'ok' };
+}
+
+export function planStatus(rows: PlanRow[], cushion: boolean): PlanStatus | null {
+  if (rows.length === 0 || rows.some((r) => r.left === null)) return null;
+  if (cushion) {
+    const k = rows.findIndex((r) => cents(r.cushion!) < 0);
+    if (k < 0) return { kind: 'cushionAll' };
+    if (k > 0) {
+      const r = rows[k]!;
+      // without its Spielgeld, would the Polster still cover the month?
+      const level = cents(r.cushion!) + cents(r.spielgeld) < 0 ? 'short' : 'spielgeld';
+      return { kind: 'cushion', until: rows[k - 1]!.period, level };
+    }
+  }
+  const short = rows.find((r) => cents(r.before!) < 0);
+  if (short) return { kind: 'short', period: short.period, amount: euros(-cents(short.before!)) };
+  const spiel = rows.find((r) => cents(r.left!) < 0);
+  if (spiel) return { kind: 'spielgeld', period: spiel.period };
+  return { kind: 'ok' };
+}

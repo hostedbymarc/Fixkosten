@@ -1,17 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../../db/db';
-import { setPlanMode, setSaving, setSpielgeld, applyMax } from '../../db/kontoActions';
+import { setCushion, setPlanMode, setSaving, setSpielgeld, applyMax } from '../../db/kontoActions';
 import { useKonto } from '../../db/useKonto';
 import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib/format';
 import { t } from '../../lib/kontoTexts';
-import type { BigPayment, MonthPlan } from '../../lib/monthPlan';
-import { addPeriods, monthName } from '../../lib/period';
-import { salaryName } from '../../lib/salaryMonth';
+import { monthLevel, planRows, planStatus, type PlanRow, type PlanStatus } from '../../lib/monthCard';
+import { monthPlan, storedSavings, type BigPayment, type MonthPlan } from '../../lib/monthPlan';
+import { addPeriods, monthName, monthOf, periodLabel, shortMonthName, yearOf } from '../../lib/period';
+import { salaryMonth, salaryName } from '../../lib/salaryMonth';
 import type { MonthStart } from '../../lib/activeMonth';
 import { useMonthStart } from '../../lib/useToday';
 import type { Dataset, Period, SavingSetting } from '../../lib/types';
 import { BottomSheet } from '../BottomSheet';
-import { AmountInput } from '../form';
+import { AmountInput, SwitchField } from '../form';
 import { AlertIcon, CheckIcon } from '../Icons';
 import { useMonthPlan } from './DeinMonatCard';
 
@@ -26,6 +27,8 @@ interface Props {
   editSpielgeld?: boolean;
   /** right after the setup: the recommended plan becomes the plan (when none was chosen) */
   fromSetup?: boolean;
+  /** plan-optionen: a row of „Deine nächsten Gehälter“ shows its month */
+  onJump?: (period: Period) => void;
   onClose: () => void;
   returnFocusTo?: HTMLElement | null;
 }
@@ -35,9 +38,13 @@ interface Props {
  * Spielgeld, the switch „Bei Fälligkeit | Gleichmäßig“ with „Empfohlen“, the next salaries and the big
  * payments with how each one is paid. Every number: monthPlan().
  */
-export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onClose, returnFocusTo }: Props) {
+export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, onClose, returnFocusTo }: Props) {
   const { settings } = useKonto();
+  const start = useMonthStart();
   const plan = useMonthPlan(ds, active);
+  // plan-optionen: the table and the message read the month cards (Überschuss = the card's large amount)
+  const rows = useMemo(() => planRows(ds, plan, start), [ds, plan, start]);
+  const status = useMemo(() => planStatus(rows, settings.cushion), [rows, settings.cushion]);
   // right after the setup: the recommendation is the plan (an existing choice stays)
   const adopted = useRef(false);
   useEffect(() => {
@@ -49,86 +56,98 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onClose, r
   return (
     <BottomSheet title={t('plan2.title')} onClose={onClose} returnFocusTo={returnFocusTo}>
       <div className="flex flex-col gap-6" data-testid="plan-sheet" data-mode={plan.mode}>
-        <Answer plan={plan} />
+        <Answer plan={plan} status={status} />
         <SpielgeldEdit spielgeld={plan.spielgeld} startEditing={!!editSpielgeld} />
         <ModeSwitch plan={plan} />
-        <Salaries plan={plan} />
-        <Payments plan={plan} />
+        <Salaries plan={plan} rows={rows} active={active} cushion={settings.cushion} onJump={onJump} />
+        <Payments ds={ds} active={active} plan={plan} rows={rows} />
       </div>
     </BottomSheet>
   );
 }
 
-/** The answer in one sentence (one of three), with what can be done about it. */
-function Answer({ plan }: { plan: MonthPlan }) {
+/**
+ * The message on top (plan-optionen, two steps): red only when a month misses its fixed costs and Vermögensaufbau
+ * („{Monat Jahr} geht sich nicht aus. Dir fehlen € X.“), muted in the warn token when only the Spielgeld is short
+ * („Ab {Monat} reicht dein Gehalt zum Planen nicht fürs volle Spielgeld.“), else green. With the Polster: how long it
+ * lasts. Below it, what can be done about it (the proposals, „Spielgeld auf € X setzen“).
+ */
+function Answer({ plan, status }: { plan: MonthPlan; status: PlanStatus | null }) {
   const a = plan.answer;
-  if (plan.noSalary)
+  if (plan.noSalary || !status)
     return (
       <p className="text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="no-salary">
         {t('plan2.noSalary')}
       </p>
     );
-  if (!a)
+  const okay = status.kind === 'ok' || status.kind === 'cushionAll';
+  if (okay && plan.spielgeld === null)
     return (
       <p className="text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="none">
         {t('plan2.none')}
       </p>
     );
-  if (a.kind === 'ok')
-    return (
-      <p className="flex items-start gap-2 text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="ok">
-        <CheckIcon size={22} strokeWidth={2.6} className="mt-0.5 shrink-0 text-paid-ink" aria-hidden="true" />
-        {t('plan2.ok')}
-      </p>
-    );
-  if (a.kind === 'save') {
-    const apply = () => {
-      if (a.via === 'even') return void setPlanMode(db, 'even');
-      const changes = Object.fromEntries(a.proposals.map((p) => [p.positionId, { mode: 'spread', startMonth: p.start } as SavingSetting]));
-      // the proposals were computed with everything else paid when due
-      const others = Object.fromEntries(plan.payments.filter((p) => p.positionId && !(p.positionId in changes)).map((p) => [p.positionId!, { mode: 'due' } as SavingSetting]));
-      void setSaving(db, changes, others);
-    };
-    return (
-      <div className="flex flex-col gap-3" data-testid="plan-answer" data-kind="save">
-        <p className="flex items-start gap-2 text-[19px] font-semibold leading-snug text-ink">
-          <AlertIcon size={22} className="mt-0.5 shrink-0 text-warn" aria-hidden="true" />
-          {t('plan2.save')}
-        </p>
-        <ul className="flex flex-col gap-1.5 text-[15px] leading-snug text-ink" data-testid="plan-proposals">
-          {a.via === 'even' ? (
-            <li>{t('plan2.proposal.even')}</li>
-          ) : (
-            a.proposals.map((p) => (
-              <li key={p.positionId} className="num" data-testid="plan-proposal">
-                {t('plan2.proposal', { monat: monthName(p.start), betrag: money(p.rate), zahlung: p.name })}
-              </li>
-            ))
-          )}
-        </ul>
-        <button type="button" className={`${PRIMARY} self-start`} onClick={apply} data-testid="plan-apply">
-          {t('plan2.apply')}
-        </button>
-      </div>
-    );
-  }
-  // gehalt-zum-planen: not even € 0 Spielgeld fits → which month and how much is missing, no button
-  if (a.max <= 0 && plan.shortfall)
-    return (
-      <p className="num flex items-start gap-2 text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="short">
-        <AlertIcon size={22} className="mt-0.5 shrink-0 text-over" aria-hidden="true" />
-        {t('plan2.short', { monat: monthName(plan.shortfall.period), betrag: money(plan.shortfall.amount) })}
-      </p>
-    );
+  const red = status.kind === 'short' || (status.kind === 'cushion' && status.level === 'short');
+  const text =
+    status.kind === 'short'
+      ? t('plan2.short', { monat: periodLabel(status.period), betrag: money(status.amount) })
+      : status.kind === 'spielgeld'
+        ? t('plan2.spielgeldShort', { monat: monthName(status.period) })
+        : status.kind === 'cushion'
+          ? t('plan2.cushion.until', { monat: periodLabel(status.until) })
+          : status.kind === 'cushionAll'
+            ? t('plan2.cushion.all')
+            : t('plan2.ok');
+  const apply = () => {
+    if (a?.kind !== 'save') return;
+    if (a.via === 'even') return void setPlanMode(db, 'even');
+    const changes = Object.fromEntries(a.proposals.map((p) => [p.positionId, { mode: 'spread', startMonth: p.start } as SavingSetting]));
+    // the proposals were computed with everything else paid when due
+    const others = Object.fromEntries(plan.payments.filter((p) => p.positionId && !(p.positionId in changes)).map((p) => [p.positionId!, { mode: 'due' } as SavingSetting]));
+    void setSaving(db, changes, others);
+  };
   return (
-    <div className="flex flex-col gap-3" data-testid="plan-answer" data-kind="max">
-      <p className="num flex items-start gap-2 text-[19px] font-semibold leading-snug text-ink">
-        <AlertIcon size={22} className="mt-0.5 shrink-0 text-over" aria-hidden="true" />
-        {t('plan2.max', { betrag: money(a.max) })}
+    <div className="flex flex-col gap-3" data-testid="plan-answer" data-kind={status.kind} data-level={okay ? 'ok' : red ? 'short' : 'spielgeld'} data-answer={a?.kind}>
+      <p
+        className={`num flex items-start gap-2 leading-snug ${okay || red ? 'text-[19px] font-semibold text-ink' : 'text-[17px] font-medium text-warn'}`}
+        data-testid="plan-answer-text"
+      >
+        {okay ? (
+          <CheckIcon size={22} strokeWidth={2.6} className="mt-0.5 shrink-0 text-paid-ink" aria-hidden="true" />
+        ) : (
+          <AlertIcon size={22} className={`mt-0.5 shrink-0 ${red ? 'text-over' : 'text-warn'}`} aria-hidden="true" />
+        )}
+        {text}
       </p>
-      <button type="button" className={`${PRIMARY} self-start`} onClick={() => void applyMax(db, a.max, a.via.mode, a.via.savings)} data-testid="plan-set-max">
-        {t('plan2.max.apply', { betrag: money(a.max) })}
-      </button>
+      {!okay && a?.kind === 'save' && (
+        <>
+          <p className="text-[15px] leading-snug text-ink-soft">{t('plan2.save')}</p>
+          <ul className="flex flex-col gap-1.5 text-[15px] leading-snug text-ink" data-testid="plan-proposals">
+            {a.via === 'even' ? (
+              <li>{t('plan2.proposal.even')}</li>
+            ) : (
+              a.proposals.map((p) => (
+                <li key={p.positionId} className="num" data-testid="plan-proposal">
+                  {t('plan2.proposal', { monat: monthName(p.start), betrag: money(p.rate), zahlung: p.name })}
+                </li>
+              ))
+            )}
+          </ul>
+          <button type="button" className={`${PRIMARY} self-start`} onClick={apply} data-testid="plan-apply">
+            {t('plan2.apply')}
+          </button>
+        </>
+      )}
+      {!okay && a?.kind === 'max' && a.max > 0 && (
+        <>
+          <p className="num text-[15px] leading-snug text-ink-soft" data-testid="plan-max">
+            {t('plan2.max', { betrag: money(a.max) })}
+          </p>
+          <button type="button" className={`${PRIMARY} self-start`} onClick={() => void applyMax(db, a.max, a.via.mode, a.via.savings)} data-testid="plan-set-max">
+            {t('plan2.max.apply', { betrag: money(a.max) })}
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -248,41 +267,73 @@ function ModeSwitch({ plan }: { plan: MonthPlan }) {
   );
 }
 
-/** The next 4 salaries (12 unfolded): Monat · aufs Konto · frei für dich; below the Spielgeld marked. */
-function Salaries({ plan }: { plan: MonthPlan }) {
+/** „Okt“ in the year of the active month, „Okt 27“ in another year (plan-optionen) */
+export function rowMonth(period: Period, active: Period): string {
+  return yearOf(period) === yearOf(active) ? shortMonthName(monthOf(period)) : `${shortMonthName(monthOf(period))} ${String(yearOf(period)).slice(2)}`;
+}
+
+/**
+ * „Deine nächsten Gehälter“ – 4 rows, 12 unfolded: Monat (+ „geplant“) · zur Seite · Überschuss, each from the month
+ * card of its period (planRows). With the Polster on, a column „Polster“ (running sum). A row shows its month.
+ */
+function Salaries({ plan, rows, active, cushion, onJump }: { plan: MonthPlan; rows: PlanRow[]; active: Period; cushion: boolean; onJump?: (p: Period) => void }) {
   const [all, setAll] = useState(false);
-  const rows = all ? plan.months : plan.months.slice(0, 4);
+  const shown = all ? rows : rows.slice(0, 4);
   // the salary planned for months without an entry („Gehalt zum Planen“, else the last one entered)
   const planned = plan.months.find((m) => m.estimated && m.salary !== null)?.salary ?? undefined;
   return (
     <div className="flex flex-col gap-2" data-testid="plan-salaries">
       <p className="text-[13px] font-medium text-ink-mute">{t('plan2.table')}</p>
-      <table className="num w-full text-[15px]">
+      <SwitchField label={t('plan2.cushion')} info={t('plan2.cushion.info')} checked={cushion} onChange={(v) => void setCushion(db, v)} testId="plan-cushion" />
+      <table className="num w-full text-[15px]" data-cushion={cushion || undefined}>
         <thead>
           <tr className="text-[12px] text-ink-mute">
             <th className="py-1 text-left font-medium">{t('plan2.table.month')}</th>
             <th className="py-1 text-right font-medium">{t(plan.hasAccount ? 'plan2.table.transfer' : 'plan2.table.aside')}</th>
-            <th className="py-1 text-right font-medium">{t('plan2.table.free')}</th>
+            <th className="py-1 text-right font-medium">{t('plan2.table.left')}</th>
+            {cushion && <th className="py-1 pl-2 text-right font-medium" data-testid="plan-cushion-head">{t('plan2.table.cushion')}</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
-          {rows.map((m) => (
-            <tr key={m.period} data-testid="plan-salary-row" data-period={m.period} data-short={m.short || undefined}>
-              <td className="py-2 text-ink">
-                {monthName(m.period)}
-                {m.estimated && m.salary !== null && (
-                  <span className="ml-1.5 text-[13px] text-ink-mute" data-testid="plan-salary-planned">
-                    {t('plan2.table.planned')}
-                  </span>
+          {shown.map((r) => {
+            const level = monthLevel(r)?.kind ?? 'ok';
+            return (
+              <tr
+                key={r.period}
+                onClick={onJump ? () => onJump(r.period) : undefined}
+                className={onJump ? 'cursor-pointer hover:bg-control' : undefined}
+                data-testid="plan-salary-row"
+                data-period={r.period}
+                data-level={level}
+                data-short={level !== 'ok' || undefined}
+              >
+                <td className="py-2 text-ink">
+                  {onJump ? (
+                    <button type="button" className="focus-ring -mx-1 rounded-md px-1 text-left" aria-label={t('plan2.table.jump', { monat: periodLabel(r.period) })} data-testid="plan-salary-jump">
+                      {rowMonth(r.period, active)}
+                    </button>
+                  ) : (
+                    rowMonth(r.period, active)
+                  )}
+                  {r.estimated && (
+                    <span className="ml-1.5 text-[13px] text-ink-mute" data-testid="plan-salary-planned">
+                      {t('plan2.table.planned')}
+                    </span>
+                  )}
+                </td>
+                <td className="py-2 text-right text-ink-soft" data-testid="plan-salary-transfer">{money(r.transfer)}</td>
+                <td className={`py-2 text-right font-semibold ${level === 'short' ? 'text-over' : level === 'spielgeld' ? 'text-warn' : 'text-ink'}`} data-testid="plan-salary-left">
+                  {level !== 'ok' && <AlertIcon size={14} className="mr-1 inline-block align-[-2px]" aria-label={t(level === 'short' ? 'plan2.table.miss' : 'plan2.table.short')} />}
+                  {r.left === null ? '–' : money(r.left)}
+                </td>
+                {cushion && (
+                  <td className={`py-2 pl-2 text-right ${r.cushion !== null && r.cushion < 0 ? 'text-over' : 'text-ink-soft'}`} data-testid="plan-salary-cushion">
+                    {r.cushion === null ? '–' : money(r.cushion)}
+                  </td>
                 )}
-              </td>
-              <td className="py-2 text-right text-ink-soft">{money(m.transfer)}</td>
-              <td className={`py-2 text-right font-semibold ${m.short ? 'text-over' : 'text-ink'}`}>
-                {m.short && <AlertIcon size={14} className="mr-1 inline-block align-[-2px]" aria-label={t('plan2.table.short')} />}
-                {m.free === null ? '–' : money(m.free)}
-              </td>
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
       {planned !== undefined && (
@@ -298,7 +349,7 @@ function Salaries({ plan }: { plan: MonthPlan }) {
 }
 
 /** „Große Zahlungen“: every big payment of the next 12 months, by date, with its state and „ändern“. */
-function Payments({ plan }: { plan: MonthPlan }) {
+function Payments({ ds, active, plan, rows }: { ds: Dataset; active: Period; plan: MonthPlan; rows: PlanRow[] }) {
   const [editing, setEditing] = useState<string | null>(null);
   const start = useMonthStart();
   return (
@@ -333,7 +384,7 @@ function Payments({ plan }: { plan: MonthPlan }) {
                   {p.rest > 0 ? t('plan2.pay.saved', { betrag: money(p.saved), monat: monthName(p.period), rest: money(p.rest) }) : t('plan2.pay.savedAll', { betrag: money(p.saved) })}
                 </p>
               )}
-              {editing === p.key && p.positionId && <PaymentEditor plan={plan} payment={p} start={start} onDone={() => setEditing(null)} />}
+              {editing === p.key && p.positionId && <PaymentEditor ds={ds} active={active} plan={plan} rows={rows} payment={p} start={start} onDone={() => setEditing(null)} />}
             </li>
           ))}
         </ul>
@@ -349,72 +400,116 @@ function stateText(p: BigPayment, start: MonthStart): string {
     const gehalt = salaryName(p.salaryMonth, start);
     return p.atDue > 0 ? t('plan2.pay.oncePart', { betrag: money(p.fromSalary), gehalt }) : t('plan2.pay.once', { gehalt });
   }
+  if (p.mode === 'range' && p.start && p.end) {
+    if (p.start === p.end) return t('plan2.pay.once', { gehalt: salaryName(p.start, start) });
+    return t('plan2.pay.range', { von: monthName(salaryMonth(p.start, start)), bis: monthName(salaryMonth(p.end, start)) });
+  }
   return t('plan2.pay.due', { monat: monthName(p.period) });
 }
 
-type Choice = 'due' | 'spread' | 'all' | 'part';
+type Choice = 'due' | 'spread' | 'all' | 'part' | 'range';
+
+/** at most 4 months of the preview */
+const PREVIEW_ROWS = 4;
 
 /**
- * „im {Monat} zahlen“, „Ansparen ab {Monat}“ (the rate is computed), and (komplett-ansparen) „Komplett vom
- * {Monat}-Gehalt“ or „Teilbetrag vom {Monat}-Gehalt: € …“ – the salaries from the next one up to the month it
- * is due; the rest of a part is paid when due.
+ * „im {Monat} zahlen“, „Ansparen ab {Monat}“ (the rate is computed), „Komplett vom {Monat}-Gehalt“, „Teilbetrag vom
+ * {Monat}-Gehalt: € …“ (the rest when due) and (plan-optionen) „Aufteilen: vom {Monat}- bis {Monat}-Gehalt“ – the
+ * salaries from the next one up to the month it is due. Live below: the months whose Überschuss changes, before →
+ * after (at most 4, worse ones in the warn token). Only „Übernehmen“ saves.
  */
-function PaymentEditor({ plan, payment, start, onDone }: { plan: MonthPlan; payment: BigPayment; start: MonthStart; onDone: () => void }) {
+function PaymentEditor({
+  ds,
+  active,
+  plan,
+  rows,
+  payment,
+  start,
+  onDone,
+}: {
+  ds: Dataset;
+  active: Period;
+  plan: MonthPlan;
+  rows: PlanRow[];
+  payment: BigPayment;
+  start: MonthStart;
+  onDone: () => void;
+}) {
+  const { settings } = useKonto();
   const first = plan.first.period;
-  const initial: Choice = payment.mode === 'once' ? (payment.partial ? 'part' : 'all') : payment.mode === 'spread' || payment.mode === 'even' ? 'spread' : 'due';
+  const initial: Choice =
+    payment.mode === 'once' ? (payment.partial ? 'part' : 'all') : payment.mode === 'range' ? 'range' : payment.mode === 'spread' || payment.mode === 'even' ? 'spread' : 'due';
   const [choice, setChoice] = useState<Choice>(initial);
-  const [from, setFrom] = useState<Period>(payment.start ?? first);
+  const [from, setFrom] = useState<Period>(payment.mode === 'spread' ? (payment.start ?? first) : first);
   const [salary, setSalary] = useState<Period>(payment.salaryMonth ?? first);
   const [part, setPart] = useState(payment.partial ? amountToInput(payment.fromSalary) : '');
+  const [rangeFrom, setRangeFrom] = useState<Period>(payment.mode === 'range' ? (payment.start ?? first) : first);
+  const [rangeTo, setRangeTo] = useState<Period>(payment.mode === 'range' ? (payment.end ?? payment.period) : payment.period);
   const partField = useRef<HTMLInputElement>(null);
   const months: Period[] = [];
   for (let p = first; p <= payment.period; p = addPeriods(p, 1)) months.push(p);
   // coming from „Gleichmäßig“: every other big payment keeps saving up from the next salary
-  const others = (): Record<string, SavingSetting> =>
-    plan.mode === 'even'
-      ? Object.fromEntries(plan.payments.filter((x) => x.positionId && x.positionId !== payment.positionId).map((x) => [x.positionId!, { mode: 'spread', startMonth: first } as SavingSetting]))
-      : {};
-  const save = (setting: SavingSetting) => void setSaving(db, { [payment.positionId!]: setting }, others());
+  const others = useMemo(
+    (): Record<string, SavingSetting> =>
+      plan.mode === 'even'
+        ? Object.fromEntries(plan.payments.filter((x) => x.positionId && x.positionId !== payment.positionId).map((x) => [x.positionId!, { mode: 'spread', startMonth: first } as SavingSetting]))
+        : {},
+    [plan, payment.positionId, first],
+  );
   /** the part in cents, or null while nothing valid is typed */
   const partCents = (text: string): number | null => {
     const v = text.trim() === '' ? null : parseAmount(text);
     return v === null || v <= 0 ? null : Math.round(v * 100);
   };
-  const savePart = (month: Period, text: string) => {
-    const c = partCents(text);
-    if (c !== null) save({ mode: 'once', salaryMonth: month, amount: c });
+  // the setting the editor stands on; null while a part is not typed yet
+  const draft: SavingSetting | null =
+    choice === 'due'
+      ? { mode: 'due' }
+      : choice === 'spread'
+        ? { mode: 'spread', startMonth: from }
+        : choice === 'all'
+          ? { mode: 'once', salaryMonth: salary }
+          : choice === 'range'
+            ? { mode: 'range', fromSalaryMonth: rangeFrom, toSalaryMonth: rangeTo }
+            : partCents(part) === null
+              ? null
+              : { mode: 'once', salaryMonth: salary, amount: partCents(part)! };
+  const key = JSON.stringify(draft);
+  // the preview: the plan as it is after „Übernehmen“ („Eigener Plan“ with this one payment changed)
+  const preview = useMemo(() => {
+    if (!draft) return null;
+    const savings = { ...storedSavings(ds), ...others, [payment.positionId!]: draft };
+    const next = planRows(ds, monthPlan(ds, active, settings, start, { mode: 'custom', savings }), start);
+    return next
+      .map((r, i) => ({ period: r.period, was: rows[i]?.left ?? null, now: r.left }))
+      .filter((r) => r.was !== null && r.now !== null && Math.round(r.was * 100) !== Math.round(r.now * 100));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, ds, active, settings, start, rows, others, payment.positionId]);
+  const apply = () => {
+    if (!draft) return;
+    void setSaving(db, { [payment.positionId!]: draft }, others);
+    onDone();
   };
   const pick = (c: Choice) => {
     setChoice(c);
-    if (c === 'due') save({ mode: 'due' });
-    else if (c === 'spread') save({ mode: 'spread', startMonth: from });
-    else if (c === 'all') save({ mode: 'once', salaryMonth: salary });
-    else {
-      if (partCents(part) !== null) savePart(salary, part);
-      window.setTimeout(() => partField.current?.focus(), 0);
-    }
+    if (c === 'part') window.setTimeout(() => partField.current?.focus(), 0);
   };
-  const salarySelect = (c: 'all' | 'part') => (
+  const select = (value: Period, options: Period[], onChange: (p: Period) => void, label: string, testId: string, name: (p: Period) => string) => (
     <select
-      value={salary}
-      onChange={(e) => {
-        const p = e.target.value as Period;
-        setSalary(p);
-        setChoice(c);
-        if (c === 'all') save({ mode: 'once', salaryMonth: p });
-        else savePart(p, part);
-      }}
+      value={value}
+      onChange={(e) => onChange(e.target.value as Period)}
       className="focus-ring h-10 min-w-0 rounded-lg border border-control-edge bg-field px-2 text-[15px] text-ink"
-      aria-label={t('plan2.pay.salary')}
-      data-testid={`plan-payment-${c}-salary`}
+      aria-label={label}
+      data-testid={testId}
     >
-      {months.map((m) => (
+      {options.map((m) => (
         <option key={m} value={m}>
-          {salaryName(m, start)}
+          {name(m)}
         </option>
       ))}
     </select>
   );
+  const gehalt = (m: Period) => salaryName(m, start);
   const radio = (c: Choice, testId: string) => (
     <input type="radio" name={`pay-${payment.key}`} checked={choice === c} onChange={() => pick(c)} className="h-5 w-5 shrink-0 accent-[rgb(var(--c-accent))]" data-testid={testId} />
   );
@@ -428,36 +523,19 @@ function PaymentEditor({ plan, payment, start, onDone }: { plan: MonthPlan; paym
       <label className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
         {radio('spread', 'plan-payment-spread')}
         {t('plan2.pay.from')}
-        <select
-          value={from}
-          onChange={(e) => {
-            const p = e.target.value as Period;
-            setFrom(p);
-            setChoice('spread');
-            save({ mode: 'spread', startMonth: p });
-          }}
-          className="focus-ring h-10 rounded-lg border border-control-edge bg-field px-2 text-[15px] text-ink"
-          aria-label={t('plan2.pay.from')}
-          data-testid="plan-payment-from"
-        >
-          {months.map((m) => (
-            <option key={m} value={m}>
-              {monthName(m)}
-            </option>
-          ))}
-        </select>
+        {select(from, months, (p) => (setFrom(p), setChoice('spread')), t('plan2.pay.from'), 'plan-payment-from', monthName)}
       </label>
       <label className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
         {radio('all', 'plan-payment-all')}
         {t('plan2.pay.onceAll')}
-        {salarySelect('all')}
+        {select(salary, months, (p) => (setSalary(p), setChoice('all')), t('plan2.pay.salary'), 'plan-payment-all-salary', gehalt)}
       </label>
       <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
         <label className="flex items-center gap-3">
           {radio('part', 'plan-payment-part')}
           {t('plan2.pay.oncePartLabel')}
         </label>
-        {salarySelect('part')}
+        {select(salary, months, (p) => (setSalary(p), setChoice('part')), t('plan2.pay.salary'), 'plan-payment-part-salary', gehalt)}
         <span className="flex items-center rounded-lg border border-control-edge bg-field px-2">
           <span className="mr-1 text-ink-mute">{currencySymbol()}</span>
           <AmountInput
@@ -465,11 +543,10 @@ function PaymentEditor({ plan, payment, start, onDone }: { plan: MonthPlan; paym
             value={part}
             onChange={setPart}
             onFocus={() => setChoice('part')}
-            onBlur={() => choice === 'part' && savePart(salary, part)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                savePart(salary, part);
+                apply();
               }
             }}
             enterKeyHint="done"
@@ -481,8 +558,52 @@ function PaymentEditor({ plan, payment, start, onDone }: { plan: MonthPlan; paym
           />
         </span>
       </div>
-      <button type="button" onClick={onDone} className="focus-ring h-11 self-end rounded-xl px-3 text-[15px] font-semibold text-accent-ink hover:bg-accent-soft" data-testid="plan-payment-ready">
-        {t('plan2.pay.ready')}
+      <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-ink">
+        <label className="flex items-center gap-3">
+          {radio('range', 'plan-payment-range')}
+          {t('plan2.pay.rangeLabel')}
+        </label>
+        {select(
+          rangeFrom,
+          months,
+          (p) => {
+            setRangeFrom(p);
+            if (rangeTo < p) setRangeTo(p);
+            setChoice('range');
+          },
+          t('plan2.pay.rangeFrom'),
+          'plan-payment-range-from',
+          gehalt,
+        )}
+        <span>{t('plan2.pay.rangeTo')}</span>
+        {select(
+          rangeTo,
+          months.filter((m) => m >= rangeFrom),
+          (p) => (setRangeTo(p), setChoice('range')),
+          t('plan2.pay.rangeLast'),
+          'plan-payment-range-to',
+          gehalt,
+        )}
+      </div>
+      {preview && (
+        <div className="flex flex-col gap-0.5 px-1 pt-1 text-[13px] leading-5 text-ink-mute" data-testid="plan-preview" aria-live="polite">
+          <p className="font-medium">{t('plan2.preview')}</p>
+          {preview.length === 0 ? (
+            <p data-testid="plan-preview-none">{t('plan2.preview.none')}</p>
+          ) : (
+            preview.slice(0, PREVIEW_ROWS).map((r) => (
+              <p key={r.period} className={`num flex justify-between gap-3 ${r.now! < r.was! ? 'text-warn' : ''}`} data-testid="plan-preview-row" data-period={r.period} data-worse={r.now! < r.was! || undefined}>
+                <span>{rowMonth(r.period, active)}</span>
+                <span>
+                  {money(r.was!)} → {money(r.now!)}
+                </span>
+              </p>
+            ))
+          )}
+        </div>
+      )}
+      <button type="button" onClick={apply} disabled={!draft} className={`${PRIMARY} self-end disabled:opacity-50`} data-testid="plan-payment-apply">
+        {t('plan2.apply')}
       </button>
     </fieldset>
   );

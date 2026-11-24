@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { goldenDataset, goldenSettings, P1, P2, P3, SALARY, SPIELGELD } from '../../tests/fixtures/golden-month';
 import { dueItems, fixedCostsAvg, monthFigures, monthItems } from './calc';
-import { monthCard, type CardRow } from './monthCard';
+import { planRows, monthCard, type CardRow } from './monthCard';
 import { monthPlan } from './monthPlan';
 import { salaryView, salaryWhen } from './salaryMonth';
 import { salaryParts } from './salarySplit';
@@ -181,6 +181,41 @@ describe('Golden Test „Dein Monat“ in jedem Monat (Monatsbeginn 25, heute 10
     // „Dein Plan“ says the same
     expect(after.months.find((m) => m.period === ACTIVE)!.transfer).toBe(600);
     expect(after.months.find((m) => m.period === MAR)!.transfer).toBe(0);
+  });
+
+  // plan-optionen: the same € 240 split over the active salary and the next one („Aufteilen: vom November- bis
+  // Dezember-Gehalt“, periods December and January): € 120 each. December ① 360 + 120 = 480 → Überschuss
+  // 427 − 120 = 307. January ① 600 + 120 = 720 → Überschuss 432 − 120 = 312. February stays (① 0, 1.002).
+  // March ① 0, „€ 240,00 aus Rücklage“ → Überschuss 762 + 240 = 1.002. „Deine nächsten Gehälter“ shows the
+  // same numbers.
+  it('Zahlung im Monat +3 aufgeteilt auf Gehalt 0 und +1: je € 120, Fälligkeitsmonat ohne Betrag', () => {
+    const steuer = { id: 'k-steuer', name: 'Kfz-Steuer', categoryId: 'g-ruecklage', history: [{ validFrom: '2026-01', amount: 240, frequency: 'annual' as const, dueMonths: [3], dueDay: 10 }], createdAt: '2026-01-01T08:00:00.000Z', sortOrder: 50, account: 'fixkostenkonto' as const };
+    const base = { ...ds, positions: [...ds.positions, steuer] };
+    const split = { ...ds, positions: [...ds.positions, { ...steuer, saving: { mode: 'range' as const, fromSalaryMonth: ACTIVE, toSalaryMonth: P3 } }] };
+    const MAR = '2027-03';
+    const before = monthPlan(base, ACTIVE, goldenSettings(), 25);
+    const after = monthPlan(split, ACTIVE, goldenSettings({ planMode: 'custom' }), 25);
+    const card = (d: typeof ds, plan: typeof before, p: Period) => monthCard(d, p, plan, 25, TODAY);
+    expect([card(base, before, P3).reserve.total, card(base, before, P3).left]).toEqual([600, 432]);
+    const dec = card(split, after, ACTIVE);
+    expect([dec.reserve.total, dec.beforeSpielgeld, dec.left]).toEqual([480, 837, 307]);
+    expect(dec.reserve.items.map((i) => [i.name, i.amount, i.plan?.kind, i.plan?.period])).toEqual([
+      ['Kfz-Versicherung', 360, 'due', ACTIVE],
+      ['Kfz-Steuer', 120, 'for', MAR],
+    ]);
+    const jan = card(split, after, P3);
+    expect([jan.reserve.total, jan.beforeSpielgeld, jan.left]).toEqual([720, 612, 312]);
+    const mar = card(split, after, MAR);
+    expect([mar.reserve.total, mar.beforeSpielgeld, mar.left, mar.fromReserve]).toEqual([0, 1302, 1002, 240]);
+    expect(card(split, after, '2027-02').left).toBe(card(base, before, '2027-02').left);
+    // „Deine nächsten Gehälter“: the same Überschüsse
+    const rows = planRows(split, after, 25, TODAY);
+    expect(rows.slice(0, 4).map((r) => [r.period, r.transfer, r.left])).toEqual([
+      [ACTIVE, 480, 307],
+      [P3, 720, 312],
+      ['2027-02', 0, 1002],
+      [MAR, 0, 1002],
+    ]);
   });
 
   it('Positionen-Ø: monatliche + halbjährlich/12 + jährlich/12, ohne Einmalzahlungen und späteren Start', () => {

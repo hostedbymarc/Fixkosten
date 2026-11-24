@@ -101,6 +101,8 @@ export interface KontoSettings {
   planSalary: number | null;
   /** the hint „Leg dein Gehalt zum Planen fest“ was tapped: it does not come back */
   planSalaryHintSeen: boolean;
+  /** plan-optionen: „Überschuss als Polster mitnehmen“ (default off) */
+  cushion: boolean;
 }
 
 /** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
@@ -153,6 +155,7 @@ export const DEFAULT_KONTO: KontoSettings = {
   planMode: null,
   planSalary: null,
   planSalaryHintSeen: false,
+  cushion: false,
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -222,6 +225,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
     planMode: PLAN_MODES.includes(v.planMode as PlanMode) ? (v.planMode as PlanMode) : null,
     planSalary: money(v.planSalary) !== null && money(v.planSalary)! > 0 ? money(v.planSalary) : null,
     planSalaryHintSeen: v.planSalaryHintSeen === true,
+    cushion: v.cushion === true,
   };
 }
 
@@ -276,6 +280,7 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.planMode) out.planMode = s.planMode;
   if (s.planSalary !== null) out.planSalary = s.planSalary;
   if (s.planSalaryHintSeen) out.planSalaryHintSeen = true;
+  if (s.cushion) out.cushion = true;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;
