@@ -1,7 +1,7 @@
 // Sprint B „Liquid Glass“: material, blur budget, tab bar / sidebar, tab transition, grain,
 // one entrance for every tab, skeleton instead of a spinner.
 import type { CDPSession, Page } from '@playwright/test';
-import { appSettled, expect, goTo, isSidebarLayout, isTouchProject, test } from './fixtures';
+import { appSettled, expect, goTo, isSidebarLayout, isTouchProject, settled, test } from './fixtures';
 import { importLive, OKT_TODAY } from './live';
 
 const ROUTES = ['monat', 'positionen', 'analyse', 'einstellungen'] as const;
@@ -347,6 +347,9 @@ test.describe('Tab-Leiste und Sidebar', () => {
 
   test('Druck-Feedback beim Antippen: scale(.96), 120 ms', async ({ page }) => {
     await importLive(page, OKT_TODAY);
+    // tests-stabil: press only once the page is still – the categories expanded by importLive grow for 240 ms
+    // after it; a layout or scroll change while the pointer is down takes :active away again (WebKit, once)
+    await settled(page);
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
     const press = nav.locator('.tab-press').nth(1);
     await expect(press).toHaveCSS('transition-duration', '0.12s');
