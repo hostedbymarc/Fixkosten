@@ -75,7 +75,24 @@ Testdaten: `tests/fixtures/golden-month.ts` plus eine erfundene jährliche Zahlu
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+Alle Läufe nach dem letzten Code- und Testcommit (9877a7e):
+
+| Lauf | Ergebnis |
+|---|---|
+| Unit (vitest) | 60 Dateien, 1466 bestanden |
+| TypeScript, Build (inkl. Farb- und Namensprüfung) | sauber |
+| E2E desktop (5 Teile) | 598 bestanden, 40 übersprungen |
+| E2E iphone-15 | 269 bestanden, 369 übersprungen |
+| E2E iphone-pro-max | 241 bestanden, 397 übersprungen |
+| E2E ipad-portrait | 257 bestanden, 381 übersprungen |
+| E2E ipad-landscape | 244 bestanden, 1 rot, 393 übersprungen. Rot: `month.spec.ts` „bottom sheet: pay open position…“ (älterer Test, nicht berührt). Isoliert 3 × wiederholt: 36/36 grün. In Lauf 1 grün |
+| Perf | 3 bestanden |
+| Perf-Feier | 2 bestanden. In Lauf 1 einmal 16,2 ms bei Grenze 16 ms (iPhone SE, unter Last); isoliert 2 × grün |
+| WebKit | plan-optionen 13, komplett-ansparen 12, monat-verdichtet 25, gehalt-zum-planen 13, alle-monate-gleich 13, monat-ist-monat 12, spielgeld-pille-rechenfehler 12, monat-feinschliff 21 bestanden |
+
+WebKit-Befund: Der Sicherungs-Test lud die Seite neu, während der zweite Import noch schrieb. Chromium war schneller, WebKit verlor den Import. Der Test wartet jetzt auf „Sicherung importiert“, das erst nach dem Commit erscheint. Danach 3 × grün. Die App war nicht betroffen.
+
+iPhone SE ist ein Viewport im Projekt `desktop` (plan-optionen, Screenshots).
 
 ## Screenshots
 
