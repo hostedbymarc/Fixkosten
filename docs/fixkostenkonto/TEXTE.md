@@ -201,7 +201,7 @@
 | Sheet „Dein Plan“ | `plan2.table.left` | Überschuss | 1 |
 | Sheet „Dein Plan“ | `plan2.table.cushion` | Polster | 1 |
 | Sheet „Dein Plan“ | `plan2.table.short` | weniger als dein Spielgeld | 4 |
-| Sheet „Dein Plan“ | `plan2.table.miss` | Fixkosten gehen sich nicht aus | 5 |
+| Sheet „Dein Plan“ | `plan2.table.miss` | Geht sich nicht aus | 4 |
 | Sheet „Dein Plan“ | `plan2.table.jump` | Zu {monat} springen | 3 |
 | Sheet „Dein Plan“ | `plan2.table.more` | Alle 12 Monate | 3 |
 | Sheet „Dein Plan“ | `plan2.table.less` | Nur 4 Monate | 3 |

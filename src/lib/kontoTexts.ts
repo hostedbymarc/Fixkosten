@@ -236,7 +236,7 @@ export const KONTO_TEXTS = {
   'plan2.table.left': 'Überschuss',
   'plan2.table.cushion': 'Polster',
   'plan2.table.short': 'weniger als dein Spielgeld',
-  'plan2.table.miss': 'Fixkosten gehen sich nicht aus',
+  'plan2.table.miss': 'Geht sich nicht aus',
   'plan2.table.jump': 'Zu {monat} springen',
   'plan2.table.more': 'Alle 12 Monate',
   'plan2.table.less': 'Nur 4 Monate',

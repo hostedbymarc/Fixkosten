@@ -147,6 +147,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         let { pay, editor } = await editPayment(page, 'Steuerberater', tap);
         await editor.getByTestId('plan-payment-all-salary').selectOption('2026-12');
         await checkRadio(editor.getByTestId('plan-payment-all'));
+        // plan-optionen: only „Übernehmen“ saves
+        await tap(editor.getByTestId('plan-payment-apply'));
         await expect(pay.getByTestId('plan-payment-state')).toHaveText('komplett vom November-Gehalt');
         await expect(pay).toHaveAttribute('data-mode', 'once');
         await shot(page, `${tag}-plan-komplett`);
@@ -200,8 +202,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
           ({ pay, editor } = await editPayment(page, name, tap));
           await editor.getByTestId('plan-payment-all-salary').selectOption('2026-12');
           await checkRadio(editor.getByTestId('plan-payment-all'));
+          await tap(editor.getByTestId('plan-payment-apply'));
           await expect(pay.getByTestId('plan-payment-state')).toHaveText('komplett vom November-Gehalt');
-          await tap(editor.getByTestId('plan-payment-ready'));
         }
         await closePlan(page);
         await toMonth(page, 'Dezember', tap);
@@ -216,8 +218,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         for (const name of ['Steuerberater', 'Öffis']) {
           ({ pay, editor } = await editPayment(page, name, tap));
           await checkRadio(editor.getByTestId('plan-payment-due'));
+          await tap(editor.getByTestId('plan-payment-apply'));
           await expect(pay.getByTestId('plan-payment-state')).toHaveText('im Februar zahlen');
-          await tap(editor.getByTestId('plan-payment-ready'));
         }
         await closePlan(page);
         await toMonth(page, 'Dezember', tap);

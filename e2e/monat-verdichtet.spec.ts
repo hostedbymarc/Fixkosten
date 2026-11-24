@@ -148,7 +148,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await spielgeldViaPlan(page, tap, '3000');
         await tap(page.getByTestId('plan-mode-due'));
         await expect(page.getByTestId('plan-mode-due')).toHaveAttribute('aria-checked', 'true');
-        await expect(page.getByTestId('plan-answer')).toHaveAttribute('data-kind', 'save');
+        // plan-optionen: the message names the first month without the full Spielgeld; the proposals stay below
+        await expect(page.getByTestId('plan-answer')).toHaveAttribute('data-answer', 'save');
+        await expect(page.getByTestId('plan-answer')).not.toHaveAttribute('data-level', 'ok');
         await expect(page.getByTestId('plan-proposal').first()).toHaveText(/^Spar ab [A-ZÄÖÜ][a-zäöü]+ €\s[\d.]+,\d{2} im Monat für .+ an\.$/);
         await shot(page, `${tag}-12-plan-ansparen`);
         await tap(page.getByTestId('plan-apply'));
@@ -163,13 +165,17 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await pay.getByTestId('plan-payment-edit').scrollIntoViewIfNeeded();
         await tap(pay.getByTestId('plan-payment-edit'));
         await tap(pay.getByTestId('plan-payment-spread'));
+        // plan-optionen: only „Übernehmen“ saves
+        await expect(pay).toHaveAttribute('data-mode', 'due');
+        await tap(pay.getByTestId('plan-payment-apply'));
         const changed = page.locator(`[data-testid=plan-payment][data-name="${name}"]`).first();
         await expect(changed).toHaveAttribute('data-mode', 'spread');
         await expect(changed.getByTestId('plan-payment-state')).toHaveText(/^vorher ansparen: \d+ × €\s[\d.]+,\d{2} ab [A-ZÄÖÜ][a-zäöü]+$/);
+        await tap(changed.getByTestId('plan-payment-edit'));
         await tap(changed.getByTestId('plan-payment-due'));
+        await tap(changed.getByTestId('plan-payment-apply'));
         await expect(changed).toHaveAttribute('data-mode', 'due');
         await expect(changed.getByTestId('plan-payment-state')).toHaveText(/^im [A-ZÄÖÜ][a-zäöü]+ zahlen$/);
-        await tap(changed.getByTestId('plan-payment-ready'));
 
         // € 6.000: no plan keeps it – answer 3 with the maximum; „Spielgeld auf € M setzen“
         await page.getByTestId('plan-spielgeld-amount').scrollIntoViewIfNeeded();
@@ -178,9 +184,9 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.keyboard.press('ControlOrMeta+a');
         await page.keyboard.type('6000');
         await page.keyboard.press('Enter');
-        await expect(page.getByTestId('plan-answer')).toHaveAttribute('data-kind', 'max');
-        await expect(page.getByTestId('plan-answer')).toContainText(/^Geht nicht ganz\. Höchstens €\s[\d.]+,00 Spielgeld sind möglich\./);
-        const max = amountOf((await page.getByTestId('plan-answer').locator('p').textContent())!.match(/€\s[\d.]+,\d{2}/)![0]);
+        await expect(page.getByTestId('plan-answer')).toHaveAttribute('data-answer', 'max');
+        await expect(page.getByTestId('plan-max')).toHaveText(/^Geht nicht ganz\. Höchstens €\s[\d.]+,00 Spielgeld sind möglich\.$/);
+        const max = amountOf((await page.getByTestId('plan-max').textContent())!.match(/€\s[\d.]+,\d{2}/)![0]);
         expect(max % 50).toBe(0);
         await expect(page.locator('[data-testid=plan-salary-row][data-short]').first()).toBeAttached();
         await shot(page, `${tag}-13-plan-geht-nicht`);

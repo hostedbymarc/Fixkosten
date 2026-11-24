@@ -81,7 +81,8 @@ function Answer({ plan, status }: { plan: MonthPlan; status: PlanStatus | null }
       </p>
     );
   const okay = status.kind === 'ok' || status.kind === 'cushionAll';
-  if (okay && plan.spielgeld === null)
+  // without a Spielgeld the plan has nothing to keep – unless the Polster is on: then how long it lasts
+  if (status.kind === 'ok' && plan.spielgeld === null)
     return (
       <p className="text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="none">
         {t('plan2.none')}
