@@ -842,36 +842,14 @@ button:active > .pea[data-pressable] {
   border-radius: 9999px;
   /* flat: a gradient into transparency is captured black by iOS „Ganze Seite“ (check-glass-layers) */
   background: var(--c);
+  /* before its fall starts (the delay fills backwards with the first keyframe) */
   opacity: 0;
-  animation-name: confetti-fall;
-  animation-timing-function: cubic-bezier(0.35, 0, 0.6, 1);
-  animation-fill-mode: both;
+  transform: translate3d(0, -24px, 0);
   /* the peas only, never the hero text */
   will-change: transform, opacity;
 }
-@keyframes confetti-fall {
-  0% {
-    transform: translate3d(0, -24px, 0);
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  30% {
-    transform: translate3d(var(--sway), calc(var(--end) * 0.3), 0);
-  }
-  60% {
-    transform: translate3d(calc(var(--sway) * -0.6), calc(var(--end) * 0.62), 0);
-  }
-  85% {
-    transform: translate3d(calc(var(--sway) * 0.3), calc(var(--end) * 0.9), 0);
-  }
-  100% {
-    transform: translate3d(0, var(--end), 0);
-    /* lying peas rest in the strip below the text */
-    opacity: 0.85;
-  }
-}
+/* the fall itself: Web Animations with plain numbers (fallKeyframes in src/components/Confetti.tsx), so it
+   runs on the compositor; lying peas rest in the strip below the text at 0.85 */
 /* the check pops while the peas fall: 0.5 → 1.2 → 1 */
 .hero-check[data-pop] {
   animation: hero-check-pop 520ms cubic-bezier(0.3, 0, 0.2, 1) both;

@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { hideSplash } from './lib/entrance';
-import { testFlag } from './lib/importTrace';
+import { startGate, testFlag } from './lib/importTrace';
 import { initAurora } from './lib/aurora';
 import { initNebel } from './lib/nebel';
 import { initTheme } from './lib/theme';
@@ -38,19 +38,21 @@ function appStyles(): Promise<void> {
   });
 }
 
-void appStyles().then(() => {
-  // background layers read their colours from the tokens of the app's stylesheet
-  initNebel();
-  initAurora();
-  // the app has started: the logo of the static start screen starts its wave in place (index.css)
-  document.getElementById('splash')?.classList.add('splash-live');
-  // failsafe: once the app runs, the splash never stays longer than 6 s, whatever happens while loading
-  window.setTimeout(() => void hideSplash(), 6000);
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </StrictMode>,
-  );
-});
+void startGate()
+  .then(appStyles)
+  .then(() => {
+    // background layers read their colours from the tokens of the app's stylesheet
+    initNebel();
+    initAurora();
+    // the app has started: the logo of the static start screen starts its wave in place (index.css)
+    document.getElementById('splash')?.classList.add('splash-live');
+    // failsafe: once the app runs, the splash never stays longer than 6 s, whatever happens while loading
+    window.setTimeout(() => void hideSplash(), 6000);
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </StrictMode>,
+    );
+  });

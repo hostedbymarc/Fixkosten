@@ -314,6 +314,24 @@ export function row(page: Page, positionId: string) {
   return page.locator(`[data-position="${positionId}"]${SHOWN}`);
 }
 
+/**
+ * tests-stabil: the top bottom sheet stands still – it has slid in (no `data-animating`) and has taken the focus
+ * (BottomSheet focuses its panel in an effect after the first paint). A fill() or click before that can lose its
+ * text to the panel or hit the backdrop of a sheet still moving.
+ */
+export async function sheetSettled(page: Page) {
+  const sheet = page.getByTestId('bottom-sheet').last();
+  await expect(sheet).toBeVisible();
+  await expect(sheet).not.toHaveAttribute('data-animating', '');
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+}
+
+/** Opens the details sheet of a position row and waits until it stands still. */
+export async function openDetails(page: Page, positionId: string) {
+  await row(page, positionId).getByRole('button', { name: /Details/ }).click();
+  await sheetSettled(page);
+}
+
 /** Resolves once all CSS animations inside the element have finished. */
 export async function animationsDone(page: Page, testId: string) {
   await page

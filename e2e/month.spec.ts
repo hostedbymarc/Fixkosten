@@ -1,4 +1,4 @@
-import { appSettled, eur, expandAll, expect, row, test, shown } from './fixtures';
+import { appSettled, eur, expandAll, expect, openDetails, row, sheetSettled, test, shown } from './fixtures';
 
 test.describe('Monat-Screen (Seed Oktober 2026)', () => {
   test('hero shows € 3.368 von € 3.403 and 1 open position', async ({ app }) => {
@@ -36,6 +36,7 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
 
   test('bottom sheet: change actual amount shows delta chip', async ({ app }) => {
     await row(app, 'pos-strom').getByRole('button', { name: 'Strom – Details' }).click();
+    await sheetSettled(app);
     const sheet = app.getByRole('dialog', { name: 'Strom' });
     await expect(sheet).toBeVisible();
     await sheet.getByLabel('Tatsächlich abgebucht').fill('76');
@@ -48,27 +49,27 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
     await expect(app.getByTestId('hero-paid')).toHaveText(eur('€ 3.380'));
 
     // cheaper → green
-    await row(app, 'pos-lebensmittel').getByRole('button', { name: /Details/ }).click();
+    await openDetails(app, 'pos-lebensmittel');
     await app.getByLabel('Tatsächlich abgebucht').fill('475');
     await app.getByRole('button', { name: 'Speichern' }).click();
     await expect(row(app, 'pos-lebensmittel')).toContainText(eur('−€ 5'));
   });
 
   test('bottom sheet: pay open position with different amount, then remove tick', async ({ app }) => {
-    await row(app, 'pos-depotentgelt').getByRole('button', { name: /Details/ }).click();
+    await openDetails(app, 'pos-depotentgelt');
     await app.getByLabel('Tatsächlich abgebucht').fill('36,90');
     await app.getByRole('button', { name: 'Als bezahlt speichern' }).click();
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'true');
     await expect(row(app, 'pos-depotentgelt')).toContainText(eur('+€ 1,90'));
 
-    await row(app, 'pos-depotentgelt').getByRole('button', { name: /Details/ }).click();
+    await openDetails(app, 'pos-depotentgelt');
     await app.getByRole('button', { name: 'Haken entfernen' }).click();
     await expect(row(app, 'pos-depotentgelt')).toHaveAttribute('data-paid', 'false');
     await expect(app.getByRole('button', { name: 'Rückgängig' })).toBeVisible();
   });
 
   test('sheet closes with Esc and locks background scroll', async ({ app }) => {
-    await row(app, 'pos-miete').getByRole('button', { name: /Details/ }).click();
+    await openDetails(app, 'pos-miete');
     await expect(app.getByRole('dialog')).toBeVisible();
     expect(await app.evaluate(() => document.body.style.position)).toBe('fixed');
     await app.keyboard.press('Escape');
@@ -77,7 +78,7 @@ test.describe('Monat-Screen (Seed Oktober 2026)', () => {
   });
 
   test('invalid amount disables saving', async ({ app }) => {
-    await row(app, 'pos-miete').getByRole('button', { name: /Details/ }).click();
+    await openDetails(app, 'pos-miete');
     await app.getByLabel('Tatsächlich abgebucht').fill('abc');
     await expect(app.getByRole('button', { name: 'Speichern' })).toBeDisabled();
     await expect(app.getByText('Bitte einen Betrag eingeben')).toBeVisible();
