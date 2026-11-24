@@ -202,6 +202,8 @@ test.describe('Plan-Optionen · Sicherung', () => {
     await checkRadio(sheet.getByRole('radio', { name: /Ersetzen/ }));
     await sheet.getByRole('button', { name: 'Ersetzen', exact: true }).click();
     await expect(sheet).toBeHidden();
+    // the toast comes after the commit: no reload (goTo) while the import still writes
+    await expect(page.getByText('Sicherung importiert')).toBeVisible();
   }
 
   async function planState(page: Page) {
