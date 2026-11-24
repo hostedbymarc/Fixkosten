@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { expect, settled, test } from './fixtures';
 import { pixelStats } from './background';
 import { importLive, OKT_TODAY } from './live';
 
@@ -82,9 +82,7 @@ async function barColour(page: Page): Promise<number[]> {
 }
 
 async function settle(page: Page) {
-  await page.evaluate(() => document.fonts.ready);
-  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
-  await page.waitForTimeout(150);
+  await settled(page);
 }
 
 for (const scheme of ['light', 'dark'] as const) {

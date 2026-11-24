@@ -3,7 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { appSettled, expect, test } from './fixtures';
+import { appSettled, expect, settled, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // Full-page capture after Liquid Glass (iPhone Safari „Ganze Seite“: a black area with a curved edge in
@@ -31,11 +31,7 @@ const isWebKit = (page: Page) => page.context().browser()?.browserType().name() 
 
 async function settle(page: Page) {
   await appSettled(page);
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined)));
-  });
-  await page.waitForTimeout(150);
+  await settled(page);
 }
 
 async function open(page: Page, route: string) {

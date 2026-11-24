@@ -3,7 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
-import { expect, goTo, test } from './fixtures';
+import { expect, goTo, settled, test } from './fixtures';
 import { diffShare, FIXED_FIRST_SCREEN, FIXED_STRETCHED, HIDE_CONTENT, NO_FILTER, pixelStats } from './background';
 import { importLive, NOV_TODAY, OKT_TODAY } from './live';
 
@@ -28,9 +28,7 @@ async function settle(page: Page) {
   // if that lands between the viewport and the full-page capture the page changes under the comparison.
   // Wait until it is built and its charts are mounted (data-analyse-ready), then measure.
   await page.waitForFunction(() => 'analyseReady' in document.documentElement.dataset, null, { timeout: 15_000 });
-  await page.evaluate(() => document.fonts.ready);
-  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined))));
-  await page.waitForTimeout(250);
+  await settled(page);
   // the slow ambient drift (mesh, hero lights; also ones started late) is taken out, back at rest: viewport
   // and full-page capture are compared, and the mesh drift is in vmax, which the full-page resize changes
   await page.evaluate(() => document.getAnimations().filter((a) => a.id === 'ambient').forEach((a) => a.cancel()));

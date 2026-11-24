@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, goTo, setUpKonto, test, closePlan } from './fixtures';
+import { appSettled, closePlan, expect, goTo, settled, setUpKonto, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // monat-feinschliff (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
@@ -30,9 +30,7 @@ const valueOf = async (l: Locator) => amountOf((await l.textContent())!);
 const shown = (page: Page) => page.locator('main > :not([data-tab-hidden])');
 
 async function shot(page: Page, name: string) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.waitForTimeout(400);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }
 

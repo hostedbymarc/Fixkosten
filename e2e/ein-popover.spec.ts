@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { appSettled, expect, FIXTURE, goTo, setUpKonto, test, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, goTo, settled, setUpKonto, test, TODAY } from './fixtures';
 
 // Only one popover at a time (every ⓘ; the chart „Verlauf mit Plan“ has no popup, its month is in the card), and the reworded ⓘ texts.
 // iPhone SE, iPhone 15, iPad portrait/landscape, desktop 1440 × light/dark; screenshots of the
@@ -23,8 +23,7 @@ const CHART_INFO = 'So entwickelt sich dein Geld, wenn du den Betrag immer am 1.
 const popovers = (page: Page) => page.locator('[role=tooltip]');
 
 async function shot(page: Page, name: string) {
-  await page.waitForTimeout(250);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 80 });
 }
 
