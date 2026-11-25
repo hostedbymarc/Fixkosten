@@ -12,6 +12,7 @@ import { ChevronRight } from '../components/Icons';
 import { BalanceField, BufferField, PlanSalaryField, RoundingField, SpielgeldField } from '../components/konto/KontoParts';
 import { setHasAccount } from '../db/kontoActions';
 import { openPlan } from '../lib/planBus';
+import { openPolster } from '../lib/polsterBus';
 import { useKonto } from '../db/useKonto';
 import { readCountryRaw, writeCountry, writeKonto } from '../db/settings';
 import { browserLanguages, CURRENCIES, CURRENCY_LABEL, countryForCurrency, currencyOf, DEFAULT_COUNTRY, type Currency } from '../lib/country';
@@ -415,6 +416,16 @@ function KontoSection({ ds }: { ds: Dataset }) {
                   data-testid="settings-open-plan"
                 >
                   {t('month.plan')}
+                  <ChevronRight className="h-5 w-5 shrink-0 text-ink-mute" aria-hidden="true" />
+                </button>
+                {/* polster-ziel: „Polster ›“ opens „Dein Polster“ */}
+                <button
+                  type="button"
+                  onClick={(e) => openPolster({ returnFocusTo: e.currentTarget })}
+                  className="focus-ring -mx-1 flex min-h-12 items-center justify-between gap-3 rounded-xl border-t border-line px-1 pt-3 text-left text-[15px] font-semibold text-ink"
+                  data-testid="settings-open-polster"
+                >
+                  {t('settings.cushion')}
                   <ChevronRight className="h-5 w-5 shrink-0 text-ink-mute" aria-hidden="true" />
                 </button>
               </div>

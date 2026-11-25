@@ -8,6 +8,8 @@ import { monthName } from '../../lib/period';
 import type { Dataset, Period } from '../../lib/types';
 import { openPlan } from '../../lib/planBus';
 import { AlertIcon, CheckIcon, ChevronRight } from '../Icons';
+import { useCushionPlan } from './Polster';
+import { cushionActive, cushionBefore, toCents } from '../../lib/polster';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
 
@@ -22,11 +24,13 @@ const money = (v: number) => formatEUR(v, { fixed: true });
 export function BigMonthCard({ ds, plan, period, start, className = '' }: { ds: Dataset; plan: MonthPlan; period: Period; start: MonthStart; className?: string }) {
   const button = useRef<HTMLButtonElement>(null);
   const big = bigMonthFrom(plan, period);
-  const level = useMemo(() => {
-    if (!big) return null;
-    const card = monthCard(ds, big.period, plan, start);
-    return monthLevel({ before: card.beforeSpielgeld, left: card.left });
-  }, [ds, big, plan, start]);
+  const card = useMemo(() => (big ? monthCard(ds, big.period, plan, start) : null), [ds, big, plan, start]);
+  const level = card ? monthLevel({ before: card.beforeSpielgeld, left: card.left }) : null;
+  // polster-ziel: „Polster deckt es“ when the Polster planned before this month covers its gap
+  const { c, proj } = useCushionPlan(ds, plan);
+  const gap = card?.left !== null && card?.left !== undefined && card.left < 0 ? toCents(-card.left) : 0;
+  const before = big ? cushionBefore(proj, big.period, c) : null;
+  const covered = cushionActive(c) && gap > 0 && before !== null && before >= gap;
   if (!big) return null;
   // without a salary: as ready (nothing to compare)
   const kind = level?.kind ?? 'ok';
@@ -41,6 +45,7 @@ export function BigMonthCard({ ds, plan, period, start, className = '' }: { ds: 
       data-ready={ready}
       data-level={kind}
       data-saved={(ready && big.saved) || undefined}
+      data-cushion={covered || undefined}
       data-period={big.period}
     >
       <span className="flex w-full items-center justify-between gap-2">
@@ -67,6 +72,11 @@ export function BigMonthCard({ ds, plan, period, start, className = '' }: { ds: 
           {level?.kind === 'short' ? t('big.short', { betrag: money(level.amount) }) : kind === 'spielgeld' ? t('big.spielgeld') : big.saved ? t('big.saved') : t('big.ready')}
         </span>
       </span>
+      {covered && (
+        <span className="text-[13px] font-semibold text-accent-ink" data-testid="big-month-cushion">
+          {t('big.cushion')}
+        </span>
+      )}
     </button>
   );
 }

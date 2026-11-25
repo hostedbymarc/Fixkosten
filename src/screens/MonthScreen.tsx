@@ -8,6 +8,7 @@ import { Pea } from '../components/Pea';
 import { useKonto } from '../db/useKonto';
 import { DeinMonatCard, useMonthPlan } from '../components/konto/DeinMonatCard';
 import { BigMonthCard } from '../components/konto/BigMonthCard';
+import { PolsterCard } from '../components/konto/Polster';
 import { t } from '../lib/kontoTexts';
 import { monthDone } from '../lib/celebration';
 import { useCelebration } from '../components/useCelebration';
@@ -235,6 +236,7 @@ export function MonthScreen({ ds, period, onPeriodChange }: Props) {
           <div className="order-1 flex min-w-0 flex-col gap-3 md:col-start-1 md:row-start-1 md:gap-4">
             {isActive && <KontoCheckCard ds={ds} active={today} />}
             <DeinMonatCard ds={ds} period={period} onOpenSalary={() => openClose(null)} />
+            {isActive && <PolsterSlot ds={ds} active={today} />}
           </div>
           <aside className="contents md:col-start-2 md:row-span-2 md:row-start-1 md:flex md:flex-col md:gap-6 md:self-start">
             {period >= today && <BigMonthSlot ds={ds} active={today} period={period} className="order-3" />}
@@ -665,6 +667,14 @@ function MonthHeader({
 
 /** The month the hero showed last (module level: a swipe re-creates the hero). */
 const heroShown: { period: Period | null } = { period: null };
+/** polster-ziel: the Polster card in the active month, right under the green card (only once set up). */
+function PolsterSlot({ ds, active }: { ds: Dataset; active: Period }) {
+  const { settings } = useKonto();
+  const plan = useMonthPlan(ds, active);
+  if (!settings.enabled || !settings.setupDone) return null;
+  return <PolsterCard plan={plan} />;
+}
+
 /** „Nächster großer Monat“ from the plan (only once set up): in the active month and every later one, from the month shown. */
 function BigMonthSlot({ ds, active, period, className }: { ds: Dataset; active: Period; period: Period; className?: string }) {
   const { settings } = useKonto();

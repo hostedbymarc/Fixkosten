@@ -1,6 +1,7 @@
 // Every write of the Fixkostenkonto: setup, plan, monthly check, new anchor, milestones. All through
 // the one meta entry (src/db/settings.ts); the schema does not change.
 
+import { localToday } from '../lib/activeMonth';
 import { celebratedUpTo } from '../lib/celebration';
 import { dayKey } from '../lib/kontoBalance';
 import { setupAccount } from '../lib/monthPlan';
@@ -195,7 +196,7 @@ export async function setCushionGoal(db: FixkostenDB, cents: number | null): Pro
 }
 
 /** „Schon geschafft“: sets the Polster and its day; an empty field removes it. */
-export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = new Date()): Promise<void> {
+export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = localToday()): Promise<void> {
   await writeKonto(db, cents === null ? { cushionBalance: null, cushionBalanceDate: null } : { cushionBalance: Math.max(0, Math.round(cents)), cushionBalanceDate: dayKey(today) });
 }
 
@@ -209,7 +210,7 @@ export async function setCushionRule(db: FixkostenDB, rule: CushionRule, share?:
  * for the month (once: a second confirmation of the same month does nothing) and the stages crossed. Returns the
  * stages newly reached (for the celebration), or null when the month was confirmed already.
  */
-export async function confirmCushion(db: FixkostenDB, period: Period, cents: number, today: Date = new Date()): Promise<CushionMilestone[] | null> {
+export async function confirmCushion(db: FixkostenDB, period: Period, cents: number, today: Date = localToday()): Promise<CushionMilestone[] | null> {
   const s = await readKonto(db);
   if (s.cushionConfirmed[period] !== undefined || cents === 0) return null;
   const before = s.cushionBalance ?? 0;
@@ -225,7 +226,7 @@ export async function confirmCushion(db: FixkostenDB, period: Period, cents: num
 }
 
 /** „Rückgängig“: takes the month's confirmation back (the stages stay celebrated). */
-export async function undoCushion(db: FixkostenDB, period: Period, today: Date = new Date()): Promise<void> {
+export async function undoCushion(db: FixkostenDB, period: Period, today: Date = localToday()): Promise<void> {
   const s = await readKonto(db);
   const amount = s.cushionConfirmed[period];
   if (amount === undefined) return;

@@ -24,6 +24,7 @@ import { fitStyle } from '../fitText';
 import { CheckIcon, ChevronDown, ChevronRight } from '../Icons';
 import { AmountInput } from '../form';
 import { KontoSetup, useKontoEffects } from './KontoTile';
+import { CushionSplit } from './Polster';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
 const minus = (v: number) => `− ${money(v)}`;
@@ -188,6 +189,8 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
                 </p>
               )}
             </div>
+            {/* polster-ziel: what to do with the Überschuss (or the gap) and the Polster */}
+            <CushionSplit ds={ds} period={period} active={active} left={card.left!} />
           </div>
         </>
       )}

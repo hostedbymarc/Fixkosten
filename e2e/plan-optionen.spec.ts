@@ -8,7 +8,7 @@ import { importLive, NOV_TODAY } from './live';
 //   due in February): the preview shows December and January − € 630 each, February + € 1.260 (worse ones in the
 //   warn token); nothing is saved before „Übernehmen“; after it the table shows the previewed Überschüsse
 // - a row of „Deine nächsten Gehälter“ shows its month; its Überschuss is the large amount of that month's card
-// - „Überschuss als Polster mitnehmen“: on → column „Polster“ (running sum) and the message about it; off → gone
+// (the switch „Überschuss als Polster mitnehmen“ is gone with polster-ziel: e2e/polster-ziel.spec.ts)
 // - export/import with and without the new fields (desktop only)
 // iPhone SE, iPhone 15, iPhone Pro Max, iPad portrait/landscape, desktop 1440 × light/dark; screenshots to
 // docs/screenshots/plan-optionen/.
@@ -150,39 +150,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect.poll(() => centsOf(page.getByTestId('dein-monat-free-value'))).toBe(after.get('2027-01'));
         await appSettled(page);
 
-        // the Polster: on → column and message; off → as before
-        await openPlan(page, tap);
-        const sw = page.getByTestId('plan-cushion-switch');
-        await sw.scrollIntoViewIfNeeded();
-        await expect(sw).toHaveAttribute('aria-checked', 'false');
-        await expect(page.getByTestId('plan-cushion-head')).toHaveCount(0);
-        const kindOff = await page.getByTestId('plan-answer').getAttribute('data-kind');
-        expect(['ok', 'short', 'spielgeld', 'none']).toContain(kindOff);
-        await tap(sw);
-        await expect(sw).toHaveAttribute('aria-checked', 'true');
-        await expect(page.getByTestId('plan-cushion-head')).toHaveText('Polster');
-        const table = await tableLeft(page, tap);
-        const list = [...table.values()];
-        const cushion = await page.getByTestId('plan-salary-cushion').allTextContents();
-        expect(cushion).toHaveLength(12);
-        let sum = 0;
-        for (const [i, text] of cushion.entries()) {
-          sum += list[i]!;
-          expect(cents(text), `Polster Zeile ${i + 1}`).toBe(sum);
-        }
-        const answer = page.getByTestId('plan-answer');
-        await expect(answer).toHaveAttribute('data-kind', /^(cushion|cushionAll|short|spielgeld)$/);
-        const kind = await answer.getAttribute('data-kind');
-        if (kind === 'cushionAll') await expect(page.getByTestId('plan-answer-text')).toHaveText('Reicht für alle 12 Monate.');
-        if (kind === 'cushion') await expect(page.getByTestId('plan-answer-text')).toHaveText(/^Dein Polster reicht bis [A-ZÄÖÜ][a-zäöü]+ \d{4}\.$/);
-        await answer.scrollIntoViewIfNeeded();
-        await shot(page, `${tag}-polster`);
-        await sw.scrollIntoViewIfNeeded();
-        await tap(sw);
-        await expect(sw).toHaveAttribute('aria-checked', 'false');
-        await expect(page.getByTestId('plan-cushion-head')).toHaveCount(0);
-        await expect(page.getByTestId('plan-salary-cushion')).toHaveCount(0);
-        await expect(answer).toHaveAttribute('data-kind', kindOff!);
         await closePlan(page);
       });
     });
@@ -209,12 +176,11 @@ test.describe('Plan-Optionen · Sicherung', () => {
     await page.getByTestId('settings-open-plan').click();
     await expect(page.getByTestId('plan-sheet')).toBeVisible();
     const mode = await page.locator('[data-testid=plan-payment][data-name="Steuerberater"]').first().getAttribute('data-mode');
-    const cushion = await page.getByTestId('plan-cushion-switch').getAttribute('aria-checked');
     await closePlan(page);
-    return { mode, cushion };
+    return { mode };
   }
 
-  test('Export enthält „Aufteilen“ und Polster; Import mit und ohne die Felder', async ({ page }) => {
+  test('Export enthält „Aufteilen“; Import mit und ohne das Feld', async ({ page }) => {
     const click: Tap = (l) => l.click();
     await start(page);
     await openPlan(page, click);
@@ -223,7 +189,6 @@ test.describe('Plan-Optionen · Sicherung', () => {
     await editor.getByTestId('plan-payment-range-from').selectOption('2026-12');
     await editor.getByTestId('plan-payment-range-to').selectOption('2027-01');
     await click(editor.getByTestId('plan-payment-apply'));
-    await page.getByTestId('plan-cushion-switch').click();
     await closePlan(page);
 
     await goTo(page, 'einstellungen');
@@ -231,17 +196,15 @@ test.describe('Plan-Optionen · Sicherung', () => {
     const file = JSON.parse(readFileSync((await download.path())!, 'utf8'));
     const steuer = file.data.positions.find((p: { name: string }) => p.name === 'Steuerberater');
     expect(steuer.saving).toEqual({ mode: 'range', fromSalaryMonth: '2026-12', toSalaryMonth: '2027-01' });
-    expect(file.settings.fixkostenkonto.cushion).toBe(true);
 
-    // without the fields (an older backup): paid when due, no Polster
+    // without the field (an older backup): paid when due
     const older = structuredClone(file);
     for (const p of older.data.positions) delete p.saving;
-    delete older.settings.fixkostenkonto.cushion;
     await importFile(page, older);
-    expect(await planState(page)).toEqual({ mode: 'due', cushion: 'false' });
+    expect(await planState(page)).toEqual({ mode: 'due' });
 
-    // with the fields: split again, Polster on
+    // with the field: split again
     await importFile(page, file);
-    expect(await planState(page)).toEqual({ mode: 'range', cushion: 'true' });
+    expect(await planState(page)).toEqual({ mode: 'range' });
   });
 });
