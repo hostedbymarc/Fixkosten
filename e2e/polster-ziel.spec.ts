@@ -127,7 +127,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         expect(surplus).toBeGreaterThan(100000);
         const split = page.getByTestId('cushion-split');
         await expect(split).toHaveAttribute('data-kind', 'fill');
-        expect(await centsOf(page.getByTestId('cushion-split-amount'))).toBe(Math.min(surplus, 600000));
+        await expect.poll(() => centsOf(page.getByTestId('cushion-split-amount'))).toBe(Math.min(surplus, 600000));
         const after = 1400000 + Math.min(surplus, 600000);
         const pct = Math.floor((after * 100) / 2000000);
         await expect(page.getByTestId('cushion-split-after')).toContainText(`70 % → ${pct} %`);
@@ -161,12 +161,12 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(split).toHaveAttribute('data-kind', 'take');
         const gap = -(await centsOf(page.getByTestId('dein-monat-free-value')));
         expect(gap).toBeGreaterThan(0);
-        expect(await centsOf(page.getByTestId('cushion-split-amount'))).toBe(Math.min(gap, 1400000));
+        await expect.poll(() => centsOf(page.getByTestId('cushion-split-amount'))).toBe(Math.min(gap, 1400000));
         await expect(page.getByTestId('cushion-split-salary')).toContainText('Gehalt brauchst du den Polster nicht.');
         await shot(page, `${tag}-3-schwacher-monat`, month);
         await tap(page.getByTestId('cushion-split-confirm'));
         await expect(page.getByTestId('cushion-split-confirmed')).toContainText('aus dem Polster genommen.');
-        expect(await centsOf(page.getByTestId('polster-card-balance'))).toBe(1400000 - Math.min(gap, 1400000));
+        await expect.poll(() => centsOf(page.getByTestId('polster-card-balance'))).toBe(1400000 - Math.min(gap, 1400000));
         await tap(page.getByTestId('cushion-split-undo'));
         await expect(page.getByTestId('polster-card-balance')).toHaveText('€ 14.000');
 
