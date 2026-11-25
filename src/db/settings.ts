@@ -101,9 +101,28 @@ export interface KontoSettings {
   planSalary: number | null;
   /** the hint „Leg dein Gehalt zum Planen fest“ was tapped: it does not come back */
   planSalaryHintSeen: boolean;
-  /** plan-optionen: „Überschuss als Polster mitnehmen“ (default off) */
-  cushion: boolean;
+  // ---- polster-ziel (all in cents; the switch „Überschuss als Polster mitnehmen“ of plan-optionen is gone:
+  // a stored `cushion` is ignored on reading and left out on writing) ----
+  /** „Polster-Ziel“ in cents; null = none */
+  cushionGoal: number | null;
+  /** „Schon geschafft“: the Polster today in cents; null = none (no Polster column, no Polster messages) */
+  cushionBalance: number | null;
+  /** the day the Polster was last entered or changed (YYYY-MM-DD) */
+  cushionBalanceDate: string | null;
+  /** „Überschuss bis zum Ziel“: all into the Polster, or a fixed share (`cushionShare` %) */
+  cushionRule: CushionRule;
+  /** the share of the rule „Fester Anteil“ in percent (1–99) */
+  cushionShare: number;
+  /** stages (25/50/75/100 %) already celebrated: each only once */
+  cushionMilestones: CushionMilestone[];
+  /** per month: the amount confirmed in cents (+ „Polster aufgefüllt“, − „Aus Polster genommen“) – once per month */
+  cushionConfirmed: Partial<Record<Period, number>>;
 }
+
+export type CushionRule = 'all' | 'share';
+export const CUSHION_MILESTONES = [25, 50, 75, 100] as const;
+export type CushionMilestone = (typeof CUSHION_MILESTONES)[number];
+export const DEFAULT_CUSHION_SHARE = 50;
 
 /** „Aus dem Überschuss“ (counts against the salary) / „Andere Quelle“ (not from the net salary, like a Vermögensaufbau payment with fromNet false) */
 export type OverflowSource = 'surplus' | 'other';
@@ -155,13 +174,22 @@ export const DEFAULT_KONTO: KontoSettings = {
   planMode: null,
   planSalary: null,
   planSalaryHintSeen: false,
-  cushion: false,
+  cushionGoal: null,
+  cushionBalance: null,
+  cushionBalanceDate: null,
+  cushionRule: 'all',
+  cushionShare: DEFAULT_CUSHION_SHARE,
+  cushionMilestones: [],
+  cushionConfirmed: {},
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const money = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 100) / 100 : null);
 const isTimestamp = (v: unknown): v is string => typeof v === 'string' && !Number.isNaN(Date.parse(v));
 const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+/** a whole number of cents (≥ 0 unless `signed`) */
+const cent = (v: unknown, signed = false): number | null =>
+  typeof v === 'number' && Number.isFinite(v) && (signed || v >= 0) ? Math.round(v) : null;
 
 /**
  * Any stored value → valid settings (unknown parts fall back to the defaults). Idempotent, so an
@@ -169,7 +197,8 @@ const isDay = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2
  * new fields: with a balance it counts as set up (no setup prompt), without one it does not.
  */
 export function toKontoSettings(value: unknown): KontoSettings {
-  if (!isObj(value)) return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [], spielgeldOverflow: {} };
+  if (!isObj(value))
+    return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [], spielgeldOverflow: {}, cushionMilestones: [], cushionConfirmed: {} };
   const v = value;
   const balance = money(v.balance) ?? 0;
   const anchor = isObj(v.anchor) && money(v.anchor.amount) !== null && isTimestamp(v.anchor.at) ? { amount: money(v.anchor.amount)!, at: v.anchor.at } : null;
@@ -225,7 +254,20 @@ export function toKontoSettings(value: unknown): KontoSettings {
     planMode: PLAN_MODES.includes(v.planMode as PlanMode) ? (v.planMode as PlanMode) : null,
     planSalary: money(v.planSalary) !== null && money(v.planSalary)! > 0 ? money(v.planSalary) : null,
     planSalaryHintSeen: v.planSalaryHintSeen === true,
-    cushion: v.cushion === true,
+    cushionGoal: cent(v.cushionGoal) !== null && cent(v.cushionGoal)! > 0 ? cent(v.cushionGoal) : null,
+    cushionBalance: cent(v.cushionBalance),
+    cushionBalanceDate: isDay(v.cushionBalanceDate) ? v.cushionBalanceDate : null,
+    cushionRule: v.cushionRule === 'share' ? 'share' : 'all',
+    cushionShare:
+      typeof v.cushionShare === 'number' && Number.isInteger(v.cushionShare) && v.cushionShare >= 1 && v.cushionShare <= 99 ? v.cushionShare : DEFAULT_CUSHION_SHARE,
+    cushionMilestones: (Array.isArray(v.cushionMilestones) ? v.cushionMilestones : [])
+      .filter((m, i, all): m is CushionMilestone => CUSHION_MILESTONES.includes(m as CushionMilestone) && all.indexOf(m) === i)
+      .sort((a, b) => a - b),
+    cushionConfirmed: Object.fromEntries(
+      Object.entries(isObj(v.cushionConfirmed) ? v.cushionConfirmed : {})
+        .map(([k, x]) => [k, cent(x, true)] as const)
+        .filter(([k, x]) => isPeriod(k) && x !== null && x !== 0),
+    ) as Partial<Record<Period, number>>,
   };
 }
 
@@ -236,7 +278,12 @@ export function toKontoSettings(value: unknown): KontoSettings {
 export function kontoUntouched(stored: KontoSettings | null): boolean {
   if (stored === null) return true;
   // „Gehalt zum Planen“ is a setting of its own (Einstellungen → Gehalt): it does not count as touched either
-  return JSON.stringify(storedKonto({ ...stored, celebratedMonths: [], planSalary: null, planSalaryHintSeen: false })) === JSON.stringify(storedKonto(DEFAULT_KONTO));
+  // the Polster (polster-ziel) is set in Einstellungen as well, without the Fixkostenkonto
+  const cushionless = { cushionGoal: null, cushionBalance: null, cushionBalanceDate: null, cushionRule: 'all' as const, cushionShare: DEFAULT_CUSHION_SHARE, cushionMilestones: [], cushionConfirmed: {} };
+  return (
+    JSON.stringify(storedKonto({ ...stored, celebratedMonths: [], planSalary: null, planSalaryHintSeen: false, ...cushionless })) ===
+    JSON.stringify(storedKonto(DEFAULT_KONTO))
+  );
 }
 
 const isRounding = (v: unknown) => v === 1 || v === 5 || v === 10;
@@ -280,7 +327,13 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.planMode) out.planMode = s.planMode;
   if (s.planSalary !== null) out.planSalary = s.planSalary;
   if (s.planSalaryHintSeen) out.planSalaryHintSeen = true;
-  if (s.cushion) out.cushion = true;
+  if (s.cushionGoal !== null) out.cushionGoal = s.cushionGoal;
+  if (s.cushionBalance !== null) out.cushionBalance = s.cushionBalance;
+  if (s.cushionBalanceDate) out.cushionBalanceDate = s.cushionBalanceDate;
+  if (s.cushionRule !== 'all') out.cushionRule = s.cushionRule;
+  if (s.cushionShare !== DEFAULT_CUSHION_SHARE) out.cushionShare = s.cushionShare;
+  if (s.cushionMilestones.length) out.cushionMilestones = s.cushionMilestones;
+  if (Object.keys(s.cushionConfirmed).length) out.cushionConfirmed = s.cushionConfirmed;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;
