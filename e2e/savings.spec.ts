@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { eur, expect, goTo, isTouchProject, test } from './fixtures';
+import { eur, expect, goTo, isTouchProject, settled, test } from './fixtures';
 import { expectClean } from './measure';
 import { importSavings } from './savings-data';
 
@@ -48,7 +48,7 @@ const NO_WRAP = [
 async function shot(page: Page, name: string, testId = 'savings') {
   // the floating tab bar would cover the lower part of an element screenshot
   await page.addStyleTag({ content: '[data-testid="tabbar"] { visibility: hidden !important; }' });
-  await page.waitForTimeout(250);
+  await settled(page);
   await page.getByTestId(testId).screenshot({ path: `${DIR}/${test.info().project.name}-${name}.png` });
 }
 

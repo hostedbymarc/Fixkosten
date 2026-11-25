@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, test, TODAY, touchSwipe, closePlan } from './fixtures';
+import { appSettled, closePlan, expect, FIXTURE, settled, test, TODAY, touchSwipe } from './fixtures';
 
 // walkthrough „So funktioniert Erbse“ (seed data, today 5 October 2026 → October active):
 // - monat-verdichtet: right after the setup „Dein Plan“ opens (not the walkthrough); the way in is
@@ -25,9 +25,7 @@ const VIEWPORTS = {
 const AMOUNT = '€\\s[\\d.]+(?:,\\d{2})?';
 
 async function shot(page: Page, name: string) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.waitForTimeout(350);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }
 

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, closePlan, expect, setUpKonto, test } from './fixtures';
+import { appSettled, closePlan, expect, settled, setUpKonto, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // alle-monate-gleich (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
@@ -80,9 +80,7 @@ async function toMonth(page: Page, name: string, tap: (l: Locator) => Promise<vo
 }
 
 async function shot(page: Page, name: string, target: Locator) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.waitForTimeout(400);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   await target.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }
 

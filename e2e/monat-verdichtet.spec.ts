@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, NOV_5, setUpKonto, test, TODAY, closePlan } from './fixtures';
+import { appSettled, closePlan, expect, FIXTURE, goTo, NOV_5, settled, setUpKonto, test, TODAY } from './fixtures';
 
 // monat-verdichtet (seed data, today 5 October 2026 → October active, a rebuilt salary € 8.302):
 // - „Dein Monat“ (only the active month, only with „Fixkosten einplanen“), for the next salary: Netto,
@@ -30,11 +30,9 @@ const amountOf = (text: string) => Number(text.replace(/[^\d,]/g, '').replace(',
 const valueOf = async (l: Locator) => amountOf((await l.textContent())!);
 
 async function shot(page: Page, name: string, target?: Locator) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
   if (target) await target.evaluate((e) => e.scrollIntoView({ block: 'center' }));
   else await page.evaluate(() => window.scrollTo(0, 0));
-  await page.waitForTimeout(300);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }
 

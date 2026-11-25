@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, setUpKonto, test, TODAY } from './fixtures';
+import { appSettled, expect, FIXTURE, goTo, settled, setUpKonto, test, TODAY } from './fixtures';
 
 // Vorher/Nachher screenshots of every tab and the sheets with explanatory texts, light and dark.
 // PHASE=vorher|nachher (default nachher). iPhone 15 and desktop only; the shots are the result.
@@ -10,9 +10,7 @@ const DIR = 'docs/screenshots/tooltips';
 mkdirSync(DIR, { recursive: true });
 
 async function shot(page: Page, name: string, fullPage = true) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(200);
+  await settled(page);
   const scheme = await page.evaluate(() => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dunkel' : 'hell'));
   await page.screenshot({ path: `${DIR}/${PHASE}-${test.info().project.name}-${scheme}-${name}.jpg`, type: 'jpeg', quality: 70, fullPage });
 }

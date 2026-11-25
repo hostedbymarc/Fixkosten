@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Browser, BrowserContext, Page, TestInfo } from '@playwright/test';
-import { appSettled, expect, test } from './fixtures';
+import { appSettled, expect, settled, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // iOS Safari „Ganze Seite“ renders the SCREEN CSS (a dark-mode capture shows the dark colours) and
@@ -32,11 +32,7 @@ const MATERIAL_ONLY = `
 
 async function settle(page: Page) {
   await appSettled(page);
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await Promise.all(document.getAnimations().filter((a) => a.id !== 'ambient').map((a) => a.finished.catch(() => undefined)));
-  });
-  await page.waitForTimeout(150);
+  await settled(page);
 }
 
 async function open(page: Page, route: string) {

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, closePlan, expandAll, expect, setUpKonto, test } from './fixtures';
+import { appSettled, closePlan, expandAll, expect, settled, setUpKonto, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // monat-ist-monat (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
@@ -34,9 +34,7 @@ const centsOf = async (l: Locator) => cents((await l.textContent())!);
 const plain = (s: string | null) => (s ?? '').replace(/[\u00a0\u202f]/g, ' ');
 
 async function shot(page: Page, name: string, target?: Locator) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.waitForTimeout(400);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   if (target) await target.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
   else await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }

@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, expect, FIXTURE, goTo, test, TODAY, closePlan } from './fixtures';
+import { animationsDone, appSettled, closePlan, expect, FIXTURE, goTo, settled, test, TODAY } from './fixtures';
 
 // feinschliff-puffer (seed data, today 5 October 2026 → October active; € 184,21 set aside, no own account):
 // - the month info only once: no popup over „Verlauf mit Plan“ (analysis), the card under it shows the
@@ -26,9 +26,7 @@ const VIEWPORTS = {
 const amountOf = (text: string) => Number(text.replace(/[^\d,]/g, '').replace(',', '.'));
 
 async function shot(page: Page, name: string, target?: Locator) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.waitForTimeout(300);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   if (target) await target.screenshot({ path: `${DIR}/${name}.png` });
   else await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }

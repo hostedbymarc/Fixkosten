@@ -97,19 +97,48 @@ async function frameWork(browser: Browser, page: Page, name: string, action: () 
   await browser.startTracing(page, { path, categories: ['devtools.timeline'] });
   await action();
   await browser.stopTracing();
-  const ev = (JSON.parse(readFileSync(path, 'utf8')) as { traceEvents: { name: string; ph: string; ts: number; id?: number | string; id2?: { local?: string } }[] }).traceEvents;
+  type Ev = { name: string; ph: string; ts: number; dur?: number; pid?: number; tid?: number; id?: number | string; id2?: { local?: string }; args?: { name?: string } };
+  const ev = (JSON.parse(readFileSync(path, 'utf8')) as { traceEvents: Ev[] }).traceEvents;
   const open = new Map<string, number>();
-  const frames: number[] = [];
+  const spans: [number, number][] = [];
   for (const e of ev.filter((x) => x.name === 'AnimationFrame')) {
     const id = String(e.id2?.local ?? e.id);
     if (e.ph === 'b') open.set(id, e.ts);
     else if (e.ph === 'e' && open.has(id)) {
-      frames.push((e.ts - open.get(id)!) / 1000);
+      spans.push([open.get(id)!, e.ts]);
       open.delete(id);
     }
   }
-  const avg = frames.length ? frames.reduce((a, b) => a + b, 0) / frames.length : 0;
-  return { frames: frames.length, avgFrameMs: Math.round(avg * 10) / 10, maxFrameMs: Math.round(Math.max(0, ...frames) * 10) / 10 };
+  const frames = spans.map(([b, e]) => (e - b) / 1000);
+  // tests-stabil: the work inside each frame – the union of the main thread's tasks within its span, without the
+  // idle gaps between them (a frame that only waits for the next vsync costs nothing)
+  const mainThread = ev.find((e) => e.name === 'thread_name' && e.args?.name === 'CrRendererMain');
+  const tasks = ev
+    .filter((e) => e.ph === 'X' && e.pid === mainThread?.pid && e.tid === mainThread?.tid && (e.dur ?? 0) > 0)
+    .map((e) => [e.ts, e.ts + e.dur!] as const)
+    .sort((a, b) => a[0] - b[0]);
+  const work = spans.map(([b, e]) => {
+    let busy = 0;
+    let until = b;
+    for (const [s, f] of tasks) {
+      if (f <= until || s >= e) continue;
+      const from = Math.max(s, until);
+      const to = Math.min(f, e);
+      if (to > from) busy += to - from;
+      until = Math.max(until, to);
+    }
+    return busy / 1000;
+  });
+  const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  const r1 = (x: number) => Math.round(x * 10) / 10;
+  return {
+    frames: frames.length,
+    avgFrameMs: r1(mean(frames)),
+    maxFrameMs: r1(Math.max(0, ...frames)),
+    avgFrameWorkMs: r1(mean(work)),
+    totalWorkMs: Math.round(work.reduce((a, b) => a + b, 0)),
+    maxFrameWorkMs: r1(Math.max(0, ...work)),
+  };
 }
 
 async function scrollGesture(page: Page, distance: number) {
@@ -195,13 +224,17 @@ test('Tabwechsel (inkl. erster Besuch Analyse): Ø Frame-Zeit < 16 ms, kein Long
 // „{Monat} erledigt“ with the pea confetti (live data: October is paid). spielgeld-planer: it falls only live, when
 // the last position is ticked, so the „Entgelt Depot“ is set back to open first and ticked again while measured
 // (4× CPU throttling, Chrome DevTools, iPhone profile of this project); the hero is scrolled back into view.
-// Limit: 16 ms, like every other perf test. Only the iPhone 15 (90 peas) gets 22 ms (decided in PR #49): a one-time
-// animation, not a lasting interaction, and the emulated measurement varies (raw a steady 22–23 ms, the
-// calibration factor 1.1–1.6). Measured only isolated (project „perf-feier“).
-for (const [device, viewport, minPeas, limit] of [
-  ['iPhone 15', null, 90, 22],
-  ['iPhone SE', { width: 375, height: 667 }, 60, 16],
+// tests-stabil: the fall runs on the compositor (every pea on one shared timeline, src/components/Confetti.tsx), so
+// the main thread hardly draws a frame while the peas fall. The span of such a rare frame is mostly the wait for
+// the next vsync (10–27 ms with 2–4 ms of work), not work of the celebration. Measured therefore: the main
+// thread's work per frame (Ø < 16 ms, both devices; the former 22 ms of the iPhone 15 is gone), and that the fall
+// does not need the main thread (fewer than 30 frames in the 2.6 s window; 104 before). The span is still written
+// to the JSON (avgFrameMs). Measured only isolated (project „perf-feier“).
+for (const [device, viewport, minPeas] of [
+  ['iPhone 15', null, 90],
+  ['iPhone SE', { width: 375, height: 667 }, 60],
 ] as const) {
+  const limit = 16;
   test(`Feier „Oktober erledigt“ (${device}): Ø Frame-Zeit < ${limit} ms bei 4× CPU-Drosselung`, async ({ page, browser }) => {
     if (viewport) await page.setViewportSize(viewport);
     await expect(page.getByTestId('hero-done')).toBeVisible();
@@ -222,6 +255,9 @@ for (const [device, viewport, minPeas, limit] of [
     await page.getByTestId('hero').scrollIntoViewIfNeeded();
     await expect(page.getByTestId('hero-confetti')).toHaveAttribute('data-falling', '');
     await page.waitForTimeout(1500);
+    const fallingNow = () =>
+      page.evaluate(() => [...document.querySelectorAll('[data-testid=hero-confetti] .confetti-pea')].some((p) => p.getAnimations().some((a) => a.playState === 'running')));
+    expect(await fallingNow(), 'the peas fall when the window opens').toBe(true);
     const m = await frameWork(browser, page, `feier-${device}`, async () => {
       await page.waitForTimeout(2600);
     });
@@ -230,7 +266,7 @@ for (const [device, viewport, minPeas, limit] of [
     const peas = Number(await page.getByTestId('hero-confetti').getAttribute('data-count'));
     results[`Feier ${device}`] = { ...m, ...normalised(m, speed), cpuThrottling: 4, peas };
     expect(peas).toBe(minPeas);
-    expect(m.frames).toBeGreaterThan(30);
-    expect(m.avgFrameMs / speed.factor).toBeLessThan(limit);
+    expect(m.frames, 'main-thread frames while the peas fall').toBeLessThan(30);
+    expect(m.avgFrameWorkMs / speed.factor).toBeLessThan(limit);
   });
 }

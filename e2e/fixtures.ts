@@ -314,6 +314,43 @@ export function row(page: Page, positionId: string) {
   return page.locator(`[data-position="${positionId}"]${SHOWN}`);
 }
 
+/**
+ * tests-stabil: the top bottom sheet stands still – it has slid in (no `data-animating`) and has taken the focus
+ * (BottomSheet focuses its panel in an effect after the first paint). A fill() or click before that can lose its
+ * text to the panel or hit the backdrop of a sheet still moving.
+ */
+export async function sheetSettled(page: Page) {
+  const sheet = page.getByTestId('bottom-sheet').last();
+  await expect(sheet).toBeVisible();
+  await expect(sheet).not.toHaveAttribute('data-animating', '');
+  await expect.poll(() => sheet.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+}
+
+/** Opens the details sheet of a position row and waits until it stands still. */
+export async function openDetails(page: Page, positionId: string) {
+  await row(page, positionId).getByRole('button', { name: /Details/ }).click();
+  await sheetSettled(page);
+}
+
+/**
+ * tests-stabil: the page stands still – instead of a fixed wait. Fonts are loaded, every finite animation and
+ * transition (not the slow ambient drift, nothing endless) has finished – also ones a finished one starts – and
+ * two frames have been painted after that.
+ */
+export async function settled(page: Page) {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    for (let round = 0; round < 20; round++) {
+      const moving = document
+        .getAnimations()
+        .filter((a) => a.id !== 'ambient' && (a.pending || a.playState === 'running') && a.effect?.getComputedTiming().iterations !== Infinity);
+      if (!moving.length) break;
+      await Promise.all(moving.map((a) => a.finished.catch(() => undefined)));
+    }
+    await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+  });
+}
+
 /** Resolves once all CSS animations inside the element have finished. */
 export async function animationsDone(page: Page, testId: string) {
   await page
@@ -337,7 +374,7 @@ export async function touchSwipe(page: Page, target: ReturnType<Page['locator']>
     await target.dispatchEvent('pointermove', { ...base, clientX: x + (dx * i) / 10, clientY: y + (dy * i) / 10, buttons: 1 });
   }
   await target.dispatchEvent('pointerup', { ...base, clientX: x + dx, clientY: y + dy, buttons: 0 });
-  await page.waitForTimeout(250); // settle animation
+  await settled(page);
 }
 
 /**

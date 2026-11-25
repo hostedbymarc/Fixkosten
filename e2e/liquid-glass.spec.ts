@@ -1,7 +1,7 @@
 // Sprint B „Liquid Glass“: material, blur budget, tab bar / sidebar, tab transition, grain,
 // one entrance for every tab, skeleton instead of a spinner.
 import type { CDPSession, Page } from '@playwright/test';
-import { appSettled, expect, goTo, isSidebarLayout, isTouchProject, test } from './fixtures';
+import { appSettled, expect, goTo, isSidebarLayout, isTouchProject, settled, test } from './fixtures';
 import { importLive, OKT_TODAY } from './live';
 
 const ROUTES = ['monat', 'positionen', 'analyse', 'einstellungen'] as const;
@@ -347,6 +347,9 @@ test.describe('Tab-Leiste und Sidebar', () => {
 
   test('Druck-Feedback beim Antippen: scale(.96), 120 ms', async ({ page }) => {
     await importLive(page, OKT_TODAY);
+    // tests-stabil: press only once the page is still – the categories expanded by importLive grow for 240 ms
+    // after it; a layout or scroll change while the pointer is down takes :active away again (WebKit, once)
+    await settled(page);
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
     const press = nav.locator('.tab-press').nth(1);
     await expect(press).toHaveCSS('transition-duration', '0.12s');
@@ -582,8 +585,19 @@ test.describe('Einheitliche Ladeanimation', () => {
     await goTo(page, 'analyse');
     await goTo(page, 'monat');
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
+    // tests-stabil: a bar's growth lives ~0.6 s; polling every 0.1–1 s could miss it entirely (WebKit, once).
+    // Recorded every frame from before the tap instead.
+    await page.evaluate(() => {
+      const w = window as unknown as { __grown: Set<Animation> };
+      w.__grown = new Set();
+      const watch = () => {
+        for (const a of document.getAnimations()) if (a.id === 'bar-grow' && ((a.effect as KeyframeEffect).target as Element).tagName === 'path') w.__grown.add(a);
+        if (w.__grown.size < 12) requestAnimationFrame(watch);
+      };
+      watch();
+    });
     await nav.getByRole('link', { name: 'Analyse' }).click();
-    await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.id === 'bar-grow' && ((a.effect as KeyframeEffect).target as Element).tagName === 'path').length)).toBeGreaterThanOrEqual(12);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __grown: Set<Animation> }).__grown.size)).toBeGreaterThanOrEqual(12);
     await appSettled(page);
   });
 

@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
-import { animationsDone, appSettled, checkRadio, closePlan, expect, goTo, setUpKonto, test } from './fixtures';
+import { animationsDone, appSettled, checkRadio, closePlan, expect, goTo, settled, setUpKonto, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // plan-optionen (data like yours, rebuilt; „Neuer Monat beginnt am“ 25, today 10 November → November active):
@@ -76,9 +76,7 @@ async function tableLeft(page: Page, tap: Tap): Promise<Map<string, number>> {
 }
 
 async function shot(page: Page, name: string, target?: Locator) {
-  if (await page.getByTestId('bottom-sheet').isVisible()) await animationsDone(page, 'bottom-sheet');
-  await page.waitForTimeout(400);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
   if (target) await target.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
   else await page.screenshot({ path: `${DIR}/${name}.jpg`, type: 'jpeg', quality: 78 });
 }

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { Page } from '@playwright/test';
-import { expect, setUpKonto, test } from './fixtures';
+import { expect, settled, setUpKonto, test } from './fixtures';
 import { importLive, NOV_TODAY } from './live';
 
 // monat-feinschliff: October (past) and December (future) keep their layout – only texts change. Data like
@@ -44,8 +44,7 @@ async function boxes(page: Page): Promise<Record<string, Box | null>> {
 async function settle(page: Page) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await expect(page.getByTestId('hero-shimmer')).toHaveCount(0, { timeout: 4000 });
-  await page.waitForTimeout(700);
-  await page.evaluate(() => document.fonts.ready);
+  await settled(page);
 }
 
 const written: Record<string, Record<string, Box | null>> = {};

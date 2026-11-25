@@ -404,20 +404,33 @@ test.describe('Startbilder, Manifest, Service Worker', () => {
       await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
       await page.reload();
       await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
+      // tests-stabil: from the cache the app can take over before the test has looked (6 of 10 runs under load). Offline
+      // nothing can be held in the network, so the test build waits at its start (holdStart) until the start
+      // screen is photographed – the same as the online test does with the held subresources.
+      await page.addInitScript(() => {
+        if (navigator.onLine) return;
+        const w = window as unknown as { __erbseTestFlags?: Record<string, boolean>; __erbseStartGate?: Promise<void>; __erbseReleaseStart?: () => void };
+        w.__erbseTestFlags = { ...w.__erbseTestFlags, holdStart: true };
+        w.__erbseStartGate = new Promise((r) => (w.__erbseReleaseStart = r));
+      });
       await context.setOffline(true);
       const cdp = await context.newCDPSession(page);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 });
       await page.reload({ waitUntil: 'commit' });
       const mark = page.locator('#splash .splash-mark');
-      await mark.waitFor({ state: 'attached' });
+      await mark.waitFor({ state: 'visible' });
+      // the app is held: only the start screen of index.html, served from the cache
+      await expect(page.locator('#splash')).not.toHaveClass(/splash-live/);
       const box = (await mark.boundingBox())!;
-      // at once: from the cache the app is there soon
       const png = await paintNow(page, `${DIR}/offline-erster-paint.png`);
       const vw = page.viewportSize()!.width;
       const p = await pixels(page, png, await bootVar(page, '--boot-base'), box, vw);
       expect(p.whiteShare, JSON.stringify(p)).toBeLessThan(0.001);
       expect(p.topIsBase, JSON.stringify(p)).toBe(true);
       expect(p.outside, JSON.stringify(p)).toBe(0);
+      // then the app, from the cache as well
+      await page.evaluate(() => (window as unknown as { __erbseReleaseStart?: () => void }).__erbseReleaseStart?.());
+      await expect(page.locator('#splash')).toHaveClass(/splash-live/);
       await expect(page.getByTestId('setup-dialog')).toBeVisible({ timeout: 15_000 });
       await context.setOffline(false);
     });

@@ -33,8 +33,16 @@ export function exposeForTrace(name: string, value: unknown): void {
  * (`window.__erbseTestFlags`). In every other build this is constant false.
  *   noSplash  start without the splash (reference image of e2e/splash-blur.spec.ts)
  *   lateBlur  blur only comes back 15 s after the splash is gone (counter-check of that test)
+ *   holdStart the app waits for `window.__erbseStartGate` before it starts (tests-stabil: the offline start of
+ *             e2e/start-screen.spec.ts photographs the start screen before the app takes over)
  */
-export function testFlag(name: 'noSplash' | 'lateBlur'): boolean {
+export function testFlag(name: 'noSplash' | 'lateBlur' | 'holdStart'): boolean {
   if (!IMPORT_TRACE) return false;
   return !!(window as unknown as { __erbseTestFlags?: Record<string, boolean> }).__erbseTestFlags?.[name];
+}
+
+/** Test build with `holdStart` only: resolves when the test opens the gate; otherwise at once. */
+export function startGate(): Promise<void> {
+  if (!testFlag('holdStart')) return Promise.resolve();
+  return (window as unknown as { __erbseStartGate?: Promise<void> }).__erbseStartGate ?? Promise.resolve();
 }
