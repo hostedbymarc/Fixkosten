@@ -12,6 +12,8 @@ Diese Tests waren in den letzten Sprints je einmal rot und beim Wiederholen grü
 | month.spec „bottom sheet: pay open position …“ (iPad quer) | `fill()` und `click()` kamen, während das Sheet noch hereinglitt. Unter Last trifft der Klick dann den Hintergrund, und das Sheet schließt ohne Speichern. Zusätzlich setzt `BottomSheet` den Fokus erst nach dem ersten Paint aufs Panel. Das kann mitten in `fill()` landen. | Neue Helfer `sheetSettled()` und `openDetails()`: warten, bis das Sheet kein `data-animating` mehr hat und den Fokus hält. In allen Sheet-Tests von `month.spec` eingesetzt. | 40 von 40 grün bei 12-facher CPU-Drosselung und 4 Workern. Die Anzeige brauchte höchstens 2,7 s |
 | Splash „Start ohne Netz“ | Offline kommt die App aus dem Service-Worker-Cache. Der Test fragte den Splash in mehreren Schritten ab, während die App schon übernehmen konnte. Unter Last: Logo weg, `boundingBox()` leer oder Screenshot nach der Übernahme. | Der Test-Build hat einen Schalter `holdStart`. Die App wartet dann auf ein Tor, das der Test nach dem Screenshot öffnet. Das entspricht dem Online-Test, der die Unterressourcen hält. Im Produktions-Build ist der Schalter immer aus (`IMPORT_TRACE`). | Unter Last vorher 4 von 10 grün, nachher 10 von 10 |
 | from-net in WebKit (30-s-Grenze) | Das rote Mal kam aus einer Prüfkonfiguration außerhalb des Repos. Sie lief als Projekt „desktop“ mit Playwrights Standard von 30 s. Die offiziellen WebKit-Projekte haben 60 s, weil WebKit ohne GPU in Software rendert. Der erste Test einer Datei zahlt den Kaltstart des Browsers. | WebKit nur noch mit den offiziellen Projekten `webkit-*` prüfen. In der Spec selbst gibt es keine feste Wartezeit, die man ersetzen könnte. | `webkit-*` from-net 24 von 24 grün, längster Test 17 s. Siehe Nachweis |
+| Neu im Nachweis: liquid-glass „Druck-Feedback beim Antippen“ (WebKit iPad hoch, einmal) | `:active` ging während des Drückens wieder verloren (Transform 1 → none). Gedrückt wurde, während die von `importLive` aufgeklappten Kategorien noch wuchsen (240 ms). Ein Layout- oder Scroll-Wechsel hebt `:active` in WebKit auf. | Vor dem Drücken `settled(page)` | 20 × einzeln und 4 × die ganze Datei grün, danach drei Nachweis-Läufe grün |
+| Neu im Nachweis: liquid-glass „Analyse erneut besucht: die Balken wachsen wieder“ (WebKit iPad hoch, einmal) | Das Wachsen lebt etwa 0,6 s. `expect.poll` fragt mit wachsenden Abständen ab, zuletzt 1 s auseinander. Fielen Start und Ende in so eine Lücke, sah der Test nie eine Animation. Der Klick selbst dauerte in WebKit schon 0,78 s. | Vor dem Tippen zeichnet die Seite jede Balken-Animation in jedem Frame auf. Der Test wartet auf diese Aufzeichnung. | WebKit 44 von 44, Chromium 64 von 64, danach drei Nachweis-Läufe grün |
 | Testhelfer: feste Wartezeiten | Feste Pausen vor Screenshots und nach Gesten. Unter Last zu kurz, sonst zu lang. | Neuer Helfer `settled(page)`: Schriften geladen, jede endliche Animation und Transition fertig (ohne die Hintergrund-Drift), danach zwei gezeichnete Frames. | Liste unten |
 
 ## Messgröße der Feier, Begründung
@@ -78,8 +80,20 @@ Feste Wartezeiten bleiben dort, wo die Zeit selbst geprüft wird. Beispiele sind
 
 ## Nachweis
 
-NACHWEIS
+Alle Läufe am Stand `bb502f3` (letzte Code- und Teständerung), ohne Wiederholungen (`--retries=0`):
+
+| Lauf | Chromium (desktop 5 Teile, iPhone 15, iPhone Pro Max, iPad hoch, iPad quer) | Perf | Perf-Feier | WebKit (iPhone SE, iPhone 15, iPad hoch, iPad quer; je hell und dunkel) | rot |
+|---|---|---|---|---|---|
+| 1 | 1.610 bestanden | 3 | 2 | 886 bestanden (8 Projekte) | 0 |
+| 2 | 1.610 bestanden | 3 | 2 | 886 bestanden (8 Projekte) | 0 |
+| 3 | 1.610 bestanden | 3 | 2 | 886 bestanden (8 Projekte) | 0 |
+
+Je Lauf 2.501 Tests bestanden und 1.758 übersprungen. Übersprungen sind Tests, die nur in ihrem eigenen Projekt laufen, zum Beispiel Viewport-Specs nur in „desktop“. iPhone SE und Desktop 1440 sind Viewports in den Specs des Projekts „desktop“, hell und dunkel ebenso. WebKit läuft mit seinen offiziellen Projekten `webkit-*` (60 s je Test, ein Worker).
+
+Ein früherer Durchgang lief bis Lauf 2. Darin waren zwei WebKit-Tests einmal rot (siehe die beiden neuen Zeilen oben). Nach den Fixes begann die Zählung von vorn, die drei Läufe oben sind der neue Durchgang. Container-Neustarts und das 2-Stunden-Limit für Hintergrundprozesse unterbrachen Läufe mehrmals. Ein unterbrochener Teil wurde dann komplett neu gestartet. Das ist keine Wiederholung nach einem Fehler: Kein Teil war rot.
+
+Unit-Tests: 60 Dateien, 1.466 bestanden. TypeScript sauber.
 
 ## Merge
 
-MERGE
+Per Squash nach `main`, sobald alle Punkte erledigt und drei volle Läufe ohne Wiederholung grün sind. Den Merge-SHA meldet der Abschlussbericht. Für Nutzer ändert sich nichts. Der Test-Build-Schalter `holdStart` ist im Produktions-Build immer aus.
