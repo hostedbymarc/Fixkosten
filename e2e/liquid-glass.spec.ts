@@ -585,8 +585,19 @@ test.describe('Einheitliche Ladeanimation', () => {
     await goTo(page, 'analyse');
     await goTo(page, 'monat');
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
+    // tests-stabil: a bar's growth lives ~0.6 s; polling every 0.1–1 s could miss it entirely (WebKit, once).
+    // Recorded every frame from before the tap instead.
+    await page.evaluate(() => {
+      const w = window as unknown as { __grown: Set<Animation> };
+      w.__grown = new Set();
+      const watch = () => {
+        for (const a of document.getAnimations()) if (a.id === 'bar-grow' && ((a.effect as KeyframeEffect).target as Element).tagName === 'path') w.__grown.add(a);
+        if (w.__grown.size < 12) requestAnimationFrame(watch);
+      };
+      watch();
+    });
     await nav.getByRole('link', { name: 'Analyse' }).click();
-    await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.id === 'bar-grow' && ((a.effect as KeyframeEffect).target as Element).tagName === 'path').length)).toBeGreaterThanOrEqual(12);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __grown: Set<Animation> }).__grown.size)).toBeGreaterThanOrEqual(12);
     await appSettled(page);
   });
 
