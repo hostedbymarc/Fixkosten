@@ -131,7 +131,31 @@ Gelöscht: `plan2.cushion` („Überschuss als Polster mitnehmen“), `plan2.cus
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+- **Unit-Tests:** 1543 grün in 62 Dateien. Neu sind 22 in `src/lib/polster.test.ts` und 10 in `src/db/polster-ziel.test.ts`.
+- **Build:** `pnpm build` (tsc, check-colors, check-bundle) ist sauber.
+- **Neue E2E:** `e2e/polster-ziel.spec.ts` deckt iPhone SE, iPhone 15, iPhone Pro Max, iPad hoch/quer und Desktop 1440 ab, je hell und dunkel. Das sind 12 von 12 grün, nach dem Fix 3× wiederholt 36 von 36.
+- **Volle Suite ohne Retries** (Lauf 4, nach der letzten Code-Änderung) mit 19 von 19 Projekten grün:
+
+| Projekt | bestanden | übersprungen | fehlgeschlagen |
+|---|---|---|---|
+| desktop 1–5/5 | 610 | 40 | 0 |
+| iphone-15 | 269 | 381 | 0 |
+| iphone-pro-max | 241 | 409 | 0 |
+| ipad-portrait | 257 | 393 | 0 |
+| ipad-landscape | 245 | 405 | 0 |
+| perf (Grenzen aus #59) | 3 | 0 | 0 |
+| perf-feier (iPhone 15 und SE, 4× CPU-Drosselung) | 2 | 0 | 0 |
+| WebKit iPhone SE hell/dunkel | 212 | 54 | 0 |
+| WebKit iPhone 15 hell/dunkel | 230 | 36 | 0 |
+| WebKit iPad hoch hell/dunkel | 228 | 38 | 0 |
+| WebKit iPad quer hell/dunkel | 216 | 50 | 0 |
+| **Summe** | **2513** | | **0** |
+
+- **Frühere Läufe, offen berichtet:**
+  - **Lauf 1:** Ein Fehler in `setup.spec` auf WebKit iPhone 15 dunkel: `page.reload` bricht mit „WebKit encountered an internal error“ ab. Das ist ein Absturz der Engine, keine Prüfung schlug fehl. Die Stelle ist in diesem Sprint unverändert.
+  - **Lauf 2:** Ein echter Wackler im neuen `polster-ziel.spec`. Der Stand wurde nach „Aus Polster genommen“ einmal gelesen statt abgewartet. Behoben mit `expect.poll`, danach 36 von 36 grün.
+  - **Lauf 3:** Ein Fehler in `spielgeld-zuordnung.spec` (Desktop): Nach dem Neuladen kam `hero` nicht innerhalb von 5 s. Einzeln 12× wiederholt war er 12 von 12 grün. Die Stelle ist unverändert und folgt demselben Muster wie die übrigen Specs.
+  - **Lauf 4:** Nach dem Fix aus Lauf 2 gab es keine Code-Änderung mehr. Der Lauf ist komplett grün.
 
 ## Screenshots
 
@@ -139,7 +163,7 @@ TESTERGEBNISSE
 
 ## Merge
 
-MERGE
+Squash-Merge von PR #60 nach `main` nach dem grünen Lauf 4. Die Merge-SHA steht im Abschlussprotokoll, sie kann nicht in dem Commit stehen, den sie bezeichnet.
 
 ## Hinweis Production-Deploy
 
