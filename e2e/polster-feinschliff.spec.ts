@@ -116,6 +116,31 @@ async function confettiClear(host: Locator) {
   return r.boxes;
 }
 
+/** the stored Polster (IndexedDB „fixkosten“, meta „fixkostenkonto“): what a failing check of the card reports */
+const storedCushion = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<string>((resolve) => {
+        const open = indexedDB.open('fixkosten');
+        open.onsuccess = () => {
+          const get = open.result.transaction('meta').objectStore('meta').get('fixkostenkonto');
+          get.onsuccess = () => {
+            const v = (get.result?.value ?? {}) as Record<string, unknown>;
+            resolve(JSON.stringify(Object.fromEntries(Object.entries(v).filter(([k]) => k.startsWith('cushion')))));
+          };
+        };
+      }),
+  );
+
+/** the card shows `cents` (waiting for it); else the failure carries what is stored */
+async function cardShows(page: Page, cents: number) {
+  try {
+    await expect.poll(() => centsOf(page.getByTestId('polster-card-balance'))).toBe(cents);
+  } catch (e) {
+    throw new Error(`${(e as Error).message}\nstored: ${await storedCushion(page)}`);
+  }
+}
+
 /** the element at the middle of `button` is the button itself (nothing lies over it) */
 async function reachable(page: Page, button: Locator) {
   await button.evaluate((el) => el.scrollIntoView({ block: 'center' }));
@@ -158,7 +183,6 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
       test('Anders aufteilen, Rückgängig frei, Einzahlen/Entnehmen mit Verlauf, Differenz, Betrag und Spielgeld für Dezember', async ({ page }) => {
         await start(page);
         const card = page.getByTestId('polster-card-open');
-        const balanceOfCard = () => centsOf(page.getByTestId('polster-card-balance'));
         await tap(card);
         await sheetOpen(page, 'polster-sheet');
         await enter(page.getByTestId('polster-goal-input'), '20000');
@@ -181,7 +205,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(other);
         await expect(field).toHaveCount(0);
         await expect(other).toHaveAttribute('aria-expanded', 'false');
-        await expect.poll(balanceOfCard).toBe(1400000);
+        await cardShows(page, 1400000);
         // an own amount: € 1.000 → 75 % reached, the field is closed after „Polster aufgefüllt“
         await tap(other);
         await field.fill('1000');
@@ -191,7 +215,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(page.getByTestId('cushion-split')).toHaveAttribute('data-kind', 'confirmed');
         await expect(field).toHaveCount(0);
         await expect(page.getByTestId('cushion-split-confirmed')).toHaveText('€ 1.000 in den Polster gelegt.');
-        await expect.poll(balanceOfCard).toBe(1500000);
+        await cardShows(page, 1500000);
 
         // 2 the confetti under the text, „Rückgängig“ free and ≥ 44 px
         const block = page.getByTestId('cushion-split');
@@ -201,7 +225,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await reachable(page, page.getByTestId('cushion-split-undo'));
         await shot(page, `${tag}-2-rueckgaengig`, month);
         await tap(page.getByTestId('cushion-split-undo'));
-        await expect.poll(balanceOfCard).toBe(1400000);
+        await cardShows(page, 1400000);
         await expect(page.getByTestId('cushion-split')).toHaveAttribute('data-kind', 'fill');
 
         // 3 „+ Einzahlen“ / „− Entnehmen“ from the card: the screen, the card, „Dein Plan“, „Verlauf“
@@ -240,7 +264,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await page.getByTestId('polster-history').scrollIntoViewIfNeeded();
         await shot(page, `${tag}-4-verlauf`, page.getByTestId('bottom-sheet'));
         await closeSheet(page, 'polster-sheet');
-        await expect.poll(balanceOfCard).toBe(1000000);
+        await cardShows(page, 1000000);
         await tap(page.getByTestId('next-salary'));
         await sheetOpen(page, 'plan-sheet');
         await expect(page.getByTestId('plan-cushion-today')).toContainText('Heute € 10.000');
@@ -251,7 +275,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const confirmed = 1000000 + Math.min(before, 1000000);
         await tap(page.getByTestId('cushion-split-confirm'));
         await expect(page.getByTestId('cushion-split')).toHaveAttribute('data-kind', 'confirmed');
-        await expect.poll(balanceOfCard).toBe(confirmed);
+        await cardShows(page, confirmed);
         // ③ Vermögensaufbau counts against the Überschuss directly: one of its lines € 50 lower, only November
         await openRow(page, tap, 'dein-monat-wealth');
         const line = page.getByTestId('dein-monat-wealth-item-edit').first();
@@ -268,7 +292,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await shot(page, `${tag}-6-differenz`, month);
         await tap(page.getByTestId('cushion-diff-move'));
         await expect(page.getByTestId('cushion-diff')).toHaveCount(0);
-        await expect.poll(balanceOfCard).toBe(confirmed + 5000);
+        await cardShows(page, confirmed + 5000);
 
         // 5 Xmas only in December: the Überschuss and the Polster preview of December at once
         await tap(page.getByRole('button', { name: 'Nächster Monat' }));

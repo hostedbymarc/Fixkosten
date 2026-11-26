@@ -201,16 +201,18 @@ export async function setCushionGoal(db: FixkostenDB, cents: number | null): Pro
  * it); an empty field removes the Polster and its moves.
  */
 export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = localToday()): Promise<void> {
-  if (cents === null) {
-    await writeKonto(db, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [] });
-    return;
-  }
-  const s = await readKonto(db);
-  const target = Math.max(0, Math.round(cents));
-  const diff = target - (s.cushionBalance ?? 0);
-  const moves = s.cushionBalance === null ? [] : s.cushionMoves;
-  const next = diff === 0 && s.cushionBalance !== null ? moves : [...moves, { id: moveId(moves, 'start'), date: dayKey(today), amount: diff, source: 'start' as const }];
-  await writeKonto(db, { cushionBalance: target, cushionBalanceDate: dayKey(today), cushionMoves: next.filter((m) => m.amount !== 0) });
+  return db.transaction('rw', db.meta, async () => {
+    if (cents === null) {
+      await writeKonto(db, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [] });
+      return;
+    }
+    const s = await readKonto(db);
+    const target = Math.max(0, Math.round(cents));
+    const diff = target - (s.cushionBalance ?? 0);
+    const moves = s.cushionBalance === null ? [] : s.cushionMoves;
+    const next = diff === 0 && s.cushionBalance !== null ? moves : [...moves, { id: moveId(moves, 'start'), date: dayKey(today), amount: diff, source: 'start' as const }];
+    await writeKonto(db, { cushionBalance: target, cushionBalanceDate: dayKey(today), cushionMoves: next.filter((m) => m.amount !== 0) });
+  });
 }
 
 /** „Überschuss bis zum Ziel“: all into the Polster, or a fixed share. */
@@ -256,34 +258,38 @@ export async function confirmCushion(
   today: Date = localToday(),
   surplus?: number,
 ): Promise<CushionMilestone[] | null> {
-  const s = await readKonto(db);
-  if (s.cushionConfirmed[period] !== undefined || cents === 0) return null;
-  const { amount, stages, patch } = withMove(s, { id: `m-${period}`, date: dayKey(today), amount: cents, source: cents > 0 ? 'split' : 'gap' });
-  if (amount === 0) return null;
-  await writeKonto(db, {
-    ...patch,
-    cushionBalanceDate: dayKey(today),
-    cushionConfirmed: { ...s.cushionConfirmed, [period]: amount },
-    ...(surplus === undefined ? {} : { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } }),
+  return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
+    if (s.cushionConfirmed[period] !== undefined || cents === 0) return null;
+    const { amount, stages, patch } = withMove(s, { id: `m-${period}`, date: dayKey(today), amount: cents, source: cents > 0 ? 'split' : 'gap' });
+    if (amount === 0) return null;
+    await writeKonto(db, {
+      ...patch,
+      cushionBalanceDate: dayKey(today),
+      cushionConfirmed: { ...s.cushionConfirmed, [period]: amount },
+      ...(surplus === undefined ? {} : { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } }),
+    });
+    return stages;
   });
-  return stages;
 }
 
 /** „Rückgängig“: takes the month's confirmation back, with its differences (the stages stay celebrated). */
 export async function undoCushion(db: FixkostenDB, period: Period, today: Date = localToday()): Promise<void> {
-  const s = await readKonto(db);
-  if (s.cushionConfirmed[period] === undefined) return;
-  const rest = { ...s.cushionConfirmed };
-  delete rest[period];
-  const surplus = { ...s.cushionSurplus };
-  delete surplus[period];
-  const moves = s.cushionMoves.filter((m) => !monthMoves(period)(m));
-  await writeKonto(db, {
-    cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
-    cushionBalanceDate: dayKey(today),
-    cushionMoves: moves,
-    cushionConfirmed: rest,
-    cushionSurplus: surplus,
+  return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
+    if (s.cushionConfirmed[period] === undefined) return;
+    const rest = { ...s.cushionConfirmed };
+    delete rest[period];
+    const surplus = { ...s.cushionSurplus };
+    delete surplus[period];
+    const moves = s.cushionMoves.filter((m) => !monthMoves(period)(m));
+    await writeKonto(db, {
+      cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
+      cushionBalanceDate: dayKey(today),
+      cushionMoves: moves,
+      cushionConfirmed: rest,
+      cushionSurplus: surplus,
+    });
   });
 }
 
@@ -297,34 +303,38 @@ export async function addCushionMove(
   note?: string,
   today: Date = localToday(),
 ): Promise<{ id: string; amount: number; stages: CushionMilestone[] } | null> {
-  const s = await readKonto(db);
-  const text = note?.trim().slice(0, CUSHION_NOTE_MAX);
-  const id = moveId(s.cushionMoves, `x-${dayKey(today)}`);
-  const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: cents, source: 'manual', ...(text ? { note: text } : {}) });
-  if (amount === 0) return null;
-  await writeKonto(db, { ...patch, cushionBalanceDate: dayKey(today) });
-  return { id, amount, stages };
+  return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
+    const text = note?.trim().slice(0, CUSHION_NOTE_MAX);
+    const id = moveId(s.cushionMoves, `x-${dayKey(today)}`);
+    const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: cents, source: 'manual', ...(text ? { note: text } : {}) });
+    if (amount === 0) return null;
+    await writeKonto(db, { ...patch, cushionBalanceDate: dayKey(today) });
+    return { id, amount, stages };
+  });
 }
 
 /** „Rückgängig“ of a single move („+ Einzahlen“, „− Entnehmen“, a difference). */
 export async function removeCushionMove(db: FixkostenDB, id: string, today: Date = localToday()): Promise<void> {
-  const s = await readKonto(db);
-  const move = s.cushionMoves.find((m) => m.id === id);
-  if (!move) return;
-  const moves = s.cushionMoves.filter((m) => m.id !== id);
-  const period = /^m-(\d{4}-\d{2})-/.exec(id)?.[1];
-  const patch: Partial<KontoSettings> = {
-    cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
-    cushionBalanceDate: dayKey(today),
-    cushionMoves: moves,
-  };
-  // a difference of a confirmed month: the month's amount and its Überschuss go back as well
-  if (period && s.cushionConfirmed[period] !== undefined) {
-    patch.cushionConfirmed = { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! - move.amount };
-    const surplus = s.cushionSurplus[period];
-    if (surplus !== undefined) patch.cushionSurplus = { ...s.cushionSurplus, [period]: surplus - move.amount };
-  }
-  await writeKonto(db, patch);
+  return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
+    const move = s.cushionMoves.find((m) => m.id === id);
+    if (!move) return;
+    const moves = s.cushionMoves.filter((m) => m.id !== id);
+    const period = /^m-(\d{4}-\d{2})-/.exec(id)?.[1];
+    const patch: Partial<KontoSettings> = {
+      cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
+      cushionBalanceDate: dayKey(today),
+      cushionMoves: moves,
+    };
+    // a difference of a confirmed month: the month's amount and its Überschuss go back as well
+    if (period && s.cushionConfirmed[period] !== undefined) {
+      patch.cushionConfirmed = { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! - move.amount };
+      const surplus = s.cushionSurplus[period];
+      if (surplus !== undefined) patch.cushionSurplus = { ...s.cushionSurplus, [period]: surplus - move.amount };
+    }
+    await writeKonto(db, patch);
+  });
 }
 
 /**
@@ -338,24 +348,26 @@ export async function settleCushionDiff(
   move: boolean,
   today: Date = localToday(),
 ): Promise<{ id: string; amount: number; stages: CushionMilestone[] } | null> {
-  const s = await readKonto(db);
-  const was = s.cushionSurplus[period];
-  if (s.cushionConfirmed[period] === undefined || was === undefined) return null;
-  const diff = Math.round(surplus) - was;
-  if (!move || diff === 0) {
-    await writeKonto(db, { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } });
-    return null;
-  }
-  const id = moveId(s.cushionMoves, `m-${period}-diff`);
-  const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: diff, source: diff > 0 ? 'split' : 'gap' });
-  await writeKonto(db, {
-    ...patch,
-    cushionBalanceDate: dayKey(today),
-    cushionConfirmed: { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! + amount },
-    // what could not be taken (the Polster was empty) is accepted as it is
-    cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) },
+  return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
+    const was = s.cushionSurplus[period];
+    if (s.cushionConfirmed[period] === undefined || was === undefined) return null;
+    const diff = Math.round(surplus) - was;
+    if (!move || diff === 0) {
+      await writeKonto(db, { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } });
+      return null;
+    }
+    const id = moveId(s.cushionMoves, `m-${period}-diff`);
+    const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: diff, source: diff > 0 ? 'split' : 'gap' });
+    await writeKonto(db, {
+      ...patch,
+      cushionBalanceDate: dayKey(today),
+      cushionConfirmed: { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! + amount },
+      // what could not be taken (the Polster was empty) is accepted as it is
+      cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) },
+    });
+    return { id, amount, stages };
   });
-  return { id, amount, stages };
 }
 
 // ---- polster-feinschliff: „Spielgeld für {Monat}“ ----
