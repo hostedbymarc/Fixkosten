@@ -3,6 +3,8 @@ import { formatDelta, formatEUR } from '../lib/format';
 import { t } from '../lib/kontoTexts';
 import { monthDeviation } from '../lib/monthCard';
 import type { OneOff } from '../lib/types';
+import { openAmount } from '../lib/amountBus';
+import { monthName } from '../lib/period';
 import { Badge, DeltaChip, planChangeLabel, scheduleLabel } from './Chips';
 import { Pea, PeaOpen } from './Pea';
 
@@ -70,7 +72,7 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
             type="button"
             onClick={onOpen}
             aria-label={`${position.name} – Details`}
-            className="focus-ring flex min-h-[56px] min-w-0 flex-1 items-start gap-3 rounded-xl py-3 pr-4 text-left hover:bg-zinc-50/60"
+            className="focus-ring flex min-h-[56px] min-w-0 flex-1 items-start gap-3 rounded-xl py-3 pr-1 text-left hover:bg-zinc-50/60"
           >
             <span className="min-w-0 flex-1">
               {/* title: at most 2 lines, then an ellipsis; German hyphenation */}
@@ -109,18 +111,27 @@ export function PositionRow({ item, onToggle, onOpen, onToggleOneOff, onOpenOneO
                 </span>
               )}
             </span>
-            {/* amount on the title line, the delta chip below it */}
-            <span className="flex shrink-0 flex-col items-end gap-1">
-              <span
-                className={`num whitespace-nowrap text-[16px] font-semibold leading-6 ${done || item.unplanned ? 'text-ink-soft' : 'text-ink'} ${status === 'skipped' ? 'line-through' : ''}`}
-                data-testid="position-amount"
-              >
-                {formatEUR(amount)}
-              </span>
-              {item.delta !== null && <DeltaChip delta={item.delta} />}
-            </span>
           </button>
-        ) : (
+        ) : null}
+        {item.due && (
+          // polster-feinschliff: the amount on the title line (the delta chip below it) – a tap opens „Betrag für {Monat}“
+          <button
+            type="button"
+            onClick={(e) => openAmount({ target: { kind: 'position', positionId: position.id, period: item.period }, returnFocusTo: e.currentTarget })}
+            aria-label={`${position.name}: ${t('amount.edit', { monat: monthName(item.period) })}`}
+            className="focus-ring flex min-h-[56px] shrink-0 flex-col items-end gap-1 rounded-xl py-3 pl-2 pr-4 hover:bg-zinc-50/60"
+            data-testid="position-amount-edit"
+          >
+            <span
+              className={`num whitespace-nowrap text-[16px] font-semibold leading-6 ${done || item.unplanned ? 'text-ink-soft' : 'text-ink'} ${status === 'skipped' ? 'line-through' : ''}`}
+              data-testid="position-amount"
+            >
+              {formatEUR(amount)}
+            </span>
+            {item.delta !== null && <DeltaChip delta={item.delta} />}
+          </button>
+        )}
+        {!item.due && (
           <div className="flex min-h-[48px] min-w-0 flex-1 items-center pr-4">
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[16px] font-medium text-ink-mute">{position.name}</span>

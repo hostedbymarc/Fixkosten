@@ -9,7 +9,7 @@ import type { Dataset, Period } from '../../lib/types';
 import { openPlan } from '../../lib/planBus';
 import { AlertIcon, CheckIcon, ChevronRight } from '../Icons';
 import { useCushionPlan } from './Polster';
-import { cushionActive, cushionBefore, toCents } from '../../lib/polster';
+import { bigMonthCushion, toCents } from '../../lib/polster';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
 
@@ -29,12 +29,13 @@ export function BigMonthCard({ ds, plan, period, start, className = '' }: { ds: 
   // polster-ziel: „Polster deckt es“ when the Polster planned before this month covers its gap
   const { c, proj } = useCushionPlan(ds, plan);
   const gap = card?.left !== null && card?.left !== undefined && card.left < 0 ? toCents(-card.left) : 0;
-  const before = big ? cushionBefore(proj, big.period, c) : null;
-  const covered = cushionActive(c) && gap > 0 && before !== null && before >= gap;
+  // polster-feinschliff, „Polster vor Rot“: covered → only „Polster deckt es · € X aus dem Polster“ (green), no red line
+  const fromCushion = big ? bigMonthCushion(proj, big.period, c, gap) : null;
+  const covered = fromCushion !== null;
   if (!big) return null;
   // without a salary: as ready (nothing to compare)
   const kind = level?.kind ?? 'ok';
-  const ready = kind === 'ok';
+  const ready = kind === 'ok' || covered;
   return (
     <button
       ref={button}
@@ -43,7 +44,7 @@ export function BigMonthCard({ ds, plan, period, start, className = '' }: { ds: 
       className={`glass glass-tile surface press focus-ring flex w-full min-w-0 flex-col gap-2 p-4 text-left md:p-5 ${className}`}
       data-testid="big-month"
       data-ready={ready}
-      data-level={kind}
+      data-level={covered ? 'cushion' : kind}
       data-saved={(ready && big.saved) || undefined}
       data-cushion={covered || undefined}
       data-period={big.period}
@@ -68,15 +69,16 @@ export function BigMonthCard({ ds, plan, period, start, className = '' }: { ds: 
       )}
       <span className={`flex items-start gap-1.5 text-[14px] font-medium leading-snug ${ready ? 'text-paid-ink' : kind === 'short' ? 'text-over' : 'text-warn'}`} data-testid="big-month-status">
         {ready ? <CheckIcon size={16} strokeWidth={2.6} className="mt-0.5 shrink-0" aria-hidden="true" /> : <AlertIcon size={16} className="mt-0.5 shrink-0" aria-hidden="true" />}
-        <span className="num">
-          {level?.kind === 'short' ? t('big.short', { betrag: money(level.amount) }) : kind === 'spielgeld' ? t('big.spielgeld') : big.saved ? t('big.saved') : t('big.ready')}
-        </span>
+        {covered ? (
+          <span className="num font-semibold" data-testid="big-month-cushion">
+            {t('big.cushion', { betrag: money(fromCushion / 100) })}
+          </span>
+        ) : (
+          <span className="num">
+            {level?.kind === 'short' ? t('big.short', { betrag: money(level.amount) }) : kind === 'spielgeld' ? t('big.spielgeld') : big.saved ? t('big.saved') : t('big.ready')}
+          </span>
+        )}
       </span>
-      {covered && (
-        <span className="text-[13px] font-semibold text-accent-ink" data-testid="big-month-cushion">
-          {t('big.cushion')}
-        </span>
-      )}
     </button>
   );
 }

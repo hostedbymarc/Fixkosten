@@ -16,7 +16,7 @@ import { AmountInput } from '../form';
 import { AlertIcon, CheckIcon } from '../Icons';
 import { useMonthPlan } from './DeinMonatCard';
 import { PlanCushionLine, useCushionPlan } from './Polster';
-import { cushionActive, cushionMessage, goalSalary, type Cushion, type CushionMessage, type CushionRow } from '../../lib/polster';
+import { cushionActive, cushionLevel, cushionMessage, goalSalary, type Cushion, type CushionLevel, type CushionMessage, type CushionRow } from '../../lib/polster';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
 const BUTTON = 'focus-ring inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-[15px] font-semibold';
@@ -51,6 +51,8 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, on
   const { c, proj } = useCushionPlan(ds, plan);
   const withCushion = cushionActive(c);
   const message = useMemo(() => (withCushion ? cushionMessage(proj, c) : null), [withCushion, proj, c]);
+  // polster-feinschliff: „Polster vor Rot“ – the Polster pays every gap, or the first month it would go below 0
+  const level = useMemo(() => (withCushion ? cushionLevel(proj) : null), [withCushion, proj]);
   const box = useMemo(() => (withCushion ? goalSalary(rows, proj, plan, c) : null), [withCushion, rows, proj, plan, c]);
   // right after the setup: the recommendation is the plan (an existing choice stays)
   const adopted = useRef(false);
@@ -63,7 +65,7 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, on
   return (
     <BottomSheet title={t('plan2.title')} onClose={onClose} returnFocusTo={returnFocusTo}>
       <div className="flex flex-col gap-6" data-testid="plan-sheet" data-mode={plan.mode}>
-        <Answer plan={plan} status={status} cushion={message} />
+        <Answer plan={plan} status={status} cushion={message} level={level} />
         <PlanCushionLine plan={plan} />
         <SpielgeldEdit spielgeld={plan.spielgeld} startEditing={!!editSpielgeld} />
         <ModeSwitch plan={plan} />
@@ -88,7 +90,7 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, on
  * („Ab {Monat} reicht dein Gehalt zum Planen nicht fürs volle Spielgeld.“), else green. With the Polster: how long it
  * lasts. Below it, what can be done about it (the proposals, „Spielgeld auf € X setzen“).
  */
-function Answer({ plan, status, cushion }: { plan: MonthPlan; status: PlanStatus | null; cushion: CushionMessage | null }) {
+function Answer({ plan, status, cushion, level }: { plan: MonthPlan; status: PlanStatus | null; cushion: CushionMessage | null; level: CushionLevel | null }) {
   const a = plan.answer;
   if (plan.noSalary || !status)
     return (
@@ -96,9 +98,15 @@ function Answer({ plan, status, cushion }: { plan: MonthPlan; status: PlanStatus
         {t('plan2.noSalary')}
       </p>
     );
-  // polster-ziel: with a Polster and a goal the green line is about the goal; the red step stays first
-  const goalLine = cushion?.goal && status.kind !== 'short' ? cushion.goal : null;
-  const okay = status.kind === 'ok' || goalLine !== null;
+  // polster-feinschliff, „Polster vor Rot“: with a Polster the red step comes only when the Polster would go below 0
+  // („{Monat Jahr}: Dein Polster reicht nicht. Dir fehlen € X.“); it pays every gap → green „Dein Polster deckt
+  // alle Lücken.“ with the goal line below. Without a Polster as before.
+  const cushionShort = level?.kind === 'short' ? level : null;
+  const covered = level?.kind === 'covered' && status.kind !== 'ok';
+  const shortStep = cushion ? null : status.kind === 'short' ? status : null;
+  // polster-ziel: with a Polster and a goal the green line is about the goal (below „deckt alle Lücken“ when that shows)
+  const goalLine = cushion?.goal && !cushionShort && !shortStep ? cushion.goal : null;
+  const okay = !cushionShort && !shortStep && (status.kind === 'ok' || goalLine !== null || covered || cushion !== null);
   const drop = cushion?.drop ? plan.months.find((m) => m.period === cushion.drop!.period) : undefined;
   const dropLine = drop && drop.salary !== null && (
     <p className="num text-[14px] font-medium leading-snug text-warn" data-testid="plan-cushion-drop" data-period={drop.period}>
@@ -112,18 +120,22 @@ function Answer({ plan, status, cushion }: { plan: MonthPlan; status: PlanStatus
         {t('plan2.none')}
       </p>
     );
-  const red = status.kind === 'short';
-  const text =
-    status.kind === 'short'
-      ? t('plan2.short', { monat: periodLabel(status.period), betrag: money(status.amount) })
-      : goalLine?.kind === 'reached'
-        ? t('plan2.cushion.reached', { monat: periodLabel(goalLine.period) })
-        : goalLine?.kind === 'missing'
-          ? t('plan2.cushion.missing', { monat: monthName(goalLine.period), betrag: formatEUR(goalLine.amount / 100) })
-          : status.kind === 'spielgeld'
-            ? t('plan2.spielgeldShort', { monat: monthName(status.period) })
-            : t('plan2.ok');
-  const kind = goalLine ? `cushion-${goalLine.kind}` : status.kind;
+  const red = !!cushionShort || !!shortStep;
+  const goalText =
+    goalLine?.kind === 'reached'
+      ? t('plan2.cushion.reached', { monat: periodLabel(goalLine.period) })
+      : goalLine?.kind === 'missing'
+        ? t('plan2.cushion.missing', { monat: monthName(goalLine.period), betrag: formatEUR(goalLine.amount / 100) })
+        : null;
+  const text = cushionShort
+    ? t('plan2.cushion.short', { monat: periodLabel(cushionShort.period), betrag: formatEUR(cushionShort.amount / 100) })
+    : shortStep
+      ? t('plan2.short', { monat: periodLabel(shortStep.period), betrag: money(shortStep.amount) })
+      : covered
+        ? t('plan2.cushion.covered')
+        : (goalText ??
+          (status.kind === 'spielgeld' && !cushion ? t('plan2.spielgeldShort', { monat: monthName(status.period) }) : t('plan2.ok')));
+  const kind = cushionShort ? 'cushion-short' : covered ? 'cushion-covered' : goalLine ? `cushion-${goalLine.kind}` : cushion && status.kind !== 'ok' ? 'cushion-ok' : status.kind;
   const apply = () => {
     if (a?.kind !== 'save') return;
     if (a.via === 'even') return void setPlanMode(db, 'even');
@@ -145,6 +157,11 @@ function Answer({ plan, status, cushion }: { plan: MonthPlan; status: PlanStatus
         )}
         {text}
       </p>
+      {covered && goalText && (
+        <p className="num text-[15px] font-medium leading-snug text-ink" data-testid="plan-cushion-goal-line">
+          {goalText}
+        </p>
+      )}
       {dropLine}
       {!okay && a?.kind === 'save' && (
         <>

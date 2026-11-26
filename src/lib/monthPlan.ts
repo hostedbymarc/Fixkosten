@@ -197,6 +197,8 @@ export interface MonthPlan {
   noSalary: boolean;
   payments: BigPayment[];
   spielgeld: number | null;
+  /** polster-feinschliff: the Spielgeld of a month – its own („Nur {Monat}“) or `spielgeld` */
+  spielgeldFor: (period: Period) => number | null;
   /** the smallest F of the 12 months (null without a salary) */
   lowestFree: number | null;
   /** every month keeps the Spielgeld (null without a salary or a Spielgeld) */
@@ -222,11 +224,11 @@ export interface Shortfall {
 }
 
 /** The month whose „Frei für dich“ is furthest below `target` (the first of equal ones); null when none is. */
-export function shortfallOf(months: PlanMonth[], target: number): Shortfall | null {
+export function shortfallOf(months: PlanMonth[], target: number | ((p: Period) => number)): Shortfall | null {
   let worst: Shortfall | null = null;
   for (const m of months) {
     if (m.free === null) return null;
-    const miss = cents(target) - cents(m.free);
+    const miss = cents(typeof target === 'number' ? target : target(m.period)) - cents(m.free);
     if (miss > 0 && (worst === null || miss > cents(worst.amount))) worst = { period: m.period, amount: euros(miss) };
   }
   return worst;
@@ -308,7 +310,7 @@ function core(
   savings: Record<string, SavingSetting>,
   step: number,
   start: MonthStart,
-  spielgeld: number | null,
+  spielgeld: SpielgeldOf,
   planSalary: number | null,
 ): Core {
   const first = periods[0]!;
@@ -486,7 +488,7 @@ function core(
       directItems: parts.directItems,
       wealth: parts.wealth,
       free,
-      short: free !== null && spielgeld !== null && cents(free) < cents(spielgeld),
+      short: free !== null && spielgeld(period) !== null && cents(free) < cents(spielgeld(period)!),
       lines,
       fromReserve: euros(fromReserve),
     });
@@ -497,10 +499,11 @@ function core(
 const lowest = (months: PlanMonth[]): number | null =>
   months.some((m) => m.free === null) ? null : months.reduce((a, m) => Math.min(a, m.free!), Infinity);
 
-const keeps = (months: PlanMonth[], spielgeld: number) => {
-  const l = lowest(months);
-  return l !== null && cents(l) >= cents(spielgeld);
-};
+/** every month keeps its Spielgeld (none: does not go below 0) */
+const keeps = (months: PlanMonth[], spielgeld: SpielgeldOf) => months.every((m) => m.free !== null && cents(m.free) >= cents(spielgeld(m.period) ?? 0));
+
+/** the Spielgeld of a month (euros); null: none */
+type SpielgeldOf = (period: Period) => number | null;
 
 /** Rounded down to whole € 50, never below 0. */
 export function floor50(v: number): number {
@@ -515,12 +518,12 @@ type Run = (mode: PlanMode, savings: Record<string, SavingSetting>) => Core;
  * every month that misses the Spielgeld are saved up from the first salary on (largest first, until the
  * month keeps it). Null when even that does not keep it in every month.
  */
-function proposals(run: Run, base: Record<string, SavingSetting>, first: Period, spielgeld: number): { savings: Record<string, SavingSetting>; list: Proposal[] } | null {
+function proposals(run: Run, base: Record<string, SavingSetting>, first: Period, spielgeld: SpielgeldOf): { savings: Record<string, SavingSetting>; list: Proposal[] } | null {
   const savings: Record<string, SavingSetting> = { ...base };
   for (const id of Object.keys(savings)) if (savings[id]!.mode === 'spread') delete savings[id];
   for (let round = 0; round < PLAN_MONTHS; round++) {
     const c = run('custom', savings);
-    const miss = c.months.find((m) => m.free !== null && cents(m.free) < cents(spielgeld));
+    const miss = c.months.find((m) => m.free !== null && cents(m.free) < cents(spielgeld(m.period) ?? 0));
     if (!miss) {
       const list = c.payments
         .filter((p) => p.mode === 'spread' && p.positionId && p.rates > 0)
@@ -544,6 +547,9 @@ function proposals(run: Run, base: Record<string, SavingSetting>, first: Period,
 export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: MonthStart = 1, opts: PlanOptions = {}): MonthPlan {
   const mode = opts.mode ?? planModeOf(s);
   const spielgeld = opts.spielgeld === undefined ? s.spielgeld : opts.spielgeld;
+  // „Nur {Monat}“ (polster-feinschliff): a month's own Spielgeld; none without a Spielgeld at all
+  const overrides = s.spielgeldOverrides ?? {};
+  const spielgeldFor: SpielgeldOf = (p) => (spielgeld === null ? null : overrides[p] !== undefined ? overrides[p]! / 100 : spielgeld);
   const savings = opts.savings ?? storedSavings(ds);
   // the even plan is kontoState with the gap spread (lump only when no deposit is left before it)
   // spielgeld-pille-rechenfehler: the plan does not depend on what is ticked. Every bill counts in its month,
@@ -559,7 +565,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
   const nowBills = first !== active ? sum(billsOf(ds, active, start)) : 0;
   const available = planBalance - nowBills;
   const step = roundStep(s);
-  const run: Run = (m, sv) => core(ds, state, periods, bills, available, m, sv, step, start, spielgeld, s.planSalary);
+  const run: Run = (m, sv) => core(ds, state, periods, bills, available, m, sv, step, start, spielgeldFor, s.planSalary);
   const chosen = run(mode, savings);
   const due = mode === 'due' ? chosen : run('due', savings);
   const even = mode === 'even' ? chosen : run('even', savings);
@@ -570,22 +576,21 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     const allBills = fromStart.map((p) => billsOf(ds, p, start));
     const check = s.checks.find((c) => c.period === active && c.deposited);
     const deposit = cents(check?.amount ?? (check ? standingOrder(ds, active, step).amount : state.months[0]?.amount ?? state.order));
-    current = core(ds, state, fromStart, allBills, planBalance - deposit, mode, savings, step, start, spielgeld, s.planSalary).months[0]!;
+    current = core(ds, state, fromStart, allBills, planBalance - deposit, mode, savings, step, start, spielgeldFor, s.planSalary).months[0]!;
   }
   const noSalary = chosen.months.some((m) => m.salary === null);
   const lowestFree = lowest(chosen.months);
-  const fits = spielgeld === null || lowestFree === null ? null : cents(lowestFree) >= cents(spielgeld);
+  const fits = spielgeld === null || lowestFree === null ? null : keeps(chosen.months, spielgeldFor);
   // the simpler plan that keeps the Spielgeld (none set: that nothing goes below 0)
-  const target = spielgeld ?? 0;
-  const recommended = noSalary ? null : keeps(due.months, target) ? 'due' : keeps(even.months, target) ? 'even' : null;
+  const recommended = noSalary ? null : keeps(due.months, spielgeldFor) ? 'due' : keeps(even.months, spielgeldFor) ? 'even' : null;
 
   let answer: PlanAnswer | null = null;
   if (!noSalary && spielgeld !== null) {
     if (fits) answer = { kind: 'ok' };
     else {
-      const targeted = proposals(run, savings, first, spielgeld);
+      const targeted = proposals(run, savings, first, spielgeldFor);
       if (targeted) answer = { kind: 'save', via: 'custom', proposals: targeted.list };
-      else if (keeps(even.months, spielgeld)) answer = { kind: 'save', via: 'even', proposals: [] };
+      else if (keeps(even.months, spielgeldFor)) answer = { kind: 'save', via: 'even', proposals: [] };
       else {
         // the best a plan can do: due, even, everything saved up from the first salary
         const allSpread: Record<string, SavingSetting> = Object.fromEntries(
@@ -623,6 +628,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     noSalary,
     payments: chosen.payments,
     spielgeld,
+    spielgeldFor,
     lowestFree,
     fits,
     answer,
@@ -630,7 +636,7 @@ export function monthPlan(ds: Dataset, active: Period, s: KontoSettings, start: 
     bigMonth,
     simulation,
     planSalary: s.planSalary,
-    shortfall: noSalary ? null : shortfallOf(chosen.months, spielgeld ?? 0),
+    shortfall: noSalary ? null : shortfallOf(chosen.months, (p) => spielgeldFor(p) ?? 0),
   };
 }
 

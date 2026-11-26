@@ -574,8 +574,18 @@ test.describe('Einheitliche Ladeanimation', () => {
     await expect(page.getByTestId('hero')).toBeHidden();
     // back on a kept tab: its cards come in again (once per visit)
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
+    // counted when they start (all of them last < 0.5 s: a slow poll could come after the last one ended)
+    await page.evaluate(() => {
+      const w = window as unknown as { entrances: number };
+      w.entrances = 0;
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (this: Element, frames: Keyframe[] | PropertyIndexedKeyframes | null, options?: number | KeyframeAnimationOptions) {
+        if (typeof options === 'object' && options.id === 'entrance') w.entrances++;
+        return animate.call(this, frames, options);
+      };
+    });
     await nav.getByRole('link', { name: 'Monat' }).click();
-    await expect.poll(() => page.evaluate(() => document.getAnimations().filter((a) => a.id === 'entrance').length)).toBeGreaterThan(1);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { entrances: number }).entrances)).toBeGreaterThan(1);
     await appSettled(page);
     await expect(page.getByTestId('hero')).toBeVisible();
   });

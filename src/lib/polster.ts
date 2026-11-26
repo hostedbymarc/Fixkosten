@@ -21,6 +21,8 @@ export interface Cushion {
   share: number;
   confirmed: Partial<Record<Period, number>>;
   milestones: CushionMilestone[];
+  /** polster-feinschliff: the Überschuss of a confirmed month when it was confirmed */
+  surplus?: Partial<Record<Period, number>>;
 }
 
 export const cushionOf = (s: KontoSettings): Cushion => ({
@@ -30,6 +32,7 @@ export const cushionOf = (s: KontoSettings): Cushion => ({
   share: s.cushionShare,
   confirmed: s.cushionConfirmed,
   milestones: s.cushionMilestones,
+  surplus: s.cushionSurplus,
 });
 
 /** Polster column and messages: as soon as a Polster is entered. */
@@ -144,6 +147,8 @@ export interface CushionRow {
   balance: number;
   /** this month's distribution was confirmed already */
   confirmed: boolean;
+  /** polster-feinschliff: the part of the gap the Polster cannot pay (it would go below 0); 0 when covered */
+  uncovered: number;
 }
 
 /** The 12 months of „Dein Plan“: from today's Polster on, each Überschuss by the rule, up to the goal, never below 0. */
@@ -153,8 +158,9 @@ export function projectCushion(rows: PlanRow[], c: Cushion): CushionRow[] {
     const surplus = r.left === null ? null : toCents(r.left);
     const confirmed = c.confirmed[r.period] !== undefined;
     const delta = confirmed || surplus === null ? 0 : cushionDelta(surplus, balance, c);
+    const uncovered = !confirmed && surplus !== null && surplus < 0 ? -surplus + delta : 0;
     balance += delta;
-    return { period: r.period, surplus, delta, balance, confirmed };
+    return { period: r.period, surplus, delta, balance, confirmed, uncovered };
   });
 }
 
@@ -215,4 +221,42 @@ export function cushionBefore(proj: CushionRow[], period: Period, c: Cushion): n
   const k = proj.findIndex((r) => r.period === period);
   if (k < 0) return null;
   return k === 0 ? (c.balance ?? 0) : proj[k - 1]!.balance;
+}
+
+/**
+ * polster-feinschliff, „Polster vor Rot“ in „Dein Plan“ (with a Polster): every gap of the 12 months paid by the
+ * Polster → covered („Dein Polster deckt alle Lücken.“, green, instead of the red step); the first month the
+ * Polster would go below 0 → short with what is missing („{Monat Jahr}: Dein Polster reicht nicht. Dir fehlen € X.“).
+ * null: no month with a gap.
+ */
+export type CushionLevel = { kind: 'covered' } | { kind: 'short'; period: Period; amount: number };
+
+export function cushionLevel(proj: CushionRow[]): CushionLevel | null {
+  const short = proj.find((r) => r.uncovered > 0);
+  if (short) return { kind: 'short', period: short.period, amount: short.uncovered };
+  return proj.some((r) => r.surplus !== null && r.surplus < 0 && !r.confirmed) ? { kind: 'covered' } : null;
+}
+
+/**
+ * „Nächster großer Monat“: the Polster planned before the month pays its whole gap → the amount it takes (cents);
+ * null when there is no gap, no Polster, or it does not cover it.
+ */
+export function bigMonthCushion(proj: CushionRow[], period: Period, c: Cushion, gap: number): number | null {
+  if (!cushionActive(c) || gap <= 0) return null;
+  const before = cushionBefore(proj, period, c);
+  return before !== null && before >= gap ? gap : null;
+}
+
+/** The Polster's history, newest first (the moves of the same day: the latest first). */
+export function movesNewestFirst<T extends { date: string }>(moves: T[]): T[] {
+  return moves.map((m, i) => ({ m, i })).sort((a, b) => b.m.date.localeCompare(a.m.date) || b.i - a.i).map((x) => x.m);
+}
+
+/**
+ * The Überschuss of a confirmed month changed since („Dein Überschuss ist € X höher/niedriger.“): the difference in
+ * cents (+ higher, − lower); 0 when it is the same or the month is not confirmed with its Überschuss.
+ */
+export function surplusDiff(remembered: number | undefined, surplus: number | null): number {
+  if (remembered === undefined || surplus === null) return 0;
+  return surplus - remembered;
 }

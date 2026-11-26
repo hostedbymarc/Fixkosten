@@ -42,6 +42,8 @@ const stateOf = async (db: FixkostenDB) => kontoState(DATA, ACTIVE, await readKo
 
 // Wortgenau aus dem Auftrag (fixkosten-ein-betrag, Ergänzung): der erste Satz hat 15 Wörter.
 const DICTATED = new Set(['sheet.chart.info']);
+// polster-feinschliff: „+ Einzahlen“ / „− Entnehmen“ of the Polster are dictated – the Fixkostenkonto keeps „zur Seite legen“
+const POLSTER_EINZAHLEN = new Set(['cushion.move.in', 'cushion.move.in.save', 'cushion.toast.moveIn', 'cushion.src.in']);
 
 describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote, „zur Seite legen“ statt „einzahlen“', () => {
   for (const [id, text] of Object.entries(KONTO_TEXTS)) {
@@ -52,7 +54,7 @@ describe('Texte: Du-Form, höchstens 12 Wörter je Satz, keine Schote, „zur Se
       expect(text).not.toMatch(['hero.done.title', 'bills.done', 'month.done.account', 'month.done.aside'].includes(id) ? /Annahme|Checkliste|Kontostand heute|schon eingegangen/i : /Annahme|Checkliste|erledigt|Kontostand heute|schon eingegangen/i);
       expect(text).not.toMatch(/Schote|Erbsen?\s*=|\b1 Erbse\b/i);
       expect(text).not.toMatch(/\b(Sie|Ihr|Ihnen)\b/);
-      expect(text).not.toMatch(/einzahlen|eingezahlt|gedeckt|Fixkostenkonto eröffnen/i);
+      expect(text).not.toMatch(POLSTER_EINZAHLEN.has(id) ? /gedeckt|Fixkostenkonto eröffnen/i : /einzahlen|eingezahlt|gedeckt|Fixkostenkonto eröffnen/i);
     });
   }
 });

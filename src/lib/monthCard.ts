@@ -184,7 +184,7 @@ export function monthCard(ds: Dataset, period: Period, plan: MonthPlan, start: M
     notFromNet: euros(wealthItems.filter((i) => !i.fromNet).reduce((a, i) => a + cents(i.amount), 0)),
   };
   const unplannedList = unplannedItems(ds, active, start);
-  const limit = plan.spielgeld;
+  const limit = plan.spielgeldFor ? plan.spielgeldFor(active) : plan.spielgeld;
   const used = unplannedList.filter((i) => !i.muted).reduce((a, i) => a + cents(i.amount), 0);
   // ④ = max(limit, spent): what is not spent yet stays booked for the Spielgeld („Noch nicht ausgegeben“)
   const notSpent = limit === null ? 0 : Math.max(cents(limit) - used, 0);
