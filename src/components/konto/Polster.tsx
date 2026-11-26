@@ -408,20 +408,30 @@ function GapSalary({ ds, period, plan, left }: { ds: Dataset; period: Period; ac
   );
 }
 
-/** An amount field in cents: Enter or leaving it commits; empty = null. */
+/**
+ * An amount field in cents: Enter or leaving it commits; empty = null. It reads what is in the field right now (not
+ * the text of the last render: under load Enter could come before that render, an old empty text would remove the
+ * Polster) and commits only a change.
+ */
 function CentsField({ cents, onCommit, testId, label }: { cents: number | null; onCommit: (v: number | null) => void; testId: string; label?: string }) {
   const [text, setText] = useState(cents === null ? '' : amountToInput(cents / 100));
+  const field = useRef<HTMLInputElement>(null);
   useEffect(() => setText(cents === null ? '' : amountToInput(cents / 100)), [cents]);
   const commit = () => {
-    const v = parseAmount(text);
-    if (text.trim() === '') return onCommit(null);
+    const now = field.current?.value ?? text;
+    if (now.trim() === '') {
+      if (cents !== null) onCommit(null);
+      return;
+    }
+    const v = parseAmount(now);
     if (v === null || v < 0) return setText(cents === null ? '' : amountToInput(cents / 100));
-    onCommit(toCents(v));
+    if (toCents(v) !== cents) onCommit(toCents(v));
   };
   return (
     <span className="flex h-12 items-center rounded-2xl border border-edge bg-field px-3 focus-within:ring-2 focus-within:ring-focus/25">
       <span className="mr-1.5 text-[17px] text-ink-mute">{currencySymbol()}</span>
       <AmountInput
+        ref={field}
         value={text}
         onChange={setText}
         onBlur={commit}
