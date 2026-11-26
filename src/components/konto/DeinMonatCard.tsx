@@ -18,6 +18,7 @@ import { Confetti } from '../Confetti';
 import { useCelebration } from '../useCelebration';
 import { monthName } from '../../lib/period';
 import { openPlan } from '../../lib/planBus';
+import { amountTargetOf, openAmount, type AmountTarget } from '../../lib/amountBus';
 import type { Dataset, Period } from '../../lib/types';
 import { useActiveMonth, useMonthStart } from '../../lib/useToday';
 import { fitStyle } from '../fitText';
@@ -149,6 +150,7 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
           <div id="dein-monat-split" className="fold grid" data-open={splitOpen || undefined} data-testid="dein-monat-split" aria-hidden={!splitOpen} {...(!splitOpen ? { inert: '' } : {})}>
             <ol className="num flex min-h-0 flex-col overflow-hidden">
               <Row
+                ds={ds}
                 n={1}
                 label={t(account ? 'month.toAccount' : 'month.aside')}
                 row={card.reserve}
@@ -156,8 +158,9 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
                 sub={isActive && current.period === plan.first.period ? inclText(plan) : undefined}
                 note={card.fromReserve > 0 ? t('month.fromReserve', { betrag: money(card.fromReserve) }) : undefined}
               />
-              <Row n={2} label={t('month.direct')} row={card.direct} testId="dein-monat-direct" sub={card.direct.count > 0 ? t('month.direct.more', { n: card.direct.count }) : undefined} />
+              <Row ds={ds} n={2} label={t('month.direct')} row={card.direct} testId="dein-monat-direct" sub={card.direct.count > 0 ? t('month.direct.more', { n: card.direct.count }) : undefined} />
               <Row
+                ds={ds}
                 n={3}
                 label={t('month.wealth')}
                 row={card.wealth}
@@ -165,7 +168,7 @@ function Card({ ds, period, active, onOpenSalary }: { ds: Dataset; period: Perio
                 sub={card.wealth.notFromNet > 0 ? t('month.wealth.notFromNet', { betrag: money(card.wealth.notFromNet) }) : undefined}
               />
               {/* komplett-ansparen: ④ only title and amount; over the limit: the line under „Vor Spielgeld frei“ */}
-              <Row n={4} label={t('month.unplanned')} row={card.unplanned} testId="dein-monat-unplanned" />
+              <Row ds={ds} n={4} label={t('month.unplanned')} row={card.unplanned} testId="dein-monat-unplanned" spielgeld={p === null ? undefined : { period, limit: p.limit }} />
             </ol>
           </div>
           <div className="mt-2 border-t border-edge pt-3">
@@ -395,7 +398,28 @@ function useSplitOpen(): [boolean, (open: boolean) => Promise<void>] {
 const shortDate = (d: string | null) => (d ? `${Number(d.slice(8, 10))}.${Number(d.slice(5, 7))}.` : '');
 
 /** One row ① – ④: a tap opens its items (name · amount · date); the counted items add up to the row. */
-function Row({ n, label, row, sub, subOver, note, testId }: { n: number; label: string; row: CardRow; sub?: string; subOver?: boolean; note?: string; testId: string }) {
+function Row({
+  ds,
+  n,
+  label,
+  row,
+  sub,
+  subOver,
+  note,
+  testId,
+  spielgeld,
+}: {
+  ds: Dataset;
+  n: number;
+  label: string;
+  row: CardRow;
+  sub?: string;
+  subOver?: boolean;
+  note?: string;
+  testId: string;
+  /** ④: „Spielgeld für {Monat}“ – a tap changes it for this month or from it on */
+  spielgeld?: { period: Period; limit: number };
+}) {
   const [open, setOpen] = useState(false);
   const listId = `${testId}-list`;
   return (
@@ -441,10 +465,23 @@ function Row({ n, label, row, sub, subOver, note, testId }: { n: number; label: 
       </button>
       {open && (
         <ul id={listId} className="mb-1 ml-[1.875rem] flex flex-col border-l border-edge pl-3" data-testid={listId}>
+          {spielgeld && (
+            <li>
+              <button
+                type="button"
+                onClick={(e) => openAmount({ target: { kind: 'spielgeld', period: spielgeld.period }, returnFocusTo: e.currentTarget })}
+                className={`${LINE_BUTTON} items-center font-semibold text-accent-ink`}
+                data-testid={`${testId}-spielgeld`}
+              >
+                <span className="min-w-0">{t('month.list.spielgeld', { monat: monthName(spielgeld.period) })}</span>
+                <span className="num shrink-0 whitespace-nowrap">{money(spielgeld.limit)}</span>
+              </button>
+            </li>
+          )}
           {row.items.length === 0 ? (
             <li className="py-1 text-[13px] text-ink-mute">{t('month.list.empty')}</li>
           ) : (
-            row.items.map((i) => <ItemLine key={i.key} item={i} testId={testId} />)
+            row.items.map((i) => <ItemLine key={i.key} item={i} testId={testId} target={amountTargetOf(i.key, ds.positions, ds.oneOffs)} />)
           )}
         </ul>
       )}
@@ -452,29 +489,31 @@ function Row({ n, label, row, sub, subOver, note, testId }: { n: number; label: 
   );
 }
 
-function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
+/** a line of ① – ④ that opens „Betrag für {Monat}“: the whole line, at least 44 px high */
+const LINE_BUTTON =
+  'focus-ring -mx-2 flex min-h-11 w-[calc(100%+1rem)] justify-between gap-3 rounded-lg px-2 py-1 text-left text-[13px] leading-5 hover:bg-white/5';
+
+function ItemLine({ item, testId, target }: { item: CardItem; testId: string; target: AmountTarget | null }) {
   const name = item.balance === 'save' ? t('month.list.save') : item.balance === 'take' ? t('month.list.take') : item.balance === 'rest' ? t('month.list.rest') : item.name;
   const note = item.note === 'notFromNet' ? t('month.list.notFromNet') : item.note === 'other' ? t('month.list.other') : null;
-  if (item.plan)
-    return (
-      <li className="flex items-baseline justify-between gap-3 py-1 text-[13px] leading-5 text-ink-soft" data-testid={`${testId}-item`} data-kind={item.plan.kind} data-period={item.plan.period}>
-        <span className="min-w-0">
-          <span className="break-words" data-testid={`${testId}-item-name`}>{name}</span>
-          <span className="text-ink-mute"> · {t(item.plan.kind === 'due' ? 'month.list.due' : 'month.list.for', { monat: monthName(item.plan.period) })}</span>
-          {item.plan.saved > 0 && (
-            <span className="num text-ink-mute" data-testid={`${testId}-item-saved`}>
-              {' '}
-              {t('month.list.saved', { betrag: money(item.plan.saved) })}
-            </span>
-          )}
-        </span>
-        <span className="num shrink-0 whitespace-nowrap font-medium" data-testid={`${testId}-item-amount`}>
-          {money(item.amount)}
-        </span>
-      </li>
-    );
-  return (
-    <li className={`flex items-baseline justify-between gap-3 py-1 text-[13px] leading-5 ${item.muted ? 'text-ink-mute' : 'text-ink-soft'}`} data-testid={`${testId}-item`} data-muted={item.muted || undefined}>
+  const body = item.plan ? (
+    <>
+      <span className="min-w-0">
+        <span className="break-words" data-testid={`${testId}-item-name`}>{name}</span>
+        <span className="text-ink-mute"> · {t(item.plan.kind === 'due' ? 'month.list.due' : 'month.list.for', { monat: monthName(item.plan.period) })}</span>
+        {item.plan.saved > 0 && (
+          <span className="num text-ink-mute" data-testid={`${testId}-item-saved`}>
+            {' '}
+            {t('month.list.saved', { betrag: money(item.plan.saved) })}
+          </span>
+        )}
+      </span>
+      <span className="num shrink-0 whitespace-nowrap font-medium" data-testid={`${testId}-item-amount`}>
+        {money(item.amount)}
+      </span>
+    </>
+  ) : (
+    <>
       <span className="min-w-0">
         <span className="break-words" data-testid={`${testId}-item-name`}>{name}</span>
         {(item.date || note) && <span className="text-ink-mute"> · {[shortDate(item.date), note].filter(Boolean).join(' · ')}</span>}
@@ -482,6 +521,28 @@ function ItemLine({ item, testId }: { item: CardItem; testId: string }) {
       <span className="num shrink-0 whitespace-nowrap font-medium" data-testid={`${testId}-item-amount`}>
         {item.amount < 0 ? minus(-item.amount) : money(item.amount)}
       </span>
+    </>
+  );
+  const tone = item.muted ? 'text-ink-mute' : 'text-ink-soft';
+  const data = { 'data-testid': `${testId}-item`, 'data-kind': item.plan?.kind, 'data-period': item.plan?.period, 'data-muted': item.muted || undefined };
+  // polster-feinschliff: a position or a one-off of the month → „Betrag für {Monat}“
+  if (target)
+    return (
+      <li {...data}>
+        <button
+          type="button"
+          onClick={(e) => openAmount({ target, returnFocusTo: e.currentTarget })}
+          aria-label={`${name}: ${t('amount.edit', { monat: monthName(target.period) })}`}
+          className={`${LINE_BUTTON} items-center ${tone}`}
+          data-testid={`${testId}-item-edit`}
+        >
+          {body}
+        </button>
+      </li>
+    );
+  return (
+    <li className={`flex items-baseline justify-between gap-3 py-1 text-[13px] leading-5 ${tone}`} {...data}>
+      {body}
     </li>
   );
 }

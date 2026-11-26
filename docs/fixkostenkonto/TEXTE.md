@@ -211,7 +211,41 @@
 | Polster | `cushion.undo` | Rückgängig | 1 |
 | Polster | `cushion.toast.in` | Polster aufgefüllt: {betrag} | 3 |
 | Polster | `cushion.toast.out` | Aus dem Polster genommen: {betrag} | 5 |
-| Nächster großer Monat | `big.cushion` | Polster deckt es | 3 |
+| Nächster großer Monat | `big.cushion` | Polster deckt es · {betrag} aus dem Polster | 7 |
+| Polster | `cushion.split.cancel` | Abbrechen | 1 |
+| Polster | `cushion.move.in` | + Einzahlen | 1 |
+| Polster | `cushion.move.out` | − Entnehmen | 1 |
+| Polster | `cushion.move.amount` | Betrag | 1 |
+| Polster | `cushion.move.note` | Notiz (optional) | 2 |
+| Polster | `cushion.move.in.save` | Einzahlen | 1 |
+| Polster | `cushion.move.out.save` | Entnehmen | 1 |
+| Polster | `cushion.move.cancel` | Abbrechen | 1 |
+| Polster | `cushion.toast.moveIn` | Eingezahlt: {betrag} | 2 |
+| Polster | `cushion.toast.moveOut` | Entnommen: {betrag} | 2 |
+| Polster | `cushion.history` | Verlauf | 1 |
+| Polster | `cushion.history.all` | Alle anzeigen › | 2 |
+| Polster | `cushion.history.less` | Weniger anzeigen | 2 |
+| Polster | `cushion.history.empty` | Noch keine Bewegungen. | 3 |
+| Polster | `cushion.src.split` | Polster aufgefüllt | 2 |
+| Polster | `cushion.src.gap` | Aus Polster genommen | 3 |
+| Polster | `cushion.src.in` | Eingezahlt | 1 |
+| Polster | `cushion.src.out` | Entnommen | 1 |
+| Polster | `cushion.src.start` | Stand eingetragen | 2 |
+| Polster | `cushion.src.diff` | Differenz | 1 |
+| Polster | `cushion.diff.higher` | Dein Überschuss ist {betrag} höher. | 5 |
+| Polster | `cushion.diff.lower` | Dein Überschuss ist {betrag} niedriger. | 5 |
+| Polster | `cushion.diff.in` | Differenz in den Polster | 4 |
+| Polster | `cushion.diff.out` | Differenz entnehmen | 2 |
+| Polster | `cushion.diff.ok` | Passt so | 2 |
+| Betrag für {Monat} | `amount.title` | Betrag für {monat} | 3 |
+| Betrag für {Monat} | `amount.only` | Nur {monat} | 2 |
+| Betrag für {Monat} | `amount.from` | Ab {monat} | 2 |
+| Betrag für {Monat} | `amount.date` | Datum | 1 |
+| Betrag für {Monat} | `amount.save` | Speichern | 1 |
+| Betrag für {Monat} | `amount.cancel` | Abbrechen | 1 |
+| Betrag für {Monat} | `amount.edit` | Betrag für {monat} ändern | 4 |
+| Spielgeld für {Monat} | `spielgeld.title` | Spielgeld für {monat} | 3 |
+| Dein Monat | `month.list.spielgeld` | Spielgeld für {monat} | 3 |
 | Einstellungen | `settings.cushion` | Polster | 1 |
 | Sheet „Dein Plan“ | `plan2.title` | Dein Plan | 2 |
 | Sheet „Dein Plan“ | `plan2.ok` | Passt so. Dein Spielgeld bleibt jeden Monat übrig. | 2 · 6 |
@@ -224,6 +258,8 @@
 | Sheet „Dein Plan“ | `plan2.short` | {monat} geht sich nicht aus. Dir fehlen {betrag}. | 5 · 3 |
 | Sheet „Dein Plan“ | `plan2.spielgeldShort` | Ab {monat} reicht dein Gehalt zum Planen nicht fürs volle Spielgeld. | 11 |
 | Sheet „Dein Plan“ | `plan2.cushion.missing` | Nach {monat} fehlen nur noch {betrag}. | 6 |
+| Sheet „Dein Plan“ | `plan2.cushion.covered` | Dein Polster deckt alle Lücken. | 5 |
+| Sheet „Dein Plan“ | `plan2.cushion.short` | {monat}: Dein Polster reicht nicht. Dir fehlen {betrag}. | 5 · 3 |
 | Sheet „Dein Plan“ | `plan2.cushion.reached` | Ziel im {monat} erreicht. | 4 |
 | Sheet „Dein Plan“ | `plan2.cushion.drop` | Bei {betrag} Gehalt sinkt dein Polster ab {monat}. | 8 |
 | Sheet „Dein Plan“ | `plan2.cushion.goal` | Polster-Ziel {betrag} | 2 |

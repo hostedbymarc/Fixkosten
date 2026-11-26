@@ -3,6 +3,8 @@
 export interface OpenPolster {
   /** focus goes back here when the sheet closes */
   returnFocusTo?: HTMLElement | null;
+  /** polster-feinschliff: open with the field of „+ Einzahlen“ / „− Entnehmen“ */
+  move?: 'in' | 'out';
 }
 
 type Listener = (open: OpenPolster) => void;

@@ -21,6 +21,8 @@ export interface Cushion {
   share: number;
   confirmed: Partial<Record<Period, number>>;
   milestones: CushionMilestone[];
+  /** polster-feinschliff: the Überschuss of a confirmed month when it was confirmed */
+  surplus?: Partial<Record<Period, number>>;
 }
 
 export const cushionOf = (s: KontoSettings): Cushion => ({
@@ -30,6 +32,7 @@ export const cushionOf = (s: KontoSettings): Cushion => ({
   share: s.cushionShare,
   confirmed: s.cushionConfirmed,
   milestones: s.cushionMilestones,
+  surplus: s.cushionSurplus,
 });
 
 /** Polster column and messages: as soon as a Polster is entered. */

@@ -402,6 +402,39 @@ export async function changeAmount(db: FixkostenDB, id: string, input: AmountCha
 }
 
 /**
+ * polster-feinschliff, „Betrag für {Monat}“: the amount of a recurring position in `period` – „Nur {Monat}“ (`only`:
+ * from the next month on the amount it had) or „Ab {Monat}“ (`from`: a new history entry from this month, as „Betrag
+ * ändern“). A change already in this month is replaced; the start entry keeps its month. Ticks keep their payment.
+ */
+export async function setMonthAmount(db: FixkostenDB, id: string, period: Period, amount: number, scope: 'only' | 'from'): Promise<void> {
+  if (!(amount > 0)) throw new RepoError('Der Betrag muss größer als 0 sein.');
+  await db.transaction('rw', db.positions, db.changeLog, async () => {
+    const position = await db.positions.get(id);
+    if (!position) throw new RepoError('Position nicht gefunden.');
+    const history = planHistory(position);
+    const first = history[0]!;
+    if (first.frequency === 'once') throw new RepoError('Bei einmaligen Zahlungen einfach den Betrag bearbeiten.');
+    const before = planForPeriod(position, period) ?? currentPlan(position, period)!;
+    const next = addPeriods(period, 1);
+    const after = planForPeriod(position, next) ?? before;
+    const recordedAt = new Date().toISOString();
+    const value = Math.round(amount * 100) / 100;
+    let list = history;
+    if (first.validFrom >= period) {
+      // the position starts in this month (or later): its start entry carries the amount
+      list = list.map((e) => (e === first ? { ...e, amount: value } : e)).filter((e) => e === first || e.validFrom !== period);
+    } else {
+      list = [...list.filter((e) => e.validFrom !== period), { validFrom: period, amount: value, ...scheduleOf(before), changedOn: `${period}-01`, recordedAt }];
+    }
+    if (scope === 'only' && !list.some((e) => e.validFrom === next)) {
+      list = [...list, { validFrom: next, amount: after.amount, ...scheduleOf(after), changedOn: `${next}-01`, recordedAt }];
+    }
+    await db.positions.update(id, { history: list.sort(compareEntries) });
+    await db.changeLog.add(log({ positionId: id, type: 'amount', validFrom: period, from: before, to: { ...before, amount: value } }));
+  });
+}
+
+/**
  * Edits one history entry. The first entry (start of the position) keeps its
  * month; only amount and reason change.
  */

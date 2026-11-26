@@ -780,18 +780,42 @@ button:active > .pea[data-pressable] {
   z-index: 1;
 }
 .hero-confetti {
+  /* polster-feinschliff: the peas have a row of their own at the bottom of the tile (or block) – the layer is
+     that strip, so they never lie over a text or a button („Rückgängig“); the tile keeps the room free */
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--confetti-strip);
   overflow: hidden;
-  border-radius: inherit;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
   pointer-events: none;
+}
+:root {
+  --confetti-strip: 44px;
 }
 /* the decorative layers can never leave the tile: WebKit does not clip a child on its own compositing
    layer (an animated transform) with overflow + border-radius alone; clip-path and paint containment do */
 .hero-confetti,
 .hero-lights {
   contain: paint;
+}
+.hero-lights {
   clip-path: inset(0 round var(--r-lg));
+}
+.hero-confetti {
+  clip-path: inset(0 round 0 0 var(--r-lg) var(--r-lg));
+}
+/* a block with confetti of its own (the Polster in „Dein Monat“ and „Dein Polster“): the strip under its text */
+.confetti-host {
+  position: relative;
+}
+.confetti-host[data-confetti] {
+  padding-bottom: calc(var(--confetti-strip) + 8px);
+}
+.confetti-host[data-confetti] > .hero-confetti {
+  border-radius: 0 0 1rem 1rem;
+  clip-path: inset(0 round 0 0 1rem 1rem);
 }
 /* „{Monat} erledigt“: a strip at the bottom of the tile where the peas come to rest, below every text */
 .hero[data-done] {

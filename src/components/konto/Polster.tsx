@@ -3,10 +3,19 @@
 // Polster changes only when the user confirms („Polster aufgefüllt“ / „Aus Polster genommen“) or enters it.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../../db/db';
-import { confirmCushion, setCushionBalance, setCushionGoal, setCushionRule, undoCushion } from '../../db/kontoActions';
-import type { KontoSettings } from '../../db/settings';
+import {
+  addCushionMove,
+  confirmCushion,
+  removeCushionMove,
+  setCushionBalance,
+  setCushionGoal,
+  setCushionRule,
+  settleCushionDiff,
+  undoCushion,
+} from '../../db/kontoActions';
+import { CUSHION_NOTE_MAX, type CushionMove, type KontoSettings } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
-import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib/format';
+import { amountToInput, currencySymbol, formatDate, formatEUR, parseAmount } from '../../lib/format';
 import { t } from '../../lib/kontoTexts';
 import { monthCard, planRows, type PlanRow } from '../../lib/monthCard';
 import type { MonthPlan } from '../../lib/monthPlan';
@@ -18,10 +27,12 @@ import {
   cushionOf,
   cushionPercent,
   distribution,
+  movesNewestFirst,
   nextStage,
   projectCushion,
   salaryWithoutCushion,
   stageAmount,
+  surplusDiff,
   toCents,
   type Cushion,
   type CushionRow,
@@ -95,7 +106,7 @@ function progressText(balance: number, goal: number): string {
 /**
  * Screen 5: the Polster card of the active month, right under the green card. Stand, „von € Ziel“, the bar with
  * the next stage, „{p} % · fehlt € X“, „{n} Monate Fixkosten“; without a goal „Leg dein Polster-Ziel fest ›“.
- * A tap opens „Dein Polster“.
+ * A tap opens „Dein Polster“. polster-feinschliff: „+ Einzahlen“ / „− Entnehmen“ open it with the field.
  */
 export function PolsterCard({ plan }: { plan: MonthPlan }) {
   const { settings } = useKonto();
@@ -103,48 +114,75 @@ export function PolsterCard({ plan }: { plan: MonthPlan }) {
   const balance = settings.cushionBalance ?? 0;
   const goal = settings.cushionGoal;
   const cover = useMemo(() => cushionCover(plan, balance, goal), [plan, balance, goal]);
+  const moves = goal !== null || settings.cushionBalance !== null;
   return (
-    <button
-      ref={button}
-      type="button"
-      onClick={() => openPolster({ returnFocusTo: button.current })}
-      className="glass glass-tile surface press focus-ring flex w-full min-w-0 flex-col gap-2.5 p-4 text-left md:p-5"
+    <div
+      className="glass glass-tile surface flex w-full min-w-0 flex-col gap-1 p-2 md:p-3"
       data-testid="polster-card"
       data-goal={goal ?? undefined}
       data-balance={settings.cushionBalance ?? undefined}
     >
-      <span className="flex w-full items-center justify-between gap-2">
-        <span className="text-[13px] font-medium text-ink-mute">{t('cushion.card')}</span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-ink-mute" aria-hidden="true" />
-      </span>
-      {goal === null ? (
-        <span className="text-[17px] font-semibold text-accent-ink" data-testid="polster-card-set-goal">
-          {t('cushion.setGoal')}
+      <button
+        ref={button}
+        type="button"
+        onClick={() => openPolster({ returnFocusTo: button.current })}
+        className="press focus-ring flex w-full min-w-0 flex-col gap-2.5 rounded-2xl p-2 text-left"
+        data-testid="polster-card-open"
+      >
+        <span className="flex w-full items-center justify-between gap-2">
+          <span className="text-[13px] font-medium text-ink-mute">{t('cushion.card')}</span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-ink-mute" aria-hidden="true" />
         </span>
-      ) : (
-        <>
-          <span className="num flex w-full items-baseline justify-between gap-3">
-            <span className="text-[26px] font-bold tracking-[-0.02em] text-ink" data-testid="polster-card-balance">
-              {eur(balance)}
-            </span>
-            <span className="text-[14px] text-ink-mute" data-testid="polster-card-goal">
-              {t('cushion.of', { betrag: eur(goal) })}
-            </span>
+        {goal === null ? (
+          <span className="text-[17px] font-semibold text-accent-ink" data-testid="polster-card-set-goal">
+            {t('cushion.setGoal')}
           </span>
-          <CushionBar balance={balance} goal={goal} testId="polster-card-bar" />
-          <span className="num flex w-full flex-wrap justify-between gap-x-3 text-[13px]">
-            <span className="font-semibold text-accent-ink" data-testid="polster-card-progress">
-              {progressText(balance, goal)}
-            </span>
-            {cover.months !== null && (
-              <span className="text-ink-mute" data-testid="polster-card-months">
-                {t('cushion.monthsN', { n: dec(cover.months) })}
+        ) : (
+          <>
+            <span className="num flex w-full items-baseline justify-between gap-3">
+              <span className="text-[26px] font-bold tracking-[-0.02em] text-ink" data-testid="polster-card-balance">
+                {eur(balance)}
               </span>
-            )}
-          </span>
-        </>
-      )}
-    </button>
+              <span className="text-[14px] text-ink-mute" data-testid="polster-card-goal">
+                {t('cushion.of', { betrag: eur(goal) })}
+              </span>
+            </span>
+            <CushionBar balance={balance} goal={goal} testId="polster-card-bar" />
+            <span className="num flex w-full flex-wrap justify-between gap-x-3 text-[13px]">
+              <span className="font-semibold text-accent-ink" data-testid="polster-card-progress">
+                {progressText(balance, goal)}
+              </span>
+              {cover.months !== null && (
+                <span className="text-ink-mute" data-testid="polster-card-months">
+                  {t('cushion.monthsN', { n: dec(cover.months) })}
+                </span>
+              )}
+            </span>
+          </>
+        )}
+      </button>
+      {moves && <MoveButtons onMove={(dir, el) => openPolster({ returnFocusTo: el, move: dir })} testId="polster-card" />}
+    </div>
+  );
+}
+
+/** „+ Einzahlen“ / „− Entnehmen“ */
+function MoveButtons({ onMove, testId, active }: { onMove: (dir: 'in' | 'out', el: HTMLButtonElement) => void; testId: string; active?: 'in' | 'out' | null }) {
+  return (
+    <span className="grid grid-cols-2 gap-2">
+      {(['in', 'out'] as const).map((dir) => (
+        <button
+          key={dir}
+          type="button"
+          onClick={(e) => onMove(dir, e.currentTarget)}
+          aria-pressed={active === undefined ? undefined : active === dir}
+          className={`${BUTTON} press bg-control text-ink ${active === dir ? 'ring-2 ring-accent' : ''}`}
+          data-testid={`${testId}-${dir}`}
+        >
+          {t(dir === 'in' ? 'cushion.move.in' : 'cushion.move.out')}
+        </button>
+      ))}
+    </span>
   );
 }
 
@@ -152,52 +190,64 @@ export function PolsterCard({ plan }: { plan: MonthPlan }) {
  * Screens 2 and 3, in the green card under the Überschuss: „So verteilst du den Überschuss“ (Überschuss > 0, goal not
  * reached), „Dein Polster deckt die Lücke“ (Überschuss < 0, Polster > 0), „Polster voll · …“ (goal reached). With a
  * button in the active month and in past months not confirmed yet; a muted preview without a button in later months.
- * Confirmed: the amount and „Rückgängig“ (the active month). Crossing a stage: the confetti, once per stage.
+ * Confirmed: the amount and „Rückgängig“ (the active month); a later change of the Überschuss: the difference.
+ * Crossing a stage: the confetti, once per stage – in a strip of its own under the text (polster-feinschliff).
  */
 export function CushionSplit({ ds, period, active, left }: { ds: Dataset; period: Period; active: Period; left: number }) {
   const { settings } = useKonto();
   const plan = useMonthPlan(ds, active);
   const toast = useToast();
   const { c, proj } = useCushionPlan(ds, plan);
-  const [chosen, setChosen] = useState<number | undefined>(undefined);
-  const [other, setOther] = useState(false);
+  // „Anders aufteilen“: the field's text; its amount counts as soon as it is a valid one
+  const [other, setOther] = useState<string | null>(null);
   const [party, setParty] = useState<{ run: number; goal: boolean } | null>(null);
   const future = period > active;
   const confirmed = c.confirmed[period];
+  const surplus = toCents(left);
   // „Rückgängig“: the celebration is over (a stage is celebrated only once)
   const undo = () => {
     setParty(null);
     void undoCushion(db, period);
   };
+  const celebrate = (stages: number[]) => {
+    if (stages.length) setParty((p) => ({ run: (p?.run ?? 0) + 1, goal: stages.includes(100) }));
+  };
   // a later month: from the Polster planned before it
   const base = future ? cushionBefore(proj, period, c) : c.balance;
-  const d = distribution(toCents(left), { ...c, balance: base }, chosen);
+  const parsed = other === null ? null : parseAmount(other);
+  const chosen = parsed === null || parsed < 0 ? undefined : toCents(parsed);
+  const d = distribution(surplus, { ...c, balance: base }, chosen);
   if (!future && confirmed !== undefined) {
     if (period !== active) return null;
     return (
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white/5 px-3 py-2.5" data-testid="cushion-split" data-kind="confirmed">
+      <div className="confetti-host mt-3 flex flex-col gap-1 rounded-2xl bg-white/5 px-3 py-1.5" data-testid="cushion-split" data-kind="confirmed" data-confetti={party ? '' : undefined}>
         {party && <Confetti key={`cushion-${party.run}`} seed={`cushion-${period}-${party.run}`} falling />}
-        <p className="num flex items-center gap-2 text-[14px] font-semibold text-ink" data-testid="cushion-split-confirmed">
-          <CheckIcon size={16} strokeWidth={2.6} className="shrink-0 text-paid-ink" aria-hidden="true" />
-          {t(confirmed > 0 ? 'cushion.in.done' : 'cushion.out.done', { betrag: eur(Math.abs(confirmed)) })}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-x-2">
+          <p className="num flex min-h-11 items-center gap-2 text-[14px] font-semibold text-ink" data-testid="cushion-split-confirmed">
+            <CheckIcon size={16} strokeWidth={2.6} className="shrink-0 text-paid-ink" aria-hidden="true" />
+            {t(confirmed > 0 ? 'cushion.in.done' : 'cushion.out.done', { betrag: eur(Math.abs(confirmed)) })}
+          </p>
+          <button type="button" className={`${BUTTON} -mr-2 text-accent-ink`} onClick={undo} data-testid="cushion-split-undo">
+            {t('cushion.undo')}
+          </button>
+        </div>
         {party?.goal && (
-          <p className="w-full text-[15px] font-semibold text-ink" data-testid="cushion-split-reached">
+          <p className="text-[15px] font-semibold text-ink" data-testid="cushion-split-reached">
             {t('cushion.reached')}
           </p>
         )}
-        <button type="button" className={`${BUTTON} -mr-2 text-accent-ink`} onClick={undo} data-testid="cushion-split-undo">
-          {t('cushion.undo')}
-        </button>
+        <SurplusDiff period={period} surplus={surplus} remembered={c.surplus?.[period]} onStages={celebrate} />
       </div>
     );
   }
   if (!d) return null;
   const canConfirm = !future;
   const confirm = async (amount: number) => {
-    const stages = await confirmCushion(db, period, amount);
+    const stages = await confirmCushion(db, period, amount, undefined, surplus);
     if (stages === null) return;
-    if (stages.length) setParty((p) => ({ run: (p?.run ?? 0) + 1, goal: stages.includes(100) }));
+    // an own amount: the field closes
+    setOther(null);
+    celebrate(stages);
     toast({
       message: t(amount > 0 ? 'cushion.toast.in' : 'cushion.toast.out', { betrag: eur(Math.abs(amount)) }),
       actionLabel: t('cushion.undo'),
@@ -245,18 +295,17 @@ export function CushionSplit({ ds, period, active, left }: { ds: Dataset; period
           </span>
         </p>
       )}
-      {d.kind === 'take' && (
-        <GapSalary ds={ds} period={period} active={active} plan={plan} left={left} />
-      )}
-      {canConfirm && d.kind === 'fill' && other && (
-        <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-soft">
-          {t('cushion.split.amount')}
-          <CentsField
-            cents={d.amount}
-            onCommit={(v) => setChosen(v ?? undefined)}
-            testId="cushion-split-input"
-          />
-        </label>
+      {d.kind === 'take' && <GapSalary ds={ds} period={period} active={active} plan={plan} left={left} />}
+      {canConfirm && d.kind === 'fill' && other !== null && (
+        <div className="flex flex-col gap-1" data-testid="cushion-split-other-field">
+          <label className="flex flex-col gap-1 text-[13px] font-medium text-ink-soft">
+            {t('cushion.split.amount')}
+            <TextCents value={other} onChange={setOther} onEnter={() => void confirm(d.amount)} testId="cushion-split-input" autoFocus />
+          </label>
+          <button type="button" className={`${BUTTON} self-start -ml-2 text-ink-soft`} onClick={() => setOther(null)} data-testid="cushion-split-cancel">
+            {t('cushion.split.cancel')}
+          </button>
+        </div>
       )}
       {canConfirm && (
         <button
@@ -269,12 +318,81 @@ export function CushionSplit({ ds, period, active, left }: { ds: Dataset; period
           {t(d.kind === 'fill' ? 'cushion.split.confirm' : 'cushion.gap.confirm')}
         </button>
       )}
-      {canConfirm && d.kind === 'fill' && !other && (
-        <button type="button" className={`${BUTTON} text-accent-ink`} onClick={() => setOther(true)} data-testid="cushion-split-other">
+      {canConfirm && d.kind === 'fill' && (
+        <button
+          type="button"
+          className={`${BUTTON} text-accent-ink`}
+          onClick={() => setOther((o) => (o === null ? amountToInput(d.amount / 100) : null))}
+          aria-expanded={other !== null}
+          data-testid="cushion-split-other"
+        >
           {t('cushion.split.other')}
         </button>
       )}
     </div>
+  );
+}
+
+/**
+ * The Überschuss of a confirmed month changed (polster-feinschliff, a month's amount edited): „Dein Überschuss ist
+ * € X höher/niedriger.“ – „Differenz in den Polster“ / „Differenz entnehmen“ (a move) or „Passt so“.
+ */
+function SurplusDiff({ period, surplus, remembered, onStages }: { period: Period; surplus: number; remembered: number | undefined; onStages: (s: number[]) => void }) {
+  const toast = useToast();
+  const diff = surplusDiff(remembered, surplus);
+  if (diff === 0) return null;
+  const settle = async (move: boolean) => {
+    const r = await settleCushionDiff(db, period, surplus, move);
+    if (!r) return;
+    onStages(r.stages);
+    toast({
+      message: t(r.amount > 0 ? 'cushion.toast.in' : 'cushion.toast.out', { betrag: eur(Math.abs(r.amount)) }),
+      actionLabel: t('cushion.undo'),
+      onAction: () => void removeCushionMove(db, r.id),
+      durationMs: 5000,
+    });
+  };
+  return (
+    <div className="flex flex-col gap-2 border-t border-edge py-2" data-testid="cushion-diff" data-diff={diff}>
+      <p className="num text-[14px] font-medium text-ink" data-testid="cushion-diff-text">
+        {t(diff > 0 ? 'cushion.diff.higher' : 'cushion.diff.lower', { betrag: eur(Math.abs(diff)) })}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={`${ACTION} flex-1`} onClick={() => void settle(true)} data-testid="cushion-diff-move">
+          {t(diff > 0 ? 'cushion.diff.in' : 'cushion.diff.out')}
+        </button>
+        <button type="button" className={`${BUTTON} text-accent-ink`} onClick={() => void settle(false)} data-testid="cushion-diff-ok">
+          {t('cushion.diff.ok')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** An amount typed in (euros with cents); the parent reads it. */
+function TextCents({ value, onChange, onEnter, testId, autoFocus, label }: { value: string; onChange: (v: string) => void; onEnter?: () => void; testId: string; autoFocus?: boolean; label?: string }) {
+  const field = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (autoFocus) field.current?.focus({ preventScroll: true });
+  }, [autoFocus]);
+  return (
+    <span className="flex h-12 items-center rounded-2xl border border-edge bg-field px-3 focus-within:ring-2 focus-within:ring-focus/25">
+      <span className="mr-1.5 text-[17px] text-ink-mute">{currencySymbol()}</span>
+      <AmountInput
+        ref={field}
+        value={value}
+        onChange={onChange}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onEnter) {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
+        aria-label={label}
+        className="num h-full w-full min-w-0 bg-transparent text-[17px] font-semibold text-ink outline-none"
+        data-testid={testId}
+      />
+    </span>
   );
 }
 
@@ -333,15 +451,27 @@ export function PolsterHost({ ds, active }: { ds: Dataset; active: Period }) {
     [],
   );
   if (!open) return null;
-  return <PolsterSheet ds={ds} active={active} returnFocusTo={open.returnFocusTo} onClose={() => setOpen(null)} />;
+  return <PolsterSheet ds={ds} active={active} returnFocusTo={open.returnFocusTo} move={open.move} onClose={() => setOpen(null)} />;
 }
 
 /**
  * Screen 1, „Dein Polster“: the green card (Stand, „Ziel € X“, the bar, „{p} % · fehlt € X“, the next stage and what
- * gets there), „Damit zahlst du“ (months of fixed costs and of fixed costs plus Spielgeld, today and at the goal),
- * the two fields and the rule.
+ * gets there), „+ Einzahlen“ / „− Entnehmen“ (polster-feinschliff), „Damit zahlst du“ (months of fixed costs and of
+ * fixed costs plus Spielgeld, today and at the goal), the two fields, the rule and „Verlauf“.
  */
-export function PolsterSheet({ ds, active, onClose, returnFocusTo }: { ds: Dataset; active: Period; onClose: () => void; returnFocusTo?: HTMLElement | null }) {
+export function PolsterSheet({
+  ds,
+  active,
+  onClose,
+  returnFocusTo,
+  move,
+}: {
+  ds: Dataset;
+  active: Period;
+  onClose: () => void;
+  returnFocusTo?: HTMLElement | null;
+  move?: 'in' | 'out';
+}) {
   const { settings } = useKonto();
   const plan = useMonthPlan(ds, active);
   const start = useMonthStart();
@@ -349,10 +479,19 @@ export function PolsterSheet({ ds, active, onClose, returnFocusTo }: { ds: Datas
   const goal = settings.cushionGoal;
   const cover = useMemo(() => cushionCover(plan, balance ?? 0, goal), [plan, balance, goal]);
   const activeLeft = useMemo(() => monthCard(ds, active, plan, start).left, [ds, active, plan, start]);
+  const [dir, setDir] = useState<'in' | 'out' | null>(move ?? null);
+  const [party, setParty] = useState<{ run: number; goal: boolean } | null>(null);
+  const celebrate = (stages: number[]) => {
+    if (stages.length) setParty((p) => ({ run: (p?.run ?? 0) + 1, goal: stages.includes(100) }));
+  };
   return (
     <BottomSheet title={t('cushion.title')} onClose={onClose} returnFocusTo={returnFocusTo}>
       <div className="flex flex-col gap-5 pb-2" data-testid="polster-sheet">
-        {goal !== null && <GoalCard settings={settings} activeLeft={activeLeft} active={active} />}
+        {goal !== null && <GoalCard settings={settings} activeLeft={activeLeft} active={active} party={party} />}
+        <div className="flex flex-col gap-2.5" data-testid="polster-moves">
+          <MoveButtons onMove={(d) => setDir((x) => (x === d ? null : d))} testId="polster" active={dir} />
+          {dir && <MoveForm key={dir} dir={dir} balance={balance ?? 0} onDone={() => setDir(null)} onStages={celebrate} />}
+        </div>
         {balance !== null && cover.months !== null && (
           <section className="flex flex-col gap-2.5 rounded-2xl border border-edge bg-raised p-4" data-testid="polster-pays">
             <h3 className="text-[15px] font-semibold text-ink">{t('cushion.pays')}</h3>
@@ -415,9 +554,114 @@ export function PolsterSheet({ ds, active, onClose, returnFocusTo }: { ds: Datas
             </label>
           )}
         </fieldset>
+        <History moves={settings.cushionMoves} />
       </div>
     </BottomSheet>
   );
+}
+
+/** „+ Einzahlen“ / „− Entnehmen“: amount (cents), an optional note (≤ 40 characters), today. Rückgängig via the hint. */
+function MoveForm({ dir, balance, onDone, onStages }: { dir: 'in' | 'out'; balance: number; onDone: () => void; onStages: (s: number[]) => void }) {
+  const toast = useToast();
+  const [text, setText] = useState('');
+  const [note, setNote] = useState('');
+  const value = parseAmount(text);
+  const cents = value === null || value <= 0 ? 0 : toCents(value);
+  const valid = cents > 0 && (dir === 'in' || balance > 0);
+  const save = async () => {
+    if (!valid) return;
+    const r = await addCushionMove(db, dir === 'in' ? cents : -cents, note);
+    if (!r) return;
+    onStages(r.stages);
+    onDone();
+    toast({
+      message: t(r.amount > 0 ? 'cushion.toast.moveIn' : 'cushion.toast.moveOut', { betrag: eur(Math.abs(r.amount)) }),
+      actionLabel: t('cushion.undo'),
+      onAction: () => void removeCushionMove(db, r.id),
+      durationMs: 5000,
+    });
+  };
+  return (
+    <form
+      className="flex flex-col gap-2.5 rounded-2xl border border-edge bg-raised p-3.5"
+      data-testid="polster-move-form"
+      data-dir={dir}
+      onSubmit={(e) => {
+        e.preventDefault();
+        void save();
+      }}
+    >
+      <label className="flex flex-col gap-1 text-[13px] font-semibold text-ink-soft">
+        {t('cushion.move.amount')}
+        <TextCents value={text} onChange={setText} testId="polster-move-amount" autoFocus />
+      </label>
+      <label className="flex flex-col gap-1 text-[13px] font-semibold text-ink-soft">
+        {t('cushion.move.note')}
+        <input
+          type="text"
+          value={note}
+          maxLength={CUSHION_NOTE_MAX}
+          onChange={(e) => setNote(e.currentTarget.value)}
+          className="h-12 rounded-2xl border border-edge bg-field px-3 text-[16px] text-ink"
+          data-testid="polster-move-note"
+        />
+      </label>
+      <div className="flex items-center gap-2">
+        <button type="submit" className={`${ACTION} flex-1`} disabled={!valid} data-testid="polster-move-save">
+          {t(dir === 'in' ? 'cushion.move.in.save' : 'cushion.move.out.save')}
+        </button>
+        <button type="button" className={`${BUTTON} text-ink-soft`} onClick={onDone} data-testid="polster-move-cancel">
+          {t('cushion.move.cancel')}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** „Verlauf“: the last 5 moves (Datum · Notiz/Quelle · ±Betrag), „Alle anzeigen ›“. */
+function History({ moves }: { moves: CushionMove[] }) {
+  const [all, setAll] = useState(false);
+  const list = useMemo(() => movesNewestFirst(moves), [moves]);
+  const shown = all ? list : list.slice(0, 5);
+  return (
+    <section className="flex flex-col gap-1.5" data-testid="polster-history" data-count={moves.length}>
+      <h3 className="text-[15px] font-semibold text-ink">{t('cushion.history')}</h3>
+      {list.length === 0 ? (
+        <p className="text-[14px] text-ink-mute">{t('cushion.history.empty')}</p>
+      ) : (
+        <ul className="flex flex-col divide-y divide-line">
+          {shown.map((m) => (
+            <li key={m.id} className="num flex items-baseline justify-between gap-3 py-2 text-[14px]" data-testid="polster-history-row" data-source={m.source} data-cents={m.amount}>
+              <span className="min-w-0 text-ink-soft">
+                <span className="text-ink-mute">{formatDate(m.date)}</span> · <span className="break-words text-ink">{moveLabel(m)}</span>
+              </span>
+              <span className={`shrink-0 font-semibold ${m.amount < 0 ? 'text-ink' : 'text-paid-ink'}`}>
+                {m.amount < 0 ? '−' : '+'}
+                {eur(Math.abs(m.amount))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {list.length > 5 && (
+        <button type="button" className={`${BUTTON} self-start -ml-2 text-accent-ink`} onClick={() => setAll((a) => !a)} aria-expanded={all} data-testid="polster-history-all">
+          {t(all ? 'cushion.history.less' : 'cushion.history.all')}
+        </button>
+      )}
+    </section>
+  );
+}
+
+/** The note, else where the move came from („Polster aufgefüllt · Dezember“, „Eingezahlt“, „Stand eingetragen“). */
+function moveLabel(m: CushionMove): string {
+  if (m.note) return m.note;
+  const month = /^m-(\d{4}-\d{2})/.exec(m.id)?.[1];
+  const of = month ? ` · ${monthName(month)}` : '';
+  if (m.id.includes('-diff')) return `${t('cushion.src.diff')}${of}`;
+  if (m.source === 'split') return `${t('cushion.src.split')}${of}`;
+  if (m.source === 'gap') return `${t('cushion.src.gap')}${of}`;
+  if (m.source === 'start') return t('cushion.src.start');
+  return t(m.amount < 0 ? 'cushion.src.out' : 'cushion.src.in');
 }
 
 function Cover({ n, label, atGoal, testId }: { n: number; label: string; atGoal: number | null; testId: string }) {
@@ -437,7 +681,17 @@ function Cover({ n, label, atGoal, testId }: { n: number; label: string; atGoal:
 }
 
 /** The green card of „Dein Polster“: Stand, „Ziel € X“, the bar, the next stage and „Noch € X bis {Etappe} %.“ */
-function GoalCard({ settings, activeLeft, active }: { settings: KontoSettings; activeLeft: number | null; active: Period }) {
+function GoalCard({
+  settings,
+  activeLeft,
+  active,
+  party,
+}: {
+  settings: KontoSettings;
+  activeLeft: number | null;
+  active: Period;
+  party: { run: number; goal: boolean } | null;
+}) {
   const goal = settings.cushionGoal!;
   const balance = settings.cushionBalance ?? 0;
   const pct = cushionPercent(balance, goal) ?? 0;
@@ -445,7 +699,9 @@ function GoalCard({ settings, activeLeft, active }: { settings: KontoSettings; a
   const c = cushionOf(settings);
   const boost = activeLeft !== null && activeLeft > 0 && c.confirmed[active] === undefined ? distribution(toCents(activeLeft), c) : null;
   return (
-    <section className="hero surface flex flex-col gap-2.5 p-5" data-testid="polster-goal-card" data-percent={pct}>
+    <section className="hero surface flex flex-col gap-2.5 p-5" data-testid="polster-goal-card" data-percent={pct} data-done={party ? '' : undefined}>
+      {/* a stage crossed by a move: the confetti in the strip at the bottom of the card */}
+      {party && <Confetti key={`polster-${party.run}`} seed={`polster-${party.run}`} falling />}
       <p className="num flex items-baseline justify-between text-[15px] text-ink-soft">
         <span>{t('cushion.done')}</span>
         <span data-testid="polster-goal">{t('cushion.goal', { betrag: eur(goal) })}</span>
