@@ -67,7 +67,7 @@ Rahmen:
 | `amount.date` | Datum | 1 |
 | `amount.save` | Speichern | 1 |
 | `amount.cancel` | Abbrechen | 1 |
-| `amount.edit` | Betrag für {monat} ändern | 4 |
+| `amount.edit` | {monat} ändern | 2 |
 | `spielgeld.title` | Spielgeld für {monat} | 3 |
 | `month.list.spielgeld` | Spielgeld für {monat} | 3 |
 | `plan2.cushion.covered` | Dein Polster deckt alle Lücken. | 5 |

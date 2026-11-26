@@ -279,7 +279,7 @@ export const KONTO_TEXTS = {
   'amount.date': 'Datum',
   'amount.save': 'Speichern',
   'amount.cancel': 'Abbrechen',
-  'amount.edit': 'Betrag für {monat} ändern',
+  'amount.edit': '{monat} ändern',
   'spielgeld.title': 'Spielgeld für {monat}',
   'month.list.spielgeld': 'Spielgeld für {monat}',
   'settings.cushion': 'Polster',

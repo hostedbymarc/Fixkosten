@@ -243,7 +243,7 @@
 | Betrag für {Monat} | `amount.date` | Datum | 1 |
 | Betrag für {Monat} | `amount.save` | Speichern | 1 |
 | Betrag für {Monat} | `amount.cancel` | Abbrechen | 1 |
-| Betrag für {Monat} | `amount.edit` | Betrag für {monat} ändern | 4 |
+| Betrag für {Monat} | `amount.edit` | {monat} ändern | 2 |
 | Spielgeld für {Monat} | `spielgeld.title` | Spielgeld für {monat} | 3 |
 | Dein Monat | `month.list.spielgeld` | Spielgeld für {monat} | 3 |
 | Einstellungen | `settings.cushion` | Polster | 1 |
