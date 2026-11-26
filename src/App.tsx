@@ -11,6 +11,7 @@ import { cleanCelebrated } from './db/kontoActions';
 import { useDataset } from './db/useDataset';
 import { WalkthroughHost } from './components/konto/WalkthroughHost';
 import { PlanHost } from './components/konto/PlanHost';
+import { PolsterHost } from './components/konto/Polster';
 import { COUNTRY_KEY, toCountry } from './lib/country';
 import { setFormatCountry } from './lib/format';
 import { activeMonth, localToday, MONTH_START_KEY, toMonthStart } from './lib/activeMonth';
@@ -236,6 +237,7 @@ export function App() {
           </main>
           <TabBar route={route} />
           {ds && <WalkthroughHost ds={ds} active={active} />}
+          {ds && <PolsterHost ds={ds} active={active} />}
           {ds && (
             <PlanHost
               ds={ds}

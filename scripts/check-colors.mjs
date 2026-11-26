@@ -23,6 +23,8 @@ const NAME_OK = [
   /Fixkosten einplanen/, // feature name (sprint fixkosten-einplanen), not the old app name
   /\b(für|Konto für)\s+Fixkosten\b/, // „für Fixkosten zur Seite legen“
   /Ø Fixkosten/, // tooltip „im Ø-Monat“
+  /Monate Fixkosten/, // polster-ziel: „4,1 Monate Fixkosten“ (Design-Canvas „Polster-Ziel Mockups“)
+  /Fixkosten ca\./, // polster-ziel: „Ø nächste 12 Monate: Fixkosten ca. € 3.425“
   /\} Fixkosten \+ \$\{/, // hero „€ 5.649 Fixkosten + € 800 Vermögensaufbau“
 ];
 

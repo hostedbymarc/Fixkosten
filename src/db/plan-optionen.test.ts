@@ -9,7 +9,7 @@ import { monthPlan, storedSavings } from '../lib/monthPlan';
 import type { Dataset, Position, SavingSetting } from '../lib/types';
 import { exportBackup, importIntoEmpty, parseBackup, type BackupFile } from './backup';
 import { FixkostenDB } from './db';
-import { setCushion, setSaving } from './kontoActions';
+import { setSaving } from './kontoActions';
 import { loadDataset } from './repo';
 import { readKonto, toKontoSettings, storedKonto } from './settings';
 
@@ -123,8 +123,8 @@ describe('Tabelle = Karte', () => {
         const card = monthCard(ds, r.period, plan, 25, TODAY);
         expect([r.transfer, r.left, r.before]).toEqual([card.reserve.total, card.left, card.beforeSpielgeld]);
         sum += cents(card.left!);
-        expect(cents(r.cushion!)).toBe(sum);
       }
+      expect(sum).toBe(rows.reduce((a, r) => a + cents(r.left!), 0));
     });
 });
 
@@ -162,27 +162,23 @@ describe('Vorschau = Werte nach Übernehmen', () => {
   });
 });
 
-const row = (period: string, before: number, spielgeld: number, cushion = 0): PlanRow => ({ period, estimated: false, transfer: 0, before, left: before - spielgeld, spielgeld, cushion });
+const row = (period: string, before: number, spielgeld: number): PlanRow => ({ period, estimated: false, transfer: 0, before, left: before - spielgeld, spielgeld });
 function rows(...xs: [number, number][]): PlanRow[] {
-  let sum = 0;
-  return xs.map(([before, sg], i) => {
-    sum += cents(before - sg);
-    return { ...row(`2027-${String(i + 1).padStart(2, '0')}`, before, sg), cushion: sum / 100 };
-  });
+  return xs.map(([before, sg], i) => row(`2027-${String(i + 1).padStart(2, '0')}`, before, sg));
 }
 
 describe('Meldung oben: zwei Stufen', () => {
   it('Rot nur bei „Vor Spielgeld“ < 0: der erste solche Monat und sein Fehlbetrag', () => {
-    expect(planStatus(rows([500, 300], [200, 300], [-50, 300], [-400, 300]), false)).toEqual({ kind: 'short', period: '2027-03', amount: 50 });
+    expect(planStatus(rows([500, 300], [200, 300], [-50, 300], [-400, 300]))).toEqual({ kind: 'short', period: '2027-03', amount: 50 });
   });
   it('nur Spielgeld nicht gedeckt: ab dem ersten Monat, kein Rot', () => {
-    expect(planStatus(rows([500, 300], [200, 300], [100, 300]), false)).toEqual({ kind: 'spielgeld', period: '2027-02' });
+    expect(planStatus(rows([500, 300], [200, 300], [100, 300]))).toEqual({ kind: 'spielgeld', period: '2027-02' });
   });
   it('alles gedeckt: ok', () => {
-    expect(planStatus(rows([500, 300], [300, 300]), false)).toEqual({ kind: 'ok' });
+    expect(planStatus(rows([500, 300], [300, 300]))).toEqual({ kind: 'ok' });
   });
   it('ohne Gehalt: keine Meldung', () => {
-    expect(planStatus([{ ...row(P2, 0, 0), before: null, left: null, cushion: null }], false)).toBeNull();
+    expect(planStatus([{ ...row(P2, 0, 0), before: null, left: null }])).toBeNull();
   });
   it('ein Monat allein (Nächster großer Monat)', () => {
     expect(monthLevel({ before: -20, left: -320 })).toEqual({ kind: 'short', amount: 20 });
@@ -191,65 +187,36 @@ describe('Meldung oben: zwei Stufen', () => {
   });
 });
 
-describe('Polster: laufende Summe und „reicht bis“', () => {
-  it('laufende Summe der Überschüsse', () => {
-    expect(rows([500, 300], [200, 300], [100, 300]).map((r) => r.cushion)).toEqual([200, 100, -100]);
-  });
-  it('„Dein Polster reicht bis {Monat}“: der Monat vor dem ersten negativen Polster', () => {
-    expect(planStatus(rows([500, 300], [200, 300], [100, 300]), true)).toEqual({ kind: 'cushion', until: '2027-02', level: 'spielgeld' });
-    // im März fehlen auch ohne Spielgeld € 50 → rot
-    expect(planStatus(rows([500, 300], [200, 300], [-150, 300]), true)).toEqual({ kind: 'cushion', until: '2027-02', level: 'short' });
-  });
-  it('„Reicht für alle 12 Monate“, auch wenn einzelne Monate unter dem Spielgeld liegen', () => {
-    expect(planStatus(rows([800, 300], [200, 300], [300, 300]), true)).toEqual({ kind: 'cushionAll' });
-    expect(planStatus(rows([800, 300], [200, 300], [300, 300]), false)).toEqual({ kind: 'spielgeld', period: '2027-02' });
-  });
-  it('schon der erste Monat negativ: die zwei Stufen wie ohne Polster', () => {
-    expect(planStatus(rows([100, 300], [900, 300]), true)).toEqual({ kind: 'spielgeld', period: '2027-01' });
-  });
-  it('am Golden-Datensatz: Polster = laufende Summe der Karten', () => {
-    const ds = withSteuer();
-    const r = planRows(ds, planOf(ds), 25, TODAY);
-    expect(r[1]!.cushion).toBe((cents(r[0]!.left!) + cents(r[1]!.left!)) / 100);
-  });
-});
-
 describe('Export und Import mit und ohne neue Felder', () => {
-  it('saving range und Polster reisen mit; ohne Felder: bei Fälligkeit und Polster aus', async () => {
+  it('saving range reist mit; ohne Feld: bei Fälligkeit (der Polster: src/db/polster-ziel.test.ts)', async () => {
     const source = newDb();
     const ds = withSteuer();
     await source.categories.bulkPut(ds.categories);
     await source.positions.bulkPut(ds.positions);
     await source.monthClose.bulkPut(ds.monthClose);
     await setSaving(source, { 'k-steuer': { mode: 'range', fromSalaryMonth: P2, toSalaryMonth: P3 } });
-    await setCushion(source, true);
     const file = parseBackup(JSON.parse(JSON.stringify(await exportBackup(source))));
     expect(file.data.positions.find((p) => p.id === 'k-steuer')!.saving).toEqual({ mode: 'range', fromSalaryMonth: P2, toSalaryMonth: P3 });
-    expect(file.settings?.fixkostenkonto?.cushion).toBe(true);
 
     const withFields = newDb();
     await importIntoEmpty(withFields, file);
     expect((await withFields.positions.get('k-steuer'))!.saving).toEqual({ mode: 'range', fromSalaryMonth: P2, toSalaryMonth: P3 });
-    expect((await readKonto(withFields)).cushion).toBe(true);
     expect(month(await loadDataset(withFields), MAR).transfer).toBe(0);
 
-    const { cushion: _c, ...konto } = file.settings!.fixkostenkonto!;
     const without: BackupFile = {
       ...file,
-      settings: { ...file.settings, fixkostenkonto: konto },
       data: { ...file.data, positions: file.data.positions.map(({ saving: _s, ...p }) => p as Position) },
     };
     const withoutFields = newDb();
     await importIntoEmpty(withoutFields, parseBackup(JSON.parse(JSON.stringify(without))));
     expect((await withoutFields.positions.get('k-steuer'))!.saving).toBeUndefined();
-    expect((await readKonto(withoutFields)).cushion).toBe(false);
     expect(month(await loadDataset(withoutFields), MAR).transfer).toBe(240);
   });
 
-  it('cushion: nur gespeichert, wenn an; Rundreise', () => {
-    expect(storedKonto(toKontoSettings({ enabled: true })).cushion).toBeUndefined();
-    const on = toKontoSettings({ enabled: true, cushion: true });
-    expect(on.cushion).toBe(true);
-    expect(toKontoSettings(storedKonto(on))).toEqual(on);
+  it('der alte Schalter cushion (plan-optionen) wird beim Lesen ignoriert und nicht mehr gespeichert', () => {
+    const old = toKontoSettings({ enabled: true, cushion: true });
+    expect('cushion' in old).toBe(false);
+    expect('cushion' in storedKonto(old)).toBe(false);
+    expect(toKontoSettings(storedKonto(old))).toEqual(old);
   });
 });

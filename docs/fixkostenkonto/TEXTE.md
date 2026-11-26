@@ -168,6 +168,51 @@
 | Nächster großer Monat | `big.short` | Geht sich nicht aus. Dir fehlen {betrag}. | 4 · 3 |
 | Nächster großer Monat | `big.saved` | Schon angespart | 2 |
 | Nächster großer Monat | `big.spielgeld` | Dein Gehalt zum Planen reicht nicht fürs volle Spielgeld. | 9 |
+| Polster | `cushion.title` | Dein Polster | 2 |
+| Polster | `cushion.done` | Geschafft | 1 |
+| Polster | `cushion.goal` | Ziel {betrag} | 2 |
+| Polster | `cushion.progress` | {prozent} % · fehlt {betrag} | 3 |
+| Polster | `cushion.nextStage` | Nächstes Etappenziel {prozent} % | 3 |
+| Polster | `cushion.toStage` | Noch {betrag} bis {prozent} %. | 4 |
+| Polster | `cushion.boost` | Dein {monat}-Überschuss bringt dich auf {prozent} %. | 6 |
+| Polster | `cushion.pays` | Damit zahlst du | 3 |
+| Polster | `cushion.months` | Monate Fixkosten | 2 |
+| Polster | `cushion.monthsSpielgeld` | Monate Fixkosten + Spielgeld | 3 |
+| Polster | `cushion.atGoal` | Am Ziel: {n} | 3 |
+| Polster | `cushion.avg` | Ø nächste 12 Monate: Fixkosten ca. {fix} | 6 · 1 |
+| Polster | `cushion.avgSpielgeld` | Ø nächste 12 Monate: Fixkosten ca. {fix}, Spielgeld {spielgeld} | 6 · 3 |
+| Polster | `cushion.goalField` | Polster-Ziel | 1 |
+| Polster | `cushion.balanceField` | Schon geschafft | 2 |
+| Polster | `cushion.rule` | Überschuss bis zum Ziel | 4 |
+| Polster | `cushion.rule.all` | Alles in den Polster: schnellster Weg | 6 |
+| Polster | `cushion.rule.share` | Fester Anteil: {prozent} %, Rest investieren | 5 |
+| Polster | `cushion.share` | Anteil für den Polster in % | 5 |
+| Polster | `cushion.reached` | Polster-Ziel erreicht | 2 |
+| Polster | `cushion.card` | Dein Polster | 2 |
+| Polster | `cushion.of` | von {betrag} | 2 |
+| Polster | `cushion.monthsN` | {n} Monate Fixkosten | 3 |
+| Polster | `cushion.setGoal` | Leg dein Polster-Ziel fest › | 4 |
+| Polster | `cushion.split.title` | So verteilst du den Überschuss | 5 |
+| Polster | `cushion.split.in` | In den Polster | 3 |
+| Polster | `cushion.split.pct` | {vorher} % → {nachher} % | 2 |
+| Polster | `cushion.split.after` | Polster danach {betrag} · noch {rest} | 5 |
+| Polster | `cushion.split.free` | Frei zum Investieren | 3 |
+| Polster | `cushion.split.confirm` | Polster aufgefüllt | 2 |
+| Polster | `cushion.split.other` | Anders aufteilen | 2 |
+| Polster | `cushion.split.amount` | Betrag für den Polster | 4 |
+| Polster | `cushion.gap.title` | Dein Polster deckt die Lücke | 5 |
+| Polster | `cushion.gap.out` | Aus dem Polster | 3 |
+| Polster | `cushion.gap.after` | Polster danach {betrag} · {prozent} % vom Ziel | 6 |
+| Polster | `cushion.gap.salary` | Ab {betrag} Gehalt brauchst du den Polster nicht. | 8 |
+| Polster | `cushion.gap.confirm` | Aus Polster genommen | 3 |
+| Polster | `cushion.full` | Polster voll · Überschuss frei zum Investieren | 6 |
+| Polster | `cushion.in.done` | {betrag} in den Polster gelegt. | 5 |
+| Polster | `cushion.out.done` | {betrag} aus dem Polster genommen. | 5 |
+| Polster | `cushion.undo` | Rückgängig | 1 |
+| Polster | `cushion.toast.in` | Polster aufgefüllt: {betrag} | 3 |
+| Polster | `cushion.toast.out` | Aus dem Polster genommen: {betrag} | 5 |
+| Nächster großer Monat | `big.cushion` | Polster deckt es | 3 |
+| Einstellungen | `settings.cushion` | Polster | 1 |
 | Sheet „Dein Plan“ | `plan2.title` | Dein Plan | 2 |
 | Sheet „Dein Plan“ | `plan2.ok` | Passt so. Dein Spielgeld bleibt jeden Monat übrig. | 2 · 6 |
 | Sheet „Dein Plan“ | `plan2.save` | Passt, wenn du ansparst. | 4 |
@@ -178,10 +223,14 @@
 | Sheet „Dein Plan“ | `plan2.max.apply` | Spielgeld auf {betrag} setzen | 4 |
 | Sheet „Dein Plan“ | `plan2.short` | {monat} geht sich nicht aus. Dir fehlen {betrag}. | 5 · 3 |
 | Sheet „Dein Plan“ | `plan2.spielgeldShort` | Ab {monat} reicht dein Gehalt zum Planen nicht fürs volle Spielgeld. | 11 |
-| Sheet „Dein Plan“ | `plan2.cushion.until` | Dein Polster reicht bis {monat}. | 5 |
-| Sheet „Dein Plan“ | `plan2.cushion.all` | Reicht für alle 12 Monate. | 5 |
-| Sheet „Dein Plan“ | `plan2.cushion` | Überschuss als Polster mitnehmen | 4 |
-| Sheet „Dein Plan“ | `plan2.cushion.info` | Nur einschalten, wenn du Überschüsse liegen lässt. | 7 |
+| Sheet „Dein Plan“ | `plan2.cushion.missing` | Nach {monat} fehlen nur noch {betrag}. | 6 |
+| Sheet „Dein Plan“ | `plan2.cushion.reached` | Ziel im {monat} erreicht. | 4 |
+| Sheet „Dein Plan“ | `plan2.cushion.drop` | Bei {betrag} Gehalt sinkt dein Polster ab {monat}. | 8 |
+| Sheet „Dein Plan“ | `plan2.cushion.goal` | Polster-Ziel {betrag} | 2 |
+| Sheet „Dein Plan“ | `plan2.cushion.change` | ändern › | 1 |
+| Sheet „Dein Plan“ | `plan2.cushion.today` | Heute {betrag} · {prozent} % · {n} Monate Fixkosten | 6 |
+| Sheet „Dein Plan“ | `plan2.cushion.box.title` | Ziel im {monat} erreicht | 4 |
+| Sheet „Dein Plan“ | `plan2.cushion.box.text` | wenn dein {gehalt} mindestens {betrag} ist. | 6 |
 | Sheet „Dein Plan“ | `plan2.none` | Leg dein Spielgeld fest. Dann prüft Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.noSalary` | Trag dein Gehalt ein. Dann rechnet Erbse deinen Plan. | 4 · 5 |
 | Sheet „Dein Plan“ | `plan2.spielgeld` | Dein Spielgeld | 2 |
@@ -200,6 +249,7 @@
 | Sheet „Dein Plan“ | `plan2.table.aside` | zur Seite | 2 |
 | Sheet „Dein Plan“ | `plan2.table.left` | Überschuss | 1 |
 | Sheet „Dein Plan“ | `plan2.table.cushion` | Polster | 1 |
+| Sheet „Dein Plan“ | `plan2.table.cushionDelta` | Polster ± | 1 |
 | Sheet „Dein Plan“ | `plan2.table.short` | weniger als dein Spielgeld | 4 |
 | Sheet „Dein Plan“ | `plan2.table.miss` | Geht sich nicht aus | 4 |
 | Sheet „Dein Plan“ | `plan2.table.jump` | Zu {monat} springen | 3 |

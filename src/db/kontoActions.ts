@@ -1,12 +1,14 @@
 // Every write of the Fixkostenkonto: setup, plan, monthly check, new anchor, milestones. All through
 // the one meta entry (src/db/settings.ts); the schema does not change.
 
+import { localToday } from '../lib/activeMonth';
 import { celebratedUpTo } from '../lib/celebration';
 import { dayKey } from '../lib/kontoBalance';
 import { setupAccount } from '../lib/monthPlan';
+import { newStages } from '../lib/polster';
 import type { Period, SavingSetting } from '../lib/types';
 import type { FixkostenDB } from './db';
-import { readKonto, writeKonto, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
+import { readKonto, writeKonto, type CushionMilestone, type CushionRule, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
 
 /** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
@@ -186,7 +188,49 @@ export async function setSpielgeld(db: FixkostenDB, amount: number | null): Prom
   await writeKonto(db, { spielgeld: amount !== null && amount > 0 ? Math.round(amount * 100) / 100 : null });
 }
 
-/** plan-optionen: „Überschuss als Polster mitnehmen“ in „Dein Plan“. */
-export async function setCushion(db: FixkostenDB, on: boolean): Promise<void> {
-  await writeKonto(db, { cushion: on });
+// ---- polster-ziel (cents) ----
+
+/** „Polster-Ziel“: an empty field removes it. */
+export async function setCushionGoal(db: FixkostenDB, cents: number | null): Promise<void> {
+  await writeKonto(db, { cushionGoal: cents !== null && cents > 0 ? Math.round(cents) : null });
+}
+
+/** „Schon geschafft“: sets the Polster and its day; an empty field removes it. */
+export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = localToday()): Promise<void> {
+  await writeKonto(db, cents === null ? { cushionBalance: null, cushionBalanceDate: null } : { cushionBalance: Math.max(0, Math.round(cents)), cushionBalanceDate: dayKey(today) });
+}
+
+/** „Überschuss bis zum Ziel“: all into the Polster, or a fixed share. */
+export async function setCushionRule(db: FixkostenDB, rule: CushionRule, share?: number): Promise<void> {
+  await writeKonto(db, share === undefined ? { cushionRule: rule } : { cushionRule: rule, cushionShare: Math.min(99, Math.max(1, Math.round(share))) });
+}
+
+/**
+ * „Polster aufgefüllt“ (+) / „Aus Polster genommen“ (−) for a month: changes the Polster by `cents`, remembers it
+ * for the month (once: a second confirmation of the same month does nothing) and the stages crossed. Returns the
+ * stages newly reached (for the celebration), or null when the month was confirmed already.
+ */
+export async function confirmCushion(db: FixkostenDB, period: Period, cents: number, today: Date = localToday()): Promise<CushionMilestone[] | null> {
+  const s = await readKonto(db);
+  if (s.cushionConfirmed[period] !== undefined || cents === 0) return null;
+  const before = s.cushionBalance ?? 0;
+  const after = Math.max(0, before + Math.round(cents));
+  const stages = newStages(before, after, s.cushionGoal, s.cushionMilestones);
+  await writeKonto(db, {
+    cushionBalance: after,
+    cushionBalanceDate: dayKey(today),
+    cushionConfirmed: { ...s.cushionConfirmed, [period]: after - before },
+    cushionMilestones: [...s.cushionMilestones, ...stages].sort((a, b) => a - b),
+  });
+  return stages;
+}
+
+/** „Rückgängig“: takes the month's confirmation back (the stages stay celebrated). */
+export async function undoCushion(db: FixkostenDB, period: Period, today: Date = localToday()): Promise<void> {
+  const s = await readKonto(db);
+  const amount = s.cushionConfirmed[period];
+  if (amount === undefined) return;
+  const rest = { ...s.cushionConfirmed };
+  delete rest[period];
+  await writeKonto(db, { cushionBalance: Math.max(0, (s.cushionBalance ?? 0) - amount), cushionBalanceDate: dayKey(today), cushionConfirmed: rest });
 }

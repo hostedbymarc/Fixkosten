@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { db } from '../../db/db';
-import { setCushion, setPlanMode, setSaving, setSpielgeld, applyMax } from '../../db/kontoActions';
+import { setPlanMode, setSaving, setSpielgeld, applyMax } from '../../db/kontoActions';
 import { useKonto } from '../../db/useKonto';
 import { amountToInput, currencySymbol, formatEUR, parseAmount } from '../../lib/format';
 import { t } from '../../lib/kontoTexts';
@@ -12,9 +12,11 @@ import type { MonthStart } from '../../lib/activeMonth';
 import { useMonthStart } from '../../lib/useToday';
 import type { Dataset, Period, SavingSetting } from '../../lib/types';
 import { BottomSheet } from '../BottomSheet';
-import { AmountInput, SwitchField } from '../form';
+import { AmountInput } from '../form';
 import { AlertIcon, CheckIcon } from '../Icons';
 import { useMonthPlan } from './DeinMonatCard';
+import { PlanCushionLine, useCushionPlan } from './Polster';
+import { cushionActive, cushionMessage, goalSalary, type Cushion, type CushionMessage, type CushionRow } from '../../lib/polster';
 
 const money = (v: number) => formatEUR(v, { fixed: true });
 const BUTTON = 'focus-ring inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-[15px] font-semibold';
@@ -44,7 +46,12 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, on
   const plan = useMonthPlan(ds, active);
   // plan-optionen: the table and the message read the month cards (Überschuss = the card's large amount)
   const rows = useMemo(() => planRows(ds, plan, start), [ds, plan, start]);
-  const status = useMemo(() => planStatus(rows, settings.cushion), [rows, settings.cushion]);
+  const status = useMemo(() => planStatus(rows), [rows]);
+  // polster-ziel: the Polster column and messages as soon as a Polster is entered
+  const { c, proj } = useCushionPlan(ds, plan);
+  const withCushion = cushionActive(c);
+  const message = useMemo(() => (withCushion ? cushionMessage(proj, c) : null), [withCushion, proj, c]);
+  const box = useMemo(() => (withCushion ? goalSalary(rows, proj, plan, c) : null), [withCushion, rows, proj, plan, c]);
   // right after the setup: the recommendation is the plan (an existing choice stays)
   const adopted = useRef(false);
   useEffect(() => {
@@ -56,10 +63,19 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, on
   return (
     <BottomSheet title={t('plan2.title')} onClose={onClose} returnFocusTo={returnFocusTo}>
       <div className="flex flex-col gap-6" data-testid="plan-sheet" data-mode={plan.mode}>
-        <Answer plan={plan} status={status} />
+        <Answer plan={plan} status={status} cushion={message} />
+        <PlanCushionLine plan={plan} />
         <SpielgeldEdit spielgeld={plan.spielgeld} startEditing={!!editSpielgeld} />
         <ModeSwitch plan={plan} />
-        <Salaries plan={plan} rows={rows} active={active} cushion={settings.cushion} onJump={onJump} />
+        <Salaries plan={plan} rows={rows} active={active} cushion={withCushion ? { c, proj } : null} onJump={onJump} />
+        {box && (
+          <div className="flex flex-col gap-1.5 rounded-2xl bg-accent-soft p-3.5" data-testid="plan-cushion-box" data-period={box.period}>
+            <p className="text-[15px] font-semibold text-ink">{t('plan2.cushion.box.title', { monat: monthName(box.period) })}</p>
+            <p className="num text-[13px] text-ink-soft" data-testid="plan-cushion-box-text">
+              {t('plan2.cushion.box.text', { gehalt: salaryName(box.period, start), betrag: formatEUR(box.amount / 100) })}
+            </p>
+          </div>
+        )}
         <Payments ds={ds} active={active} plan={plan} rows={rows} />
       </div>
     </BottomSheet>
@@ -72,7 +88,7 @@ export function DeinPlanSheet({ ds, active, editSpielgeld, fromSetup, onJump, on
  * („Ab {Monat} reicht dein Gehalt zum Planen nicht fürs volle Spielgeld.“), else green. With the Polster: how long it
  * lasts. Below it, what can be done about it (the proposals, „Spielgeld auf € X setzen“).
  */
-function Answer({ plan, status }: { plan: MonthPlan; status: PlanStatus | null }) {
+function Answer({ plan, status, cushion }: { plan: MonthPlan; status: PlanStatus | null; cushion: CushionMessage | null }) {
   const a = plan.answer;
   if (plan.noSalary || !status)
     return (
@@ -80,25 +96,34 @@ function Answer({ plan, status }: { plan: MonthPlan; status: PlanStatus | null }
         {t('plan2.noSalary')}
       </p>
     );
-  const okay = status.kind === 'ok' || status.kind === 'cushionAll';
-  // without a Spielgeld the plan has nothing to keep – unless the Polster is on: then how long it lasts
-  if (status.kind === 'ok' && plan.spielgeld === null)
+  // polster-ziel: with a Polster and a goal the green line is about the goal; the red step stays first
+  const goalLine = cushion?.goal && status.kind !== 'short' ? cushion.goal : null;
+  const okay = status.kind === 'ok' || goalLine !== null;
+  const drop = cushion?.drop ? plan.months.find((m) => m.period === cushion.drop!.period) : undefined;
+  const dropLine = drop && drop.salary !== null && (
+    <p className="num text-[14px] font-medium leading-snug text-warn" data-testid="plan-cushion-drop" data-period={drop.period}>
+      {t('plan2.cushion.drop', { betrag: money(drop.salary), monat: monthName(drop.period) })}
+    </p>
+  );
+  // without a Spielgeld the plan has nothing to keep – unless the Polster has a goal
+  if (status.kind === 'ok' && plan.spielgeld === null && !goalLine)
     return (
       <p className="text-[19px] font-semibold leading-snug text-ink" data-testid="plan-answer" data-kind="none">
         {t('plan2.none')}
       </p>
     );
-  const red = status.kind === 'short' || (status.kind === 'cushion' && status.level === 'short');
+  const red = status.kind === 'short';
   const text =
     status.kind === 'short'
       ? t('plan2.short', { monat: periodLabel(status.period), betrag: money(status.amount) })
-      : status.kind === 'spielgeld'
-        ? t('plan2.spielgeldShort', { monat: monthName(status.period) })
-        : status.kind === 'cushion'
-          ? t('plan2.cushion.until', { monat: periodLabel(status.until) })
-          : status.kind === 'cushionAll'
-            ? t('plan2.cushion.all')
+      : goalLine?.kind === 'reached'
+        ? t('plan2.cushion.reached', { monat: periodLabel(goalLine.period) })
+        : goalLine?.kind === 'missing'
+          ? t('plan2.cushion.missing', { monat: monthName(goalLine.period), betrag: formatEUR(goalLine.amount / 100) })
+          : status.kind === 'spielgeld'
+            ? t('plan2.spielgeldShort', { monat: monthName(status.period) })
             : t('plan2.ok');
+  const kind = goalLine ? `cushion-${goalLine.kind}` : status.kind;
   const apply = () => {
     if (a?.kind !== 'save') return;
     if (a.via === 'even') return void setPlanMode(db, 'even');
@@ -108,7 +133,7 @@ function Answer({ plan, status }: { plan: MonthPlan; status: PlanStatus | null }
     void setSaving(db, changes, others);
   };
   return (
-    <div className="flex flex-col gap-3" data-testid="plan-answer" data-kind={status.kind} data-level={okay ? 'ok' : red ? 'short' : 'spielgeld'} data-answer={a?.kind}>
+    <div className="flex flex-col gap-3" data-testid="plan-answer" data-kind={kind} data-level={okay ? 'ok' : red ? 'short' : 'spielgeld'} data-answer={a?.kind}>
       <p
         className={`num flex items-start gap-2 leading-snug ${okay || red ? 'text-[19px] font-semibold text-ink' : 'text-[17px] font-medium text-warn'}`}
         data-testid="plan-answer-text"
@@ -120,6 +145,7 @@ function Answer({ plan, status }: { plan: MonthPlan; status: PlanStatus | null }
         )}
         {text}
       </p>
+      {dropLine}
       {!okay && a?.kind === 'save' && (
         <>
           <p className="text-[15px] leading-snug text-ink-soft">{t('plan2.save')}</p>
@@ -275,9 +301,22 @@ export function rowMonth(period: Period, active: Period): string {
 
 /**
  * „Deine nächsten Gehälter“ – 4 rows, 12 unfolded: Monat (+ „geplant“) · zur Seite · Überschuss, each from the month
- * card of its period (planRows). With the Polster on, a column „Polster“ (running sum). A row shows its month.
+ * card of its period (planRows). polster-ziel, with a Polster entered: Monat · Überschuss · Polster ± · Polster (from
+ * today's Polster on, by the rule up to the goal, never below 0). A row shows its month.
  */
-function Salaries({ plan, rows, active, cushion, onJump }: { plan: MonthPlan; rows: PlanRow[]; active: Period; cushion: boolean; onJump?: (p: Period) => void }) {
+function Salaries({
+  plan,
+  rows,
+  active,
+  cushion,
+  onJump,
+}: {
+  plan: MonthPlan;
+  rows: PlanRow[];
+  active: Period;
+  cushion: { c: Cushion; proj: CushionRow[] } | null;
+  onJump?: (p: Period) => void;
+}) {
   const [all, setAll] = useState(false);
   const shown = all ? rows : rows.slice(0, 4);
   // the salary planned for months without an entry („Gehalt zum Planen“, else the last one entered)
@@ -285,19 +324,28 @@ function Salaries({ plan, rows, active, cushion, onJump }: { plan: MonthPlan; ro
   return (
     <div className="flex flex-col gap-2" data-testid="plan-salaries">
       <p className="text-[13px] font-medium text-ink-mute">{t('plan2.table')}</p>
-      <SwitchField label={t('plan2.cushion')} info={t('plan2.cushion.info')} checked={cushion} onChange={(v) => void setCushion(db, v)} testId="plan-cushion" />
-      <table className="num w-full text-[15px]" data-cushion={cushion || undefined}>
+      <table className="num w-full text-[15px]" data-cushion={cushion ? '' : undefined}>
         <thead>
           <tr className="text-[12px] text-ink-mute">
             <th className="py-1 text-left font-medium">{t('plan2.table.month')}</th>
-            <th className="py-1 text-right font-medium">{t(plan.hasAccount ? 'plan2.table.transfer' : 'plan2.table.aside')}</th>
+            {!cushion && <th className="py-1 text-right font-medium">{t(plan.hasAccount ? 'plan2.table.transfer' : 'plan2.table.aside')}</th>}
             <th className="py-1 text-right font-medium">{t('plan2.table.left')}</th>
-            {cushion && <th className="py-1 pl-2 text-right font-medium" data-testid="plan-cushion-head">{t('plan2.table.cushion')}</th>}
+            {cushion && (
+              <>
+                <th className="py-1 pl-2 text-right font-medium" data-testid="plan-cushion-delta-head">
+                  {t('plan2.table.cushionDelta')}
+                </th>
+                <th className="py-1 pl-2 text-right font-medium" data-testid="plan-cushion-head">
+                  {t('plan2.table.cushion')}
+                </th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-line">
-          {shown.map((r) => {
+          {shown.map((r, i) => {
             const level = monthLevel(r)?.kind ?? 'ok';
+            const pr = cushion?.proj[i];
             return (
               <tr
                 key={r.period}
@@ -322,15 +370,24 @@ function Salaries({ plan, rows, active, cushion, onJump }: { plan: MonthPlan; ro
                     </span>
                   )}
                 </td>
-                <td className="py-2 text-right text-ink-soft" data-testid="plan-salary-transfer">{money(r.transfer)}</td>
+                {!cushion && (
+                  <td className="py-2 text-right text-ink-soft" data-testid="plan-salary-transfer">
+                    {money(r.transfer)}
+                  </td>
+                )}
                 <td className={`py-2 text-right font-semibold ${level === 'short' ? 'text-over' : level === 'spielgeld' ? 'text-warn' : 'text-ink'}`} data-testid="plan-salary-left">
                   {level !== 'ok' && <AlertIcon size={14} className="mr-1 inline-block align-[-2px]" aria-label={t(level === 'short' ? 'plan2.table.miss' : 'plan2.table.short')} />}
                   {r.left === null ? '–' : money(r.left)}
                 </td>
-                {cushion && (
-                  <td className={`py-2 pl-2 text-right ${r.cushion !== null && r.cushion < 0 ? 'text-over' : 'text-ink-soft'}`} data-testid="plan-salary-cushion">
-                    {r.cushion === null ? '–' : money(r.cushion)}
-                  </td>
+                {pr && (
+                  <>
+                    <td className={`py-2 pl-2 text-right ${pr.delta > 0 ? 'text-accent-ink' : 'text-ink-soft'}`} data-testid="plan-salary-cushion-delta" data-cents={pr.delta}>
+                      {pr.delta === 0 ? '–' : `${pr.delta > 0 ? '+' : '−'}${formatEUR(Math.abs(pr.delta) / 100, { fixed: true }).replace(currencySymbol(), '').trim()}`}
+                    </td>
+                    <td className="py-2 pl-2 text-right font-semibold text-ink" data-testid="plan-salary-cushion" data-cents={pr.balance}>
+                      {formatEUR(pr.balance / 100, { fixed: true })}
+                    </td>
+                  </>
                 )}
               </tr>
             );
