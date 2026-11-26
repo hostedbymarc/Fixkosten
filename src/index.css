@@ -792,7 +792,7 @@ button:active > .pea[data-pressable] {
   pointer-events: none;
 }
 :root {
-  --confetti-strip: 44px;
+  --confetti-strip: 40px;
 }
 /* the decorative layers can never leave the tile: WebKit does not clip a child on its own compositing
    layer (an animated transform) with overflow + border-radius alone; clip-path and paint containment do */

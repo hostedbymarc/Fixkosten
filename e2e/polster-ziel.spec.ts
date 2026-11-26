@@ -79,7 +79,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
       test('Ziel und Stand → Karte, Screen und Plan gleich; auffüllen mit Feier, Rückgängig; schwacher Monat; Ziel erreicht; Vorschau', async ({ page }) => {
         await start(page);
-        const card = page.getByTestId('polster-card');
+        const card = page.getByTestId('polster-card-open');
         // without a goal: „Leg dein Polster-Ziel fest ›“
         await expect(page.getByTestId('polster-card-set-goal')).toHaveText('Leg dein Polster-Ziel fest ›');
         await expect(page.getByTestId('cushion-split')).toHaveCount(0);

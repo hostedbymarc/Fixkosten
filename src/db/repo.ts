@@ -404,11 +404,12 @@ export async function changeAmount(db: FixkostenDB, id: string, input: AmountCha
 /**
  * polster-feinschliff, „Betrag für {Monat}“: the amount of a recurring position in `period` – „Nur {Monat}“ (`only`:
  * from the next month on the amount it had) or „Ab {Monat}“ (`from`: a new history entry from this month, as „Betrag
- * ändern“). A change already in this month is replaced; the start entry keeps its month. Ticks keep their payment.
+ * ändern“). A change already in this month is replaced; the start entry keeps its month. Ticked in this month already: the
+ * tick takes the new amount as well (the amount of this month is what was asked for); other months keep their ticks.
  */
 export async function setMonthAmount(db: FixkostenDB, id: string, period: Period, amount: number, scope: 'only' | 'from'): Promise<void> {
   if (!(amount > 0)) throw new RepoError('Der Betrag muss größer als 0 sein.');
-  await db.transaction('rw', db.positions, db.changeLog, async () => {
+  await db.transaction('rw', db.positions, db.changeLog, db.payments, async () => {
     const position = await db.positions.get(id);
     if (!position) throw new RepoError('Position nicht gefunden.');
     const history = planHistory(position);
@@ -431,6 +432,8 @@ export async function setMonthAmount(db: FixkostenDB, id: string, period: Period
     }
     await db.positions.update(id, { history: list.sort(compareEntries) });
     await db.changeLog.add(log({ positionId: id, type: 'amount', validFrom: period, from: before, to: { ...before, amount: value } }));
+    const paid = (await db.payments.where('positionId').equals(id).toArray()).filter((p) => p.period === period && p.status === 'paid');
+    for (const p of paid) await db.payments.update(p.id, { actualAmount: value, plannedAmount: value });
   });
 }
 
