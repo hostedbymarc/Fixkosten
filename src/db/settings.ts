@@ -3,6 +3,7 @@
 
 import { COUNTRY_KEY, isCountry, toCountry, type Country } from '../lib/country';
 import { DEFAULT_ROUNDING, toRounding, type Rounding } from '../lib/fixkostenkonto';
+import { localToday } from '../lib/activeMonth';
 import { isPeriod } from '../lib/period';
 import type { Period } from '../lib/types';
 import type { FixkostenDB } from './db';
@@ -117,7 +118,32 @@ export interface KontoSettings {
   cushionMilestones: CushionMilestone[];
   /** per month: the amount confirmed in cents (+ „Polster aufgefüllt“, − „Aus Polster genommen“) – once per month */
   cushionConfirmed: Partial<Record<Period, number>>;
+  // ---- polster-feinschliff (cents) ----
+  /**
+   * Every change of the Polster, in order: „Polster aufgefüllt“ / „Aus Polster genommen“ of a month (split / gap),
+   * „+ Einzahlen“ / „− Entnehmen“ (manual) and the Stand entered (start). cushionBalance is always their sum (never
+   * below 0). Data without moves: one start move from the Stand (no loss).
+   */
+  cushionMoves: CushionMove[];
+  /** per confirmed month: the Überschuss when it was confirmed – a later change shows the difference */
+  cushionSurplus: Partial<Record<Period, number>>;
+  /** „Spielgeld für {Monat}“ – „Nur {Monat}“: the Spielgeld of one month in cents (instead of `spielgeld`) */
+  spielgeldOverrides: Partial<Record<Period, number>>;
 }
+
+export type CushionMoveSource = 'split' | 'gap' | 'manual' | 'start';
+export interface CushionMove {
+  id: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** cents, + into the Polster, − out of it */
+  amount: number;
+  source: CushionMoveSource;
+  /** „+ Einzahlen“ / „− Entnehmen“: up to 40 characters */
+  note?: string;
+}
+export const CUSHION_NOTE_MAX = 40;
+const MOVE_SOURCES: CushionMoveSource[] = ['split', 'gap', 'manual', 'start'];
 
 export type CushionRule = 'all' | 'share';
 export const CUSHION_MILESTONES = [25, 50, 75, 100] as const;
@@ -181,6 +207,9 @@ export const DEFAULT_KONTO: KontoSettings = {
   cushionShare: DEFAULT_CUSHION_SHARE,
   cushionMilestones: [],
   cushionConfirmed: {},
+  cushionMoves: [],
+  cushionSurplus: {},
+  spielgeldOverrides: {},
 };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -198,7 +227,18 @@ const cent = (v: unknown, signed = false): number | null =>
  */
 export function toKontoSettings(value: unknown): KontoSettings {
   if (!isObj(value))
-    return { ...DEFAULT_KONTO, plan: { ...DEFAULT_KONTO.plan }, checks: [], milestonesShown: [], spielgeldOverflow: {}, cushionMilestones: [], cushionConfirmed: {} };
+    return {
+      ...DEFAULT_KONTO,
+      plan: { ...DEFAULT_KONTO.plan },
+      checks: [],
+      milestonesShown: [],
+      spielgeldOverflow: {},
+      cushionMilestones: [],
+      cushionConfirmed: {},
+      cushionMoves: [],
+      cushionSurplus: {},
+      spielgeldOverrides: {},
+    };
   const v = value;
   const balance = money(v.balance) ?? 0;
   const anchor = isObj(v.anchor) && money(v.anchor.amount) !== null && isTimestamp(v.anchor.at) ? { amount: money(v.anchor.amount)!, at: v.anchor.at } : null;
@@ -217,6 +257,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
     .reduce<KontoCheck[]>((acc, c) => [...acc.filter((x) => x.period !== c.period), c], [])
     .sort((a, b) => (a.period < b.period ? -1 : a.period > b.period ? 1 : 0));
   const plan = isObj(v.plan) ? v.plan : {};
+  const cushion = parseCushion(v);
   const steps = typeof v.setupSteps === 'number' && Number.isInteger(v.setupSteps) ? Math.min(3, Math.max(0, v.setupSteps)) : 0;
   return {
     enabled: v.enabled === true,
@@ -255,7 +296,7 @@ export function toKontoSettings(value: unknown): KontoSettings {
     planSalary: money(v.planSalary) !== null && money(v.planSalary)! > 0 ? money(v.planSalary) : null,
     planSalaryHintSeen: v.planSalaryHintSeen === true,
     cushionGoal: cent(v.cushionGoal) !== null && cent(v.cushionGoal)! > 0 ? cent(v.cushionGoal) : null,
-    cushionBalance: cent(v.cushionBalance),
+    cushionBalance: cushion.balance,
     cushionBalanceDate: isDay(v.cushionBalanceDate) ? v.cushionBalanceDate : null,
     cushionRule: v.cushionRule === 'share' ? 'share' : 'all',
     cushionShare:
@@ -268,8 +309,47 @@ export function toKontoSettings(value: unknown): KontoSettings {
         .map(([k, x]) => [k, cent(x, true)] as const)
         .filter(([k, x]) => isPeriod(k) && x !== null && x !== 0),
     ) as Partial<Record<Period, number>>,
+    cushionMoves: cushion.moves,
+    cushionSurplus: centMap(v.cushionSurplus, true),
+    spielgeldOverrides: centMap(v.spielgeldOverrides),
   };
 }
+
+/** { 'YYYY-MM': cents } (≥ 0 unless `signed`) */
+function centMap(v: unknown, signed = false): Partial<Record<Period, number>> {
+  return Object.fromEntries(
+    Object.entries(isObj(v) ? v : {})
+      .map(([k, x]) => [k, cent(x, signed)] as const)
+      .filter(([k, x]) => isPeriod(k) && x !== null),
+  ) as Partial<Record<Period, number>>;
+}
+
+/**
+ * The Polster and its moves: the balance is the sum of the moves (never below 0). Stored data without moves
+ * (polster-ziel): one start move of the Stand, on the day it was entered – nothing is lost. No Polster: no moves.
+ */
+function parseCushion(v: Record<string, unknown>): { balance: number | null; moves: CushionMove[] } {
+  const stored = cent(v.cushionBalance);
+  if (stored === null) return { balance: null, moves: [] };
+  const moves = (Array.isArray(v.cushionMoves) ? v.cushionMoves : [])
+    .filter(
+      (m): m is Record<string, unknown> =>
+        isObj(m) && typeof m.id === 'string' && m.id !== '' && isDay(m.date) && cent(m.amount, true) !== null && MOVE_SOURCES.includes(m.source as CushionMoveSource),
+    )
+    .filter((m, i, all) => all.findIndex((x) => x.id === m.id) === i)
+    .map((m) => {
+      const note = typeof m.note === 'string' ? m.note.trim().slice(0, CUSHION_NOTE_MAX) : '';
+      return { id: m.id as string, date: m.date as string, amount: cent(m.amount, true)!, source: m.source as CushionMoveSource, ...(note ? { note } : {}) };
+    });
+  if (moves.length === 0) {
+    if (stored === 0) return { balance: 0, moves: [] };
+    const date = isDay(v.cushionBalanceDate) ? v.cushionBalanceDate : dayOf(localToday());
+    return { balance: stored, moves: [{ id: 'start', date, amount: stored, source: 'start' }] };
+  }
+  return { balance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)), moves };
+}
+
+const dayOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /**
  * Never touched „Fixkosten einplanen“: no entry, or one that only remembers celebrated months
@@ -279,7 +359,17 @@ export function kontoUntouched(stored: KontoSettings | null): boolean {
   if (stored === null) return true;
   // „Gehalt zum Planen“ is a setting of its own (Einstellungen → Gehalt): it does not count as touched either
   // the Polster (polster-ziel) is set in Einstellungen as well, without the Fixkostenkonto
-  const cushionless = { cushionGoal: null, cushionBalance: null, cushionBalanceDate: null, cushionRule: 'all' as const, cushionShare: DEFAULT_CUSHION_SHARE, cushionMilestones: [], cushionConfirmed: {} };
+  const cushionless = {
+    cushionGoal: null,
+    cushionBalance: null,
+    cushionBalanceDate: null,
+    cushionRule: 'all' as const,
+    cushionShare: DEFAULT_CUSHION_SHARE,
+    cushionMilestones: [],
+    cushionConfirmed: {},
+    cushionMoves: [],
+    cushionSurplus: {},
+  };
   return (
     JSON.stringify(storedKonto({ ...stored, celebratedMonths: [], planSalary: null, planSalaryHintSeen: false, ...cushionless })) ===
     JSON.stringify(storedKonto(DEFAULT_KONTO))
@@ -334,6 +424,9 @@ export function storedKonto(s: KontoSettings): StoredKontoSettings {
   if (s.cushionShare !== DEFAULT_CUSHION_SHARE) out.cushionShare = s.cushionShare;
   if (s.cushionMilestones.length) out.cushionMilestones = s.cushionMilestones;
   if (Object.keys(s.cushionConfirmed).length) out.cushionConfirmed = s.cushionConfirmed;
+  if (s.cushionMoves.length) out.cushionMoves = s.cushionMoves;
+  if (Object.keys(s.cushionSurplus).length) out.cushionSurplus = s.cushionSurplus;
+  if (Object.keys(s.spielgeldOverrides).length) out.spielgeldOverrides = s.spielgeldOverrides;
   // `rounding` is always stored, so a missing `roundingOn` reads as on
   if (!s.roundingOn) out.roundingOn = false;
   if (s.buffer !== DEFAULT_BUFFER) out.buffer = s.buffer;

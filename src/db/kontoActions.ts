@@ -5,10 +5,11 @@ import { localToday } from '../lib/activeMonth';
 import { celebratedUpTo } from '../lib/celebration';
 import { dayKey } from '../lib/kontoBalance';
 import { setupAccount } from '../lib/monthPlan';
+import { addPeriods } from '../lib/period';
 import { newStages } from '../lib/polster';
 import type { Period, SavingSetting } from '../lib/types';
 import type { FixkostenDB } from './db';
-import { readKonto, writeKonto, type CushionMilestone, type CushionRule, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
+import { CUSHION_NOTE_MAX, readKonto, writeKonto, type CushionMilestone, type CushionMove, type CushionRule, type KontoSettings, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
 
 /** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
@@ -195,9 +196,21 @@ export async function setCushionGoal(db: FixkostenDB, cents: number | null): Pro
   await writeKonto(db, { cushionGoal: cents !== null && cents > 0 ? Math.round(cents) : null });
 }
 
-/** „Schon geschafft“: sets the Polster and its day; an empty field removes it. */
+/**
+ * „Schon geschafft“: sets the Polster (a move „Stand eingetragen“ of the difference, so the moves still add up to
+ * it); an empty field removes the Polster and its moves.
+ */
 export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = localToday()): Promise<void> {
-  await writeKonto(db, cents === null ? { cushionBalance: null, cushionBalanceDate: null } : { cushionBalance: Math.max(0, Math.round(cents)), cushionBalanceDate: dayKey(today) });
+  if (cents === null) {
+    await writeKonto(db, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [] });
+    return;
+  }
+  const s = await readKonto(db);
+  const target = Math.max(0, Math.round(cents));
+  const diff = target - (s.cushionBalance ?? 0);
+  const moves = s.cushionBalance === null ? [] : s.cushionMoves;
+  const next = diff === 0 && s.cushionBalance !== null ? moves : [...moves, { id: moveId(moves, 'start'), date: dayKey(today), amount: diff, source: 'start' as const }];
+  await writeKonto(db, { cushionBalance: target, cushionBalanceDate: dayKey(today), cushionMoves: next.filter((m) => m.amount !== 0) });
 }
 
 /** „Überschuss bis zum Ziel“: all into the Polster, or a fixed share. */
@@ -205,32 +218,161 @@ export async function setCushionRule(db: FixkostenDB, rule: CushionRule, share?:
   await writeKonto(db, share === undefined ? { cushionRule: rule } : { cushionRule: rule, cushionShare: Math.min(99, Math.max(1, Math.round(share))) });
 }
 
+/** a new id: `base`, or `base-2`, `base-3` … when taken */
+function moveId(moves: CushionMove[], base: string): string {
+  if (!moves.some((m) => m.id === base)) return base;
+  for (let n = 2; ; n++) if (!moves.some((m) => m.id === `${base}-${n}`)) return `${base}-${n}`;
+}
+
+/** The moves of a month's confirmation and its differences („m-YYYY-MM…“). */
+const monthMoves = (period: Period) => (m: CushionMove) => m.id === `m-${period}` || m.id.startsWith(`m-${period}-`);
+
+/** One move: changes the Polster by `cents` (out: at most what is in it) and the stages crossed. */
+function withMove(s: KontoSettings, move: Omit<CushionMove, 'amount'> & { amount: number }) {
+  const before = s.cushionBalance ?? 0;
+  const amount = Math.max(-before, Math.round(move.amount));
+  const after = before + amount;
+  const stages = newStages(before, after, s.cushionGoal, s.cushionMilestones);
+  return {
+    amount,
+    stages,
+    patch: {
+      cushionBalance: after,
+      cushionMoves: [...s.cushionMoves, { ...move, amount }],
+      cushionMilestones: [...s.cushionMilestones, ...stages].sort((a, b) => a - b),
+    } satisfies Partial<KontoSettings>,
+  };
+}
+
 /**
- * „Polster aufgefüllt“ (+) / „Aus Polster genommen“ (−) for a month: changes the Polster by `cents`, remembers it
- * for the month (once: a second confirmation of the same month does nothing) and the stages crossed. Returns the
- * stages newly reached (for the celebration), or null when the month was confirmed already.
+ * „Polster aufgefüllt“ (+) / „Aus Polster genommen“ (−) for a month: a move (split / gap), remembered for the month
+ * (once: a second confirmation of the same month does nothing) with its Überschuss (`surplus`, cents) – a later
+ * change of it shows the difference. Returns the stages newly reached, or null when the month was confirmed already.
  */
-export async function confirmCushion(db: FixkostenDB, period: Period, cents: number, today: Date = localToday()): Promise<CushionMilestone[] | null> {
+export async function confirmCushion(
+  db: FixkostenDB,
+  period: Period,
+  cents: number,
+  today: Date = localToday(),
+  surplus?: number,
+): Promise<CushionMilestone[] | null> {
   const s = await readKonto(db);
   if (s.cushionConfirmed[period] !== undefined || cents === 0) return null;
-  const before = s.cushionBalance ?? 0;
-  const after = Math.max(0, before + Math.round(cents));
-  const stages = newStages(before, after, s.cushionGoal, s.cushionMilestones);
+  const { amount, stages, patch } = withMove(s, { id: `m-${period}`, date: dayKey(today), amount: cents, source: cents > 0 ? 'split' : 'gap' });
+  if (amount === 0) return null;
   await writeKonto(db, {
-    cushionBalance: after,
+    ...patch,
     cushionBalanceDate: dayKey(today),
-    cushionConfirmed: { ...s.cushionConfirmed, [period]: after - before },
-    cushionMilestones: [...s.cushionMilestones, ...stages].sort((a, b) => a - b),
+    cushionConfirmed: { ...s.cushionConfirmed, [period]: amount },
+    ...(surplus === undefined ? {} : { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } }),
   });
   return stages;
 }
 
-/** „Rückgängig“: takes the month's confirmation back (the stages stay celebrated). */
+/** „Rückgängig“: takes the month's confirmation back, with its differences (the stages stay celebrated). */
 export async function undoCushion(db: FixkostenDB, period: Period, today: Date = localToday()): Promise<void> {
   const s = await readKonto(db);
-  const amount = s.cushionConfirmed[period];
-  if (amount === undefined) return;
+  if (s.cushionConfirmed[period] === undefined) return;
   const rest = { ...s.cushionConfirmed };
   delete rest[period];
-  await writeKonto(db, { cushionBalance: Math.max(0, (s.cushionBalance ?? 0) - amount), cushionBalanceDate: dayKey(today), cushionConfirmed: rest });
+  const surplus = { ...s.cushionSurplus };
+  delete surplus[period];
+  const moves = s.cushionMoves.filter((m) => !monthMoves(period)(m));
+  await writeKonto(db, {
+    cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
+    cushionBalanceDate: dayKey(today),
+    cushionMoves: moves,
+    cushionConfirmed: rest,
+    cushionSurplus: surplus,
+  });
+}
+
+/**
+ * „+ Einzahlen“ / „− Entnehmen“: any time, as often as wanted, independent of the month's confirmation. Out: at
+ * most what is in the Polster. Returns the move's id and the stages newly reached; null when nothing moves.
+ */
+export async function addCushionMove(
+  db: FixkostenDB,
+  cents: number,
+  note?: string,
+  today: Date = localToday(),
+): Promise<{ id: string; amount: number; stages: CushionMilestone[] } | null> {
+  const s = await readKonto(db);
+  const text = note?.trim().slice(0, CUSHION_NOTE_MAX);
+  const id = moveId(s.cushionMoves, `x-${dayKey(today)}`);
+  const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: cents, source: 'manual', ...(text ? { note: text } : {}) });
+  if (amount === 0) return null;
+  await writeKonto(db, { ...patch, cushionBalanceDate: dayKey(today) });
+  return { id, amount, stages };
+}
+
+/** „Rückgängig“ of a single move („+ Einzahlen“, „− Entnehmen“, a difference). */
+export async function removeCushionMove(db: FixkostenDB, id: string, today: Date = localToday()): Promise<void> {
+  const s = await readKonto(db);
+  const move = s.cushionMoves.find((m) => m.id === id);
+  if (!move) return;
+  const moves = s.cushionMoves.filter((m) => m.id !== id);
+  const period = /^m-(\d{4}-\d{2})-/.exec(id)?.[1];
+  const patch: Partial<KontoSettings> = {
+    cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
+    cushionBalanceDate: dayKey(today),
+    cushionMoves: moves,
+  };
+  // a difference of a confirmed month: the month's amount and its Überschuss go back as well
+  if (period && s.cushionConfirmed[period] !== undefined) {
+    patch.cushionConfirmed = { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! - move.amount };
+    const surplus = s.cushionSurplus[period];
+    if (surplus !== undefined) patch.cushionSurplus = { ...s.cushionSurplus, [period]: surplus - move.amount };
+  }
+  await writeKonto(db, patch);
+}
+
+/**
+ * The Überschuss of a confirmed month changed: „Differenz in den Polster“ / „Differenz entnehmen“ (a move of the
+ * difference, `diff` cents) or „Passt so“ (`move` false). Either way the month remembers the new Überschuss.
+ */
+export async function settleCushionDiff(
+  db: FixkostenDB,
+  period: Period,
+  surplus: number,
+  move: boolean,
+  today: Date = localToday(),
+): Promise<{ id: string; amount: number; stages: CushionMilestone[] } | null> {
+  const s = await readKonto(db);
+  const was = s.cushionSurplus[period];
+  if (s.cushionConfirmed[period] === undefined || was === undefined) return null;
+  const diff = Math.round(surplus) - was;
+  if (!move || diff === 0) {
+    await writeKonto(db, { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } });
+    return null;
+  }
+  const id = moveId(s.cushionMoves, `m-${period}-diff`);
+  const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: diff, source: diff > 0 ? 'split' : 'gap' });
+  await writeKonto(db, {
+    ...patch,
+    cushionBalanceDate: dayKey(today),
+    cushionConfirmed: { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! + amount },
+    // what could not be taken (the Polster was empty) is accepted as it is
+    cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) },
+  });
+  return { id, amount, stages };
+}
+
+// ---- polster-feinschliff: „Spielgeld für {Monat}“ ----
+
+/**
+ * „Nur {Monat}“: the Spielgeld of one month (cents; null = back to the usual one). „Ab {Monat}“: the Spielgeld in
+ * the settings (euros) – the month's own amount goes.
+ */
+export async function setSpielgeldFor(db: FixkostenDB, period: Period, cents: number | null, scope: 'only' | 'from', active: Period = period): Promise<void> {
+  const s = await readKonto(db);
+  const rest = { ...s.spielgeldOverrides };
+  delete rest[period];
+  if (scope === 'from') {
+    // the months from the active one up to it keep the Spielgeld they had
+    if (s.spielgeld !== null) for (let p = active; p < period; p = addPeriods(p, 1)) if (rest[p] === undefined) rest[p] = Math.round(s.spielgeld * 100);
+    await writeKonto(db, { spielgeldOverrides: rest, spielgeld: cents !== null && cents > 0 ? cents / 100 : null });
+    return;
+  }
+  await writeKonto(db, { spielgeldOverrides: cents === null ? rest : { ...rest, [period]: Math.max(0, Math.round(cents)) } });
 }
