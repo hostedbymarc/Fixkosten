@@ -132,6 +132,20 @@ async function reachable(page: Page, button: Locator) {
   expect(top).toBe('button');
 }
 
+/** „So teilt sich dein Gehalt“ and one of its rows open (each only when it is closed) */
+async function openRow(page: Page, tap: Tap, row: string) {
+  const fold = page.getByTestId('dein-monat-split-toggle');
+  await expect(async () => {
+    if ((await fold.getAttribute('aria-expanded')) !== 'true') await tap(fold);
+    await expect(fold).toHaveAttribute('aria-expanded', 'true', { timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
+  const toggle = page.getByTestId(`${row}-toggle`);
+  await expect(async () => {
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await tap(toggle);
+    await expect(page.getByTestId(`${row}-list`)).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 10_000 });
+}
+
 for (const [vp, use] of Object.entries(VIEWPORTS)) {
   for (const scheme of ['light', 'dark'] as const) {
     const tag = `${vp}-${scheme === 'light' ? 'hell' : 'dunkel'}`;
@@ -167,7 +181,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(other);
         await expect(field).toHaveCount(0);
         await expect(other).toHaveAttribute('aria-expanded', 'false');
-        expect(await balanceOfCard()).toBe(1400000);
+        await expect.poll(balanceOfCard).toBe(1400000);
         // an own amount: € 1.000 → 75 % reached, the field is closed after „Polster aufgefüllt“
         await tap(other);
         await field.fill('1000');
@@ -233,14 +247,15 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await closePlan(page);
 
         // 4 after the confirmation the Überschuss rises: „Differenz in den Polster“
+        const before = await centsOf(page.getByTestId('dein-monat-free-value'));
+        const confirmed = 1000000 + Math.min(before, 1000000);
         await tap(page.getByTestId('cushion-split-confirm'));
         await expect(page.getByTestId('cushion-split')).toHaveAttribute('data-kind', 'confirmed');
-        const confirmed = await balanceOfCard();
-        const before = await centsOf(page.getByTestId('dein-monat-free-value'));
+        await expect.poll(balanceOfCard).toBe(confirmed);
         // ③ Vermögensaufbau counts against the Überschuss directly: one of its lines € 50 lower, only November
-        await tap(page.getByTestId('dein-monat-split-toggle'));
-        await tap(page.getByTestId('dein-monat-wealth-toggle'));
+        await openRow(page, tap, 'dein-monat-wealth');
         const line = page.getByTestId('dein-monat-wealth-item-edit').first();
+        await expect(line).toBeVisible();
         const was = await centsOf(line.getByTestId('dein-monat-wealth-item-amount'));
         await tap(line);
         await sheetOpen(page, 'amount-sheet');
@@ -262,8 +277,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         const preview = page.getByTestId('cushion-split');
         const decKind = await preview.getAttribute('data-kind');
         const oldAmount = decKind === 'fill' ? await centsOf(page.getByTestId('cushion-split-amount')) : null;
-        if ((await page.getByTestId('dein-monat-split').getAttribute('data-open')) === null) await tap(page.getByTestId('dein-monat-split-toggle'));
-        if ((await page.getByTestId('dein-monat-direct-toggle').getAttribute('aria-expanded')) !== 'true') await tap(page.getByTestId('dein-monat-direct-toggle'));
+        await openRow(page, tap, 'dein-monat-direct');
         const xmas = page.getByTestId('dein-monat-direct-item-edit').filter({ hasText: 'Xmas' });
         await expect(xmas).toContainText('€ 400');
         await tap(xmas);
@@ -290,7 +304,7 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await tap(page.getByRole('button', { name: 'Nächster Monat' }));
         await expect(month).toHaveAttribute('data-period', '2026-12');
         await expect(page.getByTestId('dein-monat-unplanned-value')).toContainText('€ 300');
-        await tap(page.getByTestId('dein-monat-unplanned-toggle'));
+        await openRow(page, tap, 'dein-monat-unplanned');
         await tap(page.getByTestId('dein-monat-unplanned-spielgeld'));
         await sheetOpen(page, 'amount-sheet');
         await expect(page.getByRole('heading', { name: 'Spielgeld für Dezember' })).toBeVisible();
