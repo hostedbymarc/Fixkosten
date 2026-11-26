@@ -40,10 +40,14 @@ describe('Bewegungen: der Stand ist ihre Summe', () => {
   it('Startwert aus einem Stand ohne Bewegungen (polster-ziel): eine Bewegung „Stand eingetragen“, kein Datenverlust', () => {
     const s = toKontoSettings({ enabled: true, cushionGoal: 2000000, cushionBalance: 1400000, cushionBalanceDate: '2026-11-20', cushionConfirmed: { '2026-11': 300000 } });
     expect(s.cushionBalance).toBe(1400000);
-    expect(s.cushionMoves).toEqual([{ id: 'start', date: '2026-11-20', amount: 1400000, source: 'start' }]);
+    // polster-stand-feld: the month confirmed gets its own move, out of the start move (the sum stays the Stand)
+    expect(s.cushionMoves).toEqual([
+      { id: 'start', date: '2026-11-20', amount: 1100000, source: 'start' },
+      { id: 'm-2026-11', date: '2026-11-20', amount: 300000, source: 'split' },
+    ]);
     // stored and read again: the same, and the moves travel along
     expect(toKontoSettings(storedKonto(s))).toEqual(s);
-    expect(storedKonto(s).cushionMoves).toHaveLength(1);
+    expect(storedKonto(s).cushionMoves).toHaveLength(2);
   });
   it('Stand 0 oder kein Polster: keine Bewegungen', () => {
     expect(toKontoSettings({ cushionBalance: 0 }).cushionMoves).toEqual([]);
@@ -64,14 +68,14 @@ describe('Bewegungen: der Stand ist ihre Summe', () => {
     expect(s.cushionMoves[1]!.note).toHaveLength(40);
     expect(s.cushionBalance).toBe(480000);
   });
-  it('„Schon geschafft“ ändern: eine Bewegung der Differenz; leer entfernt Polster und Bewegungen', async () => {
+  it('„Aktueller Stand“ ändern: eine Korrektur der Differenz; leer entfernt Polster und Bewegungen', async () => {
     const db = newDb();
     await setCushionBalance(db, 1400000, DAY);
     await setCushionBalance(db, 1500000, LATER);
     let s = await readKonto(db);
     expect(s.cushionMoves.map((m) => [m.amount, m.source, m.date])).toEqual([
       [1400000, 'start', '2026-11-24'],
-      [100000, 'start', '2026-11-26'],
+      [100000, 'fix', '2026-11-26'],
     ]);
     expect(sum(s.cushionMoves)).toBe(s.cushionBalance);
     await setCushionBalance(db, null);
@@ -191,7 +195,7 @@ describe('Export und Import', () => {
     const withoutFields = newDb();
     await importIntoEmpty(withoutFields, parseBackup(JSON.parse(JSON.stringify(without))));
     const b = await readKonto(withoutFields);
-    expect([b.cushionBalance, b.cushionMoves.map((m) => [m.amount, m.source]), b.spielgeldOverrides]).toEqual([1882800, [[1882800, 'start']], {}]);
+    expect([b.cushionBalance, b.cushionMoves.map((m) => [m.amount, m.source]), b.spielgeldOverrides]).toEqual([1882800, [[1882800 - 457800, 'start'], [457800, 'split']], {}]);
   });
 });
 

@@ -182,7 +182,7 @@
 | Polster | `cushion.avg` | Ø nächste 12 Monate: Fixkosten ca. {fix} | 6 · 1 |
 | Polster | `cushion.avgSpielgeld` | Ø nächste 12 Monate: Fixkosten ca. {fix}, Spielgeld {spielgeld} | 6 · 3 |
 | Polster | `cushion.goalField` | Polster-Ziel | 1 |
-| Polster | `cushion.balanceField` | Schon geschafft | 2 |
+| Polster | `cushion.balanceField` | Aktueller Stand | 2 |
 | Polster | `cushion.rule` | Überschuss bis zum Ziel | 4 |
 | Polster | `cushion.rule.all` | Alles in den Polster: schnellster Weg | 6 |
 | Polster | `cushion.rule.share` | Fester Anteil: {prozent} %, Rest investieren | 5 |
@@ -231,6 +231,9 @@
 | Polster | `cushion.src.in` | Eingezahlt | 1 |
 | Polster | `cushion.src.out` | Entnommen | 1 |
 | Polster | `cushion.src.start` | Stand eingetragen | 2 |
+| Polster | `cushion.src.fix` | Korrektur | 1 |
+| Polster | `cushion.field.save` | Speichern | 1 |
+| Polster | `cushion.saveFailed` | Speichern fehlgeschlagen. Bitte erneut. | 2 · 2 |
 | Polster | `cushion.src.diff` | Differenz | 1 |
 | Polster | `cushion.diff.higher` | Dein Überschuss ist {betrag} höher. | 5 |
 | Polster | `cushion.diff.lower` | Dein Überschuss ist {betrag} niedriger. | 5 |

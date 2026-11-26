@@ -12,6 +12,7 @@ import {
   setCushionRule,
   settleCushionDiff,
   undoCushion,
+  CushionWriteError,
 } from '../../db/kontoActions';
 import { CUSHION_NOTE_MAX, type CushionMove, type KontoSettings } from '../../db/settings';
 import { useKonto } from '../../db/useKonto';
@@ -27,6 +28,7 @@ import {
   cushionOf,
   cushionPercent,
   distribution,
+  fieldWrite,
   movesNewestFirst,
   nextStage,
   projectCushion,
@@ -201,13 +203,14 @@ export function CushionSplit({ ds, period, active, left }: { ds: Dataset; period
   // „Anders aufteilen“: the field's text; its amount counts as soon as it is a valid one
   const [other, setOther] = useState<string | null>(null);
   const [party, setParty] = useState<{ run: number; goal: boolean } | null>(null);
+  const guard = useCushionWrite();
   const future = period > active;
   const confirmed = c.confirmed[period];
   const surplus = toCents(left);
   // „Rückgängig“: the celebration is over (a stage is celebrated only once)
   const undo = () => {
     setParty(null);
-    void undoCushion(db, period);
+    void guard(undoCushion(db, period));
   };
   const celebrate = (stages: number[]) => {
     if (stages.length) setParty((p) => ({ run: (p?.run ?? 0) + 1, goal: stages.includes(100) }));
@@ -243,8 +246,8 @@ export function CushionSplit({ ds, period, active, left }: { ds: Dataset; period
   if (!d) return null;
   const canConfirm = !future;
   const confirm = async (amount: number) => {
-    const stages = await confirmCushion(db, period, amount, undefined, surplus);
-    if (stages === null) return;
+    const stages = await guard(confirmCushion(db, period, amount, undefined, surplus));
+    if (!stages) return;
     // an own amount: the field closes
     setOther(null);
     celebrate(stages);
@@ -339,16 +342,17 @@ export function CushionSplit({ ds, period, active, left }: { ds: Dataset; period
  */
 function SurplusDiff({ period, surplus, remembered, onStages }: { period: Period; surplus: number; remembered: number | undefined; onStages: (s: number[]) => void }) {
   const toast = useToast();
+  const guard = useCushionWrite();
   const diff = surplusDiff(remembered, surplus);
   if (diff === 0) return null;
   const settle = async (move: boolean) => {
-    const r = await settleCushionDiff(db, period, surplus, move);
+    const r = await guard(settleCushionDiff(db, period, surplus, move));
     if (!r) return;
     onStages(r.stages);
     toast({
       message: t(r.amount > 0 ? 'cushion.toast.in' : 'cushion.toast.out', { betrag: eur(Math.abs(r.amount)) }),
       actionLabel: t('cushion.undo'),
-      onAction: () => void removeCushionMove(db, r.id),
+      onAction: () => void guard(removeCushionMove(db, r.id)),
       durationMs: 5000,
     });
   };
@@ -409,44 +413,60 @@ function GapSalary({ ds, period, plan, left }: { ds: Dataset; period: Period; ac
 }
 
 /**
- * An amount field in cents: Enter or leaving it commits; empty = null. It reads what is in the field right now (not
- * the text of the last render: under load Enter could come before that render, an old empty text would remove the
- * Polster) and commits only a change.
+ * „Aktueller Stand“ / „Polster-Ziel“ (polster-stand-feld): an amount field in cents that writes only with Enter or
+ * „Speichern“, and only a real change (fieldWrite) – never when it mounts, loses the focus, re-renders or the sheet
+ * closes. Emptied and saved: removed. „Speichern“ shows while the field differs from what is stored.
  */
-function CentsField({ cents, onCommit, testId, label }: { cents: number | null; onCommit: (v: number | null) => void; testId: string; label?: string }) {
-  const [text, setText] = useState(cents === null ? '' : amountToInput(cents / 100));
+function CentsField({ cents, onCommit, testId, label }: { cents: number | null; onCommit: (v: number | null) => Promise<void>; testId: string; label?: string }) {
+  const shown = cents === null ? '' : amountToInput(cents / 100);
+  const [text, setText] = useState(shown);
   const field = useRef<HTMLInputElement>(null);
-  useEffect(() => setText(cents === null ? '' : amountToInput(cents / 100)), [cents]);
-  const commit = () => {
-    const now = field.current?.value ?? text;
-    if (now.trim() === '') {
-      if (cents !== null) onCommit(null);
-      return;
-    }
-    const v = parseAmount(now);
-    if (v === null || v < 0) return setText(cents === null ? '' : amountToInput(cents / 100));
-    if (toCents(v) !== cents) onCommit(toCents(v));
+  // the stored value changed (saved, or elsewhere): the field shows it
+  useEffect(() => setText(shown), [shown]);
+  // what is in the field right now (under load Enter can come before the render of the last key)
+  const now = () => field.current?.value ?? text;
+  const pending = fieldWrite(text, cents, parseAmount).write;
+  const save = () => {
+    const w = fieldWrite(now(), cents, parseAmount);
+    if (w.write) void onCommit(w.value);
   };
   return (
-    <span className="flex h-12 items-center rounded-2xl border border-edge bg-field px-3 focus-within:ring-2 focus-within:ring-focus/25">
-      <span className="mr-1.5 text-[17px] text-ink-mute">{currencySymbol()}</span>
-      <AmountInput
-        ref={field}
-        value={text}
-        onChange={setText}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            commit();
-          }
-        }}
-        aria-label={label}
-        className="num h-full w-full min-w-0 bg-transparent text-[17px] font-semibold text-ink outline-none"
-        data-testid={testId}
-      />
+    <span className="flex flex-col gap-1.5">
+      <span className="flex h-12 items-center rounded-2xl border border-edge bg-field px-3 focus-within:ring-2 focus-within:ring-focus/25">
+        <span className="mr-1.5 text-[17px] text-ink-mute">{currencySymbol()}</span>
+        <AmountInput
+          ref={field}
+          value={text}
+          onChange={setText}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              save();
+            }
+          }}
+          aria-label={label}
+          className="num h-full w-full min-w-0 bg-transparent text-[17px] font-semibold text-ink outline-none"
+          data-testid={testId}
+        />
+      </span>
+      {pending && (
+        <button type="button" onClick={save} className={`${BUTTON} min-h-11 self-start bg-control px-3 text-[14px] text-ink`} data-testid={`${testId}-save`}>
+          {t('cushion.field.save')}
+        </button>
+      )}
     </span>
   );
+}
+
+/** Every write of the Polster: if it would break the Polster (CushionWriteError), nothing is written – the hint says so. */
+function useCushionWrite() {
+  const toast = useToast();
+  return <T,>(p: Promise<T>): Promise<T | undefined> =>
+    p.catch((e: unknown) => {
+      if (!(e instanceof CushionWriteError)) throw e;
+      toast({ message: t('cushion.saveFailed'), durationMs: 5000 });
+      return undefined;
+    });
 }
 
 /** The one place „Dein Polster“ lives: opened via openPolster() (the card, „Dein Plan“, the settings). */
@@ -491,6 +511,7 @@ export function PolsterSheet({
   const activeLeft = useMemo(() => monthCard(ds, active, plan, start).left, [ds, active, plan, start]);
   const [dir, setDir] = useState<'in' | 'out' | null>(move ?? null);
   const [party, setParty] = useState<{ run: number; goal: boolean } | null>(null);
+  const guard = useCushionWrite();
   const celebrate = (stages: number[]) => {
     if (stages.length) setParty((p) => ({ run: (p?.run ?? 0) + 1, goal: stages.includes(100) }));
   };
@@ -519,11 +540,11 @@ export function PolsterSheet({
         <div className="grid grid-cols-2 gap-2.5">
           <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
             {t('cushion.goalField')}
-            <CentsField cents={goal} onCommit={(v) => void setCushionGoal(db, v)} testId="polster-goal-input" />
+            <CentsField cents={goal} onCommit={(v) => guard(setCushionGoal(db, v)).then(() => undefined)} testId="polster-goal-input" />
           </label>
           <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
             {t('cushion.balanceField')}
-            <CentsField cents={balance} onCommit={(v) => void setCushionBalance(db, v)} testId="polster-balance-input" />
+            <CentsField cents={balance} onCommit={(v) => guard(setCushionBalance(db, v)).then(() => undefined)} testId="polster-balance-input" />
           </label>
         </div>
         <fieldset className="flex flex-col gap-2" data-testid="polster-rule" data-rule={settings.cushionRule}>
@@ -573,6 +594,7 @@ export function PolsterSheet({
 /** „+ Einzahlen“ / „− Entnehmen“: amount (cents), an optional note (≤ 40 characters), today. Rückgängig via the hint. */
 function MoveForm({ dir, balance, onDone, onStages }: { dir: 'in' | 'out'; balance: number; onDone: () => void; onStages: (s: number[]) => void }) {
   const toast = useToast();
+  const guard = useCushionWrite();
   const [text, setText] = useState('');
   const [note, setNote] = useState('');
   const value = parseAmount(text);
@@ -580,14 +602,14 @@ function MoveForm({ dir, balance, onDone, onStages }: { dir: 'in' | 'out'; balan
   const valid = cents > 0 && (dir === 'in' || balance > 0);
   const save = async () => {
     if (!valid) return;
-    const r = await addCushionMove(db, dir === 'in' ? cents : -cents, note);
+    const r = await guard(addCushionMove(db, dir === 'in' ? cents : -cents, note));
     if (!r) return;
     onStages(r.stages);
     onDone();
     toast({
       message: t(r.amount > 0 ? 'cushion.toast.moveIn' : 'cushion.toast.moveOut', { betrag: eur(Math.abs(r.amount)) }),
       actionLabel: t('cushion.undo'),
-      onAction: () => void removeCushionMove(db, r.id),
+      onAction: () => void guard(removeCushionMove(db, r.id)),
       durationMs: 5000,
     });
   };
@@ -671,6 +693,7 @@ function moveLabel(m: CushionMove): string {
   if (m.source === 'split') return `${t('cushion.src.split')}${of}`;
   if (m.source === 'gap') return `${t('cushion.src.gap')}${of}`;
   if (m.source === 'start') return t('cushion.src.start');
+  if (m.source === 'fix') return t('cushion.src.fix');
   return t(m.amount < 0 ? 'cushion.src.out' : 'cushion.src.in');
 }
 

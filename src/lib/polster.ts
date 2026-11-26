@@ -260,3 +260,17 @@ export function surplusDiff(remembered: number | undefined, surplus: number | nu
   if (remembered === undefined || surplus === null) return 0;
   return surplus - remembered;
 }
+
+/**
+ * polster-stand-feld: what „Speichern“ / Enter of „Aktueller Stand“ or „Polster-Ziel“ does with the field's text –
+ * nothing when it is the stored value (or not an amount), else the new value in cents (null: emptied, removes it).
+ */
+export type FieldWrite = { write: false } | { write: true; value: number | null };
+
+export function fieldWrite(text: string, stored: number | null, parse: (t: string) => number | null): FieldWrite {
+  if (text.trim() === '') return stored === null ? { write: false } : { write: true, value: null };
+  const v = parse(text);
+  if (v === null || v < 0) return { write: false };
+  const value = toCents(v);
+  return value === stored ? { write: false } : { write: true, value };
+}
