@@ -124,7 +124,8 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
 
         // reloaded: Stand, Verlauf and the confirmation unchanged
         await page.reload();
-        await expect(page.getByTestId('hero')).toBeVisible();
+        // with „Fixkosten einplanen“ the month shows „Dein Monat“ (no hero)
+        await expect(page.getByTestId('dein-monat')).toBeVisible({ timeout: 15_000 });
         await appSettled(page);
         expect(await stored(page)).toBe(before);
         await expect.poll(() => centsOf(page.getByTestId('polster-card-balance'))).toBe(after);
