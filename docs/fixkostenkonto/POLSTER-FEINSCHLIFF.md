@@ -90,7 +90,36 @@ Geändert ist `big.cushion`: vorher „Polster deckt es“, jetzt „Polster dec
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+- **Unit-Tests:** 1596 grün in 63 Dateien. Neu sind 17 in `src/db/polster-feinschliff.test.ts` und die Textprüfung der neuen Texte.
+- **Build:** `pnpm build` (tsc, check-colors, check-bundle) ist sauber.
+- **Neue E2E:** `e2e/polster-feinschliff.spec.ts` mit 2 Tests je Viewport. Viewports sind iPhone SE, iPhone 15, iPhone Pro Max, iPad hoch/quer und Desktop 1440, je hell und dunkel: 24 von 24 grün. `e2e/polster-ziel.spec.ts` ist angepasst (die Karte hat jetzt einen eigenen Öffnen-Button) und ebenfalls grün.
+- **Volle Suite ohne Retries** (Lauf 2, nach der letzten Code-Änderung): 19 von 19 Projekten grün.
+
+| Projekt | bestanden | übersprungen | fehlgeschlagen |
+|---|---|---|---|
+| desktop 1–5/5 | 634 | 40 | 0 |
+| iphone-15 | 269 | 405 | 0 |
+| iphone-pro-max | 241 | 433 | 0 |
+| ipad-portrait | 257 | 417 | 0 |
+| ipad-landscape | 245 | 429 | 0 |
+| perf (Grenzen aus #59) | 3 | 0 | 0 |
+| perf-feier (iPhone 15 und SE, 4× CPU-Drosselung) | 2 | 0 | 0 |
+| WebKit iPhone SE hell/dunkel | 212 | 54 | 0 |
+| WebKit iPhone 15 hell/dunkel | 230 | 36 | 0 |
+| WebKit iPad hoch hell/dunkel | 228 | 38 | 0 |
+| WebKit iPad quer hell/dunkel | 216 | 50 | 0 |
+| **Summe** | **2537** | | **0** |
+
+- **Gefunden und behoben auf dem Weg, offen berichtet:**
+  - **Fehler im eigenen Code:** Unter Last ging bisweilen ein eingetragener Polster verloren. Behoben auf zwei Wegen:
+    - Das Betragsfeld liest beim Übernehmen den aktuellen Feldinhalt und übernimmt nur Änderungen.
+    - Jede Polster-Aktion liest und schreibt in einer Transaktion.
+
+    Die E2E meldet bei einem Fehlschlag jetzt den gespeicherten Polster mit.
+  - **Barrierefreiheit:** Die Namen der Betrag-Buttons enthielten „Betrag“. Das kollidierte mit dem Feld „Betrag“ der Formulare, für Screenreader und in `layout-phase2.spec`. Sie heißen jetzt „{Name}: {Monat} ändern“.
+  - **Konfetti-Streifen:** 44 → 40 px, weil die große Zahl des Desktop-Heros an den Streifen stieß.
+  - **Wackler `liquid-glass.spec` (WebKit):** Die Einstiegsanimation dauert insgesamt 0,46 s und war beim Abfragen schon vorbei. Der Test zählt die Animationen jetzt beim Start.
+  - Die beiden letzten Punkte hat Lauf 1 ans Licht gebracht. Danach lief Lauf 2 vollständig und grün.
 
 ## Screenshots
 
@@ -104,7 +133,7 @@ TESTERGEBNISSE
 
 ## Merge
 
-MERGE
+Squash-Merge nach `main` nach dem grünen Lauf 2. Die Merge-SHA steht im Abschlussprotokoll.
 
 ## Hinweis Production-Deploy
 
