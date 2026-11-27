@@ -234,6 +234,12 @@
 | Polster | `cushion.src.fix` | Korrektur | 1 |
 | Polster | `cushion.field.save` | Speichern | 1 |
 | Polster | `cushion.saveFailed` | Speichern fehlgeschlagen. Bitte erneut. | 2 · 2 |
+| Polster | `cushion.clear.balance` | Polster und Verlauf löschen? | 4 |
+| Polster | `cushion.clear.balance.text` | Stand, Verlauf und bestätigte Monate sind dann weg. | 8 |
+| Polster | `cushion.clear.goal` | Polster-Ziel löschen? | 2 |
+| Polster | `cushion.clear.goal.text` | Stand und Verlauf bleiben. | 4 |
+| Polster | `cushion.clear.confirm` | Löschen | 1 |
+| Polster | `cushion.clear.cancel` | Abbrechen | 1 |
 | Polster | `cushion.src.diff` | Differenz | 1 |
 | Polster | `cushion.diff.higher` | Dein Überschuss ist {betrag} höher. | 5 |
 | Polster | `cushion.diff.lower` | Dein Überschuss ist {betrag} niedriger. | 5 |

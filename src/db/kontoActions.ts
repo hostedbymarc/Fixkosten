@@ -205,14 +205,16 @@ export async function setCushionGoal(db: FixkostenDB, cents: number | null): Pro
 /**
  * „Aktueller Stand“ (polster-stand-feld): the field shows the Stand (the sum of the moves). A new value adds a move
  * „Korrektur“ of the difference (source fix) – the history is never rewritten. No Polster yet: the start move. An
- * empty field (and „Speichern“) removes the Polster and its moves. Nothing changes when the value is the same.
+ * empty field (and „Speichern“, then „Löschen“) removes the Polster, its moves and the months confirmed. Nothing changes when the value is the same.
  */
 export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = localToday()): Promise<void> {
   return db.transaction('rw', db.meta, async () => {
     const s = await readKonto(db);
     if (cents === null) {
       if (s.cushionBalance === null) return;
-      await writeCushion(db, s, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [] });
+      // „Polster und Verlauf löschen?“ → „Löschen“: the months confirmed go with the history, else a new Stand
+      // could never be saved (each confirmed month needs its own move)
+      await writeCushion(db, s, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [], cushionConfirmed: {}, cushionSurplus: {} });
       return;
     }
     const target = Math.max(0, Math.round(cents));
