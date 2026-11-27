@@ -38,7 +38,34 @@ Rahmen:
 
 ## Testergebnisse
 
-TESTERGEBNISSE
+- **Unit-Tests:** 1608 grün in 64 Dateien. Neu sind 10 in `src/db/polster-stand-feld.test.ts`:
+  - Korrektur-Bewegung
+  - gleicher Wert schreibt nichts
+  - `fieldWrite`
+  - Invariante erfüllt / erkannt / Schreiben verweigert
+  - Reparatur älterer Daten
+
+  `polster-feinschliff.test.ts` ist angepasst (Korrektur statt zweitem Startwert, bestätigter Monat mit eigener Bewegung).
+- **Build:** `pnpm build` (tsc, check-colors, check-bundle) ist sauber.
+- **Neue E2E:** `e2e/polster-stand-feld.spec.ts` deckt iPhone SE, iPhone 15, iPhone Pro Max, iPad hoch/quer und Desktop 1440 ab, je hell und dunkel: 12 von 12 grün. Die Polster-Specs davor (polster-ziel, polster-feinschliff) sind ebenfalls grün.
+- **Volle Suite ohne Retries** (nach der letzten Änderung): 19 von 19 Projekten grün.
+
+| Projekt | bestanden | übersprungen | fehlgeschlagen |
+|---|---|---|---|
+| desktop 1–5/5 | 646 | 40 | 0 |
+| iphone-15 | 269 | 417 | 0 |
+| iphone-pro-max | 241 | 445 | 0 |
+| ipad-portrait | 257 | 429 | 0 |
+| ipad-landscape | 245 | 441 | 0 |
+| perf (Grenzen aus #59) | 3 | 0 | 0 |
+| perf-feier (iPhone 15 und SE, 4× CPU-Drosselung) | 2 | 0 | 0 |
+| WebKit iPhone SE hell/dunkel | 212 | 54 | 0 |
+| WebKit iPhone 15 hell/dunkel | 230 | 36 | 0 |
+| WebKit iPad hoch hell/dunkel | 228 | 38 | 0 |
+| WebKit iPad quer hell/dunkel | 216 | 50 | 0 |
+| **Summe** | **2549** | | **0** |
+
+- **Nebenbei:** Nach dem Neuladen mit Fixkostenkonto warten `polster-stand-feld.spec` und `spielgeld-zuordnung.spec` auf „Dein Monat“ statt auf `hero`. Das war die Ursache des Wacklers aus dem polster-feinschliff-Lauf 3.
 
 ## Screenshots
 
@@ -46,7 +73,7 @@ TESTERGEBNISSE
 
 ## Merge
 
-MERGE
+Squash-Merge nach `main` nach dem grünen Lauf. Die Merge-SHA steht im Abschlussprotokoll.
 
 ## Hinweis Production-Deploy
 
