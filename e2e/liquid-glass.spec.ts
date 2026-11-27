@@ -612,48 +612,62 @@ test.describe('Einheitliche Ladeanimation', () => {
   });
 
   test('Analyse: Karten wie auf der Startseite, danach wachsen die Balken (400 ms, 20 ms Versatz)', async ({ page }) => {
-    await importLive(page, OKT_TODAY);
-    await page.evaluate(() => {
-      const w = window as unknown as { anims: { id: string; delay: number; raw: number; duration: number; tag: string }[] };
-      w.anims = [];
-      const seen = new Set<Animation>();
-      const poll = () => {
-        for (const a of document.getAnimations()) {
-          if (seen.has(a) || !['entrance', 'bar-grow'].includes(a.id)) continue;
-          seen.add(a);
-          const t = (a.effect as KeyframeEffect).getTiming();
-          // absolute (document timeline): when the animation started + its delay
-          const started = Number(document.timeline.currentTime) - Number(a.currentTime ?? 0);
-          w.anims.push({ id: a.id, delay: started + Number(t.delay), raw: Number(t.delay), duration: Number(t.duration), tag: ((a.effect as KeyframeEffect).target as Element).tagName });
+    // The plan of every animation, as the app makes it: when it is created and with which delay. Under load the first
+    // frame of an animation can come late – that does not change the plan, so the plan is checked, not when the
+    // frames happened to come. The bars of the chart are planned in one synchronous pass against one moment (`now`
+    // in src/lib/barGrowth.ts): within a pass their delays are 20 ms apart, column by column.
+    await page.addInitScript(() => {
+      type Rec = { id: string; delay: number; duration: number; tag: string; pass: number; at: number; x: number };
+      const w = window as unknown as { planned: Rec[] };
+      w.planned = [];
+      let pass = 0;
+      let open = false;
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (this: Element, keyframes, options) {
+        const o = typeof options === 'object' ? options : { duration: options };
+        if (o.id === 'entrance' || o.id === 'bar-grow') {
+          if (!open) {
+            open = true;
+            pass++;
+            queueMicrotask(() => (open = false));
+          }
+          const x = this instanceof SVGGraphicsElement ? Math.round(this.getBBox().x) : 0;
+          w.planned.push({ id: o.id, delay: Number(o.delay ?? 0), duration: Number(o.duration), tag: this.tagName, pass, at: performance.now(), x });
         }
-        requestAnimationFrame(poll);
+        return animate.call(this, keyframes, options);
       };
-      poll();
     });
+    await importLive(page, OKT_TODAY);
+    await page.evaluate(() => ((window as unknown as { planned: unknown[] }).planned = []));
     const nav = page.getByTestId(isSidebarLayout(page) ? 'sidebar' : 'tabbar');
     await nav.getByRole('link', { name: 'Analyse' }).click();
     await appSettled(page);
-    const anims = await page.evaluate(() => (window as unknown as { anims: { id: string; delay: number; raw: number; duration: number; tag: string }[] }).anims);
-    const cards = anims.filter((a) => a.id === 'entrance' && a.duration === 280);
-    const bars = anims.filter((a) => a.id === 'bar-grow');
+    type Rec = { id: string; delay: number; duration: number; tag: string; pass: number; at: number; x: number };
+    // the bars of the chart come a few frames after the screen: wait for all twelve columns
+    await expect
+      .poll(() => page.evaluate(() => new Set((window as unknown as { planned: Rec[] }).planned.filter((a) => a.id === 'bar-grow' && a.tag === 'path').map((a) => a.x)).size))
+      .toBeGreaterThanOrEqual(12);
+    await appSettled(page);
+    const planned = await page.evaluate(() => (window as unknown as { planned: Rec[] }).planned);
+    const cards = planned.filter((a) => a.id === 'entrance' && a.duration === 280);
+    const bars = planned.filter((a) => a.id === 'bar-grow');
+    const paths = bars.filter((b) => b.tag === 'path');
     expect(cards.length).toBeGreaterThan(1);
-    expect(bars.filter((b) => b.tag === 'path').length, 'forecast bars').toBeGreaterThanOrEqual(12);
+    expect(paths.length, 'forecast bars').toBeGreaterThanOrEqual(12);
     expect(bars.filter((b) => b.tag === 'SPAN').length, 'distribution bars').toBeGreaterThan(0);
     expect(bars.every((b) => b.duration === 400)).toBe(true);
-    const lastCard = Math.max(...cards.map((c) => c.delay + c.duration));
-    // the bars start when the cards have arrived (a frame of tolerance)
-    expect(Math.min(...bars.map((b) => b.delay))).toBeGreaterThanOrEqual(lastCard - 20);
-    // forecast bars 20 ms apart: the columns' start times (absolute, bars drawn anew join in sync)
-    const starts = bars
-      .filter((b) => b.tag === 'path')
-      .map((b) => b.delay)
-      .sort((a, b) => a - b)
-      .reduce<number[]>((cols, t) => (cols.length && t - cols[cols.length - 1]! < 3 ? cols : [...cols, t]), []);
-    expect(starts.length).toBe(12);
-    for (let i = 1; i < starts.length; i++) expect(Math.abs(starts[i]! - starts[i - 1]! - 20)).toBeLessThanOrEqual(3);
-    const own = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-testid="forecast"] .recharts-bar-rectangle path')].length,
-    );
+    // the bars start when the cards have arrived: each animation starts at its call + its delay
+    const lastCard = Math.max(...cards.map((c) => c.at + c.delay + c.duration));
+    const firstBar = Math.min(...bars.map((b) => b.at + b.delay));
+    expect(firstBar, `first bar ${firstBar} / last card arrived ${lastCard}`).toBeGreaterThanOrEqual(lastCard);
+    // forecast bars 20 ms apart, left to right: in every pass, the delay of column i is the pass's offset + i × 20
+    const columns = [...new Set(paths.map((b) => b.x))].sort((m, n) => m - n);
+    expect(columns.length).toBe(12);
+    for (const p of new Set(paths.map((b) => b.pass))) {
+      const offsets = paths.filter((b) => b.pass === p).map((b) => b.delay - columns.indexOf(b.x) * 20);
+      expect(Math.max(...offsets) - Math.min(...offsets), `pass ${p}: delay − column × 20 ms ${JSON.stringify(offsets)}`).toBeLessThanOrEqual(0.5);
+    }
+    const own = await page.evaluate(() => [...document.querySelectorAll('[data-testid="forecast"] .recharts-bar-rectangle path')].length);
     expect(own).toBeGreaterThanOrEqual(12);
     // nothing left on the bars
     const left = await page.evaluate(() => [...document.querySelectorAll('[data-testid="forecast"] .recharts-bar-rectangle path')].filter((p) => p.getAnimations().length).length);

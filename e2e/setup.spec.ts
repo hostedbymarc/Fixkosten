@@ -2,13 +2,22 @@ import { readFileSync } from 'node:fs';
 import { FIXTURE, TODAY, eur, expandAll, expect, importFixture, row, test } from './fixtures';
 
 test.describe('Erststart: Import oder leer', () => {
-  test('empty database shows the import dialog; import → same state; reload → no dialog', async ({ fresh }) => {
+  test('empty database shows the import dialog; import → same state; reload → no dialog', async ({ fresh, browser }) => {
     await expect(fresh.getByRole('dialog', { name: 'Daten importieren' })).toBeVisible();
     await importFixture(fresh);
     await expect(fresh.getByTestId('hero-paid')).toHaveText(eur('€ 3.368'));
-    await fresh.reload();
-    await expect(fresh.getByTestId('hero')).toBeVisible();
-    await expect(fresh.getByTestId('setup-dialog')).toHaveCount(0);
+    // the app started again with the same database: a new context with the stored IndexedDB (not page.reload –
+    // WebKit's page sometimes dies on a reload late in a long run, „WebKit encountered an internal error“)
+    const state = await fresh.context().storageState({ indexedDB: true });
+    const { viewport, deviceScaleFactor, isMobile, hasTouch, colorScheme, baseURL, locale, timezoneId } = test.info().project.use;
+    const again = await browser.newContext({ storageState: state, viewport, deviceScaleFactor, isMobile, hasTouch, colorScheme, baseURL, locale, timezoneId });
+    const page = await again.newPage();
+    await page.clock.setFixedTime(TODAY);
+    await page.goto('/');
+    await expect(page.getByTestId('hero')).toBeVisible();
+    await expect(page.getByTestId('hero-paid')).toHaveText(eur('€ 3.368'));
+    await expect(page.getByTestId('setup-dialog')).toHaveCount(0);
+    await again.close();
   });
 
   test('"Leer starten" → empty app, dialog does not come back', async ({ fresh }) => {

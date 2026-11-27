@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { bootThemes } from '../src/lib/bootSplash';
 import type { CDPSession, Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { animationsDone, expect, test } from './fixtures';
 import { importLive, OKT_TODAY } from './live';
 
 // Start screen (fix-white-start, splash-subtil): the first paint of the app is never white and shows
@@ -61,9 +61,9 @@ interface Box {
  * where the sharp edges are. The background (base colour and mesh) is smooth everywhere; only peas
  * have sharp edges. Edges inside the logo's box = the logo, edges OUTSIDE it = a second row of peas.
  */
-async function pixels(page: Page, png: Buffer, base: string, logo: Box, viewportWidth: number) {
+async function pixels(page: Page, png: Buffer, base: string, logo: Box, viewportWidth: number, skip: Box | null = null) {
   return page.evaluate(
-    async ([b64, baseCss, box, vw]) => {
+    async ([b64, baseCss, box, vw, sk]) => {
       const img = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
       const c = new OffscreenCanvas(img.width, img.height);
       const g = c.getContext('2d', { willReadFrequently: true })!;
@@ -75,6 +75,8 @@ async function pixels(page: Page, png: Buffer, base: string, logo: Box, viewport
       const s = img.width / vw;
       const [x0, y0, x1, y1] = [(box.x - 3) * s, (box.y - 3) * s, (box.x + box.width + 3) * s, (box.y + box.height + 3) * s];
       const step = Math.max(1, Math.round(2 * s));
+      // the setup dialog (white buttons by design): not counted
+      const out = sk ? [sk.x * s, sk.y * s, (sk.x + sk.width) * s, (sk.y + sk.height) * s] : null;
       const diff = (i: number, j: number) => Math.max(Math.abs(d[i]! - d[j]!), Math.abs(d[i + 1]! - d[j + 1]!), Math.abs(d[i + 2]! - d[j + 2]!));
       let white = 0;
       let total = 0;
@@ -83,6 +85,7 @@ async function pixels(page: Page, png: Buffer, base: string, logo: Box, viewport
       for (let y = 0; y < img.height - step; y++) {
         for (let x = 0; x < img.width - step; x++) {
           const i = (y * img.width + x) * 4;
+          if (out && x >= out[0]! && x <= out[2]! && y >= out[1]! && y <= out[3]!) continue;
           total++;
           if (d[i]! >= 250 && d[i + 1]! >= 250 && d[i + 2]! >= 250) white++;
           // a sharp edge: more than 12 levels to the pixel 2 pt to the right or below
@@ -96,7 +99,7 @@ async function pixels(page: Page, png: Buffer, base: string, logo: Box, viewport
       const topIsBase = [0, 1, 2].every((k) => Math.abs(d[top + k]! - B[k]!) <= 3);
       return { whiteShare: white / total, topIsBase, inside, outside };
     },
-    [png.toString('base64'), base, logo, viewportWidth] as const,
+    [png.toString('base64'), base, logo, viewportWidth, skip] as const,
   );
 }
 
@@ -109,6 +112,9 @@ async function paintNow(page: Page, path?: string): Promise<Buffer> {
   if (path) writeFileSync(path, png);
   return png;
 }
+
+/** a box grown by a share of its size on every side (an entrance in progress: the dialog scales in) */
+const grow = (b: Box, k: number): Box => ({ x: b.x - b.width * k, y: b.y - b.height * k, width: b.width * (1 + 2 * k), height: b.height * (1 + 2 * k) });
 
 const bootVar = (page: Page, name: string) => page.evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name);
 
@@ -168,6 +174,40 @@ async function peaOpacities(cdp: CDPSession, times: number[]): Promise<number[][
   })();
 }
 
+/**
+ * Every frame of the app's start (empty database: start screen → takeover → 200 ms fade → setup dialog),
+ * CPU 6× slower and a slow network: the share of white pixels per frame, the setup dialog left out (its
+ * buttons are white by design). Counted in a page of its own (the app's page runs slowed down).
+ */
+async function takeoverWhite(page: Page, viewport: { width: number; height: number }): Promise<number[]> {
+  await throttle(page);
+  const release = await holdSubresources(page);
+  await page.goto('/', { waitUntil: 'commit' });
+  await page.locator('#splash .splash-mark').waitFor({ state: 'attached' });
+  const base = await bootVar(page, '--boot-base');
+  const cdp = await page.context().newCDPSession(page);
+  const frames: Buffer[] = [];
+  cdp.on('Page.screencastFrame', (f) => {
+    frames.push(Buffer.from(f.data, 'base64'));
+    void cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }).catch(() => {});
+  });
+  await cdp.send('Page.startScreencast', { format: 'png', everyNthFrame: 1, maxWidth: viewport.width, maxHeight: viewport.height });
+  release();
+  const dialog = page.getByTestId('setup-dialog');
+  await expect(dialog).toBeVisible({ timeout: 60_000 });
+  await animationsDone(page, 'setup-dialog');
+  await expect(page.locator('#splash')).toHaveCount(0);
+  await cdp.send('Page.stopScreencast');
+  await cdp.detach();
+  const box = (await dialog.boundingBox())!;
+  const probe = await page.context().newPage();
+  await probe.goto('about:blank');
+  const shares: number[] = [];
+  for (const f of frames) shares.push(Math.round((await pixels(probe, f, base, box, viewport.width, grow(box, 0.1))).whiteShare * 1e5) / 1e5);
+  await probe.close();
+  return shares;
+}
+
 for (const [vp, use] of Object.entries(VIEWPORTS)) {
   const wide = use.viewport.width >= 768;
   const logoWidth = wide ? 56 : 48;
@@ -222,10 +262,36 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         for (const k of ['x', 'y', 'width', 'height'] as const) expect(Math.abs(after[k] - box[k]), `logo ${k}: ${box[k]} → ${after[k]}`).toBeLessThanOrEqual(1);
         const still = await page.evaluate(() => document.querySelector('#splash .splash-pea')?.getAnimations().map((a) => a.startTime) ?? null);
         if (still) expect(still, 'the CSS animation is not restarted').toEqual(before);
+        // the screenshot right after the takeover: with an empty database the app hides the start screen at
+        // once (setup → hideSplash, 200 ms) and then shows the setup dialog – under CPU 6× that can come before
+        // the screenshot. The state is read before and after it: only a frame with the start screen in front
+        // (before and after: present, not fading) is checked as the start screen; else it shows the app.
+        const splashState = () =>
+          page.evaluate(() => {
+            const sp = document.getElementById('splash');
+            return !sp ? 'gone' : sp.classList.contains('splash-out') ? 'out' : 'live';
+          });
+        const s0 = await splashState();
         const pulse = await paintNow(page, `${DIR}/${tag}-app-start.png`);
-        const q = await pixels(page, pulse, base, box, use.viewport.width);
-        expect(q.whiteShare).toBeLessThan(0.001);
-        expect(q.outside, `no second row of peas after the app started ${JSON.stringify(q)}`).toBe(0);
+        const s1 = await splashState();
+        test.info().annotations.push({ type: 'app-start', description: `${s0} → ${s1}` });
+        if (s0 === 'live' && s1 === 'live') {
+          const q = await pixels(page, pulse, base, box, use.viewport.width);
+          expect(q.whiteShare, `white pixels after the app started ${JSON.stringify(q)}`).toBeLessThan(0.001);
+          expect(q.outside, `no second row of peas after the app started ${JSON.stringify(q)}`).toBe(0);
+        } else {
+          // the app took over: the background is never white – white only inside the setup dialog
+          const dialog = s1 === 'gone' ? await page.getByTestId('setup-dialog').boundingBox() : null;
+          const q = await pixels(page, pulse, base, box, use.viewport.width, dialog && grow(dialog, 0.1));
+          expect(q.whiteShare, `white pixels outside the setup dialog ${s0} → ${s1} ${JSON.stringify(q)}`).toBeLessThan(0.001);
+        }
+      });
+
+      test('App-Start Bild für Bild (CPU 6×, langsames Netz, leere Datenbank): nie Weiß, nur der Einrichtungs-Dialog hat weiße Flächen', async ({ page }) => {
+        test.setTimeout(180_000);
+        const shares = await takeoverWhite(page, use.viewport);
+        expect(shares.length, 'frames of the takeover').toBeGreaterThan(5);
+        expect(Math.max(...shares), `white share per frame ${JSON.stringify(shares)}`).toBeLessThan(0.001);
       });
 
       test('jedes Bild der Startphase (CPU 6×, mit Daten): genau ein Logo, auch beim Ausblenden', async ({ page }) => {
@@ -434,5 +500,26 @@ test.describe('Startbilder, Manifest, Service Worker', () => {
       await expect(page.getByTestId('setup-dialog')).toBeVisible({ timeout: 15_000 });
       await context.setOffline(false);
     });
+  });
+});
+
+test.describe('Start-Bildschirm · Gegenprobe', () => {
+  test.use({ ...VIEWPORTS['iphone-15'], colorScheme: 'light' });
+  test.beforeEach(() => test.skip(test.info().project.name !== 'desktop', 'eigene Viewports, läuft im Projekt desktop'));
+  test('ein künstlicher weißer Blitz beim Ausblenden wird erkannt', async ({ page }) => {
+    test.setTimeout(180_000);
+    // while the start screen fades, a white surface covers the page for a moment
+    await page.addInitScript(() => {
+      new MutationObserver((_, obs) => {
+        if (!document.querySelector('#splash.splash-out')) return;
+        obs.disconnect();
+        const flash = document.createElement('div');
+        flash.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:2147483647;pointer-events:none';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 600);
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['class'] });
+    });
+    const shares = await takeoverWhite(page, VIEWPORTS['iphone-15'].viewport);
+    expect(Math.max(...shares), `white share per frame ${JSON.stringify(shares)}`).toBeGreaterThan(0.1);
   });
 });
