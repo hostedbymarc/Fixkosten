@@ -1,7 +1,7 @@
 // polster-ziel (Design-Canvas „Erbse – Polster-Ziel Mockups“, Screens 1–5): the Polster and its goal. Every number
 // comes from src/lib/polster.ts (cents), which reads the month cards (monthCard) and the plan (monthPlan). The
 // Polster changes only when the user confirms („Polster aufgefüllt“ / „Aus Polster genommen“) or enters it.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { db } from '../../db/db';
 import {
   addCushionMove,
@@ -415,9 +415,22 @@ function GapSalary({ ds, period, plan, left }: { ds: Dataset; period: Period; ac
 /**
  * „Aktueller Stand“ / „Polster-Ziel“ (polster-stand-feld): an amount field in cents that writes only with Enter or
  * „Speichern“, and only a real change (fieldWrite) – never when it mounts, loses the focus, re-renders or the sheet
- * closes. Emptied and saved: removed. „Speichern“ shows while the field differs from what is stored.
+ * closes. Emptied and saved: first asks (ClearConfirm). „Speichern“ shows while the field differs from what is stored.
  */
-function CentsField({ cents, onCommit, testId, label }: { cents: number | null; onCommit: (v: number | null) => Promise<void>; testId: string; label?: string }) {
+function CentsField({
+  cents,
+  onCommit,
+  onClear,
+  testId,
+  label,
+}: {
+  cents: number | null;
+  onCommit: (v: number) => Promise<void>;
+  /** emptied and saved: never written here – „Löschen“ / „Abbrechen“ (ClearConfirm) decides */
+  onClear: () => void;
+  testId: string;
+  label?: string;
+}) {
   const shown = cents === null ? '' : amountToInput(cents / 100);
   const [text, setText] = useState(shown);
   const field = useRef<HTMLInputElement>(null);
@@ -428,7 +441,9 @@ function CentsField({ cents, onCommit, testId, label }: { cents: number | null; 
   const pending = fieldWrite(text, cents, parseAmount).write;
   const save = () => {
     const w = fieldWrite(now(), cents, parseAmount);
-    if (w.write) void onCommit(w.value);
+    if (!w.write) return;
+    if (w.value === null) onClear();
+    else void onCommit(w.value);
   };
   return (
     <span className="flex flex-col gap-1.5">
@@ -455,6 +470,41 @@ function CentsField({ cents, onCommit, testId, label }: { cents: number | null; 
         </button>
       )}
     </span>
+  );
+}
+
+/**
+ * The question before an emptied field is saved (polster-loeschen-rueckfrage): „Löschen“ removes, „Abbrechen“ writes
+ * nothing and the field shows the stored value again. Inside the sheet (a second sheet on top would fight for Escape).
+ */
+function ClearConfirm({ which, onConfirm, onCancel }: { which: 'goal' | 'balance'; onConfirm: () => void; onCancel: () => void }) {
+  const box = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useEffect(() => box.current?.focus(), []);
+  return (
+    <div
+      ref={box}
+      tabIndex={-1}
+      role="alertdialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+      className="flex flex-col gap-3 rounded-2xl border border-edge bg-raised p-4 outline-none"
+      data-testid="polster-clear"
+      data-which={which}
+    >
+      <h3 id={titleId} className="text-[16px] font-semibold text-ink">
+        {t(which === 'balance' ? 'cushion.clear.balance' : 'cushion.clear.goal')}
+      </h3>
+      <p className="text-[14px] leading-relaxed text-ink-soft">{t(which === 'balance' ? 'cushion.clear.balance.text' : 'cushion.clear.goal.text')}</p>
+      <div className="flex flex-col gap-2">
+        <button type="button" onClick={onConfirm} className={`${BUTTON} h-12 w-full rounded-2xl bg-danger text-[16px] text-white hover:bg-danger-hover`} data-testid="polster-clear-confirm">
+          {t('cushion.clear.confirm')}
+        </button>
+        <button type="button" onClick={onCancel} className={`${BUTTON} h-12 w-full rounded-2xl text-[16px] font-medium text-ink-soft hover:bg-zinc-100`} data-testid="polster-clear-cancel">
+          {t('cushion.clear.cancel')}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -512,6 +562,8 @@ export function PolsterSheet({
   const [dir, setDir] = useState<'in' | 'out' | null>(move ?? null);
   const [party, setParty] = useState<{ run: number; goal: boolean } | null>(null);
   const guard = useCushionWrite();
+  const [clearing, setClearing] = useState<'goal' | 'balance' | null>(null);
+  const [reset, setReset] = useState({ goal: 0, balance: 0 });
   const celebrate = (stages: number[]) => {
     if (stages.length) setParty((p) => ({ run: (p?.run ?? 0) + 1, goal: stages.includes(100) }));
   };
@@ -540,13 +592,42 @@ export function PolsterSheet({
         <div className="grid grid-cols-2 gap-2.5">
           <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
             {t('cushion.goalField')}
-            <CentsField cents={goal} onCommit={(v) => guard(setCushionGoal(db, v)).then(() => undefined)} testId="polster-goal-input" />
+            <CentsField
+              key={`goal-${reset.goal}`}
+              cents={goal}
+              onCommit={(v) => guard(setCushionGoal(db, v)).then(() => undefined)}
+              onClear={() => setClearing('goal')}
+              testId="polster-goal-input"
+            />
           </label>
           <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold text-ink-soft">
             {t('cushion.balanceField')}
-            <CentsField cents={balance} onCommit={(v) => guard(setCushionBalance(db, v)).then(() => undefined)} testId="polster-balance-input" />
+            <CentsField
+              key={`balance-${reset.balance}`}
+              cents={balance}
+              onCommit={(v) => guard(setCushionBalance(db, v)).then(() => undefined)}
+              onClear={() => setClearing('balance')}
+              testId="polster-balance-input"
+            />
           </label>
         </div>
+        {clearing && (
+          <ClearConfirm
+            key={clearing}
+            which={clearing}
+            onConfirm={() => {
+              const which = clearing;
+              setClearing(null);
+              void guard(which === 'balance' ? setCushionBalance(db, null) : setCushionGoal(db, null));
+            }}
+            onCancel={() => {
+              // the field shows the stored value again (a fresh field), nothing is written
+              const which = clearing;
+              setClearing(null);
+              setReset((r) => ({ ...r, [which]: r[which] + 1 }));
+            }}
+          />
+        )}
         <fieldset className="flex flex-col gap-2" data-testid="polster-rule" data-rule={settings.cushionRule}>
           <legend className="mb-2 text-[14px] font-semibold text-ink">{t('cushion.rule')}</legend>
           {(['all', 'share'] as const).map((rule) => (

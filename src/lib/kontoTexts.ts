@@ -270,6 +270,13 @@ export const KONTO_TEXTS = {
   'cushion.src.fix': 'Korrektur',
   'cushion.field.save': 'Speichern',
   'cushion.saveFailed': 'Speichern fehlgeschlagen. Bitte erneut.',
+  // polster-loeschen-rueckfrage
+  'cushion.clear.balance': 'Polster und Verlauf löschen?',
+  'cushion.clear.balance.text': 'Stand, Verlauf und bestätigte Monate sind dann weg.',
+  'cushion.clear.goal': 'Polster-Ziel löschen?',
+  'cushion.clear.goal.text': 'Stand und Verlauf bleiben.',
+  'cushion.clear.confirm': 'Löschen',
+  'cushion.clear.cancel': 'Abbrechen',
   'cushion.src.diff': 'Differenz',
   'cushion.diff.higher': 'Dein Überschuss ist {betrag} höher.',
   'cushion.diff.lower': 'Dein Überschuss ist {betrag} niedriger.',
