@@ -110,6 +110,22 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
   const engine = testInfo.project.name === WEBKIT_PROJECT ? 'webkit' : 'chromium';
   const content = engine === 'webkit' ? 'web-content' : 'renderer';
   let stopped: number[] = [];
+  // the stop comes from here (Node) once the console message arrives – under load the import could finish in the
+  // meantime, then nothing hangs and the test passes by mistake. So right after „committed“ the page waits (5 s,
+  // busy) until the stop has landed; SIGSTOP freezes that wait, and after SIGCONT the import goes on.
+  await page.addInitScript({
+    content: `(() => {
+      const debug = console.debug;
+      console.debug = function (...args) {
+        debug.apply(this, args);
+        if (String(args[0]).startsWith('[import-trace] committed')) holdUntilStopped();
+      };
+      function holdUntilStopped() {
+        const until = performance.now() + 5000;
+        while (performance.now() < until) {}
+      }
+    })();`,
+  });
   try {
     await page.goto('/');
     await expect(page.getByTestId('setup-dialog')).toBeVisible();
@@ -124,6 +140,7 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
     await page.getByTestId('import-file').setInputFiles(FIXTURE);
     const hang = await waitForHang(importWatchdog.nextHang(), 150_000);
     writeFileSync(join(testInfo.outputDir, 'stopped.json'), JSON.stringify(stopped));
+    testInfo.annotations.push({ type: 'stopped', description: `${stopped.length} ${content} · hang ${!!hang}` });
     writeMarker(testInfo, `sigstop-${engine}`, hang);
   } finally {
     for (const pid of stopped) {
