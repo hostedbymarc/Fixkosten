@@ -131,7 +131,7 @@ export interface KontoSettings {
   spielgeldOverrides: Partial<Record<Period, number>>;
 }
 
-export type CushionMoveSource = 'split' | 'gap' | 'manual' | 'start';
+export type CushionMoveSource = 'split' | 'gap' | 'manual' | 'start' | 'fix';
 export interface CushionMove {
   id: string;
   /** YYYY-MM-DD */
@@ -143,7 +143,7 @@ export interface CushionMove {
   note?: string;
 }
 export const CUSHION_NOTE_MAX = 40;
-const MOVE_SOURCES: CushionMoveSource[] = ['split', 'gap', 'manual', 'start'];
+const MOVE_SOURCES: CushionMoveSource[] = ['split', 'gap', 'manual', 'start', 'fix'];
 
 export type CushionRule = 'all' | 'share';
 export const CUSHION_MILESTONES = [25, 50, 75, 100] as const;
@@ -326,12 +326,15 @@ function centMap(v: unknown, signed = false): Partial<Record<Period, number>> {
 
 /**
  * The Polster and its moves: the balance is the sum of the moves (never below 0). Stored data without moves
- * (polster-ziel): one start move of the Stand, on the day it was entered – nothing is lost. No Polster: no moves.
+ * (polster-ziel): a start move of the Stand, on the day it was entered – nothing is lost. A month confirmed without a
+ * move of its own (polster-ziel, or read by polster-feinschliff): its move `m-YYYY-MM` of the amount confirmed, taken
+ * out of the start move – the sum stays the Stand. No Polster: no moves.
  */
 function parseCushion(v: Record<string, unknown>): { balance: number | null; moves: CushionMove[] } {
   const stored = cent(v.cushionBalance);
   if (stored === null) return { balance: null, moves: [] };
-  const moves = (Array.isArray(v.cushionMoves) ? v.cushionMoves : [])
+  const date = isDay(v.cushionBalanceDate) ? v.cushionBalanceDate : dayOf(localToday());
+  let moves: CushionMove[] = (Array.isArray(v.cushionMoves) ? v.cushionMoves : [])
     .filter(
       (m): m is Record<string, unknown> =>
         isObj(m) && typeof m.id === 'string' && m.id !== '' && isDay(m.date) && cent(m.amount, true) !== null && MOVE_SOURCES.includes(m.source as CushionMoveSource),
@@ -341,12 +344,39 @@ function parseCushion(v: Record<string, unknown>): { balance: number | null; mov
       const note = typeof m.note === 'string' ? m.note.trim().slice(0, CUSHION_NOTE_MAX) : '';
       return { id: m.id as string, date: m.date as string, amount: cent(m.amount, true)!, source: m.source as CushionMoveSource, ...(note ? { note } : {}) };
     });
-  if (moves.length === 0) {
-    if (stored === 0) return { balance: 0, moves: [] };
-    const date = isDay(v.cushionBalanceDate) ? v.cushionBalanceDate : dayOf(localToday());
-    return { balance: stored, moves: [{ id: 'start', date, amount: stored, source: 'start' }] };
+  if (moves.length === 0 && stored > 0) moves = [{ id: 'start', date, amount: stored, source: 'start' }];
+  // confirmed months without a move of their own: their move, out of the start move
+  const confirmed = Object.entries(isObj(v.cushionConfirmed) ? v.cushionConfirmed : {})
+    .map(([k, x]) => [k, cent(x, true)] as const)
+    .filter((e): e is readonly [string, number] => isPeriod(e[0]) && e[1] !== null && e[1] !== 0);
+  const missing = confirmed.filter(([p]) => !moves.some((m) => m.id === `m-${p}`));
+  if (missing.length) {
+    const total = missing.reduce((a, [, x]) => a + x, 0);
+    const start = moves.find((m) => m.id === 'start');
+    moves = [
+      ...(start ? moves.map((m) => (m === start ? { ...m, amount: m.amount - total } : m)) : [...moves, { id: 'start', date, amount: -total, source: 'start' as const }]),
+      ...missing.map(([p, x]) => ({ id: `m-${p}`, date, amount: x, source: x > 0 ? ('split' as const) : ('gap' as const) })),
+    ].filter((m) => m.amount !== 0 || m.id.startsWith('m-'));
   }
   return { balance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)), moves };
+}
+
+/**
+ * polster-stand-feld: what every write of the Polster keeps – the Stand is the sum of the moves, and every month
+ * confirmed has exactly one move of its own (`m-YYYY-MM`), its differences (`m-YYYY-MM-…`) adding up to the amount
+ * confirmed. null when it holds, else what is wrong.
+ */
+export function cushionBroken(s: Pick<KontoSettings, 'cushionBalance' | 'cushionMoves' | 'cushionConfirmed'>): string | null {
+  if (s.cushionBalance === null) return s.cushionMoves.length ? 'moves without a Polster' : null;
+  const sum = s.cushionMoves.reduce((a, m) => a + m.amount, 0);
+  if (sum !== s.cushionBalance) return `Stand ${s.cushionBalance} ≠ sum ${sum}`;
+  for (const [p, amount] of Object.entries(s.cushionConfirmed)) {
+    const own = s.cushionMoves.filter((m) => m.id === `m-${p}`);
+    if (own.length !== 1) return `${p}: ${own.length} moves`;
+    const all = s.cushionMoves.filter((m) => m.id === `m-${p}` || m.id.startsWith(`m-${p}-`)).reduce((a, m) => a + m.amount, 0);
+    if (all !== amount) return `${p}: confirmed ${amount} ≠ moves ${all}`;
+  }
+  return null;
 }
 
 const dayOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

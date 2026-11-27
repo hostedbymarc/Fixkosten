@@ -258,7 +258,10 @@ for (const [vp, use] of Object.entries(VIEWPORTS)) {
         await expect(rows.first()).toContainText('−€ 500');
         await expect(rows.nth(1)).toContainText('Bonus');
         await expect(rows.nth(1)).toContainText('+€ 1.500');
-        await expect(rows.nth(2)).toContainText('Stand eingetragen');
+        // polster-stand-feld: 14.000 → 9.000 in „Aktueller Stand“ is a Korrektur, the start stays
+        await expect(rows.nth(2)).toContainText('Korrektur');
+        await expect(rows.nth(2)).toContainText('−€ 5.000');
+        await expect(rows.nth(3)).toContainText('Stand eingetragen');
         // the hint („Entnommen: € 500 · Rückgängig“) is gone after 5 s: the list in full view
         await expect(page.locator('.anim-toast')).toHaveCount(0, { timeout: 10_000 });
         await page.getByTestId('polster-history').scrollIntoViewIfNeeded();

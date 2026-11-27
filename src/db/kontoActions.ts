@@ -9,7 +9,7 @@ import { addPeriods } from '../lib/period';
 import { newStages } from '../lib/polster';
 import type { Period, SavingSetting } from '../lib/types';
 import type { FixkostenDB } from './db';
-import { CUSHION_NOTE_MAX, readKonto, writeKonto, type CushionMilestone, type CushionMove, type CushionRule, type KontoSettings, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
+import { CUSHION_NOTE_MAX, cushionBroken, readKonto, writeKonto, type CushionMilestone, type CushionMove, type CushionRule, type KontoSettings, type GapMode, type KontoCheck, type Milestone, type PlanMode } from './settings';
 
 /** Set once the setup was finished in this session: a balance reminder comes on the next start only. */
 export const session = { setUp: false };
@@ -193,26 +193,52 @@ export async function setSpielgeld(db: FixkostenDB, amount: number | null): Prom
 
 /** „Polster-Ziel“: an empty field removes it. */
 export async function setCushionGoal(db: FixkostenDB, cents: number | null): Promise<void> {
-  await writeKonto(db, { cushionGoal: cents !== null && cents > 0 ? Math.round(cents) : null });
+  return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
+    const goal = cents !== null && cents > 0 ? Math.round(cents) : null;
+    // only a real change is written
+    if (s.cushionGoal === goal) return;
+    await writeCushion(db, s, { cushionGoal: goal });
+  });
 }
 
 /**
- * „Schon geschafft“: sets the Polster (a move „Stand eingetragen“ of the difference, so the moves still add up to
- * it); an empty field removes the Polster and its moves.
+ * „Aktueller Stand“ (polster-stand-feld): the field shows the Stand (the sum of the moves). A new value adds a move
+ * „Korrektur“ of the difference (source fix) – the history is never rewritten. No Polster yet: the start move. An
+ * empty field (and „Speichern“) removes the Polster and its moves. Nothing changes when the value is the same.
  */
 export async function setCushionBalance(db: FixkostenDB, cents: number | null, today: Date = localToday()): Promise<void> {
   return db.transaction('rw', db.meta, async () => {
+    const s = await readKonto(db);
     if (cents === null) {
-      await writeKonto(db, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [] });
+      if (s.cushionBalance === null) return;
+      await writeCushion(db, s, { cushionBalance: null, cushionBalanceDate: null, cushionMoves: [] });
       return;
     }
-    const s = await readKonto(db);
     const target = Math.max(0, Math.round(cents));
+    if (s.cushionBalance === target) return;
+    const first = s.cushionBalance === null;
+    const moves = first ? [] : s.cushionMoves;
     const diff = target - (s.cushionBalance ?? 0);
-    const moves = s.cushionBalance === null ? [] : s.cushionMoves;
-    const next = diff === 0 && s.cushionBalance !== null ? moves : [...moves, { id: moveId(moves, 'start'), date: dayKey(today), amount: diff, source: 'start' as const }];
-    await writeKonto(db, { cushionBalance: target, cushionBalanceDate: dayKey(today), cushionMoves: next.filter((m) => m.amount !== 0) });
+    const move: CushionMove = first
+      ? { id: moveId(moves, 'start'), date: dayKey(today), amount: diff, source: 'start' }
+      : { id: moveId(moves, `fix-${dayKey(today)}`), date: dayKey(today), amount: diff, source: 'fix' };
+    await writeCushion(db, s, { cushionBalance: target, cushionBalanceDate: dayKey(today), cushionMoves: move.amount ? [...moves, move] : moves });
   });
+}
+
+/** „Speichern fehlgeschlagen. Bitte erneut.“: a write of the Polster that would break its invariant is not made. */
+export class CushionWriteError extends Error {}
+
+/**
+ * Every write of the Polster: only when the result keeps the invariant (the Stand is the sum of the moves, every month
+ * confirmed has exactly one move of its own, see cushionBroken) – else nothing is written.
+ */
+async function writeCushion(db: FixkostenDB, current: KontoSettings, patch: Partial<KontoSettings>): Promise<void> {
+  const next = { ...current, ...patch };
+  const broken = cushionBroken(next);
+  if (broken) throw new CushionWriteError(broken);
+  await writeKonto(db, patch);
 }
 
 /** „Überschuss bis zum Ziel“: all into the Polster, or a fixed share. */
@@ -263,7 +289,7 @@ export async function confirmCushion(
     if (s.cushionConfirmed[period] !== undefined || cents === 0) return null;
     const { amount, stages, patch } = withMove(s, { id: `m-${period}`, date: dayKey(today), amount: cents, source: cents > 0 ? 'split' : 'gap' });
     if (amount === 0) return null;
-    await writeKonto(db, {
+    await writeCushion(db, s, {
       ...patch,
       cushionBalanceDate: dayKey(today),
       cushionConfirmed: { ...s.cushionConfirmed, [period]: amount },
@@ -283,7 +309,7 @@ export async function undoCushion(db: FixkostenDB, period: Period, today: Date =
     const surplus = { ...s.cushionSurplus };
     delete surplus[period];
     const moves = s.cushionMoves.filter((m) => !monthMoves(period)(m));
-    await writeKonto(db, {
+    await writeCushion(db, s, {
       cushionBalance: Math.max(0, moves.reduce((a, m) => a + m.amount, 0)),
       cushionBalanceDate: dayKey(today),
       cushionMoves: moves,
@@ -309,7 +335,7 @@ export async function addCushionMove(
     const id = moveId(s.cushionMoves, `x-${dayKey(today)}`);
     const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: cents, source: 'manual', ...(text ? { note: text } : {}) });
     if (amount === 0) return null;
-    await writeKonto(db, { ...patch, cushionBalanceDate: dayKey(today) });
+    await writeCushion(db, s, { ...patch, cushionBalanceDate: dayKey(today) });
     return { id, amount, stages };
   });
 }
@@ -333,7 +359,7 @@ export async function removeCushionMove(db: FixkostenDB, id: string, today: Date
       const surplus = s.cushionSurplus[period];
       if (surplus !== undefined) patch.cushionSurplus = { ...s.cushionSurplus, [period]: surplus - move.amount };
     }
-    await writeKonto(db, patch);
+    await writeCushion(db, s, patch);
   });
 }
 
@@ -354,12 +380,12 @@ export async function settleCushionDiff(
     if (s.cushionConfirmed[period] === undefined || was === undefined) return null;
     const diff = Math.round(surplus) - was;
     if (!move || diff === 0) {
-      await writeKonto(db, { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } });
+      await writeCushion(db, s, { cushionSurplus: { ...s.cushionSurplus, [period]: Math.round(surplus) } });
       return null;
     }
     const id = moveId(s.cushionMoves, `m-${period}-diff`);
     const { amount, stages, patch } = withMove(s, { id, date: dayKey(today), amount: diff, source: diff > 0 ? 'split' : 'gap' });
-    await writeKonto(db, {
+    await writeCushion(db, s, {
       ...patch,
       cushionBalanceDate: dayKey(today),
       cushionConfirmed: { ...s.cushionConfirmed, [period]: s.cushionConfirmed[period]! + amount },

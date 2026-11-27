@@ -120,7 +120,8 @@ test.describe('Spielgeld-Zuordnung bleibt erhalten', () => {
 
     // reload
     await page.reload();
-    await expect(page.getByTestId('hero')).toBeVisible();
+    // with „Fixkosten einplanen“ the month shows „Dein Monat“; loading again can take a moment under load
+    await expect(page.getByTestId('dein-monat').or(page.getByTestId('hero')).first()).toBeVisible({ timeout: 15_000 });
     await appSettled(page);
     await stillSpielgeld(page);
 
