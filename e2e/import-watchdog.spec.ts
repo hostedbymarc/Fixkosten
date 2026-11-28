@@ -110,6 +110,7 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
   const engine = testInfo.project.name === WEBKIT_PROJECT ? 'webkit' : 'chromium';
   const content = engine === 'webkit' ? 'web-content' : 'renderer';
   let stopped: number[] = [];
+  let chosen: Promise<void> = Promise.resolve();
   // where the time goes (the annotations stay with a timeout too)
   const t0 = Date.now();
   const mark = (step: string) => testInfo.annotations.push({ type: 'step', description: `${step} @${Math.round((Date.now() - t0) / 1000)} s` });
@@ -141,7 +142,10 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
       for (const pid of stopped) process.kill(pid, 'SIGSTOP');
       mark('stopped');
     });
-    await page.getByTestId('import-file').setInputFiles(FIXTURE);
+    // not awaited here: the stop can land before the page has confirmed the file (it never would while stopped,
+    // and SIGCONT only comes after the hang) – the file selection is awaited once the processes run again
+    chosen = page.getByTestId('import-file').setInputFiles(FIXTURE);
+    chosen.catch(() => {});
     const hang = await waitForHang(importWatchdog.nextHang(), 150_000);
     mark(hang ? 'hang dumped' : 'no hang');
     writeFileSync(join(testInfo.outputDir, 'stopped.json'), JSON.stringify(stopped));
@@ -157,6 +161,7 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
     }
   }
   mark('continued');
+  await chosen;
   // clean up: every stopped process runs again and the page answers
   expect(stopped.length, `${content} processes stopped`).toBeGreaterThan(0);
   for (const pid of stopped) await expect.poll(() => state(pid)?.startsWith('T') ?? false).toBe(false);
