@@ -110,6 +110,9 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
   const engine = testInfo.project.name === WEBKIT_PROJECT ? 'webkit' : 'chromium';
   const content = engine === 'webkit' ? 'web-content' : 'renderer';
   let stopped: number[] = [];
+  // where the time goes (the annotations stay with a timeout too)
+  const t0 = Date.now();
+  const mark = (step: string) => testInfo.annotations.push({ type: 'step', description: `${step} @${Math.round((Date.now() - t0) / 1000)} s` });
   // the stop comes from here (Node) once the console message arrives – under load the import could finish in the
   // meantime, then nothing hangs and the test passes by mistake. So right after „committed“ the page waits (5 s,
   // busy) until the stop has landed; SIGSTOP freezes that wait, and after SIGCONT the import goes on.
@@ -136,9 +139,11 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
         .filter((p) => p.role === content)
         .map((p) => p.pid);
       for (const pid of stopped) process.kill(pid, 'SIGSTOP');
+      mark('stopped');
     });
     await page.getByTestId('import-file').setInputFiles(FIXTURE);
     const hang = await waitForHang(importWatchdog.nextHang(), 150_000);
+    mark(hang ? 'hang dumped' : 'no hang');
     writeFileSync(join(testInfo.outputDir, 'stopped.json'), JSON.stringify(stopped));
     testInfo.annotations.push({ type: 'stopped', description: `${stopped.length} ${content} · hang ${!!hang}` });
     writeMarker(testInfo, `sigstop-${engine}`, hang);
@@ -151,11 +156,13 @@ test('Renderer-Prozess per SIGSTOP eingefroren: Watchdog mit nativen Dumps, dana
       }
     }
   }
+  mark('continued');
   // clean up: every stopped process runs again and the page answers
   expect(stopped.length, `${content} processes stopped`).toBeGreaterThan(0);
   for (const pid of stopped) await expect.poll(() => state(pid)?.startsWith('T') ?? false).toBe(false);
   await expect.poll(() => page.evaluate(() => 1), { timeout: 20_000 }).toBe(1);
   await expect(page.getByTestId('hero')).toBeVisible({ timeout: 20_000 });
+  mark('hero');
 });
 
 test('Watchdog-Artefakte sind vollständig', async ({}, testInfo) => {
